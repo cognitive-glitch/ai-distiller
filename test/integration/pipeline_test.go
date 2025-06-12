@@ -131,8 +131,8 @@ func TestPipelineSimpleFile(t *testing.T) {
 			contains: []string{
 				"# " + testFile,
 				"## Structure",
-				"🏛️ **Class** `ExampleClass`",
-				"🔧 **Function** `example_method`",
+				"🏛️ **Class** `Calculator`",
+				"🔧 **Function** `__init__`",
 				"<sub>L", // Location info
 			},
 		},
@@ -145,7 +145,7 @@ func TestPipelineSimpleFile(t *testing.T) {
 				`"path": "` + testFile + `"`,
 				`"classes"`,
 				`"functions"`,
-				`"ExampleClass"`,
+				`"Calculator"`,
 			},
 		},
 		{
@@ -155,8 +155,8 @@ func TestPipelineSimpleFile(t *testing.T) {
 			contains: []string{
 				`<?xml version="1.0" encoding="UTF-8"?>`,
 				`<distilled>`,
-				`<class name="ExampleClass"`,
-				`<function name="example_method"`,
+				`<class name="Calculator"`,
+				`<function name="__init__"`,
 				`</distilled>`,
 			},
 		},

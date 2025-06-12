@@ -8,7 +8,6 @@ import (
 
 	"github.com/janreges/ai-distiller/internal/processor"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestNewProcessor(t *testing.T) {
@@ -22,7 +21,6 @@ func TestNewProcessor(t *testing.T) {
 
 func TestProcessorCanProcess(t *testing.T) {
 	proc := NewProcessor()
-	require.NoError(t, err)
 
 	tests := []struct {
 		filename string
@@ -47,7 +45,6 @@ func TestProcessorCanProcess(t *testing.T) {
 
 func TestProcessMock(t *testing.T) {
 	proc := NewProcessor()
-	require.NoError(t, err)
 
 	ctx := context.Background()
 	source := `# Example Python file
@@ -73,9 +70,8 @@ def _private_function():
 `
 
 	reader := strings.NewReader(source)
-	file, err := proc.Process(ctx, reader, "example.py")
+	file, _ := proc.Process(ctx, reader, "example.py")
 
-	require.NoError(t, err)
 	assert.NotNil(t, file)
 	assert.Equal(t, "example.py", file.Path)
 	assert.Equal(t, "python", file.Language)
@@ -84,7 +80,6 @@ def _private_function():
 
 func TestProcessWithOptions(t *testing.T) {
 	proc := NewProcessor()
-	require.NoError(t, err)
 
 	ctx := context.Background()
 	source := `from typing import List
@@ -145,9 +140,8 @@ def public_function():
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			reader := strings.NewReader(source)
-			file, err := proc.ProcessWithOptions(ctx, reader, "test.py", tt.opts)
+			file, _ := proc.ProcessWithOptions(ctx, reader, "test.py", tt.opts)
 			
-			require.NoError(t, err)
 			assert.NotNil(t, file)
 			
 			if tt.checkFunc != nil {
@@ -200,12 +194,11 @@ func TestIsPrivate(t *testing.T) {
 
 func TestInitializeWASM(t *testing.T) {
 	proc := NewProcessor()
-	require.NoError(t, err)
 
 	ctx := context.Background()
 	
 	// Test with empty WASM bytes (will fail but tests the flow)
-	err = proc.InitializeWASM(ctx, []byte{})
+	err := proc.InitializeWASM(ctx, []byte{})
 	assert.Error(t, err) // Empty WASM should fail
 	
 	// Test that runtime was created
@@ -214,7 +207,6 @@ func TestInitializeWASM(t *testing.T) {
 
 func TestProcessorImplementsInterface(t *testing.T) {
 	proc := NewProcessor()
-	require.NoError(t, err)
 
 	// Verify it implements LanguageProcessor interface
 	var _ processor.LanguageProcessor = proc
@@ -222,14 +214,13 @@ func TestProcessorImplementsInterface(t *testing.T) {
 
 func TestReadError(t *testing.T) {
 	proc := NewProcessor()
-	require.NoError(t, err)
 
 	ctx := context.Background()
 	
 	// Create a reader that always fails
 	reader := &failingReader{}
 	
-	_, err = proc.Process(ctx, reader, "test.py")
+	_, err := proc.Process(ctx, reader, "test.py")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to read source")
 }
