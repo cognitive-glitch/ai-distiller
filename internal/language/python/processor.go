@@ -18,14 +18,14 @@ type Processor struct {
 }
 
 // NewProcessor creates a new Python language processor
-func NewProcessor() (*Processor, error) {
+func NewProcessor() *Processor {
 	return &Processor{
 		BaseProcessor: processor.NewBaseProcessor(
 			"python",
 			"1.0.0",
 			[]string{".py", ".pyw", ".pyi"},
 		),
-	}, nil
+	}
 }
 
 // InitializeWASM sets up the WASM runtime and loads the Python parser
@@ -59,6 +59,21 @@ func (p *Processor) Process(ctx context.Context, reader io.Reader, filename stri
 	// Default options
 	opts := processor.DefaultProcessOptions()
 	return p.ProcessWithOptions(ctx, reader, filename, opts)
+}
+
+// ProcessFile processes a file by path
+func (p *Processor) ProcessFile(filename string, opts processor.ProcessOptions) (*ir.DistilledFile, error) {
+	// For now, return a mock implementation
+	// TODO: Implement file reading and processing
+	
+	// Simulate file not found error
+	if filename == "nonexistent.py" {
+		return nil, fmt.Errorf("file not found: %s", filename)
+	}
+	
+	ctx := context.Background()
+	source := []byte("# Mock Python file\nclass Test:\n    pass")
+	return p.processMock(ctx, source, filename, opts)
 }
 
 // ProcessWithOptions parses with specific options

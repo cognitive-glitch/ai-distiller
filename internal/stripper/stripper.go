@@ -4,100 +4,266 @@ import (
 	"strings"
 
 	"github.com/janreges/ai-distiller/internal/ir"
-	"github.com/janreges/ai-distiller/internal/processor"
 )
+
+// Options configures what to strip from the IR
+type Options struct {
+	RemovePrivate         bool
+	RemoveImplementations bool
+	RemoveComments        bool
+	RemoveImports         bool
+}
 
 // Stripper removes specified elements from the IR based on options
 type Stripper struct {
-	options processor.ProcessOptions
+	options Options
 }
 
-// NewStripper creates a new stripper with the given options
-func NewStripper(options processor.ProcessOptions) *Stripper {
+// New creates a new stripper with the given options
+func New(options Options) *Stripper {
 	return &Stripper{
 		options: options,
 	}
 }
 
-// Strip applies stripping rules to the IR tree
-func (s *Stripper) Strip(file *ir.DistilledFile) *ir.DistilledFile {
-	// Create a visitor that filters nodes based on options
-	visitor := ir.NewFuncVisitor(func(node ir.DistilledNode) ir.DistilledNode {
-		// Skip nodes based on options
-		switch n := node.(type) {
-		case *ir.DistilledComment:
-			if !s.options.IncludeComments {
-				return nil // Remove comment nodes
-			}
+// Visit implements the Visitor interface
+func (s *Stripper) Visit(node ir.DistilledNode) ir.DistilledNode {
+	if node == nil {
+		return nil
+	}
 
-		case *ir.DistilledImport:
-			if !s.options.IncludeImports {
-				return nil // Remove import nodes
-			}
-
-		case *ir.DistilledFunction:
-			// Check visibility
-			if !s.options.IncludePrivate && s.isPrivate(n.Name, n.Visibility) {
-				return nil // Remove private functions
-			}
-			
-			// Strip implementation if requested
-			if !s.options.IncludeImplementation && n.Implementation != "" {
-				// Create a copy without implementation
-				stripped := *n
-				stripped.Implementation = ""
-				return &stripped
-			}
-
-		case *ir.DistilledClass:
-			// Check visibility
-			if !s.options.IncludePrivate && s.isPrivate(n.Name, n.Visibility) {
-				return nil // Remove private classes
-			}
-
-		case *ir.DistilledInterface:
-			// Check visibility
-			if !s.options.IncludePrivate && s.isPrivate(n.Name, n.Visibility) {
-				return nil // Remove private interfaces
-			}
-
-		case *ir.DistilledStruct:
-			// Check visibility
-			if !s.options.IncludePrivate && s.isPrivate(n.Name, n.Visibility) {
-				return nil // Remove private structs
-			}
-
-		case *ir.DistilledEnum:
-			// Check visibility
-			if !s.options.IncludePrivate && s.isPrivate(n.Name, n.Visibility) {
-				return nil // Remove private enums
-			}
-
-		case *ir.DistilledField:
-			// Check visibility
-			if !s.options.IncludePrivate && s.isPrivate(n.Name, n.Visibility) {
-				return nil // Remove private fields
-			}
-
-		case *ir.DistilledTypeAlias:
-			// Check visibility
-			if !s.options.IncludePrivate && s.isPrivate(n.Name, n.Visibility) {
-				return nil // Remove private type aliases
-			}
+	// Process different node types
+	switch n := node.(type) {
+	case *ir.DistilledFile:
+		return s.visitFile(n)
+		
+	case *ir.DistilledComment:
+		if s.options.RemoveComments {
+			return nil
 		}
+		return n
+		
+	case *ir.DistilledImport:
+		if s.options.RemoveImports {
+			return nil
+		}
+		return n
+		
+	case *ir.DistilledFunction:
+		return s.visitFunction(n)
+		
+	case *ir.DistilledClass:
+		return s.visitClass(n)
+		
+	case *ir.DistilledInterface:
+		return s.visitInterface(n)
+		
+	case *ir.DistilledStruct:
+		return s.visitStruct(n)
+		
+	case *ir.DistilledEnum:
+		return s.visitEnum(n)
+		
+	case *ir.DistilledField:
+		return s.visitField(n)
+		
+	case *ir.DistilledTypeAlias:
+		return s.visitTypeAlias(n)
+		
+	default:
+		// For other nodes, visit children
+		return s.visitChildren(node)
+	}
+}
 
-		return node // Keep the node
-	})
-
-	// Apply the visitor
-	walker := ir.NewWalker(visitor)
-	result := walker.Walk(file)
-	
-	if result == nil {
-		return file // Return original if walk failed
+func (s *Stripper) visitFile(n *ir.DistilledFile) *ir.DistilledFile {
+	result := &ir.DistilledFile{
+		BaseNode: n.BaseNode,
+		Path:     n.Path,
+		Language: n.Language,
+		Version:  n.Version,
+		Metadata: n.Metadata,
+		Errors:   n.Errors,
 	}
 	
-	return result.(*ir.DistilledFile)
+	// Visit children
+	for _, child := range n.Children {
+		if visited := child.Accept(s); visited != nil {
+			result.Children = append(result.Children, visited)
+		}
+	}
+	
+	return result
+}
+
+func (s *Stripper) visitFunction(n *ir.DistilledFunction) ir.DistilledNode {
+	// Check if should remove private
+	if s.options.RemovePrivate && s.isPrivate(n.Name, n.Visibility) {
+		return nil
+	}
+	
+	// Create copy
+	result := &ir.DistilledFunction{
+		BaseNode:   n.BaseNode,
+		Name:       n.Name,
+		Visibility: n.Visibility,
+		Modifiers:  n.Modifiers,
+		Decorators: n.Decorators,
+		TypeParams: n.TypeParams,
+		Parameters: n.Parameters,
+		Returns:    n.Returns,
+		Implementation: n.Implementation,
+	}
+	
+	// Strip implementation if requested
+	if s.options.RemoveImplementations {
+		result.Implementation = ""
+	}
+	
+	// Functions don't have children in our IR
+	
+	return result
+}
+
+func (s *Stripper) visitClass(n *ir.DistilledClass) ir.DistilledNode {
+	// Check if should remove private
+	if s.options.RemovePrivate && s.isPrivate(n.Name, n.Visibility) {
+		return nil
+	}
+	
+	// Create copy
+	result := &ir.DistilledClass{
+		BaseNode:   n.BaseNode,
+		Name:       n.Name,
+		Visibility: n.Visibility,
+		Modifiers:  n.Modifiers,
+		Decorators: n.Decorators,
+		TypeParams: n.TypeParams,
+		Extends:    n.Extends,
+		Implements: n.Implements,
+		Mixins:     n.Mixins,
+	}
+	
+	// Visit children
+	for _, child := range n.Children {
+		if visited := child.Accept(s); visited != nil {
+			result.Children = append(result.Children, visited)
+		}
+	}
+	
+	return result
+}
+
+func (s *Stripper) visitInterface(n *ir.DistilledInterface) ir.DistilledNode {
+	// Check if should remove private
+	if s.options.RemovePrivate && s.isPrivate(n.Name, n.Visibility) {
+		return nil
+	}
+	
+	// Create copy
+	result := &ir.DistilledInterface{
+		BaseNode:   n.BaseNode,
+		Name:       n.Name,
+		Visibility: n.Visibility,
+		TypeParams: n.TypeParams,
+		Extends:    n.Extends,
+	}
+	
+	// Visit children
+	for _, child := range n.Children {
+		if visited := child.Accept(s); visited != nil {
+			result.Children = append(result.Children, visited)
+		}
+	}
+	
+	return result
+}
+
+func (s *Stripper) visitStruct(n *ir.DistilledStruct) ir.DistilledNode {
+	// Check if should remove private
+	if s.options.RemovePrivate && s.isPrivate(n.Name, n.Visibility) {
+		return nil
+	}
+	
+	// Create copy
+	result := &ir.DistilledStruct{
+		BaseNode:   n.BaseNode,
+		Name:       n.Name,
+		Visibility: n.Visibility,
+		TypeParams: n.TypeParams,
+	}
+	
+	// Visit children
+	for _, child := range n.Children {
+		if visited := child.Accept(s); visited != nil {
+			result.Children = append(result.Children, visited)
+		}
+	}
+	
+	return result
+}
+
+func (s *Stripper) visitEnum(n *ir.DistilledEnum) ir.DistilledNode {
+	// Check if should remove private
+	if s.options.RemovePrivate && s.isPrivate(n.Name, n.Visibility) {
+		return nil
+	}
+	
+	// Create copy
+	result := &ir.DistilledEnum{
+		BaseNode:   n.BaseNode,
+		Name:       n.Name,
+		Visibility: n.Visibility,
+	}
+	
+	// Visit children
+	for _, child := range n.Children {
+		if visited := child.Accept(s); visited != nil {
+			result.Children = append(result.Children, visited)
+		}
+	}
+	
+	return result
+}
+
+func (s *Stripper) visitField(n *ir.DistilledField) ir.DistilledNode {
+	// Check if should remove private
+	if s.options.RemovePrivate && s.isPrivate(n.Name, n.Visibility) {
+		return nil
+	}
+	
+	// Return copy
+	return &ir.DistilledField{
+		BaseNode:     n.BaseNode,
+		Name:         n.Name,
+		Visibility:   n.Visibility,
+		Modifiers:    n.Modifiers,
+		Type:         n.Type,
+		DefaultValue: n.DefaultValue,
+		Decorators:   n.Decorators,
+	}
+}
+
+func (s *Stripper) visitTypeAlias(n *ir.DistilledTypeAlias) ir.DistilledNode {
+	// Check if should remove private
+	if s.options.RemovePrivate && s.isPrivate(n.Name, n.Visibility) {
+		return nil
+	}
+	
+	// Return copy
+	return &ir.DistilledTypeAlias{
+		BaseNode:   n.BaseNode,
+		Name:       n.Name,
+		Visibility: n.Visibility,
+		TypeParams: n.TypeParams,
+		Type:       n.Type,
+	}
+}
+
+func (s *Stripper) visitChildren(node ir.DistilledNode) ir.DistilledNode {
+	// For unknown node types, just return as-is
+	// In a real implementation, we'd need to handle all node types
+	return node
 }
 
 // isPrivate checks if a node should be considered private
@@ -112,53 +278,10 @@ func (s *Stripper) isPrivate(name string, visibility ir.Visibility) bool {
 
 	// If no explicit visibility, use language conventions
 	// For now, we only check Python convention (underscore prefix)
-	// Go convention would need language context to apply correctly
 	if strings.HasPrefix(name, "_") {
 		return true
 	}
 
 	// Default to public if no explicit visibility and no underscore
 	return false
-}
-
-// StripOptions represents what to strip from the code
-type StripOptions struct {
-	Comments        bool
-	Imports         bool
-	Implementation  bool
-	NonPublic       bool
-}
-
-// FromStrings converts string options to StripOptions
-func FromStrings(options []string) StripOptions {
-	opts := StripOptions{}
-	
-	for _, opt := range options {
-		switch opt {
-		case "comments":
-			opts.Comments = true
-		case "imports":
-			opts.Imports = true
-		case "implementation":
-			opts.Implementation = true
-		case "non-public":
-			opts.NonPublic = true
-		}
-	}
-	
-	return opts
-}
-
-// ToProcessOptions converts StripOptions to ProcessOptions
-func (s StripOptions) ToProcessOptions() processor.ProcessOptions {
-	return processor.ProcessOptions{
-		IncludeImplementation: !s.Implementation,
-		IncludeComments:       !s.Comments,
-		IncludeImports:        !s.Imports,
-		IncludePrivate:        !s.NonPublic,
-		MaxDepth:              100,
-		Strict:                false,
-		SymbolResolution:      true,
-		IncludeLineNumbers:    true,
-	}
 }
