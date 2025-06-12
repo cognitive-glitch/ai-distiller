@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<distilled>
+  <file path="input/basic_class.py" language="python" version="2.0.0" line="1" endLine="3" column="1">
+    <nodes>
+      <comment format="line" line="1"><![CDATA[Python source file]]></comment>
+      <import type="from" module="typing" line="2">
+        <symbol name="List"/>
+        <symbol name="Dict"/>
+        <symbol name="Optional"/>
+      </import>
+      <class name="ExampleClass" visibility="public" line="4" endLine="10">
+        <function name="example_method" visibility="public" returns="str" line="5" endLine="8">
+          <parameters>
+            <parameter name="self" type="Any"/>
+            <parameter name="arg1: str" type="Any"/>
+            <parameter name="arg2: int" type="Any"/>
+          </parameters>
+          <implementation><![CDATA[
+# Implementation details omitted
+          ]]></implementation>
+        </function>
+      </class>
+      <function name="process_data" visibility="public" returns="Dict" line="5" endLine="8">
+        <parameters>
+          <parameter name="data: List[Dict]" type="Any"/>
+        </parameters>
+        <implementation><![CDATA[
+# Implementation details omitted
+        ]]></implementation>
+      </function>
+    </nodes>
+  </file>
+</distilled>

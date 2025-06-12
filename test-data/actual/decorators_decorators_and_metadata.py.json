@@ -1,0 +1,97 @@
+{
+  "language": "python",
+  "location": {
+    "start_line": 1,
+    "start_column": 1,
+    "end_line": 3,
+    "end_column": 1
+  },
+  "path": "input/decorators_and_metadata.py",
+  "stats": {
+    "class": 1,
+    "comment": 1,
+    "function": 2,
+    "import": 1
+  },
+  "structure": {
+    "classes": [
+      {
+        "location": {
+          "end_line": 10,
+          "start_line": 4
+        },
+        "members": {
+          "methods": [
+            {
+              "implementation": "# Implementation details omitted",
+              "location": {
+                "end_line": 8,
+                "start_line": 5
+              },
+              "name": "example_method",
+              "parameters": [
+                {
+                  "name": "self",
+                  "type": "Any"
+                },
+                {
+                  "name": "arg1: str",
+                  "type": "Any"
+                },
+                {
+                  "name": "arg2: int",
+                  "type": "Any"
+                }
+              ],
+              "returns": "str",
+              "visibility": "public"
+            }
+          ]
+        },
+        "name": "ExampleClass",
+        "visibility": "public"
+      }
+    ],
+    "functions": [
+      {
+        "implementation": "# Implementation details omitted",
+        "location": {
+          "end_line": 8,
+          "start_line": 5
+        },
+        "name": "process_data",
+        "parameters": [
+          {
+            "name": "data: List[Dict]",
+            "type": "Any"
+          }
+        ],
+        "returns": "Dict",
+        "visibility": "public"
+      }
+    ],
+    "imports": [
+      {
+        "location": {
+          "end_line": 2,
+          "start_line": 2
+        },
+        "module": "typing",
+        "symbols": [
+          {
+            "name": "List"
+          },
+          {
+            "name": "Dict"
+          },
+          {
+            "name": "Optional"
+          }
+        ],
+        "type": "from"
+      }
+    ]
+  },
+  "type": "file",
+  "version": "2.0.0"
+}
