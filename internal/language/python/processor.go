@@ -86,9 +86,9 @@ func (p *Processor) ProcessWithOptions(ctx context.Context, reader io.Reader, fi
 		return nil, fmt.Errorf("failed to read source: %w", err)
 	}
 
-	// If no WASM module loaded, create a mock response for now
+	// If no WASM module loaded, use line-based parser
 	if p.module == nil {
-		return p.processMock(ctx, source, filename, opts)
+		return p.parseActualFile(ctx, source, filename, opts)
 	}
 
 	// Create parser
@@ -323,13 +323,22 @@ func (p *Processor) parseActualFile(ctx context.Context, source []byte, filename
 		Language: "python",
 		Version:  "3.x",
 		Children: []ir.DistilledNode{},
+		Errors:   []ir.DistilledError{},
 	}
 	
-	// Simple line-based parser for demonstration
+	// Create error collector
+	errorCollector := NewErrorCollector()
+	
+	// Simple line-based parser with error recovery
 	// This is a simplified parser that extracts basic Python constructs
 	lines := strings.Split(string(source), "\n")
 	
 	for i := 0; i < len(lines); i++ {
+		// Check for indentation errors
+		if indentErr := detectIndentationError(lines, i); indentErr != nil {
+			errorCollector.AddWarning(indentErr.Line, indentErr.Column, indentErr.Message, indentErr.Kind)
+		}
+		
 		line := strings.TrimSpace(lines[i])
 		
 		// Skip empty lines
@@ -340,7 +349,11 @@ func (p *Processor) parseActualFile(ctx context.Context, source []byte, filename
 		// Parse imports
 		if strings.HasPrefix(line, "import ") || strings.HasPrefix(line, "from ") {
 			if opts.IncludeImports {
-				if imp := p.parseImport(line, i+1); imp != nil {
+				imp, err := p.parseImportWithRecovery(line, i+1, errorCollector)
+				if err != nil {
+					errorCollector.AddError(i+1, 1, err.Error(), ErrorKindSyntax)
+				}
+				if imp != nil {
 					file.Children = append(file.Children, imp)
 				}
 			}
@@ -348,7 +361,12 @@ func (p *Processor) parseActualFile(ctx context.Context, source []byte, filename
 		
 		// Parse class definitions
 		if strings.HasPrefix(line, "class ") {
-			if class, endLine := p.parseClass(lines, i, opts); class != nil {
+			class, endLine, err := p.parseClassWithRecovery(lines, i, opts, errorCollector)
+			if err != nil {
+				errorCollector.AddError(i+1, 1, err.Error(), ErrorKindSyntax)
+				// Try to recover
+				i = tryRecoverFromError(lines, i, ErrorKindIncomplete) - 1
+			} else if class != nil {
 				file.Children = append(file.Children, class)
 				i = endLine - 1 // Skip to end of class
 			}
@@ -356,7 +374,12 @@ func (p *Processor) parseActualFile(ctx context.Context, source []byte, filename
 		
 		// Parse function definitions (top-level)
 		if strings.HasPrefix(line, "def ") && !strings.HasPrefix(lines[i], "    ") {
-			if fn, endLine := p.parseFunction(lines, i, opts); fn != nil {
+			fn, endLine, err := p.parseFunctionWithRecovery(lines, i, opts, errorCollector)
+			if err != nil {
+				errorCollector.AddError(i+1, 1, err.Error(), ErrorKindSyntax)
+				// Try to recover
+				i = tryRecoverFromError(lines, i, ErrorKindIncomplete) - 1
+			} else if fn != nil {
 				file.Children = append(file.Children, fn)
 				i = endLine - 1 // Skip to end of function
 			}
@@ -364,21 +387,41 @@ func (p *Processor) parseActualFile(ctx context.Context, source []byte, filename
 		
 		// Parse async function definitions
 		if strings.HasPrefix(line, "async def ") && !strings.HasPrefix(lines[i], "    ") {
-			if node, endLine := p.parseFunction(lines, i, opts); node != nil {
-				if fn, ok := node.(*ir.DistilledFunction); ok {
-					fn.Modifiers = append(fn.Modifiers, ir.ModifierAsync)
+			fn, endLine, err := p.parseFunctionWithRecovery(lines, i, opts, errorCollector)
+			if err != nil {
+				errorCollector.AddError(i+1, 1, err.Error(), ErrorKindSyntax)
+				// Try to recover
+				i = tryRecoverFromError(lines, i, ErrorKindIncomplete) - 1
+			} else if fn != nil {
+				if fnNode, ok := fn.(*ir.DistilledFunction); ok {
+					fnNode.Modifiers = append(fnNode.Modifiers, ir.ModifierAsync)
 				}
-				file.Children = append(file.Children, node)
+				file.Children = append(file.Children, fn)
 				i = endLine - 1
 			}
 		}
 	}
 	
+	// Add collected errors to the file
+	file.Errors = errorCollector.ToDistilledErrors()
+	
 	return file, nil
 }
 
-// parseImport parses import statements
+// parseImportWithRecovery parses import statements with error recovery
+func (p *Processor) parseImportWithRecovery(line string, lineNum int, errorCollector *ErrorCollector) (*ir.DistilledImport, error) {
+	imp, err := p.parseImportInternal(line, lineNum)
+	return imp, err
+}
+
+// parseImport parses import statements (legacy interface)
 func (p *Processor) parseImport(line string, lineNum int) *ir.DistilledImport {
+	imp, _ := p.parseImportInternal(line, lineNum)
+	return imp
+}
+
+// parseImportInternal parses import statements
+func (p *Processor) parseImportInternal(line string, lineNum int) (*ir.DistilledImport, error) {
 	imp := &ir.DistilledImport{
 		BaseNode: ir.BaseNode{
 			Location: ir.Location{StartLine: lineNum, EndLine: lineNum},
@@ -431,7 +474,29 @@ func (p *Processor) parseImport(line string, lineNum int) *ir.DistilledImport {
 		}
 	}
 	
-	return imp
+	// Validate the import
+	if imp.Module == "" && len(imp.Symbols) == 0 {
+		return nil, fmt.Errorf("invalid import statement: %s", line)
+	}
+	
+	return imp, nil
+}
+
+// parseClassWithRecovery parses class definitions with error recovery
+func (p *Processor) parseClassWithRecovery(lines []string, startIdx int, opts processor.ProcessOptions, errorCollector *ErrorCollector) (ir.DistilledNode, int, error) {
+	node, endLine := p.parseClass(lines, startIdx, opts)
+	if node == nil {
+		return nil, startIdx + 1, fmt.Errorf("failed to parse class definition")
+	}
+	
+	// Check for common errors
+	if class, ok := node.(*ir.DistilledClass); ok {
+		if err := validatePythonName(class.Name); err != nil {
+			return node, endLine, fmt.Errorf("invalid class name '%s': %w", class.Name, err)
+		}
+	}
+	
+	return node, endLine, nil
 }
 
 // parseClass parses class definitions
@@ -523,6 +588,29 @@ func (p *Processor) parseClass(lines []string, startIdx int, opts processor.Proc
 	}
 	
 	return class, endLine
+}
+
+// parseFunctionWithRecovery parses function definitions with error recovery
+func (p *Processor) parseFunctionWithRecovery(lines []string, startIdx int, opts processor.ProcessOptions, errorCollector *ErrorCollector) (ir.DistilledNode, int, error) {
+	node, endLine := p.parseFunction(lines, startIdx, opts)
+	if node == nil {
+		return nil, startIdx + 1, fmt.Errorf("failed to parse function definition")
+	}
+	
+	// Check for common errors
+	if fn, ok := node.(*ir.DistilledFunction); ok {
+		if err := validatePythonName(fn.Name); err != nil {
+			return node, endLine, fmt.Errorf("invalid function name '%s': %w", fn.Name, err)
+		}
+		
+		// Check for unclosed parentheses
+		line := strings.TrimSpace(lines[startIdx])
+		if col, hasUnclosed := findUnclosedParenthesis(line); hasUnclosed {
+			errorCollector.AddWarning(startIdx+1, col+1, "unclosed parenthesis", ErrorKindUnclosedExpr)
+		}
+	}
+	
+	return node, endLine, nil
 }
 
 // parseFunction parses function definitions

@@ -1,0 +1,282 @@
+package python
+
+import (
+	"context"
+	"strings"
+	"testing"
+
+	"github.com/janreges/ai-distiller/internal/ir"
+	"github.com/janreges/ai-distiller/internal/processor"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestErrorRecovery(t *testing.T) {
+	tests := []struct {
+		name           string
+		input          string
+		expectedNodes  int
+		expectedErrors int
+		errorMessages  []string
+	}{
+		{
+			name: "valid_python",
+			input: `import os
+
+class MyClass:
+    def method(self):
+        pass
+
+def function():
+    return True`,
+			expectedNodes:  3, // import, class, function
+			expectedErrors: 0,
+		},
+		{
+			name: "invalid_class_name",
+			input: `class 123Invalid:
+    pass
+
+class Valid:
+    pass`,
+			expectedNodes:  2, // Both classes parsed
+			expectedErrors: 1,
+			errorMessages:  []string{"invalid class name"},
+		},
+		{
+			name: "mixed_indentation",
+			input: `def function():
+	    mixed_indent = True  # tab then spaces
+    return mixed_indent`,
+			expectedNodes:  1,
+			expectedErrors: 1,
+			errorMessages:  []string{"mixed spaces and tabs"},
+		},
+		{
+			name: "unclosed_parenthesis",
+			input: `def broken_func(x, y:
+    return x + y
+
+def valid_func():
+    return True`,
+			expectedNodes:  2, // Parser recovers and parses both
+			expectedErrors: 1,
+			errorMessages:  []string{"failed to parse function"},
+		},
+		{
+			name: "invalid_import",
+			input: `import
+from import something
+import os
+from sys import argv`,
+			expectedNodes:  2, // Only valid imports
+			expectedErrors: 2,
+			errorMessages:  []string{"invalid import"},
+		},
+		{
+			name: "keyword_as_name",
+			input: `def class():  # 'class' is a keyword
+    pass
+
+class for:  # 'for' is a keyword
+    pass
+
+def valid_name():
+    pass`,
+			expectedNodes:  3, // All parsed despite errors
+			expectedErrors: 2,
+			errorMessages:  []string{"keyword"},
+		},
+		{
+			name: "incomplete_class",
+			input: `class Incomplete
+    # Missing colon
+
+class Complete:
+    def method(self):
+        pass`,
+			expectedNodes:  1, // Only Complete class
+			expectedErrors: 1,
+			errorMessages:  []string{"failed to parse class"},
+		},
+		{
+			name: "unicode_names",
+			input: `class 中文类名:
+    def 方法(self):
+        return "Unicode is supported"
+
+def Ελληνικά():
+    return "Greek function"`,
+			expectedNodes:  2,
+			expectedErrors: 0, // Unicode names are valid in Python 3
+		},
+	}
+
+	p := NewProcessor()
+	ctx := context.Background()
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			reader := strings.NewReader(tt.input)
+			
+			file, err := p.Process(ctx, reader, "test.py")
+			require.NoError(t, err, "Process should not return error even with invalid syntax")
+			require.NotNil(t, file)
+
+			// Count actual nodes (excluding errors)
+			nodeCount := countNonErrorNodes(file.Children)
+			
+			// Debug output
+			t.Logf("Test %s: Found %d nodes", tt.name, nodeCount)
+			for i, node := range file.Children {
+				switch n := node.(type) {
+				case *ir.DistilledImport:
+					t.Logf("  [%d] Import: %s", i, n.Module)
+				case *ir.DistilledClass:
+					t.Logf("  [%d] Class: %s", i, n.Name)
+				case *ir.DistilledFunction:
+					t.Logf("  [%d] Function: %s", i, n.Name)
+				default:
+					t.Logf("  [%d] Other: %T", i, n)
+				}
+			}
+			
+			assert.Equal(t, tt.expectedNodes, nodeCount, "Expected %d nodes, got %d", tt.expectedNodes, nodeCount)
+
+			// Check errors
+			assert.Equal(t, tt.expectedErrors, len(file.Errors), "Expected %d errors, got %d", tt.expectedErrors, len(file.Errors))
+
+			// Verify error messages contain expected text
+			for _, expectedMsg := range tt.errorMessages {
+				found := false
+				for _, err := range file.Errors {
+					if strings.Contains(err.Message, expectedMsg) {
+						found = true
+						break
+					}
+				}
+				assert.True(t, found, "Expected error message containing '%s' not found", expectedMsg)
+			}
+
+			// Ensure all nodes have valid locations
+			for _, node := range file.Children {
+				loc := node.GetLocation()
+				assert.True(t, loc.StartLine > 0, "Node should have valid start line")
+				assert.True(t, loc.EndLine >= loc.StartLine, "End line should be >= start line")
+			}
+		})
+	}
+}
+
+func TestIndentationWarnings(t *testing.T) {
+	tests := []struct {
+		name             string
+		input            string
+		expectedWarnings []string
+	}{
+		{
+			name: "non_standard_indent",
+			input: `def function():
+   return True  # 3 spaces`,
+			expectedWarnings: []string{"not a multiple of 4 spaces"},
+		},
+		{
+			name: "standard_indent",
+			input: `def function():
+    return True  # 4 spaces`,
+			expectedWarnings: []string{},
+		},
+		{
+			name: "mixed_tabs_spaces",
+			input: `def function():
+	    return True  # tab + spaces`,
+			expectedWarnings: []string{"mixed spaces and tabs"},
+		},
+	}
+
+	p := NewProcessor()
+	ctx := context.Background()
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			reader := strings.NewReader(tt.input)
+			
+			file, err := p.Process(ctx, reader, "test.py")
+			require.NoError(t, err)
+			require.NotNil(t, file)
+
+			// Count warnings
+			warnings := 0
+			for _, err := range file.Errors {
+				if err.Severity == "warning" {
+					warnings++
+					
+					// Check if warning message matches expected
+					found := false
+					for _, expected := range tt.expectedWarnings {
+						if strings.Contains(err.Message, expected) {
+							found = true
+							break
+						}
+					}
+					assert.True(t, found || len(tt.expectedWarnings) == 0, 
+						"Unexpected warning: %s", err.Message)
+				}
+			}
+			
+			assert.Equal(t, len(tt.expectedWarnings), warnings, 
+				"Expected %d warnings, got %d", len(tt.expectedWarnings), warnings)
+		})
+	}
+}
+
+func TestErrorRecoveryOnRealFile(t *testing.T) {
+	// Test with the actual error_recovery.py test file
+	p := NewProcessor()
+	
+	file, err := p.ProcessFile("../../../test-data/input/error_recovery.py", processor.ProcessOptions{
+		IncludeComments:       true,
+		IncludeImplementation: true,
+		IncludeImports:        true,
+		IncludePrivate:        true,
+	})
+	
+	require.NoError(t, err)
+	require.NotNil(t, file)
+	
+	// Should have parsed valid constructs despite errors
+	assert.True(t, len(file.Children) >= 6, "Should parse at least 6 valid constructs")
+	
+	// Should have recorded errors
+	assert.True(t, len(file.Errors) > 0, "Should have recorded parsing errors")
+	
+	// Verify specific nodes were parsed
+	nodeNames := make(map[string]bool)
+	for _, node := range file.Children {
+		switch n := node.(type) {
+		case *ir.DistilledFunction:
+			nodeNames[n.Name] = true
+		case *ir.DistilledClass:
+			nodeNames[n.Name] = true
+		case *ir.DistilledImport:
+			nodeNames[n.Module] = true
+		}
+	}
+	
+	// These valid constructs should be parsed
+	assert.True(t, nodeNames["valid_function"], "Should parse valid_function")
+	assert.True(t, nodeNames["ValidClass"], "Should parse ValidClass")
+	assert.True(t, nodeNames["os"], "Should parse os import")
+	assert.True(t, nodeNames["sys"], "Should parse sys import")
+}
+
+// Helper function to count non-error nodes
+func countNonErrorNodes(nodes []ir.DistilledNode) int {
+	count := 0
+	for _, node := range nodes {
+		if node.GetNodeKind() != ir.KindError {
+			count++
+		}
+	}
+	return count
+}

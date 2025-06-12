@@ -218,12 +218,23 @@ type Options struct {
 
 ## Development Workflow for AI Assistants
 
+### CRITICAL: No Mocks or Simulated Functions
+
+**NEVER create mock implementations or simulated functions.** All code must be real, working implementations. This includes:
+- No hardcoded test data pretending to be parsed results
+- No mock parsers returning fixed data
+- No placeholder functions that don't actually work
+- Tests must test REAL functionality, not mocked behavior
+
+If something can't be implemented properly, document it as TODO but don't create fake implementations.
+
 ### 1. When Adding New Features
 
 1. **Check existing patterns** - Look at similar features
-2. **Update tests first** - TDD approach
-3. **Follow architecture** - Don't break the visitor pattern
-4. **Test with real files** - Use test-data/ directory
+2. **Write REAL implementation** - No mocks or stubs
+3. **Update tests first** - TDD approach with real tests
+4. **Follow architecture** - Don't break the visitor pattern
+5. **Test with real files** - Use test-data/ directory
 
 ### 2. When Fixing Bugs
 
@@ -365,6 +376,13 @@ make test-quick    # Quick smoke tests
 - Use **English** for all code, comments, and technical documentation
 - Be concise but thorough
 - Show real examples when explaining
+
+## Communication with AI Assistants (Gemini, o3)
+
+- Always communicate in **English** when using Zen MCP tools
+- Use 'pro' model for Gemini for deep analysis
+- Use 'o3' model (not 'o3-mini') for o3 conversations
+- Request deep thinking modes when appropriate
 
 ## Next Steps & TODOs
 
