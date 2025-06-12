@@ -2,96 +2,118 @@
   "language": "python",
   "location": {
     "start_line": 1,
-    "start_column": 1,
-    "end_line": 3,
-    "end_column": 1
+    "start_column": 0,
+    "end_line": 36,
+    "end_column": 0
   },
   "path": "input/basic_class.py",
   "stats": {
     "class": 1,
-    "comment": 1,
-    "function": 2,
-    "import": 1
+    "function": 5
   },
   "structure": {
     "classes": [
       {
         "location": {
-          "end_line": 10,
-          "start_line": 4
+          "end_line": 36,
+          "start_line": 3
         },
         "members": {
           "methods": [
             {
-              "implementation": "# Implementation details omitted",
+              "implementation": "        \"\"\"Initialize a person.\"\"\"\n        self.name = name\n        self.age = age\n        self._id = None  # Private attribute\n    ",
               "location": {
-                "end_line": 8,
-                "start_line": 5
+                "end_line": 11,
+                "start_line": 6
               },
-              "name": "example_method",
+              "name": "__init__",
               "parameters": [
                 {
-                  "name": "self",
-                  "type": "Any"
+                  "name": "self"
                 },
                 {
-                  "name": "arg1: str",
-                  "type": "Any"
+                  "name": "name",
+                  "type": "str"
                 },
                 {
-                  "name": "arg2: int",
-                  "type": "Any"
+                  "name": "age",
+                  "type": "int"
+                }
+              ],
+              "visibility": "public"
+            },
+            {
+              "implementation": "        \"\"\"Get person information.\"\"\"\n        return f\"{self.name} is {self.age} years old\"\n    ",
+              "location": {
+                "end_line": 15,
+                "start_line": 12
+              },
+              "name": "get_info",
+              "parameters": [
+                {
+                  "name": "self"
                 }
               ],
               "returns": "str",
               "visibility": "public"
+            },
+            {
+              "implementation": "        \"\"\"Get the person's ID.\"\"\"\n        if self._id is None:\n            self._id = self._calculate_id()\n        return self._id\n    ",
+              "location": {
+                "end_line": 26,
+                "start_line": 21
+              },
+              "name": "id",
+              "parameters": [
+                {
+                  "name": "self"
+                }
+              ],
+              "returns": "int",
+              "visibility": "public"
+            },
+            {
+              "implementation": "        \"\"\"Check if age represents an adult.\"\"\"\n        return age \u003e= 18\n    ",
+              "location": {
+                "end_line": 31,
+                "start_line": 28
+              },
+              "name": "is_adult",
+              "parameters": [
+                {
+                  "name": "age",
+                  "type": "int"
+                }
+              ],
+              "returns": "bool",
+              "visibility": "public"
+            },
+            {
+              "implementation": "        \"\"\"Create person from string.\"\"\"\n        name, age = data.split(',')\n        return cls(name, int(age))",
+              "location": {
+                "end_line": 36,
+                "start_line": 33
+              },
+              "name": "from_string",
+              "parameters": [
+                {
+                  "name": "cls"
+                },
+                {
+                  "name": "data",
+                  "type": "str"
+                }
+              ],
+              "returns": "'Person'",
+              "visibility": "public"
             }
           ]
         },
-        "name": "ExampleClass",
+        "name": "Person",
         "visibility": "public"
-      }
-    ],
-    "functions": [
-      {
-        "implementation": "# Implementation details omitted",
-        "location": {
-          "end_line": 8,
-          "start_line": 5
-        },
-        "name": "process_data",
-        "parameters": [
-          {
-            "name": "data: List[Dict]",
-            "type": "Any"
-          }
-        ],
-        "returns": "Dict",
-        "visibility": "public"
-      }
-    ],
-    "imports": [
-      {
-        "location": {
-          "end_line": 2,
-          "start_line": 2
-        },
-        "module": "typing",
-        "symbols": [
-          {
-            "name": "List"
-          },
-          {
-            "name": "Dict"
-          },
-          {
-            "name": "Optional"
-          }
-        ],
-        "type": "from"
       }
     ]
   },
   "type": "file",
-  "version": "2.0.0"
+  "version": "3.x"
 }

@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
+	"strings"
 
 	"github.com/janreges/ai-distiller/internal/ir"
 	"github.com/janreges/ai-distiller/internal/parser"
@@ -63,17 +65,17 @@ func (p *Processor) Process(ctx context.Context, reader io.Reader, filename stri
 
 // ProcessFile processes a file by path
 func (p *Processor) ProcessFile(filename string, opts processor.ProcessOptions) (*ir.DistilledFile, error) {
-	// For now, return a mock implementation
-	// TODO: Implement file reading and processing
-	
-	// Simulate file not found error
-	if filename == "nonexistent.py" {
-		return nil, fmt.Errorf("file not found: %s", filename)
+	// Read the actual file
+	source, err := os.ReadFile(filename)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read file %s: %w", filename, err)
 	}
 	
 	ctx := context.Background()
-	source := []byte("# Mock Python file\nclass Test:\n    pass")
-	return p.processMock(ctx, source, filename, opts)
+	
+	// For now, use simplified parsing since we don't have WASM yet
+	// But parse the ACTUAL file content, not mock data
+	return p.parseActualFile(ctx, source, filename, opts)
 }
 
 // ProcessWithOptions parses with specific options
@@ -305,4 +307,363 @@ func createMockFunction(name string, visibility string, params []string, returnT
 		Decorators:     []string{},
 		Implementation: "# Implementation details omitted",
 	}
+}
+
+// parseActualFile parses actual Python source code
+func (p *Processor) parseActualFile(ctx context.Context, source []byte, filename string, opts processor.ProcessOptions) (*ir.DistilledFile, error) {
+	// Create the root file node
+	file := &ir.DistilledFile{
+		BaseNode: ir.BaseNode{
+			Location: ir.Location{
+				StartLine:   1,
+				EndLine:     countLines(source),
+			},
+		},
+		Path:     filename,
+		Language: "python",
+		Version:  "3.x",
+		Children: []ir.DistilledNode{},
+	}
+	
+	// Simple line-based parser for demonstration
+	// This is a simplified parser that extracts basic Python constructs
+	lines := strings.Split(string(source), "\n")
+	
+	for i := 0; i < len(lines); i++ {
+		line := strings.TrimSpace(lines[i])
+		
+		// Skip empty lines
+		if line == "" {
+			continue
+		}
+		
+		// Parse imports
+		if strings.HasPrefix(line, "import ") || strings.HasPrefix(line, "from ") {
+			if opts.IncludeImports {
+				if imp := p.parseImport(line, i+1); imp != nil {
+					file.Children = append(file.Children, imp)
+				}
+			}
+		}
+		
+		// Parse class definitions
+		if strings.HasPrefix(line, "class ") {
+			if class, endLine := p.parseClass(lines, i, opts); class != nil {
+				file.Children = append(file.Children, class)
+				i = endLine - 1 // Skip to end of class
+			}
+		}
+		
+		// Parse function definitions (top-level)
+		if strings.HasPrefix(line, "def ") && !strings.HasPrefix(lines[i], "    ") {
+			if fn, endLine := p.parseFunction(lines, i, opts); fn != nil {
+				file.Children = append(file.Children, fn)
+				i = endLine - 1 // Skip to end of function
+			}
+		}
+		
+		// Parse async function definitions
+		if strings.HasPrefix(line, "async def ") && !strings.HasPrefix(lines[i], "    ") {
+			if node, endLine := p.parseFunction(lines, i, opts); node != nil {
+				if fn, ok := node.(*ir.DistilledFunction); ok {
+					fn.Modifiers = append(fn.Modifiers, ir.ModifierAsync)
+				}
+				file.Children = append(file.Children, node)
+				i = endLine - 1
+			}
+		}
+	}
+	
+	return file, nil
+}
+
+// parseImport parses import statements
+func (p *Processor) parseImport(line string, lineNum int) *ir.DistilledImport {
+	imp := &ir.DistilledImport{
+		BaseNode: ir.BaseNode{
+			Location: ir.Location{StartLine: lineNum, EndLine: lineNum},
+		},
+	}
+	
+	if strings.HasPrefix(line, "from ") {
+		// Parse "from X import Y, Z"
+		parts := strings.Split(line[5:], " import ")
+		if len(parts) == 2 {
+			imp.ImportType = "from"
+			imp.Module = strings.TrimSpace(parts[0])
+			
+			// Parse imported symbols
+			symbols := strings.Split(parts[1], ",")
+			for _, sym := range symbols {
+				sym = strings.TrimSpace(sym)
+				if sym == "" {
+					continue
+				}
+				
+				// Handle "X as Y"
+				if strings.Contains(sym, " as ") {
+					aliasParts := strings.Split(sym, " as ")
+					imp.Symbols = append(imp.Symbols, ir.ImportedSymbol{
+						Name:  strings.TrimSpace(aliasParts[0]),
+						Alias: strings.TrimSpace(aliasParts[1]),
+					})
+				} else {
+					imp.Symbols = append(imp.Symbols, ir.ImportedSymbol{
+						Name: sym,
+					})
+				}
+			}
+		}
+	} else if strings.HasPrefix(line, "import ") {
+		// Parse "import X" or "import X as Y"
+		module := strings.TrimSpace(line[7:])
+		imp.ImportType = "import"
+		
+		if strings.Contains(module, " as ") {
+			parts := strings.Split(module, " as ")
+			imp.Module = strings.TrimSpace(parts[0])
+			imp.Symbols = []ir.ImportedSymbol{{
+				Name:  strings.TrimSpace(parts[0]),
+				Alias: strings.TrimSpace(parts[1]),
+			}}
+		} else {
+			imp.Module = module
+		}
+	}
+	
+	return imp
+}
+
+// parseClass parses class definitions
+func (p *Processor) parseClass(lines []string, startIdx int, opts processor.ProcessOptions) (ir.DistilledNode, int) {
+	line := strings.TrimSpace(lines[startIdx])
+	
+	// Extract class name and inheritance
+	classLine := line[6:] // Remove "class "
+	className := ""
+	var extends []ir.TypeRef
+	
+	if idx := strings.Index(classLine, "("); idx > 0 {
+		className = strings.TrimSpace(classLine[:idx])
+		// Parse base classes
+		if endIdx := strings.Index(classLine[idx:], ")"); endIdx > 0 {
+			bases := classLine[idx+1 : idx+endIdx]
+			for _, base := range strings.Split(bases, ",") {
+				base = strings.TrimSpace(base)
+				if base != "" && base != "object" {
+					extends = append(extends, ir.TypeRef{Name: base})
+				}
+			}
+		}
+	} else if idx := strings.Index(classLine, ":"); idx > 0 {
+		className = strings.TrimSpace(classLine[:idx])
+	} else {
+		className = strings.TrimSpace(classLine)
+	}
+	
+	// Check if private
+	visibility := ir.VisibilityPublic
+	if strings.HasPrefix(className, "_") {
+		visibility = ir.VisibilityPrivate
+	}
+	
+	class := &ir.DistilledClass{
+		BaseNode: ir.BaseNode{
+			Location: ir.Location{StartLine: startIdx + 1},
+		},
+		Name:       className,
+		Visibility: visibility,
+		Extends:    extends,
+		Children:   []ir.DistilledNode{},
+	}
+	
+	// Find end of class and parse methods
+	endLine := p.findBlockEnd(lines, startIdx)
+	class.BaseNode.Location.EndLine = endLine
+	
+	// Parse class body
+	for i := startIdx + 1; i < endLine; i++ {
+		line := lines[i]
+		trimmed := strings.TrimSpace(line)
+		
+		// Skip empty lines and comments
+		if trimmed == "" || strings.HasPrefix(trimmed, "#") {
+			continue
+		}
+		
+		// Parse methods (must be indented)
+		if strings.HasPrefix(line, "    def ") || strings.HasPrefix(line, "    async def ") {
+			if method, methodEnd := p.parseFunction(lines, i, opts); method != nil {
+				class.Children = append(class.Children, method)
+				i = methodEnd - 1
+			}
+		}
+		
+		// Parse decorators like @property, @staticmethod, etc.
+		if strings.HasPrefix(line, "    @") {
+			// Look for the function after decorators
+			j := i + 1
+			for j < len(lines) && strings.HasPrefix(strings.TrimSpace(lines[j]), "@") {
+				j++
+			}
+			if j < len(lines) && (strings.Contains(lines[j], "def ")) {
+				if method, methodEnd := p.parseFunction(lines, j, opts); method != nil {
+					// Add decorators
+					for k := i; k < j; k++ {
+						decorator := strings.TrimSpace(lines[k])[1:] // Remove @
+						if fn, ok := method.(*ir.DistilledFunction); ok {
+							fn.Decorators = append(fn.Decorators, decorator)
+						}
+					}
+					class.Children = append(class.Children, method)
+					i = methodEnd - 1
+				}
+			}
+		}
+	}
+	
+	return class, endLine
+}
+
+// parseFunction parses function definitions
+func (p *Processor) parseFunction(lines []string, startIdx int, opts processor.ProcessOptions) (ir.DistilledNode, int) {
+	line := strings.TrimSpace(lines[startIdx])
+	
+	// Handle async functions
+	isAsync := false
+	if strings.HasPrefix(line, "async def ") {
+		isAsync = true
+		line = strings.TrimSpace(line[6:]) // Remove "async "
+	}
+	
+	// Extract function signature
+	if !strings.HasPrefix(line, "def ") {
+		return nil, startIdx
+	}
+	
+	line = line[4:] // Remove "def "
+	
+	// Find function name and parameters
+	parenIdx := strings.Index(line, "(")
+	if parenIdx < 0 {
+		return nil, startIdx
+	}
+	
+	funcName := strings.TrimSpace(line[:parenIdx])
+	
+	// Check visibility
+	visibility := ir.VisibilityPublic
+	if strings.HasPrefix(funcName, "_") && funcName != "__init__" {
+		visibility = ir.VisibilityPrivate
+	}
+	
+	// Find end of function
+	endLine := p.findBlockEnd(lines, startIdx)
+	
+	fn := &ir.DistilledFunction{
+		BaseNode: ir.BaseNode{
+			Location: ir.Location{
+				StartLine: startIdx + 1,
+				EndLine:   endLine,
+			},
+		},
+		Name:       funcName,
+		Visibility: visibility,
+		Parameters: []ir.Parameter{},
+		Modifiers:  []ir.Modifier{},
+	}
+	
+	if isAsync {
+		fn.Modifiers = append(fn.Modifiers, ir.ModifierAsync)
+	}
+	
+	// Parse parameters (simplified)
+	if endParenIdx := strings.Index(line[parenIdx:], ")"); endParenIdx > 0 {
+		params := line[parenIdx+1 : parenIdx+endParenIdx]
+		if params != "" {
+			for _, param := range strings.Split(params, ",") {
+				param = strings.TrimSpace(param)
+				if param == "" {
+					continue
+				}
+				
+				// Simple parameter parsing
+				paramName := param
+				paramType := ""
+				
+				// Handle type annotations
+				if colonIdx := strings.Index(param, ":"); colonIdx > 0 {
+					paramName = strings.TrimSpace(param[:colonIdx])
+					paramType = strings.TrimSpace(param[colonIdx+1:])
+					
+					// Handle default values
+					if eqIdx := strings.Index(paramType, "="); eqIdx > 0 {
+						paramType = strings.TrimSpace(paramType[:eqIdx])
+					}
+				} else if eqIdx := strings.Index(param, "="); eqIdx > 0 {
+					paramName = strings.TrimSpace(param[:eqIdx])
+				}
+				
+				p := ir.Parameter{Name: paramName}
+				if paramType != "" {
+					p.Type = ir.TypeRef{Name: paramType}
+				}
+				fn.Parameters = append(fn.Parameters, p)
+			}
+		}
+		
+		// Check for return type
+		remaining := line[parenIdx+endParenIdx+1:]
+		if arrowIdx := strings.Index(remaining, "->"); arrowIdx >= 0 {
+			retType := strings.TrimSpace(remaining[arrowIdx+2:])
+			if colonIdx := strings.Index(retType, ":"); colonIdx > 0 {
+				retType = strings.TrimSpace(retType[:colonIdx])
+			}
+			if retType != "" {
+				fn.Returns = &ir.TypeRef{Name: retType}
+			}
+		}
+	}
+	
+	// Get implementation if requested
+	if opts.IncludeImplementation && endLine > startIdx+1 {
+		var implLines []string
+		for i := startIdx + 1; i < endLine; i++ {
+			implLines = append(implLines, lines[i])
+		}
+		fn.Implementation = strings.Join(implLines, "\n")
+	}
+	
+	return fn, endLine
+}
+
+// findBlockEnd finds the end of a code block (class or function)
+func (p *Processor) findBlockEnd(lines []string, startIdx int) int {
+	if startIdx >= len(lines) {
+		return startIdx
+	}
+	
+	// Get the indentation level of the definition line
+	defLine := lines[startIdx]
+	baseIndent := len(defLine) - len(strings.TrimLeft(defLine, " \t"))
+	
+	// Find where the block ends
+	for i := startIdx + 1; i < len(lines); i++ {
+		line := lines[i]
+		
+		// Skip empty lines
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+		
+		// Check indentation
+		currentIndent := len(line) - len(strings.TrimLeft(line, " \t"))
+		
+		// If we find a line with same or less indentation (and it's not empty), block ends
+		if currentIndent <= baseIndent && strings.TrimSpace(line) != "" {
+			return i
+		}
+	}
+	
+	return len(lines)
 }

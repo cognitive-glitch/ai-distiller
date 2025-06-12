@@ -1,3 +1,5 @@
+// +build ignore
+
 package main
 
 import (
@@ -150,17 +152,17 @@ func validateXML(file string) map[string]int {
 		return nil
 	}
 	
-	var output XMLOutput
-	if err := xml.Unmarshal(data, &output); err != nil {
-		log.Printf("Error parsing XML %s: %v", file, err)
-		return nil
-	}
+	content := string(data)
 	
-	// For now, just return dummy counts since XML structure is complex
+	// Count occurrences of patterns in XML
+	classes := strings.Count(content, "<class ")
+	functions := strings.Count(content, "<function ")
+	imports := strings.Count(content, "<import ")
+	
 	return map[string]int{
-		"classes":   1, // Mock data always has 1 class
-		"functions": 2, // Mock data always has 2 functions
-		"imports":   1, // Mock data always has 1 import
+		"classes":   classes,
+		"functions": functions,
+		"imports":   imports,
 	}
 }
 

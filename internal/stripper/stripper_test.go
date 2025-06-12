@@ -4,80 +4,23 @@ import (
 	"testing"
 
 	"github.com/janreges/ai-distiller/internal/ir"
-	"github.com/janreges/ai-distiller/internal/processor"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNewStripper(t *testing.T) {
-	opts := processor.DefaultProcessOptions()
-	stripper := NewStripper(opts)
+	opts := Options{
+		RemoveComments: true,
+		RemovePrivate: true,
+	}
+	stripper := New(opts)
 	
 	assert.NotNil(t, stripper)
 	assert.Equal(t, opts, stripper.options)
 }
 
-func TestFromStrings(t *testing.T) {
-	tests := []struct {
-		name     string
-		options  []string
-		expected StripOptions
-	}{
-		{
-			name:    "Empty",
-			options: []string{},
-			expected: StripOptions{},
-		},
-		{
-			name:    "Comments",
-			options: []string{"comments"},
-			expected: StripOptions{Comments: true},
-		},
-		{
-			name:    "All",
-			options: []string{"comments", "imports", "implementation", "non-public"},
-			expected: StripOptions{
-				Comments:       true,
-				Imports:        true,
-				Implementation: true,
-				NonPublic:      true,
-			},
-		},
-		{
-			name:    "Unknown",
-			options: []string{"unknown", "comments"},
-			expected: StripOptions{Comments: true},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := FromStrings(tt.options)
-			assert.Equal(t, tt.expected, result)
-		})
-	}
-}
-
-func TestToProcessOptions(t *testing.T) {
-	stripOpts := StripOptions{
-		Comments:       true,
-		Imports:        true,
-		Implementation: true,
-		NonPublic:      true,
-	}
-
-	procOpts := stripOpts.ToProcessOptions()
-	
-	assert.False(t, procOpts.IncludeComments)
-	assert.False(t, procOpts.IncludeImports)
-	assert.False(t, procOpts.IncludeImplementation)
-	assert.False(t, procOpts.IncludePrivate)
-	assert.Equal(t, 100, procOpts.MaxDepth)
-	assert.True(t, procOpts.SymbolResolution)
-	assert.True(t, procOpts.IncludeLineNumbers)
-}
 
 func TestIsPrivate(t *testing.T) {
-	stripper := NewStripper(processor.DefaultProcessOptions())
+	stripper := New(Options{})
 	
 	tests := []struct {
 		name       string
@@ -114,7 +57,7 @@ func TestIsPrivate(t *testing.T) {
 	}
 }
 
-func TestStrip(t *testing.T) {
+func TestVisit(t *testing.T) {
 	// Create a test file with various nodes
 	file := &ir.DistilledFile{
 		Path:     "test.py",
@@ -157,16 +100,13 @@ func TestStrip(t *testing.T) {
 
 	tests := []struct {
 		name      string
-		options   processor.ProcessOptions
+		options   Options
 		checkFunc func(t *testing.T, result *ir.DistilledFile)
 	}{
 		{
 			name: "StripComments",
-			options: processor.ProcessOptions{
-				IncludeComments:       false,
-				IncludeImports:        true,
-				IncludePrivate:        true,
-				IncludeImplementation: true,
+			options: Options{
+				RemoveComments: true,
 			},
 			checkFunc: func(t *testing.T, result *ir.DistilledFile) {
 				// Should not have comments
@@ -178,11 +118,8 @@ func TestStrip(t *testing.T) {
 		},
 		{
 			name: "StripImports",
-			options: processor.ProcessOptions{
-				IncludeComments:       true,
-				IncludeImports:        false,
-				IncludePrivate:        true,
-				IncludeImplementation: true,
+			options: Options{
+				RemoveImports: true,
 			},
 			checkFunc: func(t *testing.T, result *ir.DistilledFile) {
 				// Should not have imports
@@ -194,11 +131,8 @@ func TestStrip(t *testing.T) {
 		},
 		{
 			name: "StripPrivate",
-			options: processor.ProcessOptions{
-				IncludeComments:       true,
-				IncludeImports:        true,
-				IncludePrivate:        false,
-				IncludeImplementation: true,
+			options: Options{
+				RemovePrivate: true,
 			},
 			checkFunc: func(t *testing.T, result *ir.DistilledFile) {
 				// Should not have private functions
@@ -211,11 +145,8 @@ func TestStrip(t *testing.T) {
 		},
 		{
 			name: "StripImplementation",
-			options: processor.ProcessOptions{
-				IncludeComments:       true,
-				IncludeImports:        true,
-				IncludePrivate:        true,
-				IncludeImplementation: false,
+			options: Options{
+				RemoveImplementations: true,
 			},
 			checkFunc: func(t *testing.T, result *ir.DistilledFile) {
 				// Functions should have empty implementation
@@ -230,14 +161,16 @@ func TestStrip(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			stripper := NewStripper(tt.options)
-			result := stripper.Strip(file)
+			stripper := New(tt.options)
+			walker := ir.NewWalker(stripper)
+			result := walker.Walk(file)
 			
 			assert.NotNil(t, result)
-			assert.Equal(t, file.Path, result.Path)
+			resultFile := result.(*ir.DistilledFile)
+			assert.Equal(t, file.Path, resultFile.Path)
 			
 			if tt.checkFunc != nil {
-				tt.checkFunc(t, result)
+				tt.checkFunc(t, resultFile)
 			}
 		})
 	}

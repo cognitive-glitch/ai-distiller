@@ -12,9 +12,8 @@ import (
 )
 
 func TestNewProcessor(t *testing.T) {
-	proc, err := NewProcessor()
+	proc := NewProcessor()
 	
-	require.NoError(t, err)
 	assert.NotNil(t, proc)
 	assert.Equal(t, "python", proc.Language())
 	assert.Equal(t, "1.0.0", proc.Version())
@@ -22,7 +21,7 @@ func TestNewProcessor(t *testing.T) {
 }
 
 func TestProcessorCanProcess(t *testing.T) {
-	proc, err := NewProcessor()
+	proc := NewProcessor()
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -47,7 +46,7 @@ func TestProcessorCanProcess(t *testing.T) {
 }
 
 func TestProcessMock(t *testing.T) {
-	proc, err := NewProcessor()
+	proc := NewProcessor()
 	require.NoError(t, err)
 
 	ctx := context.Background()
@@ -84,7 +83,7 @@ def _private_function():
 }
 
 func TestProcessWithOptions(t *testing.T) {
-	proc, err := NewProcessor()
+	proc := NewProcessor()
 	require.NoError(t, err)
 
 	ctx := context.Background()
@@ -200,7 +199,7 @@ func TestIsPrivate(t *testing.T) {
 }
 
 func TestInitializeWASM(t *testing.T) {
-	proc, err := NewProcessor()
+	proc := NewProcessor()
 	require.NoError(t, err)
 
 	ctx := context.Background()
@@ -214,7 +213,7 @@ func TestInitializeWASM(t *testing.T) {
 }
 
 func TestProcessorImplementsInterface(t *testing.T) {
-	proc, err := NewProcessor()
+	proc := NewProcessor()
 	require.NoError(t, err)
 
 	// Verify it implements LanguageProcessor interface
@@ -222,7 +221,7 @@ func TestProcessorImplementsInterface(t *testing.T) {
 }
 
 func TestReadError(t *testing.T) {
-	proc, err := NewProcessor()
+	proc := NewProcessor()
 	require.NoError(t, err)
 
 	ctx := context.Background()

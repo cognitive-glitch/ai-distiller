@@ -1,33 +1,76 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <distilled>
-  <file path="input/basic_class.py" language="python" version="2.0.0" line="1" endLine="3" column="1">
+  <file path="input/basic_class.py" language="python" version="3.x" line="1" endLine="36">
     <nodes>
-      <comment format="line" line="1"><![CDATA[Python source file]]></comment>
-      <import type="from" module="typing" line="2">
-        <symbol name="List"/>
-        <symbol name="Dict"/>
-        <symbol name="Optional"/>
-      </import>
-      <class name="ExampleClass" visibility="public" line="4" endLine="10">
-        <function name="example_method" visibility="public" returns="str" line="5" endLine="8">
+      <class name="Person" visibility="public" line="3" endLine="36">
+        <function name="__init__" visibility="public" line="6" endLine="11">
           <parameters>
-            <parameter name="self" type="Any"/>
-            <parameter name="arg1: str" type="Any"/>
-            <parameter name="arg2: int" type="Any"/>
+            <parameter name="self"/>
+            <parameter name="name" type="str"/>
+            <parameter name="age" type="int"/>
           </parameters>
           <implementation><![CDATA[
-# Implementation details omitted
+        """Initialize a person."""
+        self.name = name
+        self.age = age
+        self._id = None  # Private attribute
+    
+          ]]></implementation>
+        </function>
+        <function name="get_info" visibility="public" returns="str" line="12" endLine="15">
+          <parameters>
+            <parameter name="self"/>
+          </parameters>
+          <implementation><![CDATA[
+        """Get person information."""
+        return f"{self.name} is {self.age} years old"
+    
+          ]]></implementation>
+        </function>
+        <function name="_calculate_id" visibility="private" returns="int" line="16" endLine="19">
+          <parameters>
+            <parameter name="self"/>
+          </parameters>
+          <implementation><![CDATA[
+        """Private method to calculate ID."""
+        return hash(self.name) % 1000
+    
+          ]]></implementation>
+        </function>
+        <function name="id" visibility="public" returns="int" line="21" endLine="26">
+          <parameters>
+            <parameter name="self"/>
+          </parameters>
+          <implementation><![CDATA[
+        """Get the person's ID."""
+        if self._id is None:
+            self._id = self._calculate_id()
+        return self._id
+    
+          ]]></implementation>
+        </function>
+        <function name="is_adult" visibility="public" returns="bool" line="28" endLine="31">
+          <parameters>
+            <parameter name="age" type="int"/>
+          </parameters>
+          <implementation><![CDATA[
+        """Check if age represents an adult."""
+        return age >= 18
+    
+          ]]></implementation>
+        </function>
+        <function name="from_string" visibility="public" returns="&#39;Person&#39;" line="33" endLine="36">
+          <parameters>
+            <parameter name="cls"/>
+            <parameter name="data" type="str"/>
+          </parameters>
+          <implementation><![CDATA[
+        """Create person from string."""
+        name, age = data.split(',')
+        return cls(name, int(age))
           ]]></implementation>
         </function>
       </class>
-      <function name="process_data" visibility="public" returns="Dict" line="5" endLine="8">
-        <parameters>
-          <parameter name="data: List[Dict]" type="Any"/>
-        </parameters>
-        <implementation><![CDATA[
-# Implementation details omitted
-        ]]></implementation>
-      </function>
     </nodes>
   </file>
 </distilled>

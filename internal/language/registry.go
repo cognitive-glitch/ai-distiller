@@ -8,10 +8,7 @@ import (
 // RegisterAll registers all built-in language processors
 func RegisterAll() error {
 	// Register Python processor
-	pythonProc, err := python.NewProcessor()
-	if err != nil {
-		return err
-	}
+	pythonProc := python.NewProcessor()
 	if err := processor.Register(pythonProc); err != nil {
 		return err
 	}

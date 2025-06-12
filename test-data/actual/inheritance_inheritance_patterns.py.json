@@ -2,44 +2,211 @@
   "language": "python",
   "location": {
     "start_line": 1,
-    "start_column": 1,
-    "end_line": 3,
-    "end_column": 1
+    "start_column": 0,
+    "end_line": 153,
+    "end_column": 0
   },
   "path": "input/inheritance_patterns.py",
   "stats": {
-    "class": 1,
-    "comment": 1,
-    "function": 2,
-    "import": 1
+    "class": 7,
+    "function": 24,
+    "import": 3
   },
   "structure": {
     "classes": [
       {
+        "extends": [
+          "Protocol"
+        ],
         "location": {
-          "end_line": 10,
-          "start_line": 4
+          "end_line": 19,
+          "start_line": 9
         },
         "members": {
           "methods": [
             {
               "location": {
-                "end_line": 8,
-                "start_line": 5
+                "end_line": 15,
+                "start_line": 12
               },
-              "name": "example_method",
+              "name": "to_dict",
               "parameters": [
                 {
-                  "name": "self",
-                  "type": "Any"
+                  "name": "self"
+                }
+              ],
+              "returns": "dict",
+              "visibility": "public"
+            },
+            {
+              "location": {
+                "end_line": 19,
+                "start_line": 16
+              },
+              "name": "from_dict",
+              "parameters": [
+                {
+                  "name": "self"
                 },
                 {
-                  "name": "arg1: str",
-                  "type": "Any"
+                  "name": "data",
+                  "type": "dict"
+                }
+              ],
+              "returns": "None",
+              "visibility": "public"
+            }
+          ]
+        },
+        "name": "Serializable",
+        "visibility": "public"
+      },
+      {
+        "location": {
+          "end_line": 36,
+          "start_line": 21
+        },
+        "members": {
+          "methods": [
+            {
+              "location": {
+                "end_line": 29,
+                "start_line": 24
+              },
+              "name": "to_json",
+              "parameters": [
+                {
+                  "name": "self"
+                }
+              ],
+              "returns": "str",
+              "visibility": "public"
+            },
+            {
+              "location": {
+                "end_line": 36,
+                "start_line": 30
+              },
+              "name": "from_json",
+              "parameters": [
+                {
+                  "name": "self"
                 },
                 {
-                  "name": "arg2: int",
-                  "type": "Any"
+                  "name": "json_str",
+                  "type": "str"
+                }
+              ],
+              "returns": "None",
+              "visibility": "public"
+            }
+          ]
+        },
+        "name": "JSONMixin",
+        "visibility": "public"
+      },
+      {
+        "location": {
+          "end_line": 43,
+          "start_line": 37
+        },
+        "members": {
+          "methods": [
+            {
+              "location": {
+                "end_line": 43,
+                "start_line": 40
+              },
+              "name": "log",
+              "parameters": [
+                {
+                  "name": "self"
+                },
+                {
+                  "name": "message",
+                  "type": "str"
+                },
+                {
+                  "name": "level",
+                  "type": "str"
+                }
+              ],
+              "returns": "None",
+              "visibility": "public"
+            }
+          ]
+        },
+        "name": "LoggerMixin",
+        "visibility": "public"
+      },
+      {
+        "extends": [
+          "ABC"
+        ],
+        "location": {
+          "end_line": 65,
+          "start_line": 45
+        },
+        "members": {
+          "methods": [
+            {
+              "location": {
+                "end_line": 51,
+                "start_line": 48
+              },
+              "name": "__init__",
+              "parameters": [
+                {
+                  "name": "self"
+                },
+                {
+                  "name": "name",
+                  "type": "str"
+                },
+                {
+                  "name": "species",
+                  "type": "str"
+                }
+              ],
+              "visibility": "public"
+            },
+            {
+              "location": {
+                "end_line": 56,
+                "start_line": 53
+              },
+              "name": "make_sound",
+              "parameters": [
+                {
+                  "name": "self"
+                }
+              ],
+              "returns": "str",
+              "visibility": "public"
+            },
+            {
+              "location": {
+                "end_line": 61,
+                "start_line": 58
+              },
+              "name": "move",
+              "parameters": [
+                {
+                  "name": "self"
+                }
+              ],
+              "returns": "str",
+              "visibility": "public"
+            },
+            {
+              "location": {
+                "end_line": 65,
+                "start_line": 62
+              },
+              "name": "describe",
+              "parameters": [
+                {
+                  "name": "self"
                 }
               ],
               "returns": "str",
@@ -47,49 +214,370 @@
             }
           ]
         },
-        "name": "ExampleClass",
+        "name": "Animal",
         "visibility": "public"
-      }
-    ],
-    "functions": [
+      },
       {
-        "location": {
-          "end_line": 8,
-          "start_line": 5
-        },
-        "name": "process_data",
-        "parameters": [
-          {
-            "name": "data: List[Dict]",
-            "type": "Any"
-          }
+        "extends": [
+          "Animal",
+          "JSONMixin",
+          "LoggerMixin"
         ],
-        "returns": "Dict",
+        "location": {
+          "end_line": 104,
+          "start_line": 67
+        },
+        "members": {
+          "methods": [
+            {
+              "location": {
+                "end_line": 74,
+                "start_line": 70
+              },
+              "name": "__init__",
+              "parameters": [
+                {
+                  "name": "self"
+                },
+                {
+                  "name": "name",
+                  "type": "str"
+                },
+                {
+                  "name": "breed",
+                  "type": "str"
+                }
+              ],
+              "visibility": "public"
+            },
+            {
+              "location": {
+                "end_line": 79,
+                "start_line": 75
+              },
+              "name": "make_sound",
+              "parameters": [
+                {
+                  "name": "self"
+                }
+              ],
+              "returns": "str",
+              "visibility": "public"
+            },
+            {
+              "location": {
+                "end_line": 83,
+                "start_line": 80
+              },
+              "name": "move",
+              "parameters": [
+                {
+                  "name": "self"
+                }
+              ],
+              "returns": "str",
+              "visibility": "public"
+            },
+            {
+              "location": {
+                "end_line": 88,
+                "start_line": 84
+              },
+              "name": "add_trick",
+              "parameters": [
+                {
+                  "name": "self"
+                },
+                {
+                  "name": "trick",
+                  "type": "str"
+                }
+              ],
+              "returns": "None",
+              "visibility": "public"
+            },
+            {
+              "location": {
+                "end_line": 97,
+                "start_line": 89
+              },
+              "name": "to_dict",
+              "parameters": [
+                {
+                  "name": "self"
+                }
+              ],
+              "returns": "dict",
+              "visibility": "public"
+            },
+            {
+              "location": {
+                "end_line": 104,
+                "start_line": 98
+              },
+              "name": "from_dict",
+              "parameters": [
+                {
+                  "name": "self"
+                },
+                {
+                  "name": "data",
+                  "type": "dict"
+                }
+              ],
+              "returns": "None",
+              "visibility": "public"
+            }
+          ]
+        },
+        "name": "Dog",
+        "visibility": "public"
+      },
+      {
+        "extends": [
+          "ABC"
+        ],
+        "location": {
+          "end_line": 128,
+          "start_line": 106
+        },
+        "members": {
+          "methods": [
+            {
+              "location": {
+                "end_line": 113,
+                "start_line": 110
+              },
+              "name": "save",
+              "parameters": [
+                {
+                  "name": "self"
+                },
+                {
+                  "name": "key",
+                  "type": "str"
+                },
+                {
+                  "name": "value",
+                  "type": "Any"
+                }
+              ],
+              "returns": "None",
+              "visibility": "public"
+            },
+            {
+              "location": {
+                "end_line": 118,
+                "start_line": 115
+              },
+              "name": "load",
+              "parameters": [
+                {
+                  "name": "self"
+                },
+                {
+                  "name": "key",
+                  "type": "str"
+                }
+              ],
+              "returns": "Optional[Any]",
+              "visibility": "public"
+            },
+            {
+              "location": {
+                "end_line": 123,
+                "start_line": 120
+              },
+              "name": "delete",
+              "parameters": [
+                {
+                  "name": "self"
+                },
+                {
+                  "name": "key",
+                  "type": "str"
+                }
+              ],
+              "returns": "bool",
+              "visibility": "public"
+            },
+            {
+              "location": {
+                "end_line": 128,
+                "start_line": 125
+              },
+              "name": "exists",
+              "parameters": [
+                {
+                  "name": "self"
+                },
+                {
+                  "name": "key",
+                  "type": "str"
+                }
+              ],
+              "returns": "bool",
+              "visibility": "public"
+            }
+          ]
+        },
+        "name": "Storage",
+        "visibility": "public"
+      },
+      {
+        "extends": [
+          "Storage"
+        ],
+        "location": {
+          "end_line": 153,
+          "start_line": 130
+        },
+        "members": {
+          "methods": [
+            {
+              "location": {
+                "end_line": 135,
+                "start_line": 133
+              },
+              "name": "__init__",
+              "parameters": [
+                {
+                  "name": "self"
+                }
+              ],
+              "visibility": "public"
+            },
+            {
+              "location": {
+                "end_line": 139,
+                "start_line": 136
+              },
+              "name": "save",
+              "parameters": [
+                {
+                  "name": "self"
+                },
+                {
+                  "name": "key",
+                  "type": "str"
+                },
+                {
+                  "name": "value",
+                  "type": "Any"
+                }
+              ],
+              "returns": "None",
+              "visibility": "public"
+            },
+            {
+              "location": {
+                "end_line": 143,
+                "start_line": 140
+              },
+              "name": "load",
+              "parameters": [
+                {
+                  "name": "self"
+                },
+                {
+                  "name": "key",
+                  "type": "str"
+                }
+              ],
+              "returns": "Optional[Any]",
+              "visibility": "public"
+            },
+            {
+              "location": {
+                "end_line": 150,
+                "start_line": 144
+              },
+              "name": "delete",
+              "parameters": [
+                {
+                  "name": "self"
+                },
+                {
+                  "name": "key",
+                  "type": "str"
+                }
+              ],
+              "returns": "bool",
+              "visibility": "public"
+            },
+            {
+              "location": {
+                "end_line": 153,
+                "start_line": 151
+              },
+              "name": "exists",
+              "parameters": [
+                {
+                  "name": "self"
+                },
+                {
+                  "name": "key",
+                  "type": "str"
+                }
+              ],
+              "returns": "bool",
+              "visibility": "public"
+            }
+          ]
+        },
+        "name": "MemoryStorage",
         "visibility": "public"
       }
     ],
     "imports": [
       {
         "location": {
-          "end_line": 2,
-          "start_line": 2
+          "end_line": 3,
+          "start_line": 3
+        },
+        "module": "abc",
+        "symbols": [
+          {
+            "name": "ABC"
+          },
+          {
+            "name": "abstractmethod"
+          }
+        ],
+        "type": "from"
+      },
+      {
+        "location": {
+          "end_line": 4,
+          "start_line": 4
         },
         "module": "typing",
         "symbols": [
           {
-            "name": "List"
+            "name": "Protocol"
           },
           {
-            "name": "Dict"
+            "name": "runtime_checkable"
+          },
+          {
+            "name": "List"
           },
           {
             "name": "Optional"
           }
         ],
         "type": "from"
+      },
+      {
+        "location": {
+          "end_line": 5,
+          "start_line": 5
+        },
+        "module": "json",
+        "type": "import"
       }
     ]
   },
   "type": "file",
-  "version": "2.0.0"
+  "version": "3.x"
 }

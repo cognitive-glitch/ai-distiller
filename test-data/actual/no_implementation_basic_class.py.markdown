@@ -2,8 +2,10 @@
 
 ## Structure
 
-💬 *Python source file* <sub>L1</sub>
-📥 **Import** from `typing` import `List`, `Dict`, `Optional` <sub>L2</sub>
-🏛️ **Class** `ExampleClass` <sub>L4-10</sub>
-  🔧 **Function** `example_method`(`self`, `arg1: str`, `arg2: int`) → `str` <sub>L5-8</sub>
-🔧 **Function** `process_data`(`data: List[Dict]`) → `Dict` <sub>L5-8</sub>
+🏛️ **Class** `Person` <sub>L3-36</sub>
+  🔧 **Function** `__init__`(`self`, `name`: `str`, `age`: `int`) <sub>L6-11</sub>
+  🔧 **Function** `get_info`(`self`) → `str` <sub>L12-15</sub>
+  🔧 **Function** `_calculate_id` _private_(`self`) → `int` <sub>L16-19</sub>
+  🔧 **Function** `id`(`self`) → `int` <sub>L21-26</sub>
+  🔧 **Function** `is_adult`(`age`: `int`) → `bool` <sub>L28-31</sub>
+  🔧 **Function** `from_string`(`cls`, `data`: `str`) → `'Person'` <sub>L33-36</sub>

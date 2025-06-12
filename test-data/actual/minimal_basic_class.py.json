@@ -2,71 +2,113 @@
   "language": "python",
   "location": {
     "start_line": 1,
-    "start_column": 1,
-    "end_line": 3,
-    "end_column": 1
+    "start_column": 0,
+    "end_line": 36,
+    "end_column": 0
   },
   "path": "input/basic_class.py",
   "stats": {
     "class": 1,
-    "function": 2
+    "function": 5
   },
   "structure": {
     "classes": [
       {
         "location": {
-          "end_line": 10,
-          "start_line": 4
+          "end_line": 36,
+          "start_line": 3
         },
         "members": {
           "methods": [
             {
               "location": {
-                "end_line": 8,
-                "start_line": 5
+                "end_line": 11,
+                "start_line": 6
               },
-              "name": "example_method",
+              "name": "__init__",
               "parameters": [
                 {
-                  "name": "self",
-                  "type": "Any"
+                  "name": "self"
                 },
                 {
-                  "name": "arg1: str",
-                  "type": "Any"
+                  "name": "name",
+                  "type": "str"
                 },
                 {
-                  "name": "arg2: int",
-                  "type": "Any"
+                  "name": "age",
+                  "type": "int"
+                }
+              ],
+              "visibility": "public"
+            },
+            {
+              "location": {
+                "end_line": 15,
+                "start_line": 12
+              },
+              "name": "get_info",
+              "parameters": [
+                {
+                  "name": "self"
                 }
               ],
               "returns": "str",
               "visibility": "public"
+            },
+            {
+              "location": {
+                "end_line": 26,
+                "start_line": 21
+              },
+              "name": "id",
+              "parameters": [
+                {
+                  "name": "self"
+                }
+              ],
+              "returns": "int",
+              "visibility": "public"
+            },
+            {
+              "location": {
+                "end_line": 31,
+                "start_line": 28
+              },
+              "name": "is_adult",
+              "parameters": [
+                {
+                  "name": "age",
+                  "type": "int"
+                }
+              ],
+              "returns": "bool",
+              "visibility": "public"
+            },
+            {
+              "location": {
+                "end_line": 36,
+                "start_line": 33
+              },
+              "name": "from_string",
+              "parameters": [
+                {
+                  "name": "cls"
+                },
+                {
+                  "name": "data",
+                  "type": "str"
+                }
+              ],
+              "returns": "'Person'",
+              "visibility": "public"
             }
           ]
         },
-        "name": "ExampleClass",
-        "visibility": "public"
-      }
-    ],
-    "functions": [
-      {
-        "location": {
-          "end_line": 8,
-          "start_line": 5
-        },
-        "name": "process_data",
-        "parameters": [
-          {
-            "name": "data: List[Dict]",
-            "type": "Any"
-          }
-        ],
-        "returns": "Dict",
+        "name": "Person",
         "visibility": "public"
       }
     ]
   },
   "type": "file",
-  "version": "2.0.0"
+  "version": "3.x"
 }

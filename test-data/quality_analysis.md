@@ -19,11 +19,17 @@ Ran 8 test scenarios with different configurations:
 2. **Multiple Output Formats**: Successfully generates Markdown, JSON, JSONL, and XML
 3. **Stripper Functionality**: Options correctly control filtering behavior
 4. **Error Handling**: No crashes on any test input
+5. **Real Python Parsing**: Successfully parsing actual Python files with line-based parser
+6. **Import Extraction**: Correctly parsing various import styles (import, from, as)
+7. **Class/Function Detection**: Finding and extracting classes, methods, and functions
+8. **Type Annotations**: Preserving parameter and return type annotations
+9. **Visibility Detection**: Correctly identifying private members (underscore prefix)
+10. **Format Consistency**: All output formats contain the same information
 
-### ⚠️ Limitations (Expected with Mock Implementation)
-1. **Mock Data**: Currently returns hardcoded ExampleClass instead of parsing actual files
-2. **No Real Parsing**: Tree-sitter WASM integration not yet implemented
-3. **Limited Python Constructs**: Mock only shows basic class/function structure
+### ⚠️ Current Limitations
+1. **Simple Parser**: Using line-based parser instead of full AST (tree-sitter WASM pending)
+2. **Decorator Parsing**: Basic decorator support, may miss complex cases
+3. **Multi-line Constructs**: May struggle with complex multi-line statements
 
 ### 📊 Quality Metrics to Track (Once Real Parser Implemented)
 
