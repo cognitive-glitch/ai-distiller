@@ -28,6 +28,7 @@ var (
 	absolutePaths  bool
 	strict         bool
 	verbosity      int
+	useTreeSitter  bool
 )
 
 // rootCmd represents the base command
@@ -58,7 +59,7 @@ func initFlags() {
 	// Output flags
 	rootCmd.Flags().StringVarP(&outputFile, "output", "o", "", "Output file path (default: .<dir>.[options].aid.txt)")
 	rootCmd.Flags().BoolVar(&outputToStdout, "stdout", false, "Print to stdout (in addition to file)")
-	rootCmd.Flags().StringVar(&outputFormat, "format", "md", "Output format: md|jsonl|json-structured|xml")
+	rootCmd.Flags().StringVar(&outputFormat, "format", "md", "Output format: md|text|jsonl|json-structured|xml")
 
 	// Processing flags
 	rootCmd.Flags().StringSliceVar(&stripOptions, "strip", nil, "Remove items: comments,imports,implementation,non-public")
@@ -72,6 +73,9 @@ func initFlags() {
 	rootCmd.Flags().CountVarP(&verbosity, "verbose", "v", "Verbose output (use -vv or -vvv for more detail)")
 	rootCmd.Flags().Bool("version", false, "Show version information")
 	rootCmd.Flags().Bool("help", false, "Show help message")
+	
+	// Experimental flags
+	rootCmd.Flags().BoolVar(&useTreeSitter, "tree-sitter", false, "Use tree-sitter parser (experimental)")
 
 	// Handle version flag specially
 	rootCmd.PreRun = func(cmd *cobra.Command, args []string) {
@@ -106,7 +110,7 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 	}
 
 	// Validate output format
-	validFormats := []string{"md", "jsonl", "json-structured", "xml"}
+	validFormats := []string{"md", "text", "jsonl", "json-structured", "xml"}
 	if !contains(validFormats, outputFormat) {
 		return fmt.Errorf("invalid output format: %s (valid: %s)", outputFormat, strings.Join(validFormats, ", "))
 	}
@@ -132,6 +136,14 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 
 	// Create the processor
 	proc := processor.New()
+	
+	// Enable tree-sitter if requested
+	if useTreeSitter {
+		proc.EnableTreeSitter()
+		if verbosity > 0 {
+			fmt.Fprintf(os.Stderr, "Using tree-sitter parser (experimental)\n")
+		}
+	}
 
 	// Process the input
 	result, err := proc.ProcessPath(absPath, procOpts)

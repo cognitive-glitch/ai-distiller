@@ -15,8 +15,9 @@ import (
 // Processor implements the LanguageProcessor interface for Python
 type Processor struct {
 	processor.BaseProcessor
-	wasmRuntime *parser.WASMRuntime
-	module      *parser.WASMModule
+	wasmRuntime   *parser.WASMRuntime
+	module        *parser.WASMModule
+	useTreeSitter bool
 }
 
 // NewProcessor creates a new Python language processor
@@ -27,7 +28,13 @@ func NewProcessor() *Processor {
 			"1.0.0",
 			[]string{".py", ".pyw", ".pyi"},
 		),
+		useTreeSitter: false, // Default to line-based parser for now
 	}
+}
+
+// EnableTreeSitter enables tree-sitter based parsing
+func (p *Processor) EnableTreeSitter() {
+	p.useTreeSitter = true
 }
 
 // InitializeWASM sets up the WASM runtime and loads the Python parser
@@ -73,8 +80,21 @@ func (p *Processor) ProcessFile(filename string, opts processor.ProcessOptions) 
 	
 	ctx := context.Background()
 	
-	// For now, use simplified parsing since we don't have WASM yet
-	// But parse the ACTUAL file content, not mock data
+	// Try tree-sitter first if enabled
+	if p.useTreeSitter {
+		processor, err := NewNativeTreeSitterProcessor()
+		if err == nil {
+			defer processor.parser.Close()
+			file, err := processor.ProcessSource(ctx, source, filename)
+			if err == nil {
+				// Apply options to filter the result
+				return p.applyOptions(file, opts), nil
+			}
+			// Fall back to line-based parser on error
+		}
+	}
+	
+	// Use line-based parser as fallback
 	return p.parseActualFile(ctx, source, filename, opts)
 }
 
@@ -84,6 +104,20 @@ func (p *Processor) ProcessWithOptions(ctx context.Context, reader io.Reader, fi
 	source, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read source: %w", err)
+	}
+
+	// Try tree-sitter first if enabled
+	if p.useTreeSitter {
+		processor, err := NewNativeTreeSitterProcessor()
+		if err == nil {
+			defer processor.parser.Close()
+			file, err := processor.ProcessSource(ctx, source, filename)
+			if err == nil {
+				// Apply options to filter the result
+				return p.applyOptions(file, opts), nil
+			}
+			// Fall back to line-based parser on error
+		}
 	}
 
 	// If no WASM module loaded, use line-based parser

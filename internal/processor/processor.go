@@ -14,11 +14,19 @@ import (
 
 // Processor processes files and directories
 type Processor struct {
+	useTreeSitter bool
 }
 
 // New creates a new processor
 func New() *Processor {
-	return &Processor{}
+	return &Processor{
+		useTreeSitter: false,
+	}
+}
+
+// EnableTreeSitter enables tree-sitter parsing for supported languages
+func (p *Processor) EnableTreeSitter() {
+	p.useTreeSitter = true
 }
 
 // ProcessPath processes a file or directory
@@ -40,6 +48,15 @@ func (p *Processor) ProcessFile(filename string, opts ProcessOptions) (*ir.Disti
 	proc, ok := GetByFilename(filename)
 	if !ok {
 		return nil, fmt.Errorf("no processor found for file: %s", filename)
+	}
+	
+	// Enable tree-sitter if requested and supported
+	if p.useTreeSitter && proc.Language() == "python" {
+		// Use reflection to call EnableTreeSitter if it exists
+		if enabler, ok := proc.(interface{ EnableTreeSitter() }); ok {
+			enableTSFunc := enabler.EnableTreeSitter
+			enableTSFunc()
+		}
 	}
 
 	// Open file
@@ -82,6 +99,15 @@ func (p *Processor) Process(ctx context.Context, reader io.Reader, filename stri
 	proc, ok := GetByFilename(filename)
 	if !ok {
 		return nil, fmt.Errorf("no processor found for file: %s", filename)
+	}
+	
+	// Enable tree-sitter if requested and supported
+	if p.useTreeSitter && proc.Language() == "python" {
+		// Use reflection to call EnableTreeSitter if it exists
+		if enabler, ok := proc.(interface{ EnableTreeSitter() }); ok {
+			enableTSFunc := enabler.EnableTreeSitter
+			enableTSFunc()
+		}
 	}
 
 	return proc.Process(ctx, reader, filename)

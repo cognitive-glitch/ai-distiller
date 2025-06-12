@@ -180,7 +180,7 @@ func (f *TextFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, in
 	fmt.Fprintf(w, "%s)", strings.Join(params, ", "))
 	
 	// Format return type
-	if fn.Returns.Name != "" {
+	if fn.Returns != nil && fn.Returns.Name != "" {
 		fmt.Fprintf(w, " -> %s", fn.Returns.Name)
 	}
 	
