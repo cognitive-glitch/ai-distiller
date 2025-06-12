@@ -99,4 +99,8 @@ func init() {
 	Register("json-structured", func(opts Options) Formatter {
 		return NewJSONStructuredFormatter(opts)
 	})
+	
+	Register("text", func(opts Options) Formatter {
+		return NewTextFormatter(opts)
+	})
 }

@@ -7,6 +7,10 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/janreges/ai-distiller/internal/formatter"
+	"github.com/janreges/ai-distiller/internal/ir"
+	"github.com/janreges/ai-distiller/internal/processor"
+	_ "github.com/janreges/ai-distiller/internal/language" // Register language processors
 )
 
 var (
@@ -118,9 +122,69 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// TODO: Implement actual distillation logic
-	fmt.Println("Distillation not yet implemented")
+	// Create processor options from flags
+	procOpts := processor.ProcessOptions{
+		IncludeComments:       !contains(stripOptions, "comments"),
+		IncludeImports:        !contains(stripOptions, "imports"),
+		IncludeImplementation: !contains(stripOptions, "implementation"),
+		IncludePrivate:        !contains(stripOptions, "non-public"),
+	}
+
+	// Create the processor
+	proc := processor.New()
+
+	// Process the input
+	result, err := proc.ProcessPath(absPath, procOpts)
+	if err != nil {
+		return fmt.Errorf("failed to process: %w", err)
+	}
+
+	// Create formatter based on format
+	formatterOpts := formatter.Options{}
+	formatter, err := formatter.Get(outputFormat, formatterOpts)
+	if err != nil {
+		return fmt.Errorf("failed to get formatter: %w", err)
+	}
+
+	// Write output
+	var output strings.Builder
 	
+	// Handle different result types
+	switch r := result.(type) {
+	case *ir.DistilledFile:
+		if err := formatter.Format(&output, r); err != nil {
+			return fmt.Errorf("failed to format output: %w", err)
+		}
+	case *ir.DistilledDirectory:
+		// Extract files from directory
+		var files []*ir.DistilledFile
+		for _, child := range r.Children {
+			if file, ok := child.(*ir.DistilledFile); ok {
+				files = append(files, file)
+			}
+		}
+		if err := formatter.FormatMultiple(&output, files); err != nil {
+			return fmt.Errorf("failed to format output: %w", err)
+		}
+	default:
+		return fmt.Errorf("unexpected result type: %T", result)
+	}
+
+	// Write to file if not stdout-only
+	if outputFile != "" && !outputToStdout {
+		if err := os.WriteFile(outputFile, []byte(output.String()), 0644); err != nil {
+			return fmt.Errorf("failed to write output file: %w", err)
+		}
+		if verbosity > 0 {
+			fmt.Fprintf(os.Stderr, "Wrote output to %s\n", outputFile)
+		}
+	}
+
+	// Write to stdout if requested
+	if outputToStdout || outputFile == "" {
+		fmt.Print(output.String())
+	}
+
 	return nil
 }
 

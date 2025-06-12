@@ -30,3 +30,8 @@ func MustRegisterAll() {
 		panic(err)
 	}
 }
+
+func init() {
+	// Register all language processors at startup
+	MustRegisterAll()
+}

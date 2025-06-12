@@ -31,6 +31,7 @@ type NodeKind string
 
 const (
 	KindFile      NodeKind = "file"
+	KindDirectory NodeKind = "directory"
 	KindPackage   NodeKind = "package"
 	KindImport    NodeKind = "import"
 	KindClass     NodeKind = "class"
