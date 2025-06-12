@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
+	"strings"
 
 	"github.com/janreges/ai-distiller/internal/ir"
 )
@@ -151,7 +152,7 @@ func (p BaseProcessor) SupportedExtensions() []string {
 
 // CanProcess implements LanguageProcessor
 func (p BaseProcessor) CanProcess(filename string) bool {
-	ext := filepath.Ext(filename)
+	ext := strings.ToLower(filepath.Ext(filename))
 	for _, supported := range p.extensions {
 		if ext == supported {
 			return true
