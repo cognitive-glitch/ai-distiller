@@ -1,11 +1,13 @@
 module github.com/janreges/ai-distiller
 
-go 1.21
+go 1.22.0
+
+toolchain go1.23.8
 
 require (
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
-	github.com/tetratelabs/wazero v1.6.0
+	github.com/tetratelabs/wazero v1.9.0
 	golang.org/x/sync v0.6.0
 )
 
