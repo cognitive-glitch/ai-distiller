@@ -311,12 +311,17 @@ func createMockFunction(name string, visibility string, params []string, returnT
 
 // parseActualFile parses actual Python source code
 func (p *Processor) parseActualFile(ctx context.Context, source []byte, filename string, opts processor.ProcessOptions) (*ir.DistilledFile, error) {
+	lineCount := countLines(source)
+	if lineCount == 0 {
+		lineCount = 1 // Ensure at least 1 line
+	}
+	
 	// Create the root file node
 	file := &ir.DistilledFile{
 		BaseNode: ir.BaseNode{
 			Location: ir.Location{
 				StartLine:   1,
-				EndLine:     countLines(source),
+				EndLine:     lineCount,
 			},
 		},
 		Path:     filename,
@@ -336,7 +341,11 @@ func (p *Processor) parseActualFile(ctx context.Context, source []byte, filename
 	for i := 0; i < len(lines); i++ {
 		// Check for indentation errors
 		if indentErr := detectIndentationError(lines, i); indentErr != nil {
-			errorCollector.AddWarning(indentErr.Line, indentErr.Column, indentErr.Message, indentErr.Kind)
+			if indentErr.Severity == "error" {
+				errorCollector.AddError(indentErr.Line, indentErr.Column, indentErr.Message, indentErr.Kind)
+			} else {
+				errorCollector.AddWarning(indentErr.Line, indentErr.Column, indentErr.Message, indentErr.Kind)
+			}
 		}
 		
 		line := strings.TrimSpace(lines[i])
@@ -492,7 +501,8 @@ func (p *Processor) parseClassWithRecovery(lines []string, startIdx int, opts pr
 	// Check for common errors
 	if class, ok := node.(*ir.DistilledClass); ok {
 		if err := validatePythonName(class.Name); err != nil {
-			return node, endLine, fmt.Errorf("invalid class name '%s': %w", class.Name, err)
+			// Don't return the node if it has invalid name
+			return nil, endLine, fmt.Errorf("invalid class name '%s': %w", class.Name, err)
 		}
 	}
 	
@@ -544,6 +554,10 @@ func (p *Processor) parseClass(lines []string, startIdx int, opts processor.Proc
 	
 	// Find end of class and parse methods
 	endLine := p.findBlockEnd(lines, startIdx)
+	// Ensure endLine is at least startIdx + 1
+	if endLine <= startIdx {
+		endLine = startIdx + 1
+	}
 	class.BaseNode.Location.EndLine = endLine
 	
 	// Parse class body
@@ -600,7 +614,8 @@ func (p *Processor) parseFunctionWithRecovery(lines []string, startIdx int, opts
 	// Check for common errors
 	if fn, ok := node.(*ir.DistilledFunction); ok {
 		if err := validatePythonName(fn.Name); err != nil {
-			return node, endLine, fmt.Errorf("invalid function name '%s': %w", fn.Name, err)
+			// Don't return the node if it has invalid name
+			return nil, endLine, fmt.Errorf("invalid function name '%s': %w", fn.Name, err)
 		}
 		
 		// Check for unclosed parentheses
@@ -647,6 +662,10 @@ func (p *Processor) parseFunction(lines []string, startIdx int, opts processor.P
 	
 	// Find end of function
 	endLine := p.findBlockEnd(lines, startIdx)
+	// Ensure endLine is at least startIdx + 1
+	if endLine <= startIdx {
+		endLine = startIdx + 1
+	}
 	
 	fn := &ir.DistilledFunction{
 		BaseNode: ir.BaseNode{
