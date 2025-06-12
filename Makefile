@@ -83,6 +83,23 @@ setup:
 	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 	@$(GOMOD) download
 
+# Initialize development environment with all dependencies
+dev-init:
+	@echo "==> Initializing development environment..."
+	@echo "  - Downloading Go module dependencies"
+	@$(GOMOD) download
+	@echo "  - Installing testing dependencies"
+	@go get -t ./...
+	@echo "  - Installing development tools"
+	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+	@go install golang.org/x/tools/cmd/goimports@latest
+	@go install github.com/segmentio/golines@latest
+	@go install github.com/air-verse/air@latest
+	@echo "  - Running go mod tidy"
+	@$(GOMOD) tidy
+	@echo "==> Development environment initialized successfully!"
+	@echo "==> Run 'make test' to verify everything is working"
+
 # Run the application
 run: build
 	@echo "==> Running $(BINARY_NAME)"
@@ -102,6 +119,7 @@ help:
 	@echo "  cross-compile   - Build for all platforms"
 	@echo "  build-wasm      - Build WASM modules"
 	@echo "  setup           - Set up development environment"
+	@echo "  dev-init        - Initialize dev environment with all dependencies"
 	@echo "  run ARGS=...    - Run the application with arguments"
 
 # Default target

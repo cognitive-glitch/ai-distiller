@@ -47,6 +47,10 @@ func Execute() error {
 }
 
 func init() {
+	initFlags()
+}
+
+func initFlags() {
 	// Output flags
 	rootCmd.Flags().StringVarP(&outputFile, "output", "o", "", "Output file path (default: .<dir>.[options].aid.txt)")
 	rootCmd.Flags().BoolVar(&outputToStdout, "stdout", false, "Print to stdout (in addition to file)")
