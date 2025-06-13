@@ -5,6 +5,7 @@ import (
 	"github.com/janreges/ai-distiller/internal/language/javascript"
 	"github.com/janreges/ai-distiller/internal/language/php"
 	"github.com/janreges/ai-distiller/internal/language/python"
+	"github.com/janreges/ai-distiller/internal/language/rust"
 	"github.com/janreges/ai-distiller/internal/language/typescript"
 	"github.com/janreges/ai-distiller/internal/processor"
 )
@@ -41,10 +42,15 @@ func RegisterAll() error {
 		return err
 	}
 
+	// Register Rust processor
+	rustProc := rust.NewProcessor()
+	if err := processor.Register(rustProc); err != nil {
+		return err
+	}
+
 	// TODO: Register other language processors
 	// - Java
 	// - C#
-	// - Rust
 	// - Swift
 	// - Ruby
 	// - etc.
