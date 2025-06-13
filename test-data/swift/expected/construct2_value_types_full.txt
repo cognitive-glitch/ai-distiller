@@ -1,0 +1,25 @@
+<file path="construct2_value_types.swift">
+// MARK: - Construct 2: Value Types & State
+// Test 1: Enum with associated values. A core Swift feature.
+
+enum NetworkResponse:
+    +success
+    +failure
+// Test 2: A struct with mixed properties and a mutating method.
+
+struct UserProfile:
+    // Stored properties
+    ~id: UUID
+    -username: String
+    // Writable internally, readable publicly.
+    // Computed property
+    ~initials: String
+    // Failable initializer
+    // Test failable initialization
+    // Mutating method required for value types
+    ~updateUsername(_: String):
+        {
+                guard !newName.isEmpty else { return }
+                self.username = newName
+            }
+</file>

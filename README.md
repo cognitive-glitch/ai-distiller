@@ -154,6 +154,7 @@ Currently supports 12+ languages via tree-sitter:
 #### Language-Specific Documentation:
 - [Python](docs/lang/python.md) - Full Python 3.x support with type hints, async/await, decorators
 - [PHP](docs/lang/php.md) - PHP 7.4+ with PHP 8.x features (attributes, union types, enums)
+- [Swift](docs/lang/swift.md) - Swift 5.x support with tree-sitter parser (basic features implemented)
 - More language guides coming soon!
 
 See [all language documentation](docs/lang/) for complete details.

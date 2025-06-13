@@ -127,8 +127,15 @@ func (f *TextFormatter) formatClass(w io.Writer, class *ir.DistilledClass, inden
 		fmt.Fprintf(w, "\n%s@%s", indentStr, dec)
 	}
 	
-	// Format class declaration
-	fmt.Fprintf(w, "\n%sclass %s", indentStr, class.Name)
+	// Format class declaration - check if it's a struct
+	classType := "class"
+	for _, mod := range class.Modifiers {
+		if mod == ir.ModifierStruct {
+			classType = "struct"
+			break
+		}
+	}
+	fmt.Fprintf(w, "\n%s%s %s", indentStr, classType, class.Name)
 	
 	// Add base classes if any
 	if len(class.Extends) > 0 {
@@ -242,22 +249,8 @@ func (f *TextFormatter) formatField(w io.Writer, field *ir.DistilledField, inden
 }
 
 func (f *TextFormatter) formatComment(w io.Writer, comment *ir.DistilledComment, indent string) error {
-	// Special handling for export comments
-	if comment.Format == "export" {
-		fmt.Fprintf(w, "%s# %s\n", indent, comment.Text)
-		return nil
-	}
-	
-	// Format as Python comment or docstring
-	lines := strings.Split(comment.Text, "\n")
-	if len(lines) > 1 || strings.Contains(comment.Text, "\n") {
-		// Multi-line comment/docstring
-		fmt.Fprintf(w, "%s\"\"\"%s\"\"\"\n", indent, comment.Text)
-	} else {
-		// Single line comment
-		fmt.Fprintf(w, "%s# %s\n", indent, comment.Text)
-	}
-	
+	// Just output the comment text as-is for language-agnostic output
+	fmt.Fprintf(w, "%s%s\n", indent, comment.Text)
 	return nil
 }
 
@@ -376,6 +369,11 @@ func formatModifiers(modifiers []ir.Modifier) string {
 			mods = append(mods, "readonly")
 		case ir.ModifierEmbedded:
 			mods = append(mods, "embeds")
+		case ir.ModifierMutating:
+			mods = append(mods, "mutating")
+		case ir.ModifierActor:
+			mods = append(mods, "actor")
+		// Skip ModifierStruct as it's handled in formatClass
 		}
 	}
 	

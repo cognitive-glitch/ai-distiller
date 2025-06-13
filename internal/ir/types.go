@@ -83,6 +83,9 @@ const (
 	ModifierVolatile  Modifier = "volatile"
 	ModifierTransient Modifier = "transient"
 	ModifierEmbedded  Modifier = "embedded"
+	ModifierActor     Modifier = "actor"
+	ModifierMutating  Modifier = "mutating"
+	ModifierStruct    Modifier = "struct"
 )
 
 // DistilledNode is the base interface for all IR nodes
