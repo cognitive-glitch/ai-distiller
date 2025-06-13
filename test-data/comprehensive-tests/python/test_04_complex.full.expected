@@ -1,0 +1,52 @@
+<file path="/home/janreges/ai-distiller/test-data/comprehensive-tests/python/test_04_complex.py">
+# test_04_complex.py
+import asyncio
+
+class EnforceAsyncMeta(type):
+    """A metaclass that ensures all public methods in a class
+    (except __init__) are asynchronous."""
+    +def __new__(cls, name, bases, dct):
+        for key, value in dct.items():
+                    if callable(value) and not key.startswith('_') and not asyncio.iscoroutinefunction(value):
+                        raise TypeError(f"Method '{key}' in class '{name}' must be async.")
+                return super().__new__(cls, name, bases, dct)
+
+class Connectable:
+    # An abstract mixin for connectable services.
+    +async def connect(self):
+        print("Connecting...")
+                await asyncio.sleep(0.1)
+                return True
+
+class Streamable:
+    # An abstract mixin for streamable services.
+    +async def stream_data(self):
+        print("Streaming data...")
+                await asyncio.sleep(0.2)
+                return b"some_data"
+
+class AsyncService(Connectable, Streamable, metaclass=EnforceAsyncMeta):
+    """A complex service demonstrating multiple inheritance, async operations,
+    and a custom metaclass."""
+    +def __init__(self, service_name: str):
+        self.service_name = service_name
+                self._session_id = None
+    +async def start_session(self):
+        """Connects and starts a new session."""
+                is_connected = await self.connect()
+                if is_connected:
+                    self._session_id = "session-xyz"
+                    print(f"Session started for {self.service_name}")
+                return self._session_id
+    +async def process(self):
+        """Streams and processes data."""
+                if not self._session_id:
+                    raise ConnectionError("No active session.")
+                data = await self.stream_data()
+                return f"Processed {len(data)} bytes."
++async def main():
+    service = AsyncService("DataStreamer")
+        await service.start_session()
+        result = await service.process()
+        print(result)
+</file>
