@@ -482,6 +482,8 @@ func (p *TreeSitterProcessor) processMethodDeclaration(node *sitter.Node, source
 	}
 
 	// Extract modifiers, attributes, return type, name, parameters, body
+	// We need to be careful about the order - return type comes before method name
+	hasSeenType := false
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		switch child.Type() {
@@ -491,16 +493,23 @@ func (p *TreeSitterProcessor) processMethodDeclaration(node *sitter.Node, source
 			p.extractAttributes(child, source, &method.Decorators)
 		case "void_keyword":
 			method.Returns = &ir.TypeRef{Name: "void"}
+			hasSeenType = true
 		case "predefined_type", "array_type", "generic_name", "qualified_name":
 			if method.Returns == nil {
 				method.Returns = p.extractType(child, source)
+				hasSeenType = true
 			}
 		case "identifier":
-			if method.Name == "" {
-				method.Name = string(source[child.StartByte():child.EndByte()])
-			} else if method.Returns == nil {
-				// This might be the return type
+			// In C#, return type comes before method name
+			// So first identifier is return type (unless we already have one)
+			// Second identifier is method name
+			if !hasSeenType && method.Returns == nil {
+				// This is the return type
 				method.Returns = p.extractType(child, source)
+				hasSeenType = true
+			} else if method.Name == "" {
+				// This is the method name
+				method.Name = string(source[child.StartByte():child.EndByte()])
 			}
 		case "type_parameter_list":
 			// TODO: Handle generic methods
@@ -585,6 +594,7 @@ func (p *TreeSitterProcessor) processPropertyDeclaration(node *sitter.Node, sour
 		},
 		Modifiers: []ir.Modifier{},
 	}
+	
 
 	// Track accessor information
 	hasGetter := false
@@ -592,6 +602,7 @@ func (p *TreeSitterProcessor) processPropertyDeclaration(node *sitter.Node, sour
 	hasInit := false
 
 	// Extract modifiers, attributes, type, name, accessors
+	hasSeenType := false
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		switch child.Type() {
@@ -599,16 +610,20 @@ func (p *TreeSitterProcessor) processPropertyDeclaration(node *sitter.Node, sour
 			p.extractFieldModifiers(child, source, property)
 		case "attribute_list":
 			p.extractAttributes(child, source, &property.Decorators)
-		case "predefined_type", "array_type", "generic_name", "qualified_name":
+		case "predefined_type", "array_type", "generic_name", "qualified_name", "nullable_type":
 			if property.Type == nil {
 				property.Type = p.extractType(child, source)
+				hasSeenType = true
 			}
 		case "identifier":
-			if property.Name == "" {
-				property.Name = string(source[child.StartByte():child.EndByte()])
-			} else if property.Type == nil {
-				// This might be the property type
+			// Property type comes before property name
+			if !hasSeenType && property.Type == nil {
+				// This is the property type
 				property.Type = p.extractType(child, source)
+				hasSeenType = true
+			} else if property.Name == "" {
+				// This is the property name
+				property.Name = string(source[child.StartByte():child.EndByte()])
 			}
 		case "accessor_list":
 			// Parse get/set/init accessors
@@ -660,6 +675,7 @@ func (p *TreeSitterProcessor) processPropertyDeclaration(node *sitter.Node, sour
 	if property.Visibility == "" {
 		property.Visibility = ir.VisibilityPrivate // Default for properties
 	}
+	
 
 	p.addToParent(file, parent, property)
 }
@@ -1106,15 +1122,18 @@ func (p *TreeSitterProcessor) extractType(node *sitter.Node, source []byte) *ir.
 			return &ir.TypeRef{Name: arrayType}
 		}
 	case "nullable_type":
-		// Handle nullable types (e.g., int?)
-		for i := 0; i < int(node.ChildCount()); i++ {
-			child := node.Child(i)
-			if child.Type() != "?" {
-				baseType := p.extractType(child, source)
-				baseType.IsNullable = true
-				return baseType
-			}
+		// Handle nullable types (e.g., int?, string?)
+		// The nullable_type node contains the base type as first child and "?" as second
+		if node.ChildCount() > 0 {
+			// Get the base type (first child)
+			baseType := p.extractType(node.Child(0), source)
+			baseType.IsNullable = true
+			return baseType
 		}
+		// Fallback: extract type name without the ?
+		typeName := string(source[node.StartByte():node.EndByte()])
+		typeName = strings.TrimSuffix(typeName, "?")
+		return &ir.TypeRef{Name: typeName, IsNullable: true}
 	}
 
 	// Default: return the raw text

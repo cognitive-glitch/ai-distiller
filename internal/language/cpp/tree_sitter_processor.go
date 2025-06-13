@@ -1,0 +1,1077 @@
+package cpp
+
+import (
+	"context"
+	"fmt"
+	"strings"
+
+	sitter "github.com/smacker/go-tree-sitter"
+	tree_sitter_cpp "github.com/tree-sitter/tree-sitter-cpp/bindings/go"
+	"github.com/janreges/ai-distiller/internal/ir"
+)
+
+// TreeSitterProcessor uses tree-sitter for C++ parsing
+type TreeSitterProcessor struct {
+	parser *sitter.Parser
+}
+
+// NewTreeSitterProcessor creates a new tree-sitter based processor
+func NewTreeSitterProcessor() *TreeSitterProcessor {
+	parser := sitter.NewParser()
+	parser.SetLanguage(sitter.NewLanguage(tree_sitter_cpp.Language()))
+	
+	return &TreeSitterProcessor{
+		parser: parser,
+	}
+}
+
+// ProcessSource processes C++ source code using tree-sitter
+func (p *TreeSitterProcessor) ProcessSource(ctx context.Context, source []byte, filename string) (*ir.DistilledFile, error) {
+	// Parse the source code
+	tree, err := p.parser.ParseCtx(ctx, nil, source)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse C++ code: %w", err)
+	}
+	defer tree.Close()
+
+	// Create distilled file
+	file := &ir.DistilledFile{
+		BaseNode: ir.BaseNode{
+			Location: ir.Location{
+				StartLine: 1,
+				EndLine:   int(tree.RootNode().EndPoint().Row) + 1,
+			},
+		},
+		Path:     filename,
+		Language: "cpp",
+		Version:  "1.0",
+		Children: []ir.DistilledNode{},
+		Errors:   []ir.DistilledError{},
+	}
+
+	// Process the tree
+	p.processNode(tree.RootNode(), source, file, nil)
+
+	return file, nil
+}
+
+// processNode recursively processes tree-sitter nodes
+func (p *TreeSitterProcessor) processNode(node *sitter.Node, source []byte, file *ir.DistilledFile, parent ir.DistilledNode) {
+	nodeType := node.Type()
+
+	switch nodeType {
+	case "preproc_include":
+		p.processInclude(node, source, file)
+	case "using_declaration":
+		p.processUsingDeclaration(node, source, file)
+	case "namespace_definition":
+		p.processNamespace(node, source, file, parent)
+	case "class_specifier":
+		p.processClass(node, source, file, parent)
+	case "struct_specifier":
+		p.processStruct(node, source, file, parent)
+	case "union_specifier":
+		p.processUnion(node, source, file, parent)
+	case "enum_specifier":
+		p.processEnum(node, source, file, parent)
+	case "function_definition":
+		p.processFunctionDefinition(node, source, file, parent)
+	case "declaration":
+		p.processDeclaration(node, source, file, parent)
+	case "template_declaration":
+		p.processTemplateDeclaration(node, source, file, parent)
+	case "friend_declaration":
+		p.processFriendDeclaration(node, source, file, parent)
+	case "comment":
+		p.processComment(node, source, file, parent)
+	default:
+		// Recursively process children
+		for i := 0; i < int(node.ChildCount()); i++ {
+			child := node.Child(i)
+			p.processNode(child, source, file, parent)
+		}
+	}
+}
+
+// processInclude handles #include directives
+func (p *TreeSitterProcessor) processInclude(node *sitter.Node, source []byte, file *ir.DistilledFile) {
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		if child.Type() == "system_lib_string" || child.Type() == "string_literal" {
+			path := p.nodeText(child, source)
+			// Remove quotes or angle brackets
+			path = strings.Trim(path, "\"<>")
+			
+			imp := &ir.DistilledImport{
+				BaseNode: ir.BaseNode{
+					Location: p.nodeLocation(node),
+				},
+				Module:     path,
+				ImportType: "include",
+			}
+			file.Children = append(file.Children, imp)
+			return
+		}
+	}
+}
+
+// processUsingDeclaration handles using declarations
+func (p *TreeSitterProcessor) processUsingDeclaration(node *sitter.Node, source []byte, file *ir.DistilledFile) {
+	text := p.nodeText(node, source)
+	// Extract the namespace or symbol being used
+	parts := strings.Fields(text)
+	if len(parts) >= 2 && parts[0] == "using" {
+		module := strings.TrimSuffix(strings.Join(parts[1:], " "), ";")
+		
+		imp := &ir.DistilledImport{
+			BaseNode: ir.BaseNode{
+				Location: p.nodeLocation(node),
+			},
+			Module:     module,
+			ImportType: "using",
+		}
+		file.Children = append(file.Children, imp)
+	}
+}
+
+// processNamespace handles namespace definitions
+func (p *TreeSitterProcessor) processNamespace(node *sitter.Node, source []byte, file *ir.DistilledFile, parent ir.DistilledNode) {
+	// Use DistilledPackage for namespaces (following C# pattern)
+	namespace := &ir.DistilledPackage{
+		BaseNode: ir.BaseNode{
+			Location: p.nodeLocation(node),
+		},
+		Name:     "anonymous",
+		Children: []ir.DistilledNode{},
+	}
+
+	// Find namespace name
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		if child.Type() == "identifier" || child.Type() == "nested_namespace_specifier" || child.Type() == "namespace_identifier" {
+			namespace.Name = p.nodeText(child, source)
+			// Don't break, keep looking for the actual name
+		}
+	}
+
+	// Process namespace body
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		if child.Type() == "declaration_list" {
+			for j := 0; j < int(child.ChildCount()); j++ {
+				p.processNode(child.Child(j), source, file, namespace)
+			}
+		}
+	}
+
+	p.addChild(file, parent, namespace)
+}
+
+// processClass handles class declarations
+func (p *TreeSitterProcessor) processClass(node *sitter.Node, source []byte, file *ir.DistilledFile, parent ir.DistilledNode) {
+	class := &ir.DistilledClass{
+		BaseNode: ir.BaseNode{
+			Location: p.nodeLocation(node),
+		},
+		Visibility: ir.VisibilityPrivate, // Default for C++ classes
+		Children:   []ir.DistilledNode{},
+	}
+
+	// Find class name
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		if child.Type() == "type_identifier" {
+			class.Name = p.nodeText(child, source)
+			break
+		}
+	}
+
+	// Process base classes
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		if child.Type() == "base_class_clause" {
+			class.Extends = p.extractBaseClasses(child, source)
+		}
+	}
+
+	// Process class body
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		if child.Type() == "field_declaration_list" {
+			p.processClassBody(child, source, file, class)
+		}
+	}
+
+	p.addChild(file, parent, class)
+}
+
+// processStruct handles struct declarations (similar to class but default public)
+func (p *TreeSitterProcessor) processStruct(node *sitter.Node, source []byte, file *ir.DistilledFile, parent ir.DistilledNode) {
+	// In C++, structs are essentially classes with default public access
+	structNode := &ir.DistilledStruct{
+		BaseNode: ir.BaseNode{
+			Location: p.nodeLocation(node),
+		},
+		Visibility: ir.VisibilityPublic, // Structs are public by default
+		Children:   []ir.DistilledNode{},
+	}
+
+	// Find struct name
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		if child.Type() == "type_identifier" {
+			structNode.Name = p.nodeText(child, source)
+			break
+		}
+	}
+
+	// Process struct body
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		if child.Type() == "field_declaration_list" {
+			p.processStructBody(child, source, file, structNode)
+		}
+	}
+
+	p.addChild(file, parent, structNode)
+}
+
+// processUnion handles union declarations
+func (p *TreeSitterProcessor) processUnion(node *sitter.Node, source []byte, file *ir.DistilledFile, parent ir.DistilledNode) {
+	// Use DistilledStruct for unions as they're similar
+	union := &ir.DistilledStruct{
+		BaseNode: ir.BaseNode{
+			Location: p.nodeLocation(node),
+		},
+		Name:       "union",
+		Visibility: ir.VisibilityPublic,
+		Children:   []ir.DistilledNode{},
+	}
+
+	// Find union name
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		if child.Type() == "type_identifier" {
+			union.Name = p.nodeText(child, source)
+			break
+		}
+	}
+
+	// Process union body
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		if child.Type() == "field_declaration_list" {
+			p.processStructBody(child, source, file, union)
+		}
+	}
+
+	p.addChild(file, parent, union)
+}
+
+// processEnum handles enum declarations
+func (p *TreeSitterProcessor) processEnum(node *sitter.Node, source []byte, file *ir.DistilledFile, parent ir.DistilledNode) {
+	enum := &ir.DistilledEnum{
+		BaseNode: ir.BaseNode{
+			Location: p.nodeLocation(node),
+		},
+		Visibility: ir.VisibilityPublic,
+		Children:   []ir.DistilledNode{},
+	}
+
+	// Find enum name and values
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		if child.Type() == "type_identifier" {
+			enum.Name = p.nodeText(child, source)
+		} else if child.Type() == "enumerator_list" {
+			// Extract enum values as children
+			for j := 0; j < int(child.ChildCount()); j++ {
+				enumChild := child.Child(j)
+				if enumChild.Type() == "enumerator" {
+					for k := 0; k < int(enumChild.ChildCount()); k++ {
+						if enumChild.Child(k).Type() == "identifier" {
+							// Create a field for each enum value
+							field := &ir.DistilledField{
+								BaseNode: ir.BaseNode{
+									Location: p.nodeLocation(enumChild.Child(k)),
+								},
+								Name:       p.nodeText(enumChild.Child(k), source),
+								Visibility: ir.VisibilityPublic,
+							}
+							enum.Children = append(enum.Children, field)
+							break
+						}
+					}
+				}
+			}
+		}
+	}
+
+	p.addChild(file, parent, enum)
+}
+
+// processClassBody processes the body of a class
+func (p *TreeSitterProcessor) processClassBody(node *sitter.Node, source []byte, file *ir.DistilledFile, class *ir.DistilledClass) {
+	currentVisibility := ir.VisibilityPrivate // Default for class
+
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		
+		switch child.Type() {
+		case "access_specifier":
+			// Update current access level
+			for j := 0; j < int(child.ChildCount()); j++ {
+				accessChild := child.Child(j)
+				switch accessChild.Type() {
+				case "public":
+					currentVisibility = ir.VisibilityPublic
+				case "private":
+					currentVisibility = ir.VisibilityPrivate
+				case "protected":
+					currentVisibility = ir.VisibilityProtected
+				}
+			}
+		case "function_definition":
+			p.processMethodDefinition(child, source, file, class, currentVisibility)
+		case "declaration", "field_declaration":
+			p.processClassDeclaration(child, source, file, class, currentVisibility)
+		case "template_declaration":
+			p.processTemplateDeclaration(child, source, file, class)
+		case "friend_declaration":
+			p.processFriendDeclaration(child, source, file, class)
+		default:
+			// Process other nodes recursively
+			p.processNode(child, source, file, class)
+		}
+	}
+}
+
+// processStructBody processes the body of a struct
+func (p *TreeSitterProcessor) processStructBody(node *sitter.Node, source []byte, file *ir.DistilledFile, structNode *ir.DistilledStruct) {
+	currentVisibility := ir.VisibilityPublic // Default for struct
+
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		
+		switch child.Type() {
+		case "access_specifier":
+			// Update current access level
+			for j := 0; j < int(child.ChildCount()); j++ {
+				accessChild := child.Child(j)
+				switch accessChild.Type() {
+				case "public":
+					currentVisibility = ir.VisibilityPublic
+				case "private":
+					currentVisibility = ir.VisibilityPrivate
+				case "protected":
+					currentVisibility = ir.VisibilityProtected
+				}
+			}
+		case "function_definition":
+			p.processStructMethodDefinition(child, source, file, structNode, currentVisibility)
+		case "declaration", "field_declaration":
+			p.processStructFieldDeclaration(child, source, file, structNode, currentVisibility)
+		case "template_declaration":
+			p.processTemplateDeclaration(child, source, file, structNode)
+		case "friend_declaration":
+			p.processFriendDeclaration(child, source, file, structNode)
+		default:
+			// Process other nodes recursively
+			p.processNode(child, source, file, structNode)
+		}
+	}
+}
+
+// processMethodDefinition handles method definitions inside a class
+func (p *TreeSitterProcessor) processMethodDefinition(node *sitter.Node, source []byte, file *ir.DistilledFile, class *ir.DistilledClass, visibility ir.Visibility) {
+	method := &ir.DistilledFunction{
+		BaseNode: ir.BaseNode{
+			Location: p.nodeLocation(node),
+		},
+		Visibility: visibility,
+		Parameters: []ir.Parameter{},
+		Modifiers:  []ir.Modifier{},
+	}
+
+	// Extract method details
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		switch child.Type() {
+		case "function_declarator":
+			p.extractFunctionDeclarator(child, source, method)
+		case "type_identifier", "primitive_type", "auto":
+			if method.Returns == nil {
+				method.Returns = &ir.TypeRef{
+					Name: p.nodeText(child, source),
+				}
+			}
+		case "virtual":
+			method.Modifiers = append(method.Modifiers, ir.ModifierVirtual)
+		case "override":
+			method.Modifiers = append(method.Modifiers, ir.ModifierOverride)
+		case "storage_class_specifier":
+			if p.nodeText(child, source) == "static" {
+				method.Modifiers = append(method.Modifiers, ir.ModifierStatic)
+			}
+		case "type_qualifier":
+			qualifier := p.nodeText(child, source)
+			if qualifier == "const" {
+				method.Modifiers = append(method.Modifiers, ir.ModifierConst)
+			}
+		case "compound_statement":
+			method.Implementation = p.nodeText(child, source)
+		case "default_method_clause":
+			method.Implementation = "= default"
+		case "delete_method_clause":
+			method.Implementation = "= delete"
+		}
+	}
+
+	// Check if it's a constructor or destructor
+	if method.Name == class.Name {
+		// Constructor - add as a special comment to indicate it
+		method.Name = "constructor"
+	} else if method.Name == "~"+class.Name {
+		// Destructor
+		method.Name = "destructor"
+	}
+
+	class.Children = append(class.Children, method)
+}
+
+// processStructMethodDefinition handles method definitions inside a struct
+func (p *TreeSitterProcessor) processStructMethodDefinition(node *sitter.Node, source []byte, file *ir.DistilledFile, structNode *ir.DistilledStruct, visibility ir.Visibility) {
+	method := &ir.DistilledFunction{
+		BaseNode: ir.BaseNode{
+			Location: p.nodeLocation(node),
+		},
+		Visibility: visibility,
+		Parameters: []ir.Parameter{},
+		Modifiers:  []ir.Modifier{},
+	}
+
+	// Extract method details (similar to class methods)
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		switch child.Type() {
+		case "function_declarator":
+			p.extractFunctionDeclarator(child, source, method)
+		case "type_identifier", "primitive_type", "auto":
+			if method.Returns == nil {
+				method.Returns = &ir.TypeRef{
+					Name: p.nodeText(child, source),
+				}
+			}
+		case "storage_class_specifier":
+			if p.nodeText(child, source) == "static" {
+				method.Modifiers = append(method.Modifiers, ir.ModifierStatic)
+			}
+		case "type_qualifier":
+			qualifier := p.nodeText(child, source)
+			if qualifier == "const" {
+				method.Modifiers = append(method.Modifiers, ir.ModifierConst)
+			}
+		case "compound_statement":
+			method.Implementation = p.nodeText(child, source)
+		}
+	}
+
+	structNode.Children = append(structNode.Children, method)
+}
+
+// processFunctionDefinition handles standalone function definitions
+func (p *TreeSitterProcessor) processFunctionDefinition(node *sitter.Node, source []byte, file *ir.DistilledFile, parent ir.DistilledNode) {
+	function := &ir.DistilledFunction{
+		BaseNode: ir.BaseNode{
+			Location: p.nodeLocation(node),
+		},
+		Visibility: ir.VisibilityPublic, // Standalone functions are public
+		Parameters: []ir.Parameter{},
+		Modifiers:  []ir.Modifier{},
+	}
+
+	// Extract function details
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		switch child.Type() {
+		case "function_declarator":
+			p.extractFunctionDeclarator(child, source, function)
+		case "type_identifier", "primitive_type", "auto":
+			if function.Returns == nil {
+				function.Returns = &ir.TypeRef{
+					Name: p.nodeText(child, source),
+				}
+			}
+		case "storage_class_specifier":
+			spec := p.nodeText(child, source)
+			if spec == "static" {
+				function.Modifiers = append(function.Modifiers, ir.ModifierStatic)
+			} else if spec == "inline" {
+				function.Modifiers = append(function.Modifiers, ir.ModifierInline)
+			}
+		case "type_qualifier":
+			if p.nodeText(child, source) == "constexpr" {
+				// Add constexpr as a const modifier
+				function.Modifiers = append(function.Modifiers, ir.ModifierConst)
+			}
+		case "compound_statement":
+			function.Implementation = p.nodeText(child, source)
+		case "noexcept":
+			// Could add as extension attribute if needed
+		}
+	}
+
+	p.addChild(file, parent, function)
+}
+
+// extractFunctionDeclarator extracts function name and parameters
+func (p *TreeSitterProcessor) extractFunctionDeclarator(node *sitter.Node, source []byte, function *ir.DistilledFunction) {
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		switch child.Type() {
+		case "identifier", "field_identifier", "destructor_name", "operator_name":
+			function.Name = p.nodeText(child, source)
+		case "parameter_list":
+			p.extractParameters(child, source, function)
+		case "reference_declarator", "pointer_declarator":
+			// Handle function pointers/references
+			p.extractFunctionDeclarator(child, source, function)
+		}
+	}
+}
+
+// extractParameters extracts function parameters
+func (p *TreeSitterProcessor) extractParameters(node *sitter.Node, source []byte, function *ir.DistilledFunction) {
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		if child.Type() == "parameter_declaration" || child.Type() == "optional_parameter_declaration" {
+			param := ir.Parameter{
+				Name: "",
+				Type: ir.TypeRef{},
+			}
+
+			// Extract parameter type and name
+			var typeStr string
+			for j := 0; j < int(child.ChildCount()); j++ {
+				paramChild := child.Child(j)
+				switch paramChild.Type() {
+				case "type_identifier", "primitive_type":
+					typeStr = p.nodeText(paramChild, source)
+				case "identifier":
+					param.Name = p.nodeText(paramChild, source)
+				case "reference_declarator", "pointer_declarator":
+					// Handle references and pointers
+					for k := 0; k < int(paramChild.ChildCount()); k++ {
+						if paramChild.Child(k).Type() == "identifier" {
+							param.Name = p.nodeText(paramChild.Child(k), source)
+						}
+					}
+					typeStr = typeStr + p.extractDeclaratorPrefix(paramChild, source)
+				case "optional_parameter_declaration":
+					param.DefaultValue = "..." // Indicate it has a default
+				}
+			}
+
+			if typeStr != "" {
+				param.Type.Name = typeStr
+			}
+
+			function.Parameters = append(function.Parameters, param)
+		}
+	}
+}
+
+// processDeclaration handles general declarations
+func (p *TreeSitterProcessor) processDeclaration(node *sitter.Node, source []byte, file *ir.DistilledFile, parent ir.DistilledNode) {
+	// Check if this is a function declaration
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		if child.Type() == "function_declarator" {
+			// This is a function declaration
+			function := &ir.DistilledFunction{
+				BaseNode: ir.BaseNode{
+					Location: p.nodeLocation(node),
+				},
+				Visibility: ir.VisibilityPublic, // Top-level functions are public
+				Parameters: []ir.Parameter{},
+				Modifiers:  []ir.Modifier{},
+			}
+
+			// Extract return type
+			for j := 0; j < i; j++ {
+				typeChild := node.Child(j)
+				if typeChild.Type() == "type_identifier" || typeChild.Type() == "primitive_type" {
+					function.Returns = &ir.TypeRef{
+						Name: p.nodeText(typeChild, source),
+					}
+					break
+				}
+			}
+
+			// Extract function details
+			p.extractFunctionDeclarator(child, source, function)
+			p.addChild(file, parent, function)
+			return
+		}
+	}
+
+	// Otherwise, it might be a variable declaration
+	p.processVariableDeclaration(node, source, file, parent)
+}
+
+// processClassDeclaration handles declarations inside a class
+func (p *TreeSitterProcessor) processClassDeclaration(node *sitter.Node, source []byte, file *ir.DistilledFile, class *ir.DistilledClass, visibility ir.Visibility) {
+	// Check if this is a method declaration
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		if child.Type() == "function_declarator" {
+			p.processMethodDeclaration(node, source, file, class, visibility)
+			return
+		}
+	}
+
+	// Otherwise, it's a field declaration
+	p.processFieldDeclaration(node, source, file, class, visibility)
+}
+
+// processStructDeclaration handles declarations inside a struct
+func (p *TreeSitterProcessor) processStructDeclaration(node *sitter.Node, source []byte, file *ir.DistilledFile, structNode *ir.DistilledStruct, visibility ir.Visibility) {
+	// Check if this is a method declaration
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		if child.Type() == "function_declarator" {
+			p.processStructMethodDeclaration(node, source, file, structNode, visibility)
+			return
+		}
+	}
+
+	// Otherwise, it's a field declaration
+	p.processStructFieldDeclaration(node, source, file, structNode, visibility)
+}
+
+// processMethodDeclaration handles method declarations (without body)
+func (p *TreeSitterProcessor) processMethodDeclaration(node *sitter.Node, source []byte, file *ir.DistilledFile, class *ir.DistilledClass, visibility ir.Visibility) {
+	method := &ir.DistilledFunction{
+		BaseNode: ir.BaseNode{
+			Location: p.nodeLocation(node),
+		},
+		Visibility: visibility,
+		Parameters: []ir.Parameter{},
+		Modifiers:  []ir.Modifier{},
+	}
+
+	// Extract method details
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		switch child.Type() {
+		case "function_declarator":
+			p.extractFunctionDeclarator(child, source, method)
+		case "type_identifier", "primitive_type", "auto":
+			if method.Returns == nil {
+				method.Returns = &ir.TypeRef{
+					Name: p.nodeText(child, source),
+				}
+			}
+		case "virtual":
+			method.Modifiers = append(method.Modifiers, ir.ModifierVirtual)
+		case "storage_class_specifier":
+			if p.nodeText(child, source) == "static" {
+				method.Modifiers = append(method.Modifiers, ir.ModifierStatic)
+			}
+		case "type_qualifier":
+			qualifier := p.nodeText(child, source)
+			if qualifier == "const" {
+				method.Modifiers = append(method.Modifiers, ir.ModifierConst)
+			}
+		case "abstract_function_declarator":
+			// Pure virtual function
+			method.Modifiers = append(method.Modifiers, ir.ModifierVirtual, ir.ModifierAbstract)
+		}
+	}
+
+	// Check for pure virtual (= 0)
+	text := p.nodeText(node, source)
+	if strings.Contains(text, "= 0") {
+		method.Modifiers = append(method.Modifiers, ir.ModifierAbstract)
+		if !p.hasModifier(method.Modifiers, ir.ModifierVirtual) {
+			method.Modifiers = append(method.Modifiers, ir.ModifierVirtual)
+		}
+	}
+
+	// Check if it's a constructor or destructor
+	if method.Name == class.Name {
+		method.Name = "constructor"
+	} else if method.Name == "~"+class.Name {
+		method.Name = "destructor"
+	}
+
+	class.Children = append(class.Children, method)
+}
+
+// processStructMethodDeclaration handles method declarations in structs
+func (p *TreeSitterProcessor) processStructMethodDeclaration(node *sitter.Node, source []byte, file *ir.DistilledFile, structNode *ir.DistilledStruct, visibility ir.Visibility) {
+	method := &ir.DistilledFunction{
+		BaseNode: ir.BaseNode{
+			Location: p.nodeLocation(node),
+		},
+		Visibility: visibility,
+		Parameters: []ir.Parameter{},
+		Modifiers:  []ir.Modifier{},
+	}
+
+	// Extract method details (similar to class methods)
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		switch child.Type() {
+		case "function_declarator":
+			p.extractFunctionDeclarator(child, source, method)
+		case "type_identifier", "primitive_type", "auto":
+			if method.Returns == nil {
+				method.Returns = &ir.TypeRef{
+					Name: p.nodeText(child, source),
+				}
+			}
+		case "storage_class_specifier":
+			if p.nodeText(child, source) == "static" {
+				method.Modifiers = append(method.Modifiers, ir.ModifierStatic)
+			}
+		case "type_qualifier":
+			if p.nodeText(child, source) == "const" {
+				method.Modifiers = append(method.Modifiers, ir.ModifierConst)
+			}
+		}
+	}
+
+	structNode.Children = append(structNode.Children, method)
+}
+
+// processFieldDeclaration handles field declarations
+func (p *TreeSitterProcessor) processFieldDeclaration(node *sitter.Node, source []byte, file *ir.DistilledFile, class *ir.DistilledClass, visibility ir.Visibility) {
+	var typeStr string
+	modifiers := []ir.Modifier{}
+
+	// Extract type and modifiers
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		switch child.Type() {
+		case "type_identifier", "primitive_type":
+			typeStr = p.nodeText(child, source)
+		case "storage_class_specifier":
+			spec := p.nodeText(child, source)
+			if spec == "static" {
+				modifiers = append(modifiers, ir.ModifierStatic)
+			} else if spec == "mutable" {
+				modifiers = append(modifiers, ir.ModifierMutable)
+			}
+		case "type_qualifier":
+			if p.nodeText(child, source) == "const" {
+				modifiers = append(modifiers, ir.ModifierConst)
+			}
+		case "field_identifier", "identifier":
+			field := &ir.DistilledField{
+				BaseNode: ir.BaseNode{
+					Location: p.nodeLocation(child),
+				},
+				Name:       p.nodeText(child, source),
+				Visibility: visibility,
+				Modifiers:  modifiers,
+			}
+
+			if typeStr != "" {
+				field.Type = &ir.TypeRef{
+					Name: typeStr,
+				}
+			}
+
+			class.Children = append(class.Children, field)
+		case "init_declarator":
+			// Handle initialized fields
+			for j := 0; j < int(child.ChildCount()); j++ {
+				declChild := child.Child(j)
+				if declChild.Type() == "identifier" {
+					field := &ir.DistilledField{
+						BaseNode: ir.BaseNode{
+							Location: p.nodeLocation(declChild),
+						},
+						Name:       p.nodeText(declChild, source),
+						Visibility: visibility,
+						Modifiers:  modifiers,
+					}
+
+					if typeStr != "" {
+						field.Type = &ir.TypeRef{
+							Name: typeStr,
+						}
+					}
+
+					class.Children = append(class.Children, field)
+					break
+				}
+			}
+		}
+	}
+}
+
+// processStructFieldDeclaration handles field declarations in structs
+func (p *TreeSitterProcessor) processStructFieldDeclaration(node *sitter.Node, source []byte, file *ir.DistilledFile, structNode *ir.DistilledStruct, visibility ir.Visibility) {
+	var typeStr string
+	modifiers := []ir.Modifier{}
+
+	// Extract type and modifiers (similar to class fields)
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		switch child.Type() {
+		case "type_identifier", "primitive_type":
+			typeStr = p.nodeText(child, source)
+		case "storage_class_specifier":
+			if p.nodeText(child, source) == "static" {
+				modifiers = append(modifiers, ir.ModifierStatic)
+			}
+		case "type_qualifier":
+			if p.nodeText(child, source) == "const" {
+				modifiers = append(modifiers, ir.ModifierConst)
+			}
+		case "field_identifier", "identifier":
+			field := &ir.DistilledField{
+				BaseNode: ir.BaseNode{
+					Location: p.nodeLocation(child),
+				},
+				Name:       p.nodeText(child, source),
+				Visibility: visibility,
+				Modifiers:  modifiers,
+			}
+
+			if typeStr != "" {
+				field.Type = &ir.TypeRef{
+					Name: typeStr,
+				}
+			}
+
+			structNode.Children = append(structNode.Children, field)
+		}
+	}
+}
+
+// processVariableDeclaration handles variable declarations
+func (p *TreeSitterProcessor) processVariableDeclaration(node *sitter.Node, source []byte, file *ir.DistilledFile, parent ir.DistilledNode) {
+	var typeStr string
+	modifiers := []ir.Modifier{}
+
+	// Extract type and modifiers
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		switch child.Type() {
+		case "type_identifier", "primitive_type":
+			typeStr = p.nodeText(child, source)
+		case "storage_class_specifier":
+			if p.nodeText(child, source) == "static" {
+				modifiers = append(modifiers, ir.ModifierStatic)
+			}
+		case "type_qualifier":
+			if p.nodeText(child, source) == "const" {
+				modifiers = append(modifiers, ir.ModifierConst)
+			}
+		case "identifier":
+			// Global variables are represented as fields
+			variable := &ir.DistilledField{
+				BaseNode: ir.BaseNode{
+					Location: p.nodeLocation(child),
+				},
+				Name:       p.nodeText(child, source),
+				Visibility: ir.VisibilityPublic, // Top-level variables are public
+				Modifiers:  modifiers,
+			}
+
+			if typeStr != "" {
+				variable.Type = &ir.TypeRef{
+					Name: typeStr,
+				}
+			}
+
+			p.addChild(file, parent, variable)
+		case "init_declarator":
+			// Handle initialized variables
+			for j := 0; j < int(child.ChildCount()); j++ {
+				declChild := child.Child(j)
+				if declChild.Type() == "identifier" {
+					variable := &ir.DistilledField{
+						BaseNode: ir.BaseNode{
+							Location: p.nodeLocation(declChild),
+						},
+						Name:       p.nodeText(declChild, source),
+						Visibility: ir.VisibilityPublic,
+						Modifiers:  modifiers,
+					}
+
+					if typeStr != "" {
+						variable.Type = &ir.TypeRef{
+							Name: typeStr,
+						}
+					}
+
+					p.addChild(file, parent, variable)
+					break
+				}
+			}
+		}
+	}
+}
+
+// processTemplateDeclaration handles template declarations
+func (p *TreeSitterProcessor) processTemplateDeclaration(node *sitter.Node, source []byte, file *ir.DistilledFile, parent ir.DistilledNode) {
+	// Extract template parameters for future use
+	// var templateParams []ir.TypeParam
+	// for i := 0; i < int(node.ChildCount()); i++ {
+	// 	child := node.Child(i)
+	// 	if child.Type() == "template_parameter_list" {
+	// 		templateParams = p.extractTemplateParameters(child, source)
+	// 		break
+	// 	}
+	// }
+
+	// Process the templated declaration
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		switch child.Type() {
+		case "class_specifier":
+			p.processClass(child, source, file, parent)
+			// TODO: Add template parameters to the class
+		case "function_definition":
+			p.processFunctionDefinition(child, source, file, parent)
+			// TODO: Add template parameters to the function
+		case "declaration":
+			p.processDeclaration(child, source, file, parent)
+		}
+	}
+}
+
+// extractTemplateParameters extracts template parameter names
+func (p *TreeSitterProcessor) extractTemplateParameters(node *sitter.Node, source []byte) []ir.TypeParam {
+	var params []ir.TypeParam
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		if child.Type() == "type_parameter_declaration" || child.Type() == "parameter_declaration" {
+			param := ir.TypeParam{}
+			for j := 0; j < int(child.ChildCount()); j++ {
+				if child.Child(j).Type() == "type_identifier" {
+					param.Name = p.nodeText(child.Child(j), source)
+					params = append(params, param)
+					break
+				}
+			}
+		}
+	}
+	return params
+}
+
+// processFriendDeclaration handles friend declarations
+func (p *TreeSitterProcessor) processFriendDeclaration(node *sitter.Node, source []byte, file *ir.DistilledFile, parent ir.DistilledNode) {
+	// For now, we'll add a comment indicating a friend declaration
+	comment := &ir.DistilledComment{
+		BaseNode: ir.BaseNode{
+			Location: p.nodeLocation(node),
+		},
+		Text:   "friend " + strings.TrimSpace(p.nodeText(node, source)),
+		Format: "line",
+	}
+	p.addChild(file, parent, comment)
+}
+
+// processComment handles comments
+func (p *TreeSitterProcessor) processComment(node *sitter.Node, source []byte, file *ir.DistilledFile, parent ir.DistilledNode) {
+	text := p.nodeText(node, source)
+	format := "line"
+	if strings.HasPrefix(text, "/*") {
+		format = "block"
+		if strings.HasPrefix(text, "/**") || strings.Contains(text, "*/") && strings.Contains(text, "@") {
+			format = "doc"
+		}
+	} else if strings.HasPrefix(text, "///") {
+		format = "doc"
+	}
+
+	comment := &ir.DistilledComment{
+		BaseNode: ir.BaseNode{
+			Location: p.nodeLocation(node),
+		},
+		Text:   text,
+		Format: format,
+	}
+	p.addChild(file, parent, comment)
+}
+
+// extractBaseClasses extracts base class names from inheritance clause
+func (p *TreeSitterProcessor) extractBaseClasses(node *sitter.Node, source []byte) []ir.TypeRef {
+	var bases []ir.TypeRef
+	
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		if child.Type() == "type_identifier" || child.Type() == "qualified_identifier" {
+			bases = append(bases, ir.TypeRef{
+				Name: p.nodeText(child, source),
+			})
+		} else if child.Type() == "base_class_clause" {
+			// Recursively extract from base_class_clause
+			bases = append(bases, p.extractBaseClasses(child, source)...)
+		}
+	}
+	
+	return bases
+}
+
+// extractDeclaratorPrefix extracts pointer/reference prefix
+func (p *TreeSitterProcessor) extractDeclaratorPrefix(node *sitter.Node, source []byte) string {
+	switch node.Type() {
+	case "pointer_declarator":
+		return "*"
+	case "reference_declarator":
+		return "&"
+	default:
+		return ""
+	}
+}
+
+// hasModifier checks if a modifier list contains a specific modifier
+func (p *TreeSitterProcessor) hasModifier(modifiers []ir.Modifier, modifier ir.Modifier) bool {
+	for _, m := range modifiers {
+		if m == modifier {
+			return true
+		}
+	}
+	return false
+}
+
+// Helper methods
+
+// nodeText extracts the text content of a node
+func (p *TreeSitterProcessor) nodeText(node *sitter.Node, source []byte) string {
+	return string(source[node.StartByte():node.EndByte()])
+}
+
+// nodeLocation creates a Location from a node
+func (p *TreeSitterProcessor) nodeLocation(node *sitter.Node) ir.Location {
+	return ir.Location{
+		StartLine:   int(node.StartPoint().Row) + 1,
+		EndLine:     int(node.EndPoint().Row) + 1,
+		StartColumn: int(node.StartPoint().Column) + 1,
+		EndColumn:   int(node.EndPoint().Column) + 1,
+	}
+}
+
+// addChild adds a child node to the appropriate parent
+func (p *TreeSitterProcessor) addChild(file *ir.DistilledFile, parent ir.DistilledNode, child ir.DistilledNode) {
+	if parent == nil {
+		file.Children = append(file.Children, child)
+	} else {
+		switch p := parent.(type) {
+		case *ir.DistilledClass:
+			p.Children = append(p.Children, child)
+		case *ir.DistilledStruct:
+			p.Children = append(p.Children, child)
+		case *ir.DistilledPackage:
+			p.Children = append(p.Children, child)
+		case *ir.DistilledEnum:
+			p.Children = append(p.Children, child)
+		}
+	}
+}

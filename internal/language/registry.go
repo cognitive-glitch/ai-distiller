@@ -1,10 +1,12 @@
 package language
 
 import (
+	"github.com/janreges/ai-distiller/internal/language/cpp"
 	"github.com/janreges/ai-distiller/internal/language/csharp"
 	"github.com/janreges/ai-distiller/internal/language/golang"
 	"github.com/janreges/ai-distiller/internal/language/java"
 	"github.com/janreges/ai-distiller/internal/language/javascript"
+	"github.com/janreges/ai-distiller/internal/language/kotlin"
 	"github.com/janreges/ai-distiller/internal/language/php"
 	"github.com/janreges/ai-distiller/internal/language/python"
 	"github.com/janreges/ai-distiller/internal/language/ruby"
@@ -76,9 +78,19 @@ func RegisterAll() error {
 		return err
 	}
 
+	// Register Kotlin processor
+	kotlinProc := kotlin.NewProcessor()
+	if err := processor.Register(kotlinProc); err != nil {
+		return err
+	}
+
+	// Register C++ processor
+	cppProc := cpp.NewProcessor()
+	if err := processor.Register(cppProc); err != nil {
+		return err
+	}
+
 	// TODO: Register other language processors
-	// - Kotlin
-	// - C/C++
 	// - etc.
 
 	return nil
