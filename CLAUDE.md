@@ -423,13 +423,139 @@ make test-quick    # Quick smoke tests
 
 Remember: A clean repository is a professional repository!
 
+## Parser Development Guide
+
+### Key Principles Learned from Go/TypeScript/Python/JavaScript
+
+This guide documents the successful patterns discovered during systematic parser development:
+
+#### 1. **Architecture Pattern: Tree-Sitter + Stripper Integration**
+
+All parsers follow this proven architecture:
+
+```go
+// 1. Tree-sitter AST parsing
+func (p *Processor) ProcessWithOptions(ctx context.Context, reader io.Reader, filename string, opts processor.ProcessOptions) (*ir.DistilledFile, error) {
+    // Parse with tree-sitter
+    file, err := p.treeparser.ProcessSource(ctx, source, filename)
+    if err != nil {
+        return nil, err
+    }
+    
+    // 2. Apply standardized stripper
+    stripperOpts := stripper.Options{
+        RemovePrivate:         !opts.IncludePrivate,
+        RemoveImplementations: !opts.IncludeImplementation,
+        RemoveComments:        !opts.IncludeComments,
+        RemoveImports:         !opts.IncludeImports,
+    }
+    
+    if /* anything to strip */ {
+        s := stripper.New(stripperOpts)
+        stripped := file.Accept(s)
+        return stripped.(*ir.DistilledFile), nil
+    }
+    
+    return file, nil
+}
+```
+
+#### 2. **Method Association Pattern**
+
+Methods must be properly nested under their classes/structs:
+
+- **Go**: Two-pass processing (collect types → associate methods)
+- **TypeScript**: Single-pass with proper AST traversal  
+- **Python**: Native tree-sitter handles this automatically
+- **JavaScript**: Class methods parsed within class body
+
+#### 3. **Interface/Protocol Satisfaction Detection**
+
+Each language has its own approach:
+
+- **Go**: Structural analysis comparing method sets
+- **TypeScript**: Explicit `implements` + disabled structural (too complex)
+- **Python**: Duck typing analysis with Protocol detection
+- **JavaScript**: Inheritance tracking via `extends`
+
+#### 4. **Visibility Handling**
+
+Language-specific visibility rules:
+
+- **Go**: Uppercase = public, lowercase = package-private
+- **TypeScript**: `public`/`private`/`protected` keywords
+- **Python**: `_private`, `__dunder__` = public API
+- **JavaScript**: `#private`, JSDoc `@private`, `_convention`
+
+#### 5. **Critical Implementation Details**
+
+**Tree-sitter Node Text Safety:**
+```go
+func (p *Parser) nodeText(node *sitter.Node) string {
+    if node == nil {
+        return ""
+    }
+    start := node.StartByte()
+    end := node.EndByte()
+    sourceLen := uint32(len(p.source))
+    if start > end || end > sourceLen {
+        return ""
+    }
+    return string(p.source[start:end])
+}
+```
+
+**Stripper Integration (CRITICAL):**
+- NEVER use custom `applyOptions` - always use standardized `stripper.New()`
+- Ensures consistent behavior across all languages
+
+**AST Traversal Pattern:**
+```go
+func (p *Parser) processNode(node *sitter.Node, file *ir.DistilledFile, parent ir.DistilledNode) {
+    switch node.Type() {
+    case "class_declaration", "abstract_class_declaration":
+        p.parseClass(node, file, parent)
+    case "function_declaration":
+        p.parseFunction(node, file, parent)
+    // ... other cases
+    default:
+        // Recurse into children
+        for i := 0; i < int(node.ChildCount()); i++ {
+            p.processNode(node.Child(i), file, parent)
+        }
+    }
+}
+```
+
+### 6. **Testing Validation Pattern**
+
+For each language:
+1. Create complex examples with inheritance, generics, privacy
+2. Test all stripping modes: full, `--strip implementation`, `--strip non-public`
+3. Validate method association and interface detection
+4. Compare outputs with AI assistant for accuracy review
+
+### 7. **Common Pitfalls & Solutions**
+
+❌ **Using line-based regex parsing** → ✅ Use tree-sitter AST  
+❌ **Custom option filtering** → ✅ Use standardized stripper  
+❌ **Missing method association** → ✅ Ensure proper parent/child IR structure  
+❌ **Broken node text extraction** → ✅ Add boundary checks  
+❌ **Ignoring language-specific features** → ✅ Handle generics, async, etc.
+
+### 8. **Performance Guidelines**
+
+- Single-pass AST traversal where possible
+- Bounded context (avoid full-program analysis)
+- Cache tree-sitter parsers
+- Stream processing for large files
+
 ## Next Steps & TODOs
 
-1. **Tree-sitter WASM integration** - Replace line-based parser
-2. **More languages** - Java, C#, Rust priority
-3. **Semantic features** - Call graphs, dependency analysis
-4. **Performance optimization** - Sub-50ms for small files
-5. **Release automation** - GitHub Actions for multi-platform builds
+1. **More languages** - Java, C#, Rust following these patterns
+2. **Semantic features** - Call graphs, dependency analysis  
+3. **Performance optimization** - Sub-50ms for small files
+4. **Release automation** - GitHub Actions for multi-platform builds
 
 Remember: The goal is to make code understandable for AI, not humans. Optimize for context efficiency!
 

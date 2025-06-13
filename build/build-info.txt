@@ -1,0 +1,20 @@
+AI Distiller Build Information
+=============================
+
+Build Time: 2025-06-13T14:36:28Z
+Build Mode: development
+Git Commit: d29da4df5f7cc4ae94bc82ebafcd458fb2a36966
+Git Branch: main
+Go Version: go version go1.23.8 linux/amd64
+
+Platforms Built:
+linux/amd64
+
+Build Command:
+LDFLAGS="-X 'main.version=dev' -X 'main.buildTime=2025-06-13T14:36:27Z'"
+CGO_ENABLED=1
+
+Files Created:
+ 
+aid 26516936
+build-info.txt 0

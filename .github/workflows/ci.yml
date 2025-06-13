@@ -1,0 +1,336 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run tests daily at 6 AM UTC
+    - cron: '0 6 * * *'
+
+env:
+  GO_VERSION: '1.21'
+
+jobs:
+  # Code quality checks
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Install golangci-lint
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.54.2
+
+      - name: Run golangci-lint
+        run: golangci-lint run --timeout=5m
+
+      - name: Check Go modules
+        run: |
+          go mod tidy
+          git diff --exit-code go.mod go.sum
+
+      - name: Check formatting
+        run: |
+          go fmt ./...
+          git diff --exit-code
+
+  # Run tests on multiple platforms and Go versions
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        go-version: ['1.20', '1.21']
+      fail-fast: false
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-${{ matrix.go-version }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.go-version }}-go-
+
+      - name: Run tests
+        run: |
+          go test -v -race -coverprofile=coverage.out ./...
+
+      - name: Upload coverage to Codecov
+        if: matrix.os == 'ubuntu-latest' && matrix.go-version == '1.21'
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.out
+          flags: unittests
+          name: codecov-umbrella
+
+  # Build verification
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target:
+          - { os: linux, arch: amd64 }
+          - { os: linux, arch: arm64 }
+          - { os: darwin, arch: amd64 }
+          - { os: darwin, arch: arm64 }
+          - { os: windows, arch: amd64 }
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Build binary
+        env:
+          GOOS: ${{ matrix.target.os }}
+          GOARCH: ${{ matrix.target.arch }}
+          CGO_ENABLED: 0
+        run: |
+          BINARY_EXT=""
+          if [ "${{ matrix.target.os }}" = "windows" ]; then
+            BINARY_EXT=".exe"
+          fi
+          
+          go build \
+            -ldflags="-s -w" \
+            -o "aid-${{ matrix.target.os }}-${{ matrix.target.arch }}${BINARY_EXT}" \
+            ./cmd/aid/
+
+      - name: Test binary execution (Unix)
+        if: matrix.target.os != 'windows'
+        run: |
+          if [ "${{ matrix.target.os }}" = "linux" ] && [ "${{ matrix.target.arch }}" = "amd64" ]; then
+            ./aid-${{ matrix.target.os }}-${{ matrix.target.arch }} --version || true
+            ./aid-${{ matrix.target.os }}-${{ matrix.target.arch }} --help || true
+          fi
+
+  # Integration tests with real codebases
+  integration:
+    runs-on: ubuntu-latest
+    needs: [lint, test, build]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Build aid binary
+        run: |
+          go build -o aid ./cmd/aid/
+
+      - name: Test with real Python codebase
+        run: |
+          # Clone a small Python project for testing
+          git clone --depth=1 https://github.com/psf/requests.git test-python
+          ./aid test-python --format text --strip comments > python-output.txt
+          
+          # Verify output contains expected patterns
+          grep -q "class" python-output.txt
+          grep -q "def " python-output.txt
+          echo "✅ Python processing test passed"
+
+      - name: Test with real JavaScript codebase
+        run: |
+          # Create a test JavaScript project
+          mkdir test-js
+          cat > test-js/index.js << 'EOF'
+          const express = require('express');
+          const app = express();
+          
+          class UserService {
+            constructor() {
+              this.users = [];
+            }
+            
+            addUser(user) {
+              this.users.push(user);
+            }
+          }
+          
+          app.get('/users', (req, res) => {
+            res.json({ users: [] });
+          });
+          
+          module.exports = { UserService };
+          EOF
+          
+          ./aid test-js --format text --strip implementation > js-output.txt
+          
+          # Verify output
+          grep -q "class UserService" js-output.txt
+          grep -q "addUser" js-output.txt
+          echo "✅ JavaScript processing test passed"
+
+      - name: Test performance with large file
+        run: |
+          # Create a large test file
+          mkdir large-test
+          for i in {1..100}; do
+            cat >> large-test/large.py << 'EOF'
+          class TestClass$i:
+              def method_$i(self):
+                  """This is a test method"""
+                  return f"result_{$i}"
+          
+          def function_$i():
+              """Test function"""
+              pass
+          
+          EOF
+          done
+          
+          # Test processing time
+          time ./aid large-test --format text --strip comments,implementation > large-output.txt
+          
+          # Verify it processed successfully
+          test -s large-output.txt
+          echo "✅ Large file performance test passed"
+
+      - name: Test multiple format outputs
+        run: |
+          # Test all supported formats
+          ./aid test-js --format text > output.txt
+          ./aid test-js --format md > output.md
+          ./aid test-js --format json > output.json
+          ./aid test-js --format xml > output.xml
+          
+          # Verify all outputs exist and are non-empty
+          test -s output.txt
+          test -s output.md
+          test -s output.json
+          test -s output.xml
+          
+          echo "✅ Multiple format test passed"
+
+      - name: Upload integration test artifacts
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: integration-test-outputs
+          path: |
+            *-output.txt
+            output.*
+
+  # Security scanning
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Gosec Security Scanner
+        uses: securecodewarrior/github-action-gosec@master
+        with:
+          args: './...'
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  # Dependency updates check
+  dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Check for dependency updates
+        run: |
+          go list -u -m all > current-deps.txt
+          
+          # Check if any dependencies have updates available
+          if grep -q "=>" current-deps.txt; then
+            echo "📦 Dependency updates available:"
+            grep "=>" current-deps.txt
+          else
+            echo "✅ All dependencies are up to date"
+          fi
+
+      - name: Upload dependency report
+        uses: actions/upload-artifact@v3
+        with:
+          name: dependency-report
+          path: current-deps.txt
+
+  # Summary job for branch protection
+  ci-success:
+    runs-on: ubuntu-latest
+    needs: [lint, test, build, integration, security, dependencies]
+    if: always()
+    
+    steps:
+      - name: Check all jobs status
+        run: |
+          if [ "${{ needs.lint.result }}" != "success" ] || \
+             [ "${{ needs.test.result }}" != "success" ] || \
+             [ "${{ needs.build.result }}" != "success" ] || \
+             [ "${{ needs.integration.result }}" != "success" ] || \
+             [ "${{ needs.security.result }}" != "success" ] || \
+             [ "${{ needs.dependencies.result }}" != "success" ]; then
+            echo "❌ One or more CI jobs failed"
+            exit 1
+          else
+            echo "✅ All CI jobs passed successfully!"
+          fi

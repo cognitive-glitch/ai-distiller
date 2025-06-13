@@ -1,0 +1,287 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (e.g., v1.0.0)'
+        required: true
+        type: string
+
+env:
+  BINARY_NAME: aid
+  GO_VERSION: '1.21'
+
+jobs:
+  # Run tests before release
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Run tests
+        run: |
+          go test -v -race -coverprofile=coverage.out ./...
+          go tool cover -html=coverage.out -o coverage.html
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: coverage.html
+
+  # Build binaries for multiple platforms
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [linux, darwin, windows]
+        arch: [amd64, arm64]
+        exclude:
+          # Windows ARM64 builds often have issues
+          - os: windows
+            arch: arm64
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Build binary
+        env:
+          GOOS: ${{ matrix.os }}
+          GOARCH: ${{ matrix.arch }}
+          CGO_ENABLED: 0
+        run: |
+          # Set version from tag or input
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.tag }}"
+          else
+            VERSION="${{ github.ref_name }}"
+          fi
+          
+          # Set binary extension for Windows
+          BINARY_EXT=""
+          if [ "${{ matrix.os }}" = "windows" ]; then
+            BINARY_EXT=".exe"
+          fi
+          
+          # Build with version info
+          go build \
+            -ldflags="-s -w -X 'main.version=${VERSION}' -X 'main.buildTime=$(date -u +%Y-%m-%dT%H:%M:%SZ)' -X 'main.commit=${GITHUB_SHA}'" \
+            -o "${BINARY_NAME}-${VERSION}-${{ matrix.os }}-${{ matrix.arch }}${BINARY_EXT}" \
+            ./cmd/aid/
+
+      - name: Upload binary artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: binaries
+          path: ${{ env.BINARY_NAME }}-*
+
+  # Create GitHub release with binaries
+  release:
+    needs: [test, build]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch full history for changelog
+
+      - name: Download binary artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: binaries
+          path: ./binaries
+
+      - name: Set release version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.tag }}"
+          else
+            VERSION="${{ github.ref_name }}"
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Get previous tag for changelog generation
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
+          
+          # Generate changelog
+          if [ -n "$PREVIOUS_TAG" ]; then
+            echo "## Changes since ${PREVIOUS_TAG}" > CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            git log --pretty="- %s (%h)" ${PREVIOUS_TAG}..HEAD >> CHANGELOG.md
+          else
+            echo "## Initial Release" > CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            echo "- Initial release of AI Distiller" >> CHANGELOG.md
+          fi
+          
+          # Add feature highlights
+          cat >> CHANGELOG.md << 'EOF'
+          
+          ## Key Features
+          
+          ### 🚀 Core Functionality
+          - **Multi-language support**: Python, JavaScript, TypeScript, Go, Java, C#, Rust
+          - **Fast processing**: 10MB codebase in <2 seconds  
+          - **Multiple output formats**: Markdown, Text, JSON, JSONL, XML
+          - **Flexible stripping**: Remove comments, implementations, private members
+          
+          ### 🔧 Advanced Features
+          - **Semantic analysis**: Symbol extraction and call graph generation
+          - **Tree-sitter parsing**: Accurate AST-based code analysis
+          - **Performance optimization**: Concurrent processing and intelligent caching
+          - **Single binary**: No runtime dependencies
+          
+          ### 📊 Output Examples
+          ```bash
+          aid                                    # Process current directory
+          aid src/                              # Process src directory  
+          aid --strip comments,implementation   # Remove comments and implementations
+          aid --format json --output api.json   # JSON output to file
+          aid --strip non-public --stdout       # Print only public members
+          ```
+          
+          ### 🛠 Installation
+          Download the appropriate binary for your platform from the release assets below.
+          
+          EOF
+
+      - name: Create checksums
+        run: |
+          cd binaries
+          sha256sum * > checksums.txt
+          cat checksums.txt
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: "AI Distiller ${{ steps.version.outputs.version }}"
+          body_path: CHANGELOG.md
+          draft: false
+          prerelease: ${{ contains(steps.version.outputs.version, '-') }}
+          files: |
+            binaries/*
+            binaries/checksums.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update latest release pointer
+        if: "!contains(steps.version.outputs.version, '-')"
+        run: |
+          # Create/update 'latest' tag to point to this release
+          git tag -f latest
+          git push -f origin latest
+
+  # Build and publish Docker image
+  docker:
+    needs: [test, build]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        if: env.DOCKER_USERNAME != ''
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+
+      - name: Set version for Docker
+        id: docker_version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.tag }}"
+          else
+            VERSION="${{ github.ref_name }}"
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Build and push Docker image
+        if: env.DOCKER_USERNAME != ''
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/ai-distiller:${{ steps.docker_version.outputs.version }}
+            ${{ secrets.DOCKER_USERNAME }}/ai-distiller:latest
+          build-args: |
+            VERSION=${{ steps.docker_version.outputs.version }}
+            BUILD_TIME=${{ github.run_id }}
+            COMMIT=${{ github.sha }}
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+
+  # Notify on completion
+  notify:
+    needs: [test, build, release]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: Notify success
+        if: needs.release.result == 'success'
+        run: |
+          echo "🎉 Release completed successfully!"
+          echo "Version: ${{ needs.release.outputs.version || github.ref_name }}"
+          echo "Download: https://github.com/${{ github.repository }}/releases/latest"
+
+      - name: Notify failure
+        if: needs.release.result == 'failure'
+        run: |
+          echo "❌ Release failed!"
+          echo "Check the workflow logs for details."
+          exit 1
