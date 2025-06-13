@@ -1,6 +1,7 @@
 package language
 
 import (
+	"github.com/janreges/ai-distiller/internal/language/csharp"
 	"github.com/janreges/ai-distiller/internal/language/golang"
 	"github.com/janreges/ai-distiller/internal/language/java"
 	"github.com/janreges/ai-distiller/internal/language/javascript"
@@ -69,9 +70,15 @@ func RegisterAll() error {
 		return err
 	}
 
+	// Register C# processor
+	csharpProc := csharp.NewProcessor()
+	if err := processor.Register(csharpProc); err != nil {
+		return err
+	}
+
 	// TODO: Register other language processors
-	// - C#
 	// - Kotlin
+	// - C/C++
 	// - etc.
 
 	return nil

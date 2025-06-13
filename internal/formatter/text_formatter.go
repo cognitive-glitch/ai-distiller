@@ -295,6 +295,14 @@ func (f *TextFormatter) formatEnum(w io.Writer, enum *ir.DistilledEnum, indent i
 
 func (f *TextFormatter) formatPackage(w io.Writer, pkg *ir.DistilledPackage, indent string) error {
 	fmt.Fprintf(w, "%spackage %s\n", indent, pkg.Name)
+	
+	// Format package children
+	for _, child := range pkg.Children {
+		if err := f.formatNode(w, child, len(indent)/4); err != nil {
+			return err
+		}
+	}
+	
 	return nil
 }
 
