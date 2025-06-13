@@ -135,6 +135,65 @@ perf-optimize:
 	@echo "==> Finding optimal performance configuration"
 	@go run ./cmd/performance-test -mode=config
 
+# NPM package version (read from npm/package.json)
+NPM_VERSION := $(shell node -p "require('./npm/package.json').version" 2>/dev/null || echo "0.0.0")
+
+# NPM release preparation
+npm-prepare:
+	@echo "==> Preparing NPM package (version $(NPM_VERSION))"
+	@mkdir -p npm
+	@cp LICENSE npm/ 2>/dev/null || echo "No LICENSE file found"
+	@echo "==> NPM package prepared in ./npm"
+
+# Build release binaries for NPM
+npm-build-binaries:
+	@echo "==> Building release binaries for all platforms"
+	@mkdir -p dist
+	# Linux AMD64
+	GOOS=linux GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o dist/aid-linux-amd64 ./cmd/aid
+	cd dist && tar -czf aid-linux-amd64.tar.gz aid-linux-amd64
+	# Linux ARM64
+	GOOS=linux GOARCH=arm64 $(GOBUILD) $(LDFLAGS) -o dist/aid-linux-arm64 ./cmd/aid
+	cd dist && tar -czf aid-linux-arm64.tar.gz aid-linux-arm64
+	# macOS AMD64
+	GOOS=darwin GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o dist/aid-darwin-amd64 ./cmd/aid
+	cd dist && tar -czf aid-darwin-amd64.tar.gz aid-darwin-amd64
+	# macOS ARM64 (M1/M2)
+	GOOS=darwin GOARCH=arm64 $(GOBUILD) $(LDFLAGS) -o dist/aid-darwin-arm64 ./cmd/aid
+	cd dist && tar -czf aid-darwin-arm64.tar.gz aid-darwin-arm64
+	# Windows AMD64
+	GOOS=windows GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o dist/aid-windows-amd64.exe ./cmd/aid
+	cd dist && tar -czf aid-windows-amd64.tar.gz aid-windows-amd64.exe
+	# Windows ARM64
+	GOOS=windows GOARCH=arm64 $(GOBUILD) $(LDFLAGS) -o dist/aid-windows-arm64.exe ./cmd/aid
+	cd dist && tar -czf aid-windows-arm64.tar.gz aid-windows-arm64.exe
+	@echo "==> Release binaries built in ./dist"
+
+# Test NPM package locally
+npm-test-local:
+	@echo "==> Testing NPM package locally"
+	cd npm && npm pack
+	@echo "==> Install the package locally with: npm install -g ./npm/*.tgz"
+
+# Publish to NPM (requires npm login)
+npm-publish:
+	@echo "==> Publishing to NPM"
+	@echo "==> Checking NPM login status..."
+	@npm whoami || (echo "Error: Not logged in to NPM. Run 'npm login' first." && exit 1)
+	cd npm && npm publish --access public
+	@echo "==> Published @janreges/ai-distiller-mcp@$(NPM_VERSION) to NPM"
+
+# Update NPM version
+npm-version:
+	@echo "==> Current NPM version: $(NPM_VERSION)"
+	@echo "==> To update version, run: cd npm && npm version <patch|minor|major>"
+
+# Complete NPM release process
+npm-release: npm-prepare npm-build-binaries
+	@echo "==> Creating GitHub release v$(NPM_VERSION)"
+	@echo "==> Upload binaries from ./dist to GitHub release"
+	@echo "==> Then run 'make npm-publish' to publish to NPM"
+
 # Show help
 help:
 	@echo "Available targets:"
@@ -157,6 +216,14 @@ help:
 	@echo "  test-resolver   - Run semantic resolver tests"
 	@echo "  perf-compare    - Compare performance modes"
 	@echo "  perf-optimize   - Find optimal configuration"
+	@echo ""
+	@echo "NPM Distribution targets:"
+	@echo "  npm-prepare     - Prepare NPM package structure"
+	@echo "  npm-build-binaries - Build binaries for all platforms"
+	@echo "  npm-test-local  - Create local NPM package for testing"
+	@echo "  npm-publish     - Publish package to NPM registry"
+	@echo "  npm-version     - Show current NPM package version"
+	@echo "  npm-release     - Full release process (prepare + build)"
 
 # Default target
 .DEFAULT_GOAL := build
