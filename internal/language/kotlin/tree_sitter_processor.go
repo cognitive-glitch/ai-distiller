@@ -58,6 +58,7 @@ func (p *TreeSitterProcessor) ProcessSource(ctx context.Context, source []byte, 
 // processNode recursively processes tree-sitter nodes
 func (p *TreeSitterProcessor) processNode(node *sitter.Node, source []byte, file *ir.DistilledFile, parent ir.DistilledNode) {
 	nodeType := node.Type()
+	
 
 	switch nodeType {
 	case "source_file":
@@ -86,6 +87,8 @@ func (p *TreeSitterProcessor) processNode(node *sitter.Node, source []byte, file
 		p.processPropertyDeclaration(node, source, file, parent)
 	case "secondary_constructor":
 		p.processSecondaryConstructor(node, source, file, parent)
+	case "type_alias":
+		p.processTypeAlias(node, source, file, parent)
 	case "primary_constructor":
 		// Primary constructors are handled as part of class declaration
 		// since they're integral to the class definition
@@ -190,6 +193,21 @@ func (p *TreeSitterProcessor) processImport(node *sitter.Node, source []byte, fi
 
 // processClassDeclaration handles class declarations (including data classes and sealed classes)
 func (p *TreeSitterProcessor) processClassDeclaration(node *sitter.Node, source []byte, file *ir.DistilledFile, parent ir.DistilledNode) {
+	// Check if this is actually an enum class
+	isEnum := false
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		if child.Type() == "enum" {
+			isEnum = true
+			break
+		}
+	}
+	
+	if isEnum {
+		p.processEnumDeclaration(node, source, file, parent)
+		return
+	}
+	
 	class := &ir.DistilledClass{
 		BaseNode: ir.BaseNode{
 			Location: p.nodeLocation(node),
@@ -266,6 +284,7 @@ func (p *TreeSitterProcessor) processEnumDeclaration(node *sitter.Node, source [
 		},
 		Children: []ir.DistilledNode{},
 	}
+	
 
 	// Extract modifiers, name
 	for i := 0; i < int(node.ChildCount()); i++ {
@@ -278,7 +297,7 @@ func (p *TreeSitterProcessor) processEnumDeclaration(node *sitter.Node, source [
 		case "primary_constructor":
 			// Enum classes can have constructors
 			p.processEnumPrimaryConstructor(child, source, enum)
-		case "enum_class_body":
+		case "enum_class_body", "class_body":
 			p.processEnumBody(child, source, file, enum)
 		}
 	}
@@ -525,7 +544,16 @@ func (p *TreeSitterProcessor) processPrimaryConstructor(node *sitter.Node, sourc
 			constructor.Parameters = append(constructor.Parameters, *param)
 			
 			// If parameter is val/var, it's also a property
-			if p.isPropertyParameter(child, source) {
+			// For data classes, ALL parameters are properties
+			isDataClass := false
+			for _, mod := range class.Modifiers {
+				if mod == ir.ModifierData {
+					isDataClass = true
+					break
+				}
+			}
+			
+			if isDataClass || p.isPropertyParameter(child, source) {
 				p.createPropertyFromParameter(child, source, class, param)
 			}
 		}
@@ -538,6 +566,48 @@ func (p *TreeSitterProcessor) processPrimaryConstructor(node *sitter.Node, sourc
 
 	// Add constructor to class
 	class.Children = append(class.Children, constructor)
+}
+
+// processTypeAlias handles type alias declarations
+func (p *TreeSitterProcessor) processTypeAlias(node *sitter.Node, source []byte, file *ir.DistilledFile, parent ir.DistilledNode) {
+	alias := &ir.DistilledTypeAlias{
+		BaseNode: ir.BaseNode{
+			Location: p.nodeLocation(node),
+		},
+		Visibility: ir.VisibilityPublic, // Default visibility
+	}
+
+	// Extract modifiers, name, and type
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		switch child.Type() {
+		case "modifiers":
+			// Extract visibility
+			for j := 0; j < int(child.ChildCount()); j++ {
+				mod := child.Child(j)
+				text := string(source[mod.StartByte():mod.EndByte()])
+				switch text {
+				case "public":
+					alias.Visibility = ir.VisibilityPublic
+				case "private":
+					alias.Visibility = ir.VisibilityPrivate
+				case "protected":
+					alias.Visibility = ir.VisibilityProtected
+				case "internal":
+					alias.Visibility = ir.VisibilityInternal
+				}
+			}
+		case "type_identifier":
+			alias.Name = string(source[child.StartByte():child.EndByte()])
+		case "type", "user_type", "function_type", "nullable_type":
+			// The actual type being aliased
+			alias.Type = ir.TypeRef{
+				Name: string(source[child.StartByte():child.EndByte()]),
+			}
+		}
+	}
+
+	p.addToParent(file, parent, alias)
 }
 
 // Helper methods
@@ -923,6 +993,15 @@ func (p *TreeSitterProcessor) isPropertyParameter(node *sitter.Node, source []by
 		child := node.Child(i)
 		if child.Type() == "val" || child.Type() == "var" {
 			return true
+		}
+		// Check binding_pattern_kind for val/var
+		if child.Type() == "binding_pattern_kind" {
+			for j := 0; j < int(child.ChildCount()); j++ {
+				grandchild := child.Child(j)
+				if grandchild.Type() == "val" || grandchild.Type() == "var" {
+					return true
+				}
+			}
 		}
 	}
 	return false
