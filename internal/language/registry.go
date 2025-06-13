@@ -2,6 +2,7 @@ package language
 
 import (
 	"github.com/janreges/ai-distiller/internal/language/golang"
+	"github.com/janreges/ai-distiller/internal/language/java"
 	"github.com/janreges/ai-distiller/internal/language/javascript"
 	"github.com/janreges/ai-distiller/internal/language/php"
 	"github.com/janreges/ai-distiller/internal/language/python"
@@ -62,9 +63,15 @@ func RegisterAll() error {
 		return err
 	}
 
+	// Register Java processor
+	javaProc := java.NewProcessor()
+	if err := processor.Register(javaProc); err != nil {
+		return err
+	}
+
 	// TODO: Register other language processors
-	// - Java
 	// - C#
+	// - Kotlin
 	// - etc.
 
 	return nil
