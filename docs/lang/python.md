@@ -442,7 +442,7 @@ detect-secrets scan --baseline .secrets.baseline
 
 ## Integration Examples
 
-### With Claude or GPT-4
+### Direct CLI Usage
 
 ```bash
 # Generate optimal context for AI assistants
@@ -459,6 +459,79 @@ $(cat context.txt)
 Please help me implement a new feature that...
 EOF
 ```
+
+### MCP Integration with Claude Desktop
+
+When using AI Distiller through MCP, Claude can directly access your codebase:
+
+**Setup** (in Claude Desktop config.json):
+```json
+{
+  "mcpServers": {
+    "ai-distiller": {
+      "command": "/usr/local/bin/aid",
+      "args": ["--mcp-server"],
+      "env": {
+        "AID_ROOT": "/Users/you/projects/myapp"
+      }
+    }
+  }
+}
+```
+
+**Example Conversation:**
+
+> **You**: I need to add a caching layer to our user authentication. First, show me the current structure of our auth module.
+
+> **Claude**: I'll analyze your authentication module structure using AI Distiller.
+
+*Claude automatically calls:*
+```
+distillFile("auth/authenticator.py", strip_implementation=true)
+listFiles("auth/", pattern="*.py")
+```
+
+*Claude receives the distilled structure and responds:*
+
+> Based on the analysis, your authentication module has:
+> - `Authenticator` class with methods: `authenticate()`, `validate_token()`, `refresh_token()`
+> - `TokenManager` class handling JWT operations
+> - `UserSession` dataclass for session management
+>
+> I can see that adding a caching layer would benefit the `validate_token()` method which currently makes database calls. Here's my implementation plan...
+
+**Advanced Example - Feature Implementation:**
+
+> **You**: We need to implement API rate limiting. Show me all middleware classes and where request handling happens.
+
+> **Claude**: Let me search for middleware patterns and request handling in your codebase.
+
+*Claude calls multiple MCP tools:*
+```
+search("class.*Middleware", is_regex=true)
+search("def process_request", is_regex=false)
+distillFile("middleware/base.py", strip_implementation=true)
+```
+
+> I found your middleware architecture:
+> 1. Base middleware class at `middleware/base.py` with `process_request()` and `process_response()`
+> 2. Existing middleware: `AuthMiddleware`, `CORSMiddleware`, `LoggingMiddleware`
+> 3. Request flow goes through `app.py:handle_request()` → middleware chain
+>
+> Here's a rate limiting middleware that fits your patterns:
+>
+> ```python
+> class RateLimitMiddleware(BaseMiddleware):
+>     def __init__(self, requests_per_minute: int = 60):
+>         self.cache = {}  # In production, use Redis
+>         self.limit = requests_per_minute
+>     
+>     def process_request(self, request: Request) -> Optional[Response]:
+>         client_id = self._get_client_id(request)
+>         if self._is_rate_limited(client_id):
+>             return Response(status=429, body="Rate limit exceeded")
+>         return None
+> ```
 
 ### With Documentation Tools
 

@@ -74,6 +74,30 @@ make build
 ./aid --format json --output structure.json
 ```
 
+### 🤖 Use with Claude Desktop (MCP)
+
+AI Distiller can integrate directly with Claude Desktop through the Model Context Protocol:
+
+```bash
+# Start MCP server (coming in v0.3.0)
+./aid --mcp-server
+
+# Or configure in Claude Desktop's config.json:
+{
+  "mcpServers": {
+    "ai-distiller": {
+      "command": "/path/to/aid",
+      "args": ["--mcp-server"],
+      "env": {
+        "AID_ROOT": "/path/to/your/project"
+      }
+    }
+  }
+}
+```
+
+Then in Claude: "Analyze the structure of the authentication module" → AI Distiller automatically provides the context!
+
 ## 📊 Real Performance Numbers
 
 <table>
@@ -234,6 +258,33 @@ aid . --format json | jq -r '.files[].symbols[].name' > symbols.txt
 aid ./api --strip "non-public,implementation,comments" --format md > api-ref.md
 ```
 
+### MCP Server Mode (Coming Soon)
+
+AI Distiller will offer native MCP integration for seamless AI assistant usage:
+
+```bash
+# Start as MCP server
+aid --mcp-server --port 50051
+
+# With specific root directory
+aid --mcp-server --root /path/to/project
+
+# Enable caching for large codebases
+aid --mcp-server --cache disk --cache-size 500
+```
+
+**Available MCP Tools:**
+- `distillFile` - Extract structure from a single file
+- `listFiles` - List files in directory with language stats
+- `getFileContent` - Read raw file content
+- `search` - Search codebase with regex support
+
+**Example Claude Prompts:**
+- "Show me all public methods in the UserService class"
+- "Find all TODO comments in the codebase"
+- "What's the structure of the authentication module?"
+- "Search for SQL queries that modify the users table"
+
 ### Configuration File
 
 Create `.aidconfig.yml` in your project root:
@@ -254,6 +305,7 @@ exclude:
 
 - [Installation Guide](docs/installation.md)
 - [CLI Reference](docs/cli-reference.md)
+- [MCP Integration Guide](docs/mcp-integration.md) 🆕
 - [Language Support](docs/lang/)
   - [Python](docs/lang/python.md)
   - [TypeScript](docs/lang/typescript.md)
