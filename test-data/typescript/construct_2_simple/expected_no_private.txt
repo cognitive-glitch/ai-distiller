@@ -1,0 +1,27 @@
+<file path="/home/janreges/ai-distiller/test-data/typescript/construct_2_simple/user_model.ts">
+export class UserModel {
+  public readonly id: number;
+  public username: string;
+
+  /**
+   * Creates a new user model.
+   * @param id The unique user ID.
+   * @param username The user's public name.
+   */
+  constructor(id: number, username: string) {
+    this.id = id;
+    this._validateEmail(email);
+  }
+
+  public getProfileInfo() {
+    return {
+      username: this.username,
+      profileUrl: this._generateProfileUrl(),
+    };
+  }
+
+  public recordLogin(): void {
+    this.lastLogin = new Date();
+  }
+}
+</file>

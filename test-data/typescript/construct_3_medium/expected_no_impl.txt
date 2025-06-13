@@ -1,0 +1,25 @@
+<file path="/home/janreges/ai-distiller/test-data/typescript/construct_3_medium/notification_service.ts">
+// Interface for any object that can receive a notification payload.
+export interface INotifiable<P> {
+  handleNotification(payload: P): void;
+}
+
+// Generic payload structure
+export type NotificationPayload<T> = {
+  recipient: T;
+  message: string;
+  timestamp: Date;
+};
+
+abstract class BaseNotificationService {
+  protected transportName: string;
+  constructor(transportName: string);
+  public abstract send<T extends { id: string | number }>(payload: NotificationPayload<T>): Promise<boolean>;
+  protected log(message: string): void;
+}
+
+export class EmailNotificationService extends BaseNotificationService {
+  constructor();
+  public send<T extends { id: string | number; email: string }>(payload: NotificationPayload<T>): Promise<boolean>;
+}
+</file>

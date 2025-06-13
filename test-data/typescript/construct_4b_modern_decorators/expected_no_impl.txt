@@ -1,0 +1,28 @@
+<file path="/home/janreges/ai-distiller/test-data/typescript/construct_4b_modern_decorators/plugin_manager_modern.ts">
+// The PluginSettings and IPlugin interface remain the same.
+export type PluginSettings = {
+  [K in 'timeout' | 'retries']?: K extends 'timeout' ? number : number;
+};
+
+export interface IPlugin {
+  name: string;
+  execute(data: any): void;
+}
+
+// A modern Method Decorator
+function LogExecution<T extends (...args: any[]) => any>(
+  originalMethod: T,
+  context: ClassMethodDecoratorContext
+): (this: any, ...args: Parameters<T>) => ReturnType<T>;
+
+export class PluginManager {
+  private plugins: Map<string, IPlugin>;
+  private settings: PluginSettings;
+  constructor(settings?: PluginSettings);
+
+  @LogExecution
+  public registerPlugin(plugin: IPlugin): void;
+
+  public runAll(data: any): void;
+}
+</file>

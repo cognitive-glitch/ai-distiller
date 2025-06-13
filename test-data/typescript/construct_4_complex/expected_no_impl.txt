@@ -1,0 +1,22 @@
+<file path="/home/janreges/ai-distiller/test-data/typescript/construct_4_complex/plugin_manager.ts">
+// Mapped type for flexible plugin configuration
+export type PluginSettings = {
+  [K in 'timeout' | 'retries']?: K extends 'timeout' ? number : number;
+};
+
+export interface IPlugin {
+  name: string;
+  execute(data: any): void;
+}
+
+export class PluginManager {
+  private plugins: Map<string, IPlugin>;
+  private settings: PluginSettings;
+  constructor(settings?: PluginSettings);
+
+  @LogExecution
+  public registerPlugin(plugin: IPlugin): void;
+
+  public runAll(data: any): void;
+}
+</file>

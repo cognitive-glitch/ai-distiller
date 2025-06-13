@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 
 	"github.com/janreges/ai-distiller/internal/ir"
 	"github.com/janreges/ai-distiller/internal/processor"
@@ -64,4 +65,15 @@ func (p *Processor) EnableTreeSitter() {
 // DisableTreeSitter disables tree-sitter parsing
 func (p *Processor) DisableTreeSitter() {
 	p.useTreeSitter = false
+}
+
+// ProcessFile processes a file by path
+func (p *Processor) ProcessFile(filename string, opts processor.ProcessOptions) (*ir.DistilledFile, error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open file: %w", err)
+	}
+	defer file.Close()
+
+	return p.ProcessWithOptions(context.Background(), file, filename, opts)
 }

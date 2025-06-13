@@ -1,0 +1,18 @@
+<file path="/home/janreges/ai-distiller/test-data/typescript/construct_1_basic/validation_utils.ts">
+// A type alias for clarity and reusability.
+export type UserID = string | number;
+
+/**
+ * Checks if a given string is a valid email format.
+ * @param email The string to validate.
+ * @returns True if the email is valid, false otherwise.
+ */
+export const isValidEmail: (email: string) => boolean;
+
+/**
+ * Formats a user ID into a canonical string.
+ * @param id The UserID to format.
+ * @returns A formatted string.
+ */
+export const formatUserID: (id: UserID) => string;
+</file>

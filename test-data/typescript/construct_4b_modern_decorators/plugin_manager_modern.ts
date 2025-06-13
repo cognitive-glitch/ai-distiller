@@ -1,0 +1,51 @@
+// The PluginSettings and IPlugin interface remain the same.
+export type PluginSettings = {
+  [K in 'timeout' | 'retries']?: K extends 'timeout' ? number : number;
+};
+
+export interface IPlugin {
+  name: string;
+  execute(data: any): void;
+}
+
+// A modern Method Decorator
+function LogExecution<T extends (...args: any[]) => any>(
+  originalMethod: T,
+  context: ClassMethodDecoratorContext
+) {
+  const methodName = String(context.name);
+
+  function replacementMethod(this: any, ...args: Parameters<T>): ReturnType<T> {
+    console.log(`Executing "${methodName}"...`);
+    const result = originalMethod.apply(this, args);
+    console.log(`Finished executing "${methodName}".`);
+    return result;
+  }
+
+  return replacementMethod;
+}
+
+export class PluginManager {
+  private plugins: Map<string, IPlugin> = new Map();
+
+  constructor(private settings: PluginSettings = {}) {}
+
+  @LogExecution
+  public registerPlugin(plugin: IPlugin): void {
+    if (this.plugins.has(plugin.name)) {
+      throw new Error(`Plugin "${plugin.name}" is already registered.`);
+    }
+    console.log(`Registering plugin: ${plugin.name} with settings`, this.settings);
+    this.plugins.set(plugin.name, plugin);
+  }
+
+  public runAll(data: any): void {
+    this.plugins.forEach(plugin => {
+      try {
+        plugin.execute(data);
+      } catch (error) {
+        console.error(`Plugin ${plugin.name} failed`, error);
+      }
+    });
+  }
+}
