@@ -4,6 +4,7 @@ import (
 	"github.com/janreges/ai-distiller/internal/language/javascript"
 	"github.com/janreges/ai-distiller/internal/language/php"
 	"github.com/janreges/ai-distiller/internal/language/python"
+	"github.com/janreges/ai-distiller/internal/language/typescript"
 	"github.com/janreges/ai-distiller/internal/processor"
 )
 
@@ -24,6 +25,12 @@ func RegisterAll() error {
 	// Register JavaScript processor
 	jsProc := javascript.NewProcessor()
 	if err := processor.Register(jsProc); err != nil {
+		return err
+	}
+
+	// Register TypeScript processor
+	tsProc := typescript.NewProcessor()
+	if err := processor.Register(tsProc); err != nil {
 		return err
 	}
 
