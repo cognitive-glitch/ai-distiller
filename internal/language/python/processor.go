@@ -28,7 +28,7 @@ func NewProcessor() *Processor {
 			"1.0.0",
 			[]string{".py", ".pyw", ".pyi"},
 		),
-		useTreeSitter: false, // Default to line-based parser for now
+		useTreeSitter: true, // Default to tree-sitter parser
 	}
 }
 
@@ -231,11 +231,23 @@ func (p *Processor) applyOptions(file *ir.DistilledFile, opts processor.ProcessO
 					return nil
 				}
 				if !opts.IncludeImplementation {
-					// Clear implementation
-					n.Implementation = ""
+					// For --strip implementation, preserve only the docstring (if any)
+					if docstring := extractDocstringFromImplementation(n.Implementation); docstring != "" {
+						n.Implementation = docstring
+					} else {
+						n.Implementation = ""
+					}
 				}
 			case *ir.DistilledClass:
 				if !opts.IncludePrivate && isPrivate(n.Name) {
+					return nil
+				}
+			case *ir.DistilledField:
+				if !opts.IncludePrivate && isPrivate(n.Name) {
+					return nil
+				}
+				// For --strip implementation, also remove private fields as they are implementation details
+				if !opts.IncludeImplementation && isPrivate(n.Name) {
 					return nil
 				}
 			}
@@ -250,6 +262,62 @@ func (p *Processor) applyOptions(file *ir.DistilledFile, opts processor.ProcessO
 	}
 
 	return file
+}
+
+// extractDocstringFromImplementation extracts docstring from function implementation
+func extractDocstringFromImplementation(implementation string) string {
+	if implementation == "" {
+		return ""
+	}
+	
+	lines := strings.Split(implementation, "\n")
+	if len(lines) == 0 {
+		return ""
+	}
+	
+	// Find the first non-empty line after any opening braces
+	startLine := -1
+	for i, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if trimmed != "" && trimmed != "{" {
+			startLine = i
+			break
+		}
+	}
+	
+	if startLine == -1 {
+		return ""
+	}
+	
+	// Check if first meaningful line is a docstring
+	firstLine := strings.TrimSpace(lines[startLine])
+	if !strings.HasPrefix(firstLine, `"""`) && !strings.HasPrefix(firstLine, `'''`) {
+		return ""
+	}
+	
+	// Find the end of the docstring
+	quote := `"""`
+	if strings.HasPrefix(firstLine, `'''`) {
+		quote = `'''`
+	}
+	
+	// Handle single-line docstring
+	if strings.Count(firstLine, quote) >= 2 {
+		return strings.TrimSpace(firstLine)
+	}
+	
+	// Handle multi-line docstring
+	var docstringLines []string
+	docstringLines = append(docstringLines, lines[startLine])
+	
+	for i := startLine + 1; i < len(lines); i++ {
+		docstringLines = append(docstringLines, lines[i])
+		if strings.Contains(lines[i], quote) {
+			break
+		}
+	}
+	
+	return strings.Join(docstringLines, "\n")
 }
 
 // Helper functions
@@ -269,7 +337,18 @@ func countLines(source []byte) int {
 
 func isPrivate(name string) bool {
 	// In Python, names starting with _ are considered private
-	return len(name) > 0 && name[0] == '_'
+	// BUT dunder methods (like __init__, __repr__) are public API
+	if len(name) == 0 {
+		return false
+	}
+	
+	// Dunder methods are public
+	if strings.HasPrefix(name, "__") && strings.HasSuffix(name, "__") {
+		return false
+	}
+	
+	// Single underscore prefix means private
+	return name[0] == '_'
 }
 
 // Mock node creators for testing

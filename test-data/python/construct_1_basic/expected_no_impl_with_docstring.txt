@@ -1,0 +1,18 @@
+<file path="/home/janreges/ai-distiller/test-data/python/construct_1_basic/validation_utils.py">
+"""A collection of simple, reusable validation functions for common data types
+in a web application context."""
+import re
++is_valid_email(email: str) -> bool:
+    """
+        Checks if a given string is a valid email address.
+        Args:
+            email: The string to validate.
+        Returns:
+            True if the email is valid, False otherwise.
+        """
++is_strong_password(password: str, min_length: int = 8) -> bool:
+    """
+        Validates password strength based on length and character types.
+        A strong password must contain at least one digit and one letter.
+        """
+</file>

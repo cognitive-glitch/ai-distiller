@@ -178,7 +178,7 @@ func TestIsPrivate(t *testing.T) {
 	}{
 		{"public_function", false},
 		{"_private_function", true},
-		{"__dunder_method__", true},
+		{"__dunder_method__", false},
 		{"", false},
 		{"normal_name", false},
 		{"_", true},

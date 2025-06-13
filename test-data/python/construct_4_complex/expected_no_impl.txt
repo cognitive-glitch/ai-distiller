@@ -1,0 +1,24 @@
+<file path="/home/janreges/ai-distiller/test-data/python/construct_4_complex/plugin_manager.py">
+"""A plugin manager that discovers, registers, and executes plugins.
+This demonstrates composition, custom decorators, and advanced typing."""
+from typing import Protocol, List, Dict, Callable, Any
+
+class Plugin(Protocol):
+    # A protocol defining the interface for a valid plugin.
+    +name = str
+    +def execute(self, data: Dict[str, Any]) -> None
++def register_plugin(name: str) -> Callable[[Callable[[], Plugin]], None]:
+    """A decorator to register a plugin creation function."""
+
+class DataProcessingPlugin:
+    +name = "data_processor"
+    +def execute(self, data: Dict[str, Any]) -> None
+@register_plugin(name=DataProcessingPlugin.name)
++def create_data_plugin() -> Plugin
+
+class PluginManager:
+    # Manages the lifecycle of plugins.
+    +def __init__(self)
+    +def activate(self, name: str) -> None
+    +def run_all(self, data: Dict[str, Any])
+</file>

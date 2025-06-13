@@ -68,6 +68,19 @@ func (p *Processor) ProcessFile(filename string, opts ProcessOptions) (*ir.Disti
 
 	// Process file
 	ctx := context.Background()
+	
+	// Check if processor supports ProcessWithOptions
+	if procWithOpts, ok := proc.(interface {
+		ProcessWithOptions(context.Context, io.Reader, string, ProcessOptions) (*ir.DistilledFile, error)
+	}); ok {
+		result, err := procWithOpts.ProcessWithOptions(ctx, file, filename, opts)
+		if err != nil {
+			return nil, fmt.Errorf("failed to process file: %w", err)
+		}
+		return result, nil
+	}
+	
+	// Fallback to regular Process method
 	result, err := proc.Process(ctx, file, filename)
 	if err != nil {
 		return nil, fmt.Errorf("failed to process file: %w", err)

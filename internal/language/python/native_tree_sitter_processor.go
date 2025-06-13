@@ -102,12 +102,20 @@ func (p *NativeTreeSitterProcessor) processNode(node *sitter.Node, file *ir.Dist
 	case "decorated_definition":
 		p.processDecoratedDefinition(node, file, parent)
 		
+	case "assignment":
+		p.processAssignment(node, file, parent)
+		
 	case "expression_statement":
-		// Check for docstrings
+		// Check for docstrings and assignments
 		if node.ChildCount() > 0 {
 			child := node.Child(0)
 			if child.Type() == "string" {
-				p.processDocstring(child, file, parent)
+				// Only process top-level docstrings (module-level), not function docstrings
+				if parent == nil { // parent == nil means it's at module level
+					p.processDocstring(child, file, parent)
+				}
+			} else if child.Type() == "assignment" {
+				p.processAssignment(child, file, parent)
 			}
 		}
 		
@@ -159,85 +167,48 @@ func (p *NativeTreeSitterProcessor) processImport(node *sitter.Node, file *ir.Di
 
 // processFromImport processes from...import statements
 func (p *NativeTreeSitterProcessor) processFromImport(node *sitter.Node, file *ir.DistilledFile, parent ir.DistilledNode) {
+	// Simple approach - just get the text and parse it ourselves
+	nodeText := p.getNodeText(node)
+	
 	imp := &ir.DistilledImport{
 		BaseNode: p.nodeLocation(node),
 		ImportType: "from",
 		Symbols: []ir.ImportedSymbol{},
 	}
 	
-	// Walk through children to find module and imports
-	foundFrom := false
-	foundImport := false
-	
-	for i := 0; i < int(node.ChildCount()); i++ {
-		child := node.Child(i)
-		childType := child.Type()
-		
-		if childType == "from" {
-			foundFrom = true
-			continue
-		}
-		
-		if childType == "import" {
-			foundImport = true
-			continue
-		}
-		
-		if foundFrom && !foundImport {
-			// This is the module name
-			if childType == "dotted_name" || childType == "identifier" || childType == "relative_import" {
-				imp.Module = p.getNodeText(child)
-			}
-		} else if foundImport {
-			// These are the imported symbols
-			switch childType {
-			case "aliased_import":
-				// import name as alias
-				if child.ChildCount() >= 3 {
-					nameNode := child.Child(0)
-					aliasNode := child.Child(2) // Skip "as"
-					if nameNode != nil {
-						symbol := ir.ImportedSymbol{
-							Name: p.getNodeText(nameNode),
-						}
-						if aliasNode != nil {
-							symbol.Alias = p.getNodeText(aliasNode)
-						}
-						imp.Symbols = append(imp.Symbols, symbol)
+	// Parse "from MODULE import SYMBOL[, SYMBOL2] [as ALIAS]"
+	if strings.HasPrefix(nodeText, "from ") && strings.Contains(nodeText, " import ") {
+		parts := strings.Split(nodeText, " import ")
+		if len(parts) == 2 {
+			// Extract module name
+			modulePart := strings.TrimPrefix(parts[0], "from ")
+			imp.Module = strings.TrimSpace(modulePart)
+			
+			// Extract symbols
+			symbolsPart := strings.TrimSpace(parts[1])
+			if symbolsPart == "*" {
+				// Star import - leave symbols empty
+			} else {
+				// Parse individual symbols
+				symbols := strings.Split(symbolsPart, ",")
+				for _, sym := range symbols {
+					sym = strings.TrimSpace(sym)
+					if sym == "" {
+						continue
 					}
-				}
-				
-			case "identifier":
-				// Direct import
-				imp.Symbols = append(imp.Symbols, ir.ImportedSymbol{
-					Name: p.getNodeText(child),
-				})
-				
-			case "*":
-				// from module import *
-				// Leave symbols empty to indicate star import
-				
-			case "import_from_as_names":
-				// Multiple imports: process children
-				for j := 0; j < int(child.ChildCount()); j++ {
-					subChild := child.Child(j)
-					if subChild.Type() == "aliased_import" {
-						if subChild.ChildCount() >= 3 {
-							nameNode := subChild.Child(0)
-							aliasNode := subChild.Child(2)
-							if nameNode != nil {
-								symbol := ir.ImportedSymbol{
-									Name: p.getNodeText(nameNode),
-								}
-								if aliasNode != nil {
-									symbol.Alias = p.getNodeText(aliasNode)
-								}
-								imp.Symbols = append(imp.Symbols, symbol)
-							}
+					
+					// Handle "symbol as alias"
+					if strings.Contains(sym, " as ") {
+						aliasParts := strings.Split(sym, " as ")
+						if len(aliasParts) == 2 {
+							imp.Symbols = append(imp.Symbols, ir.ImportedSymbol{
+								Name:  strings.TrimSpace(aliasParts[0]),
+								Alias: strings.TrimSpace(aliasParts[1]),
+							})
 						}
-					} else if subChild.Type() == "identifier" {
+					} else {
 						imp.Symbols = append(imp.Symbols, ir.ImportedSymbol{
-							Name: p.getNodeText(subChild),
+							Name: sym,
 						})
 					}
 				}
@@ -285,7 +256,7 @@ func (p *NativeTreeSitterProcessor) processClass(node *sitter.Node, file *ir.Dis
 	}
 	
 	// Set visibility
-	if strings.HasPrefix(class.Name, "_") {
+	if p.isPrivateName(class.Name) {
 		class.Visibility = ir.VisibilityPrivate
 	} else {
 		class.Visibility = ir.VisibilityPublic
@@ -355,17 +326,6 @@ func (p *NativeTreeSitterProcessor) processFunction(node *sitter.Node, file *ir.
 			
 		case "block":
 			// Function body
-			// Extract docstring if present  
-			if docstring := p.extractDocstring(child); docstring != "" {
-				// Create a docstring comment as first child
-				docComment := &ir.DistilledComment{
-					BaseNode: p.nodeLocation(child.Child(0)),
-					Text:     docstring,
-					Format:   "docstring",
-				}
-				p.addNode(file, parent, docComment)
-			}
-			
 			// Get implementation
 			startByte := child.StartByte()
 			endByte := child.EndByte()
@@ -376,7 +336,7 @@ func (p *NativeTreeSitterProcessor) processFunction(node *sitter.Node, file *ir.
 	}
 	
 	// Set visibility
-	if strings.HasPrefix(fn.Name, "_") {
+	if p.isPrivateName(fn.Name) {
 		fn.Visibility = ir.VisibilityPrivate
 	} else {
 		fn.Visibility = ir.VisibilityPublic
@@ -594,7 +554,7 @@ func (p *NativeTreeSitterProcessor) processAssignment(node *sitter.Node, file *i
 		}
 		
 		// Set visibility
-		if strings.HasPrefix(name, "_") {
+		if p.isPrivateName(name) {
 			field.Visibility = ir.VisibilityPrivate
 		} else {
 			field.Visibility = ir.VisibilityPublic
@@ -608,10 +568,14 @@ func (p *NativeTreeSitterProcessor) processAssignment(node *sitter.Node, file *i
 func (p *NativeTreeSitterProcessor) processDocstring(node *sitter.Node, file *ir.DistilledFile, parent ir.DistilledNode) {
 	text := p.getNodeText(node)
 	
-	// Remove quotes
-	text = strings.Trim(text, `"'`)
-	if strings.HasPrefix(text, `"""`) || strings.HasPrefix(text, `'''`) {
+	// Remove quotes - handle triple quotes first
+	if strings.HasPrefix(text, `"""`) && strings.HasSuffix(text, `"""`) && len(text) >= 6 {
 		text = text[3 : len(text)-3]
+	} else if strings.HasPrefix(text, `'''`) && strings.HasSuffix(text, `'''`) && len(text) >= 6 {
+		text = text[3 : len(text)-3]
+	} else {
+		// Handle single quotes
+		text = strings.Trim(text, `"'`)
 	}
 	
 	comment := &ir.DistilledComment{
@@ -641,6 +605,23 @@ func (p *NativeTreeSitterProcessor) processComment(node *sitter.Node, file *ir.D
 }
 
 // Helper methods
+
+// isPrivateName checks if a name should be considered private in Python
+func (p *NativeTreeSitterProcessor) isPrivateName(name string) bool {
+	// In Python, names starting with _ are considered private
+	// BUT dunder methods (like __init__, __repr__) are public API
+	if len(name) == 0 {
+		return false
+	}
+	
+	// Dunder methods are public
+	if strings.HasPrefix(name, "__") && strings.HasSuffix(name, "__") {
+		return false
+	}
+	
+	// Single underscore prefix means private
+	return name[0] == '_'
+}
 
 func (p *NativeTreeSitterProcessor) nodeLocation(node *sitter.Node) ir.BaseNode {
 	startPoint := node.StartPoint()

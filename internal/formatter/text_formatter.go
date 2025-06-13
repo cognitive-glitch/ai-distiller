@@ -156,9 +156,9 @@ func (f *TextFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, in
 		fmt.Fprintf(w, "%s@%s\n", indent, dec)
 	}
 	
-	// Format function signature with visibility prefix (no 'def' needed)
+	// Format function signature with visibility prefix and def keyword
 	visPrefix := getVisibilityPrefix(fn.Visibility)
-	fmt.Fprintf(w, "%s%s%s(", indent, visPrefix, fn.Name)
+	fmt.Fprintf(w, "%s%sdef %s(", indent, visPrefix, fn.Name)
 	
 	// Format parameters
 	params := make([]string, len(fn.Parameters))
