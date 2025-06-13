@@ -20,6 +20,20 @@ func NewTextFormatter(opts Options) Formatter {
 	}
 }
 
+// getVisibilityPrefix returns a UML notation prefix based on visibility
+func getVisibilityPrefix(visibility ir.Visibility) string {
+	switch visibility {
+	case ir.VisibilityPrivate, ir.VisibilityInternal, ir.VisibilityFilePrivate:
+		return "-"
+	case ir.VisibilityProtected:
+		return "#"
+	case ir.VisibilityPublic, ir.VisibilityOpen:
+		return "+"
+	default:
+		return "+" // default to public
+	}
+}
+
 // Format formats a distilled file as text
 func (f *TextFormatter) Format(w io.Writer, file *ir.DistilledFile) error {
 	return f.formatFile(w, file)
@@ -162,8 +176,9 @@ func (f *TextFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, in
 		fmt.Fprintf(w, "%s@%s\n", indent, dec)
 	}
 	
-	// Format function signature
-	fmt.Fprintf(w, "%sdef %s(", indent, fn.Name)
+	// Format function signature with visibility prefix (no 'def' needed)
+	visPrefix := getVisibilityPrefix(fn.Visibility)
+	fmt.Fprintf(w, "%s%s%s(", indent, visPrefix, fn.Name)
 	
 	// Format parameters
 	params := make([]string, len(fn.Parameters))
@@ -202,7 +217,8 @@ func (f *TextFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, in
 }
 
 func (f *TextFormatter) formatField(w io.Writer, field *ir.DistilledField, indent string) error {
-	fmt.Fprintf(w, "%s%s", indent, field.Name)
+	visPrefix := getVisibilityPrefix(field.Visibility)
+	fmt.Fprintf(w, "%s%s%s", indent, visPrefix, field.Name)
 	if field.Type != nil && field.Type.Name != "" {
 		fmt.Fprintf(w, ": %s", field.Type.Name)
 	}

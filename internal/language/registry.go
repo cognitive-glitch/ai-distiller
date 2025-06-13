@@ -1,6 +1,7 @@
 package language
 
 import (
+	"github.com/janreges/ai-distiller/internal/language/php"
 	"github.com/janreges/ai-distiller/internal/language/python"
 	"github.com/janreges/ai-distiller/internal/processor"
 )
@@ -10,6 +11,12 @@ func RegisterAll() error {
 	// Register Python processor
 	pythonProc := python.NewProcessor()
 	if err := processor.Register(pythonProc); err != nil {
+		return err
+	}
+
+	// Register PHP processor
+	phpProc := php.NewProcessor()
+	if err := processor.Register(phpProc); err != nil {
 		return err
 	}
 

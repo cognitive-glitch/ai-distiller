@@ -42,8 +42,14 @@ type ProcessOptions struct {
 	// IncludeImports includes import statements
 	IncludeImports bool
 
-	// IncludePrivate includes private/internal declarations
+	// IncludePrivate includes private/internal declarations (legacy - removes both private and protected)
 	IncludePrivate bool
+	
+	// RemovePrivateOnly removes only private members (not protected)
+	RemovePrivateOnly bool
+	
+	// RemoveProtectedOnly removes only protected members (not private)
+	RemoveProtectedOnly bool
 
 	// MaxDepth limits the depth of nested structures
 	MaxDepth int

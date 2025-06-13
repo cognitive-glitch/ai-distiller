@@ -8,7 +8,9 @@ import (
 
 // Options configures what to strip from the IR
 type Options struct {
-	RemovePrivate         bool
+	RemovePrivate         bool  // Removes both private and protected (legacy)
+	RemovePrivateOnly     bool  // Removes only private members
+	RemoveProtectedOnly   bool  // Removes only protected members
 	RemoveImplementations bool
 	RemoveComments        bool
 	RemoveImports         bool
@@ -97,8 +99,8 @@ func (s *Stripper) visitFile(n *ir.DistilledFile) *ir.DistilledFile {
 }
 
 func (s *Stripper) visitFunction(n *ir.DistilledFunction) ir.DistilledNode {
-	// Check if should remove private
-	if s.options.RemovePrivate && s.isPrivate(n.Name, n.Visibility) {
+	// Check if should remove by visibility
+	if s.shouldRemoveByVisibility(n.Name, n.Visibility) {
 		return nil
 	}
 	
@@ -126,8 +128,8 @@ func (s *Stripper) visitFunction(n *ir.DistilledFunction) ir.DistilledNode {
 }
 
 func (s *Stripper) visitClass(n *ir.DistilledClass) ir.DistilledNode {
-	// Check if should remove private
-	if s.options.RemovePrivate && s.isPrivate(n.Name, n.Visibility) {
+	// Check if should remove by visibility
+	if s.shouldRemoveByVisibility(n.Name, n.Visibility) {
 		return nil
 	}
 	
@@ -155,8 +157,8 @@ func (s *Stripper) visitClass(n *ir.DistilledClass) ir.DistilledNode {
 }
 
 func (s *Stripper) visitInterface(n *ir.DistilledInterface) ir.DistilledNode {
-	// Check if should remove private
-	if s.options.RemovePrivate && s.isPrivate(n.Name, n.Visibility) {
+	// Check if should remove by visibility
+	if s.shouldRemoveByVisibility(n.Name, n.Visibility) {
 		return nil
 	}
 	
@@ -180,8 +182,8 @@ func (s *Stripper) visitInterface(n *ir.DistilledInterface) ir.DistilledNode {
 }
 
 func (s *Stripper) visitStruct(n *ir.DistilledStruct) ir.DistilledNode {
-	// Check if should remove private
-	if s.options.RemovePrivate && s.isPrivate(n.Name, n.Visibility) {
+	// Check if should remove by visibility
+	if s.shouldRemoveByVisibility(n.Name, n.Visibility) {
 		return nil
 	}
 	
@@ -204,8 +206,8 @@ func (s *Stripper) visitStruct(n *ir.DistilledStruct) ir.DistilledNode {
 }
 
 func (s *Stripper) visitEnum(n *ir.DistilledEnum) ir.DistilledNode {
-	// Check if should remove private
-	if s.options.RemovePrivate && s.isPrivate(n.Name, n.Visibility) {
+	// Check if should remove by visibility
+	if s.shouldRemoveByVisibility(n.Name, n.Visibility) {
 		return nil
 	}
 	
@@ -227,8 +229,8 @@ func (s *Stripper) visitEnum(n *ir.DistilledEnum) ir.DistilledNode {
 }
 
 func (s *Stripper) visitField(n *ir.DistilledField) ir.DistilledNode {
-	// Check if should remove private
-	if s.options.RemovePrivate && s.isPrivate(n.Name, n.Visibility) {
+	// Check if should remove by visibility
+	if s.shouldRemoveByVisibility(n.Name, n.Visibility) {
 		return nil
 	}
 	
@@ -245,8 +247,8 @@ func (s *Stripper) visitField(n *ir.DistilledField) ir.DistilledNode {
 }
 
 func (s *Stripper) visitTypeAlias(n *ir.DistilledTypeAlias) ir.DistilledNode {
-	// Check if should remove private
-	if s.options.RemovePrivate && s.isPrivate(n.Name, n.Visibility) {
+	// Check if should remove by visibility
+	if s.shouldRemoveByVisibility(n.Name, n.Visibility) {
 		return nil
 	}
 	
@@ -266,22 +268,43 @@ func (s *Stripper) visitChildren(node ir.DistilledNode) ir.DistilledNode {
 	return node
 }
 
-// isPrivate checks if a node should be considered private
-func (s *Stripper) isPrivate(name string, visibility ir.Visibility) bool {
-	// Check explicit visibility first
-	switch visibility {
-	case ir.VisibilityPrivate, ir.VisibilityInternal, ir.VisibilityFilePrivate:
-		return true
-	case ir.VisibilityPublic, ir.VisibilityOpen:
-		return false
+// shouldRemoveByVisibility checks if a node should be removed based on visibility settings
+func (s *Stripper) shouldRemoveByVisibility(name string, visibility ir.Visibility) bool {
+	// Check specific visibility removal options first
+	if s.options.RemovePrivateOnly || s.options.RemoveProtectedOnly {
+		switch visibility {
+		case ir.VisibilityPrivate, ir.VisibilityInternal, ir.VisibilityFilePrivate:
+			// Remove if private-only flag is set
+			return s.options.RemovePrivateOnly
+		case ir.VisibilityProtected:
+			// Remove if protected-only flag is set
+			return s.options.RemoveProtectedOnly
+		case ir.VisibilityPublic, ir.VisibilityOpen:
+			return false
+		default:
+			// For implicit visibility, check language conventions
+			if strings.HasPrefix(name, "_") && s.options.RemovePrivateOnly {
+				return true
+			}
+			return false
+		}
 	}
-
-	// If no explicit visibility, use language conventions
-	// For now, we only check Python convention (underscore prefix)
-	if strings.HasPrefix(name, "_") {
-		return true
+	
+	// Legacy behavior: RemovePrivate removes both private and protected
+	if s.options.RemovePrivate {
+		switch visibility {
+		case ir.VisibilityPrivate, ir.VisibilityProtected, ir.VisibilityInternal, ir.VisibilityFilePrivate:
+			return true
+		case ir.VisibilityPublic, ir.VisibilityOpen:
+			return false
+		}
+		
+		// If no explicit visibility, use language conventions
+		if strings.HasPrefix(name, "_") {
+			return true
+		}
 	}
-
-	// Default to public if no explicit visibility and no underscore
+	
+	// Default to not removing
 	return false
 }

@@ -76,12 +76,15 @@ func (p *Processor) ProcessFile(filename string, opts ProcessOptions) (*ir.Disti
 	// Apply stripping options
 	stripOpts := stripper.Options{
 		RemovePrivate:         !opts.IncludePrivate,
+		RemovePrivateOnly:     opts.RemovePrivateOnly,
+		RemoveProtectedOnly:   opts.RemoveProtectedOnly,
 		RemoveImplementations: !opts.IncludeImplementation,
 		RemoveComments:        !opts.IncludeComments,
 		RemoveImports:         !opts.IncludeImports,
 	}
 
-	if stripOpts.RemovePrivate || stripOpts.RemoveImplementations || stripOpts.RemoveComments || stripOpts.RemoveImports {
+	if stripOpts.RemovePrivate || stripOpts.RemovePrivateOnly || stripOpts.RemoveProtectedOnly || 
+	   stripOpts.RemoveImplementations || stripOpts.RemoveComments || stripOpts.RemoveImports {
 		s := stripper.New(stripOpts)
 		strippedNode := result.Accept(s)
 		if file, ok := strippedNode.(*ir.DistilledFile); ok {

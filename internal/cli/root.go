@@ -62,7 +62,7 @@ func initFlags() {
 	rootCmd.Flags().StringVar(&outputFormat, "format", "md", "Output format: md|text|jsonl|json-structured|xml")
 
 	// Processing flags
-	rootCmd.Flags().StringSliceVar(&stripOptions, "strip", nil, "Remove items: comments,imports,implementation,non-public")
+	rootCmd.Flags().StringSliceVar(&stripOptions, "strip", nil, "Remove items: comments,imports,implementation,non-public,private,protected")
 	rootCmd.Flags().StringVar(&includeGlob, "include", "", "Include file patterns (default: all supported)")
 	rootCmd.Flags().StringVar(&excludeGlob, "exclude", "", "Exclude file patterns")
 	rootCmd.Flags().BoolVarP(&recursive, "recursive", "r", true, "Process directories recursively")
@@ -132,6 +132,8 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 		IncludeImports:        !contains(stripOptions, "imports"),
 		IncludeImplementation: !contains(stripOptions, "implementation"),
 		IncludePrivate:        !contains(stripOptions, "non-public"),
+		RemovePrivateOnly:     contains(stripOptions, "private"),
+		RemoveProtectedOnly:   contains(stripOptions, "protected"),
 	}
 
 	// Create the processor
@@ -221,7 +223,11 @@ func generateOutputFilename(path string, stripOptions []string) string {
 			case "implementation":
 				abbrev = append(abbrev, "nimpl")
 			case "non-public":
+				abbrev = append(abbrev, "npub")
+			case "private":
 				abbrev = append(abbrev, "npriv")
+			case "protected":
+				abbrev = append(abbrev, "nprot")
 			}
 		}
 		if len(abbrev) > 0 {

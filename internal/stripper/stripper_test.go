@@ -19,39 +19,53 @@ func TestNewStripper(t *testing.T) {
 }
 
 
-func TestIsPrivate(t *testing.T) {
-	stripper := New(Options{})
-	
+func TestShouldRemoveByVisibility(t *testing.T) {
 	tests := []struct {
 		name       string
+		options    Options
 		nodeName   string
 		visibility ir.Visibility
 		expected   bool
 	}{
-		// Explicit visibility
-		{"ExplicitPrivate", "MyClass", ir.VisibilityPrivate, true},
-		{"ExplicitInternal", "MyClass", ir.VisibilityInternal, true},
-		{"ExplicitFilePrivate", "MyClass", ir.VisibilityFilePrivate, true},
-		{"ExplicitPublic", "MyClass", ir.VisibilityPublic, false},
-		{"ExplicitOpen", "MyClass", ir.VisibilityOpen, false},
+		// Legacy RemovePrivate behavior (removes both private and protected)
+		{"LegacyPrivate", Options{RemovePrivate: true}, "MyClass", ir.VisibilityPrivate, true},
+		{"LegacyProtected", Options{RemovePrivate: true}, "MyClass", ir.VisibilityProtected, true},
+		{"LegacyInternal", Options{RemovePrivate: true}, "MyClass", ir.VisibilityInternal, true},
+		{"LegacyFilePrivate", Options{RemovePrivate: true}, "MyClass", ir.VisibilityFilePrivate, true},
+		{"LegacyPublic", Options{RemovePrivate: true}, "MyClass", ir.VisibilityPublic, false},
+		{"LegacyOpen", Options{RemovePrivate: true}, "MyClass", ir.VisibilityOpen, false},
 		
-		// Python convention
-		{"PythonPrivate", "_private_func", "", true},
-		{"PythonDunder", "__init__", "", true},
-		{"PythonPublic", "public_func", "", false},
+		// RemovePrivateOnly behavior
+		{"PrivateOnlyPrivate", Options{RemovePrivateOnly: true}, "MyClass", ir.VisibilityPrivate, true},
+		{"PrivateOnlyProtected", Options{RemovePrivateOnly: true}, "MyClass", ir.VisibilityProtected, false},
+		{"PrivateOnlyPublic", Options{RemovePrivateOnly: true}, "MyClass", ir.VisibilityPublic, false},
 		
-		// Go convention would need language context
-		{"GoLowercase", "privateFunc", "", false}, // Without language context, defaults to public
-		{"GoUppercase", "PublicFunc", "", false},
+		// RemoveProtectedOnly behavior
+		{"ProtectedOnlyPrivate", Options{RemoveProtectedOnly: true}, "MyClass", ir.VisibilityPrivate, false},
+		{"ProtectedOnlyProtected", Options{RemoveProtectedOnly: true}, "MyClass", ir.VisibilityProtected, true},
+		{"ProtectedOnlyPublic", Options{RemoveProtectedOnly: true}, "MyClass", ir.VisibilityPublic, false},
+		
+		// Python convention with RemovePrivate
+		{"PythonPrivate", Options{RemovePrivate: true}, "_private_func", "", true},
+		{"PythonDunder", Options{RemovePrivate: true}, "__init__", "", true},
+		{"PythonPublic", Options{RemovePrivate: true}, "public_func", "", false},
+		
+		// Python convention with RemovePrivateOnly
+		{"PythonPrivateOnly", Options{RemovePrivateOnly: true}, "_private_func", "", true},
+		{"PythonPublicOnly", Options{RemovePrivateOnly: true}, "public_func", "", false},
+		
+		// No removal options
+		{"NoRemoval", Options{}, "MyClass", ir.VisibilityPrivate, false},
 		
 		// Edge cases
-		{"EmptyName", "", "", false},
-		{"Underscore", "_", "", true},
+		{"EmptyName", Options{RemovePrivate: true}, "", "", false},
+		{"Underscore", Options{RemovePrivate: true}, "_", "", true},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := stripper.isPrivate(tt.nodeName, tt.visibility)
+			stripper := New(tt.options)
+			result := stripper.shouldRemoveByVisibility(tt.nodeName, tt.visibility)
 			assert.Equal(t, tt.expected, result)
 		})
 	}
@@ -92,6 +106,16 @@ func TestVisit(t *testing.T) {
 						BaseNode:   ir.BaseNode{},
 						Name:       "_private_field",
 						Visibility: "",
+					},
+					&ir.DistilledField{
+						BaseNode:   ir.BaseNode{},
+						Name:       "protected_field",
+						Visibility: ir.VisibilityProtected,
+					},
+					&ir.DistilledFunction{
+						BaseNode:   ir.BaseNode{},
+						Name:       "protected_method",
+						Visibility: ir.VisibilityProtected,
 					},
 				},
 			},
@@ -155,6 +179,64 @@ func TestVisit(t *testing.T) {
 						assert.Empty(t, fn.Implementation)
 					}
 				}
+			},
+		},
+		{
+			name: "StripPrivateOnly",
+			options: Options{
+				RemovePrivateOnly: true,
+			},
+			checkFunc: func(t *testing.T, result *ir.DistilledFile) {
+				// Should not have private members but should keep protected
+				hasProtected := false
+				hasPrivate := false
+				
+				for _, child := range result.Children {
+					if class, ok := child.(*ir.DistilledClass); ok {
+						for _, member := range class.Children {
+							if field, ok := member.(*ir.DistilledField); ok {
+								if field.Name == "protected_field" {
+									hasProtected = true
+								}
+								if field.Name == "_private_field" {
+									hasPrivate = true
+								}
+							}
+						}
+					}
+				}
+				
+				assert.True(t, hasProtected, "Should keep protected members")
+				assert.False(t, hasPrivate, "Should remove private members")
+			},
+		},
+		{
+			name: "StripProtectedOnly",
+			options: Options{
+				RemoveProtectedOnly: true,
+			},
+			checkFunc: func(t *testing.T, result *ir.DistilledFile) {
+				// Should not have protected members but should keep private
+				hasProtected := false
+				hasPrivate := false
+				
+				for _, child := range result.Children {
+					if class, ok := child.(*ir.DistilledClass); ok {
+						for _, member := range class.Children {
+							if field, ok := member.(*ir.DistilledField); ok {
+								if field.Name == "protected_field" {
+									hasProtected = true
+								}
+								if field.Name == "_private_field" {
+									hasPrivate = true
+								}
+							}
+						}
+					}
+				}
+				
+				assert.False(t, hasProtected, "Should remove protected members")
+				assert.True(t, hasPrivate, "Should keep private members")
 			},
 		},
 	}

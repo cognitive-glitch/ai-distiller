@@ -39,7 +39,7 @@ func TestGenerateOutputFilename(t *testing.T) {
 			name:         "AllOptions",
 			path:         "/home/user/myproject",
 			stripOptions: []string{"comments", "imports", "implementation", "non-public"},
-			expected:     ".myproject.ncom.nimp.nimpl.npriv.aid.txt",
+			expected:     ".myproject.ncom.nimp.nimpl.npub.aid.txt",
 		},
 		{
 			name:         "CurrentDirectory",
@@ -270,8 +270,11 @@ func TestStripOptionsAbbreviation(t *testing.T) {
 		{[]string{"comments"}, ".ncom"},
 		{[]string{"imports"}, ".nimp"},
 		{[]string{"implementation"}, ".nimpl"},
-		{[]string{"non-public"}, ".npriv"},
+		{[]string{"non-public"}, ".npub"},
+		{[]string{"private"}, ".npriv"},
+		{[]string{"protected"}, ".nprot"},
 		{[]string{"comments", "imports"}, ".ncom.nimp"},
+		{[]string{"private", "protected"}, ".npriv.nprot"},
 		{[]string{"unknown"}, ""}, // Unknown options are ignored
 	}
 
