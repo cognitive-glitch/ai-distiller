@@ -12,7 +12,6 @@ require (
 	github.com/tree-sitter/tree-sitter-javascript v0.23.1
 	github.com/tree-sitter/tree-sitter-php v0.23.12
 	github.com/tree-sitter/tree-sitter-python v0.23.2
-	github.com/tree-sitter/tree-sitter-rust v0.24.0
 )
 
 require (

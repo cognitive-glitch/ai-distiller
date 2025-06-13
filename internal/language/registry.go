@@ -6,6 +6,7 @@ import (
 	"github.com/janreges/ai-distiller/internal/language/php"
 	"github.com/janreges/ai-distiller/internal/language/python"
 	"github.com/janreges/ai-distiller/internal/language/rust"
+	"github.com/janreges/ai-distiller/internal/language/swift"
 	"github.com/janreges/ai-distiller/internal/language/typescript"
 	"github.com/janreges/ai-distiller/internal/processor"
 )
@@ -48,10 +49,15 @@ func RegisterAll() error {
 		return err
 	}
 
+	// Register Swift processor
+	swiftProc := swift.NewProcessor()
+	if err := processor.Register(swiftProc); err != nil {
+		return err
+	}
+
 	// TODO: Register other language processors
 	// - Java
 	// - C#
-	// - Swift
 	// - Ruby
 	// - etc.
 
