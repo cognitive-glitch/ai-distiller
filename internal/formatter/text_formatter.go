@@ -8,83 +8,55 @@ import (
 	"github.com/janreges/ai-distiller/internal/ir"
 )
 
-// TextFormatter formats IR as ultra-compact plain text for AI consumption
+// TextFormatter implements the text output formatter for AI consumption
 type TextFormatter struct {
-	options Options
+	BaseFormatter
 }
 
 // NewTextFormatter creates a new text formatter
-func NewTextFormatter(opts Options) Formatter {
+func NewTextFormatter(options Options) Formatter {
 	return &TextFormatter{
-		options: opts,
+		BaseFormatter: NewBaseFormatter(options),
 	}
 }
 
-// getVisibilityPrefix returns a UML notation prefix based on visibility
-func getVisibilityPrefix(visibility ir.Visibility) string {
-	switch visibility {
-	case ir.VisibilityPrivate, ir.VisibilityInternal, ir.VisibilityFilePrivate:
-		return "-"
-	case ir.VisibilityProtected:
-		return "#"
-	case ir.VisibilityPublic, ir.VisibilityOpen:
-		return "+"
-	default:
-		return "+" // default to public
-	}
-}
-
-// Format formats a distilled file as text
+// Format implements formatter.Formatter
 func (f *TextFormatter) Format(w io.Writer, file *ir.DistilledFile) error {
-	return f.formatFile(w, file)
-}
-
-// FormatMultiple formats multiple files as text
-func (f *TextFormatter) FormatMultiple(w io.Writer, files []*ir.DistilledFile) error {
-	for i, file := range files {
-		if i > 0 {
-			fmt.Fprintln(w) // Empty line between files
-		}
-		if err := f.Format(w, file); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// Extension returns the recommended file extension
-func (f *TextFormatter) Extension() string {
-	return ".txt"
-}
-
-func (f *TextFormatter) formatFile(w io.Writer, file *ir.DistilledFile) error {
-	// Start file tag
+	// Write file header
 	fmt.Fprintf(w, "<file path=\"%s\">\n", file.Path)
-
-	// Format all children
+	
+	// Write file contents
 	for _, child := range file.Children {
 		if err := f.formatNode(w, child, 0); err != nil {
 			return err
 		}
 	}
-
-	// End file tag
+	
+	// Write file footer
 	fmt.Fprintln(w, "</file>")
+	
 	return nil
 }
 
-func (f *TextFormatter) formatDirectory(w io.Writer, dir *ir.DistilledDirectory) error {
-	// Format each file in the directory
-	for i, child := range dir.Children {
-		if file, ok := child.(*ir.DistilledFile); ok {
-			if i > 0 {
-				fmt.Fprintln(w) // Empty line between files
-			}
-			if err := f.Format(w, file); err != nil {
-				return err
-			}
+// FormatMultiple implements formatter.Formatter
+func (f *TextFormatter) FormatMultiple(w io.Writer, files []*ir.DistilledFile) error {
+	for _, file := range files {
+		if err := f.Format(w, file); err != nil {
+			return err
 		}
+		fmt.Fprintln(w) // Add blank line between files
 	}
+	return nil
+}
+
+// Extension implements formatter.Formatter
+func (f *TextFormatter) Extension() string {
+	return "txt"
+}
+
+// FormatError implements formatter.Formatter
+func (f *TextFormatter) FormatError(w io.Writer, err error) error {
+	fmt.Fprintf(w, "ERROR: %v\n", err)
 	return nil
 }
 
@@ -102,6 +74,14 @@ func (f *TextFormatter) formatNode(w io.Writer, node ir.DistilledNode, indent in
 		return f.formatField(w, n, indentStr)
 	case *ir.DistilledComment:
 		return f.formatComment(w, n, indentStr)
+	case *ir.DistilledInterface:
+		return f.formatInterface(w, n, indent)
+	case *ir.DistilledTypeAlias:
+		return f.formatTypeAlias(w, n, indentStr)
+	case *ir.DistilledEnum:
+		return f.formatEnum(w, n, indent)
+	case *ir.DistilledPackage:
+		return f.formatPackage(w, n, indentStr)
 	default:
 		// Skip unknown nodes
 		return nil
@@ -195,14 +175,14 @@ func (f *TextFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, in
 	fmt.Fprintf(w, "%s)", strings.Join(params, ", "))
 	
 	// Format return type
-	if fn.Returns != nil && fn.Returns.Name != "" {
+	if fn.Returns != nil {
 		fmt.Fprintf(w, " -> %s", fn.Returns.Name)
 	}
 	
-	// Format body
+	// Format implementation
 	if fn.Implementation != "" {
 		fmt.Fprintln(w, ":")
-		// Add proper indentation to implementation
+		// Indent implementation
 		lines := strings.Split(fn.Implementation, "\n")
 		for _, line := range lines {
 			if line != "" {
@@ -217,14 +197,27 @@ func (f *TextFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, in
 }
 
 func (f *TextFormatter) formatField(w io.Writer, field *ir.DistilledField, indent string) error {
+	// Format decorators
+	for _, dec := range field.Decorators {
+		fmt.Fprintf(w, "%s@%s\n", indent, dec)
+	}
+	
+	// Format field with visibility prefix
 	visPrefix := getVisibilityPrefix(field.Visibility)
-	fmt.Fprintf(w, "%s%s%s", indent, visPrefix, field.Name)
-	if field.Type != nil && field.Type.Name != "" {
+	modifiers := formatModifiers(field.Modifiers)
+	
+	fmt.Fprintf(w, "%s%s%s%s", indent, visPrefix, modifiers, field.Name)
+	
+	// Add type if present
+	if field.Type != nil {
 		fmt.Fprintf(w, ": %s", field.Type.Name)
 	}
+	
+	// Add default value if present
 	if field.DefaultValue != "" {
 		fmt.Fprintf(w, " = %s", field.DefaultValue)
 	}
+	
 	fmt.Fprintln(w)
 	return nil
 }
@@ -241,4 +234,110 @@ func (f *TextFormatter) formatComment(w io.Writer, comment *ir.DistilledComment,
 	}
 	
 	return nil
+}
+
+func (f *TextFormatter) formatInterface(w io.Writer, intf *ir.DistilledInterface, indent int) error {
+	indentStr := strings.Repeat("    ", indent)
+	
+	// Format interface declaration
+	fmt.Fprintf(w, "\n%sinterface %s", indentStr, intf.Name)
+	
+	// Add extends if any
+	if len(intf.Extends) > 0 {
+		bases := make([]string, len(intf.Extends))
+		for i, base := range intf.Extends {
+			bases[i] = base.Name
+		}
+		fmt.Fprintf(w, "(%s)", strings.Join(bases, ", "))
+	}
+	
+	fmt.Fprintln(w, ":")
+	
+	// Format interface body
+	if len(intf.Children) > 0 {
+		for _, child := range intf.Children {
+			if err := f.formatNode(w, child, indent+1); err != nil {
+				return err
+			}
+		}
+	} else {
+		fmt.Fprintf(w, "%s    pass\n", indentStr)
+	}
+	
+	return nil
+}
+
+func (f *TextFormatter) formatTypeAlias(w io.Writer, alias *ir.DistilledTypeAlias, indent string) error {
+	visPrefix := getVisibilityPrefix(alias.Visibility)
+	fmt.Fprintf(w, "%s%stype %s = %s\n", indent, visPrefix, alias.Name, alias.Type.Name)
+	return nil
+}
+
+func (f *TextFormatter) formatEnum(w io.Writer, enum *ir.DistilledEnum, indent int) error {
+	indentStr := strings.Repeat("    ", indent)
+	
+	// Format enum declaration
+	fmt.Fprintf(w, "\n%senum %s:\n", indentStr, enum.Name)
+	
+	// Format enum members
+	if len(enum.Children) > 0 {
+		for _, child := range enum.Children {
+			if err := f.formatNode(w, child, indent+1); err != nil {
+				return err
+			}
+		}
+	} else {
+		fmt.Fprintf(w, "%s    pass\n", indentStr)
+	}
+	
+	return nil
+}
+
+func (f *TextFormatter) formatPackage(w io.Writer, pkg *ir.DistilledPackage, indent string) error {
+	fmt.Fprintf(w, "%spackage %s\n", indent, pkg.Name)
+	return nil
+}
+
+// getVisibilityPrefix converts visibility to UML-style prefix
+func getVisibilityPrefix(vis ir.Visibility) string {
+	switch vis {
+	case ir.VisibilityPublic:
+		return "+"
+	case ir.VisibilityPrivate:
+		return "-"
+	case ir.VisibilityProtected:
+		return "#"
+	case ir.VisibilityInternal:
+		return "~"
+	default:
+		return "+"
+	}
+}
+
+// formatModifiers formats modifiers as a string
+func formatModifiers(modifiers []ir.Modifier) string {
+	if len(modifiers) == 0 {
+		return ""
+	}
+	
+	var mods []string
+	for _, mod := range modifiers {
+		switch mod {
+		case ir.ModifierStatic:
+			mods = append(mods, "static")
+		case ir.ModifierFinal:
+			mods = append(mods, "final")
+		case ir.ModifierAbstract:
+			mods = append(mods, "abstract")
+		case ir.ModifierAsync:
+			mods = append(mods, "async")
+		case ir.ModifierReadonly:
+			mods = append(mods, "readonly")
+		}
+	}
+	
+	if len(mods) > 0 {
+		return strings.Join(mods, " ") + " "
+	}
+	return ""
 }

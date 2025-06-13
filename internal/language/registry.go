@@ -1,6 +1,7 @@
 package language
 
 import (
+	"github.com/janreges/ai-distiller/internal/language/golang"
 	"github.com/janreges/ai-distiller/internal/language/javascript"
 	"github.com/janreges/ai-distiller/internal/language/php"
 	"github.com/janreges/ai-distiller/internal/language/python"
@@ -34,12 +35,18 @@ func RegisterAll() error {
 		return err
 	}
 
+	// Register Go processor
+	goProc := golang.NewProcessor()
+	if err := processor.Register(goProc); err != nil {
+		return err
+	}
+
 	// TODO: Register other language processors
-	// - Go
-	// - JavaScript/TypeScript
 	// - Java
 	// - C#
 	// - Rust
+	// - Swift
+	// - Ruby
 	// - etc.
 
 	return nil
