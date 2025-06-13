@@ -49,14 +49,16 @@ const (
 type Visibility string
 
 const (
-	VisibilityPublic      Visibility = "public"
-	VisibilityPrivate     Visibility = "private"
-	VisibilityProtected   Visibility = "protected"
-	VisibilityInternal    Visibility = "internal"
-	VisibilityPackage     Visibility = "package"
-	VisibilityFilePrivate Visibility = "fileprivate"
-	VisibilityOpen        Visibility = "open"
-	VisibilityFriend      Visibility = "friend"
+	VisibilityPublic           Visibility = "public"
+	VisibilityPrivate          Visibility = "private"
+	VisibilityProtected        Visibility = "protected"
+	VisibilityInternal         Visibility = "internal"
+	VisibilityPackage          Visibility = "package"
+	VisibilityFilePrivate      Visibility = "fileprivate"
+	VisibilityOpen             Visibility = "open"
+	VisibilityFriend           Visibility = "friend"
+	VisibilityProtectedInternal Visibility = "protected internal"  // C# protected internal
+	VisibilityPrivateProtected  Visibility = "private protected"   // C# private protected
 )
 
 // Modifier represents various modifiers

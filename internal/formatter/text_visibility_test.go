@@ -103,7 +103,7 @@ func TestTextFormatter_VisibilityPrefixes(t *testing.T) {
     -privateMethod()`,
 		},
 		{
-			name: "internal visibility treated as private",
+			name: "internal visibility distinct from private",
 			node: &ir.DistilledFile{
 				Path: "test.go",
 				Children: []ir.DistilledNode{
@@ -113,7 +113,7 @@ func TestTextFormatter_VisibilityPrefixes(t *testing.T) {
 					},
 				},
 			},
-			expected: "-internalFunc()",
+			expected: "~internalFunc()",
 		},
 	}
 
@@ -143,12 +143,14 @@ func TestGetVisibilityPrefix(t *testing.T) {
 		visibility ir.Visibility
 		expected   string
 	}{
-		{ir.VisibilityPublic, "+"},
-		{ir.VisibilityPrivate, "-"},
-		{ir.VisibilityProtected, "#"},
-		{ir.VisibilityInternal, "-"},
-		{ir.VisibilityFilePrivate, "-"},
-		{ir.VisibilityOpen, "+"},
+		{ir.VisibilityPublic, "+"},      // UML public
+		{ir.VisibilityPrivate, "-"},     // UML private
+		{ir.VisibilityProtected, "#"},   // UML protected
+		{ir.VisibilityInternal, "~"},    // UML package/internal (distinct from private)
+		{ir.VisibilityFilePrivate, "_"}, // Swift fileprivate -> file-scoped private
+		{ir.VisibilityOpen, "+"},        // Swift open -> treat as public
+		{ir.VisibilityProtectedInternal, "#_"}, // C# protected internal
+		{ir.VisibilityPrivateProtected, "-#"},  // C# private protected
 		{"", "+"}, // default/empty visibility
 	}
 

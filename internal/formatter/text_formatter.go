@@ -169,9 +169,9 @@ func (f *TextFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, in
 		fmt.Fprintf(w, "%s@%s\n", indent, dec)
 	}
 	
-	// Format function signature with visibility prefix and def keyword
+	// Format function signature with visibility prefix (no keyword needed)
 	visPrefix := getVisibilityPrefix(fn.Visibility)
-	fmt.Fprintf(w, "%s%sdef %s(", indent, visPrefix, fn.Name)
+	fmt.Fprintf(w, "%s%s%s(", indent, visPrefix, fn.Name)
 	
 	// Format parameters
 	params := make([]string, len(fn.Parameters))
@@ -323,15 +323,23 @@ func (f *TextFormatter) formatPackage(w io.Writer, pkg *ir.DistilledPackage, ind
 func getVisibilityPrefix(vis ir.Visibility) string {
 	switch vis {
 	case ir.VisibilityPublic:
-		return "+"
+		return "+"  // UML public
 	case ir.VisibilityPrivate:
-		return "-"
+		return "-"  // UML private
 	case ir.VisibilityProtected:
-		return "#"
+		return "#"  // UML protected
 	case ir.VisibilityInternal:
-		return "~"
+		return "~"  // UML package/internal (distinct from private)
+	case ir.VisibilityFilePrivate:
+		return "_"  // Swift fileprivate -> file-scoped private
+	case ir.VisibilityOpen:
+		return "+"   // Swift open -> treat as public
+	case ir.VisibilityProtectedInternal:
+		return "#_"  // C# protected internal -> combination of protected + internal
+	case ir.VisibilityPrivateProtected:
+		return "-#"  // C# private protected -> combination of private + protected
 	default:
-		return "+"
+		return "+"   // Default to public
 	}
 }
 
