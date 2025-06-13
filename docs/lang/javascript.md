@@ -36,53 +36,94 @@ While JavaScript is dynamically typed, AI Distiller extracts type information fr
  * @returns {User} The created user
  */
 function createUser(name, age) { ... }
+
+/**
+ * @param {Object} options - Configuration options
+ * @param {boolean} [options.cache=true] - Enable caching
+ * @returns {Promise<Data>} The fetched data
+ */
+async function fetchData(options) { ... }
 ```
 
-This appears in the distilled output with type annotations, making it easier for AI to understand the expected types.
+This appears in the distilled output with type annotations:
+- `+createUser(name: string, age: number) -> User`
+- `+async fetchData(options: Object) -> Promise<Data>`
+
+### Function Parameter Extraction
+
+The parser extracts all function parameters including:
+- Parameter names and types from JSDoc
+- Default parameter values
+- Rest parameters (`...args`)
+- Destructured parameters (shown as patterns)
 
 ### Modern JavaScript Support
 
 The parser supports modern JavaScript features including:
 - ES6+ syntax (arrow functions, destructuring, template literals)
-- Async/await and Promises
-- Generators and iterators
+- Async/await and Promises (with automatic `Promise` return type detection)
+- Generators and iterators (marked with `*` prefix)
 - ES6 modules and dynamic imports
 - JSX syntax for React components
+- Getters and setters in objects and classes
+- Static class members and private fields (`#private`)
+- Spread syntax in object literals (`...object`)
 
 ### Object Literal Analysis
 
-Object literals are parsed to show their structure with full method signatures:
+Object literals are parsed to show their structure with full method signatures including parameters, async/generator modifiers, and spread syntax:
 ```javascript
 const api = {
   name: 'MyAPI',
   getData(id) { ... },
-  async processData(input, options) { ... },
+  async processData(input, options = {}) { ... },
+  *generateItems(count) { ... },
   get status() { ... },
   set status(value) { ... }
 }
+
+const extended = {
+  ...api,
+  cache: new Map(),
+  async getCached(key) { ... }
+}
 ```
 
-Distills to: `+final api = { name, getData(id), processData(input, options), get status(), set status(value) }`
+Distills to:
+- `+final api = { name, getData(id), async processData(input, options), *generateItems(count), get status(), set status(value) }`
+- `+final extended = { ...api, cache, async getCached(key) -> Promise }`
 
-## Known Issues
+## What Works Well
 
-### Limited Recursive Parsing
+### Fully Supported Features
+- ✅ **Function signatures** with all parameters and default values
+- ✅ **Return types** from JSDoc `@returns` annotations
+- ✅ **Async/generator detection** with proper prefixes
+- ✅ **Object literal analysis** including methods and spread syntax
+- ✅ **ES6 classes** with constructors, methods, getters/setters
+- ✅ **Module exports** (both ES6 and CommonJS `module.exports`)
+- ✅ **JSDoc type extraction** for parameters and return values
+- ✅ **Private members** detection (`#private` and `_convention`)
 
-The parser uses a shallow parsing approach for performance. This means:
-- Nested objects are shown as opaque
-- IIFE (Immediately Invoked Function Expressions) are not analyzed for their return values
-- Complex destructuring in parameters may be simplified
+### Partially Supported Features
+- ⚠️ **Nested objects** - Only first level is analyzed
+- ⚠️ **Complex destructuring** - Shown as patterns, not fully expanded
+- ⚠️ **CommonJS patterns** - Basic `module.exports` works, complex patterns may not
 
-### CommonJS Support
+### Known Limitations
 
-While `module.exports` is detected and shown, the parser primarily focuses on ES6 modules. Complex CommonJS patterns may not be fully analyzed.
+#### Limited Recursive Parsing
+The parser uses a shallow parsing approach for performance:
+- Nested objects show only the first level of properties
+- IIFE (Immediately Invoked Function Expressions) internals are not analyzed
+- Function expressions assigned to properties show signatures but not deep analysis
 
-### Dynamic Patterns
-
+#### Dynamic Patterns
 JavaScript's dynamic nature means some patterns cannot be statically analyzed:
 - Dynamic property access: `obj[variable]`
 - Runtime module loading: `require(moduleName)`
 - eval() and Function constructor usage
+- Computed property names (except in method definitions)
 
 ## Real Examples
 
@@ -229,12 +270,14 @@ export default UserList;
     
 ```
 <file path="UserList.jsx">
-import react
-import prop-types
+import React as react from react
+import PropTypes as PropTypes from prop-types
 
 +final useUsers() -> Array
 
-+UserList({ title, onUserClick })
++UserList({ title, onUserClick }: Object)
+
++final UserList.propTypes = { title, onUserClick }
 
 # Exports: UserList
 </file>
@@ -295,19 +338,104 @@ export default ApiClient;
     
 ```
 <file path="api-client.js">
-import axios
+import axios from axios
 
 +final API_BASE = 'https://api.example.com'
 
-class ApiClient
+class ApiClient:
     +constructor(apiKey)
-    +async get(endpoint)
-    +async post(endpoint, data)
+    +async get(endpoint) -> Promise
+    +async post(endpoint, data) -> Promise
 
-+final createClient(apiKey)
-+async quickGet(endpoint)
++final createClient = (apiKey) => new ApiClient(apiKey)
++final async quickGet = async (endpoint) -> Promise
 
 # Exports: createClient, quickGet, ApiClient
+</file>
+```
+    
+  </blockquote></details>
+</blockquote></details>
+
+<details><summary>Advanced Features Example</summary><blockquote>
+  <details><summary>advanced-features.js - source code</summary><blockquote>
+    
+```javascript
+// Object with spread syntax and methods
+const baseApi = {
+    timeout: 5000,
+    retry: 3
+};
+
+const dataService = {
+    ...baseApi,
+    cache: new Map(),
+    
+    async getData(id, options = {}) {
+        // Implementation
+        return { id, ...options };
+    },
+    
+    *generateBatch(count = 10) {
+        for (let i = 0; i < count; i++) {
+            yield { id: i, data: `item-${i}` };
+        }
+    },
+    
+    get cacheSize() {
+        return this.cache.size;
+    },
+    
+    set maxCacheSize(value) {
+        this._maxCache = value;
+    }
+};
+
+// Class with private fields
+class SecureStore {
+    #encryptionKey;
+    #data = new Map();
+    
+    constructor(key) {
+        this.#encryptionKey = key;
+    }
+    
+    async store(key, value) {
+        const encrypted = await this.#encrypt(value);
+        this.#data.set(key, encrypted);
+    }
+    
+    async #encrypt(data) {
+        // Private method
+        return btoa(JSON.stringify(data));
+    }
+}
+
+/**
+ * @param {string[]} items - Array of items
+ * @param {Function} callback - Processing callback
+ * @returns {Promise<void>}
+ */
+async function processItems(items, callback) {
+    for (const item of items) {
+        await callback(item);
+    }
+}
+```
+    
+  </blockquote></details>
+  <details open><summary>Default compact AI-friendly version (`--strip 'non-public,comments,implementation'`)</summary><blockquote>
+    
+```
+<file path="advanced-features.js">
++final baseApi = { timeout, retry }
++final dataService = { ...baseApi, cache, async getData(id, options) -> Promise, *generateBatch(count), get cacheSize(), set maxCacheSize(value) }
+
+class SecureStore:
+    +constructor(key)
+    +async store(key, value) -> Promise
+
++async processItems(items: string[], callback: Function) -> Promise<void>
 </file>
 ```
     
