@@ -1,0 +1,10 @@
+<file path="/tmp/test-php-types.php">
+
+class TypeTest:
+    users: User[]
+    count: ?int
+    mixedType: string|int
+    def getUsers() -> User[]
+    def setUsers(users: User[]) -> void
+    def process(name: string, age: ?int) -> ?User
+</file>

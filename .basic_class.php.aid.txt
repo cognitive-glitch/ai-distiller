@@ -1,0 +1,84 @@
+# /home/janreges/ai-distiller/test-data/input/php/basic_class.php
+
+## Structure
+
+💬 *Basic PHP class for testing the distiller
+
+This file tests core PHP features including:
+- Classes with visibility modifiers
+- Methods and properties
+- Constants
+- Docblocks*
+📥 **Import** `App\Core\BaseModel`
+📥 **Import** `App\Traits\Timestampable`
+📥 **Import** `App\Interfaces\Jsonable`
+💬 *User model class
+
+@property string $name User's full name
+@property string $email User's email address*
+🏛️ **Class** `User` (extends `App\Core\BaseModel`, implements `App\Models\JsonableInterface`)
+  💬 *Uses traits: App\Traits\Timestampable*
+  📊 **Field** `TYPE_ADMIN` _static_ _final_ = `'admin'`
+  📊 **Field** `TYPE_USER` _static_ _final_ = `'user'`
+  📊 **Field** `TYPE_GUEST` _static_ _final_ = `'guest'`
+  📊 **Field** `name`
+  📊 **Field** `email` _protected_
+  📊 **Field** `password` _private_
+  📊 **Field** `attributes` _private_
+  🔧 **Function** `__construct`(`name`, `email`)
+    ```
+    {
+            $this->name = $name;
+            $this->email = $email;
+        }
+    ```
+  🔧 **Function** `getName`()
+    ```
+    {
+            return $this->name;
+        }
+    ```
+  🔧 **Function** `setName`(`name`)
+    ```
+    {
+            $this->name = $name;
+        }
+    ```
+  🔧 **Function** `getEmail` _protected_()
+    ```
+    {
+            return $this->email;
+        }
+    ```
+  🔧 **Function** `validatePassword` _private_(`password`)
+    ```
+    {
+            return strlen($password) >= 8;
+        }
+    ```
+  🔧 **Function** `toJson`()
+    ```
+    {
+            return json_encode([
+                'name' => $this->name,
+                'email' => $this->email,
+                'type' => self::TYPE_USER
+            ]);
+        }
+    ```
+  🔧 **Function** `fromArray` _static_(`data`)
+    ```
+    {
+            return new self($data['name'], $data['email']);
+        }
+    ```
+  🔧 **Function** `validate` _abstract_()
+💬 *Admin user extends regular user*
+🏛️ **Class** `AdminUser` _final_ (extends `App\Models\User`)
+  📊 **Field** `isSuperAdmin` _private_
+  🔧 **Function** `validate`()
+    ```
+    {
+            return !empty($this->name) && filter_var($this->email, FILTER_VALIDATE_EMAIL);
+        }
+    ```

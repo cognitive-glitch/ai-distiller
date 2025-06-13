@@ -1,6 +1,7 @@
 package language
 
 import (
+	"github.com/janreges/ai-distiller/internal/language/javascript"
 	"github.com/janreges/ai-distiller/internal/language/php"
 	"github.com/janreges/ai-distiller/internal/language/python"
 	"github.com/janreges/ai-distiller/internal/processor"
@@ -17,6 +18,12 @@ func RegisterAll() error {
 	// Register PHP processor
 	phpProc := php.NewProcessor()
 	if err := processor.Register(phpProc); err != nil {
+		return err
+	}
+
+	// Register JavaScript processor
+	jsProc := javascript.NewProcessor()
+	if err := processor.Register(jsProc); err != nil {
 		return err
 	}
 
