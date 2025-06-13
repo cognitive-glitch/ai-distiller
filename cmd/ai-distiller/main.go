@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/janreges/ai-distiller/internal/formatter"
 	"github.com/janreges/ai-distiller/internal/ir"
-	"github.com/janreges/ai-distiller/internal/language/python"
+	_ "github.com/janreges/ai-distiller/internal/language" // Register all language processors
 	"github.com/janreges/ai-distiller/internal/processor"
 	"github.com/janreges/ai-distiller/internal/stripper"
 	"github.com/spf13/cobra"
@@ -128,7 +127,14 @@ func runDistill(cmd *cobra.Command, args []string) error {
 			SymbolResolution:      true,
 		}
 
-		distilled, err := proc.ProcessFile(file, processOpts)
+		// Open file for processing
+		f, err := os.Open(file)
+		if err != nil {
+			return fmt.Errorf("failed to open %s: %w", file, err)
+		}
+		defer f.Close()
+		
+		distilled, err := proc.ProcessWithOptions(cmd.Context(), f, file, processOpts)
 		if err != nil {
 			return fmt.Errorf("failed to process %s: %w", file, err)
 		}
@@ -196,15 +202,13 @@ func runDistill(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func getProcessorForFile(filename string) (*python.Processor, error) {
-	ext := strings.ToLower(filepath.Ext(filename))
-	
-	switch ext {
-	case ".py":
-		return python.NewProcessor(), nil
-	default:
+func getProcessorForFile(filename string) (processor.LanguageProcessor, error) {
+	proc, ok := processor.GetByFilename(filename)
+	if !ok {
+		ext := filepath.Ext(filename)
 		return nil, fmt.Errorf("unsupported file type: %s", ext)
 	}
+	return proc, nil
 }
 
 func createListCommand() *cobra.Command {

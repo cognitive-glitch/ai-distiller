@@ -269,6 +269,9 @@ func (p *TreeSitterProcessor) processNode(node *sitter.Node, file *ir.DistilledF
 	case "function_declaration":
 		p.processFunction(node, file, parent, false)
 		
+	case "generator_function_declaration":
+		p.processFunction(node, file, parent, false)
+		
 	case "variable_declaration":
 		p.processVariableDeclaration(node, file, parent)
 		
@@ -343,16 +346,32 @@ func (p *TreeSitterProcessor) processNamedImports(node *sitter.Node, imp *ir.Dis
 		child := node.Child(i)
 		if child.Type() == "import_specifier" {
 			var name, alias string
-			for j := 0; j < int(child.ChildCount()); j++ {
-				grandchild := child.Child(j)
-				if grandchild.Type() == "identifier" {
-					if name == "" {
-						name = p.getNodeText(grandchild)
-					} else {
-						alias = p.getNodeText(grandchild)
+			
+			// Use field names for more reliable parsing
+			nameNode := child.ChildByFieldName("name")
+			if nameNode != nil {
+				name = p.getNodeText(nameNode)
+			}
+			
+			aliasNode := child.ChildByFieldName("alias")
+			if aliasNode != nil {
+				alias = p.getNodeText(aliasNode)
+			}
+			
+			// Fallback to positional if fields not available
+			if name == "" {
+				for j := 0; j < int(child.ChildCount()); j++ {
+					grandchild := child.Child(j)
+					if grandchild.Type() == "identifier" {
+						if name == "" {
+							name = p.getNodeText(grandchild)
+						} else {
+							alias = p.getNodeText(grandchild)
+						}
 					}
 				}
 			}
+			
 			imp.Symbols = append(imp.Symbols, ir.ImportedSymbol{
 				Name:  name,
 				Alias: alias,
@@ -845,8 +864,8 @@ func (p *TreeSitterProcessor) processVariableDeclarator(node *sitter.Node, file 
 		default:
 			// Initializer
 			if child.Type() != "=" && field.DefaultValue == "" {
-				// Check if it's a function expression or arrow function
-				if child.Type() == "function_expression" || child.Type() == "arrow_function" {
+				// Check if it's a function expression, generator function, or arrow function
+				if child.Type() == "function_expression" || child.Type() == "arrow_function" || child.Type() == "generator_function" {
 					// Store as a function instead
 					fn := &ir.DistilledFunction{
 						BaseNode:   p.nodeLocation(child),

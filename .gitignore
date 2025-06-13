@@ -1,2 +1,7 @@
 test_repos/
 differential_testing_results.json
+coverage.txt
+aid
+.*.aid.txt
+*.tmp
+*.log

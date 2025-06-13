@@ -384,6 +384,45 @@ make test-quick    # Quick smoke tests
 - Use 'o3' model (not 'o3-mini') for o3 conversations
 - Request deep thinking modes when appropriate
 
+## Git Commit Guidelines
+
+### CRITICAL: Pre-commit Checklist
+
+**Before EVERY commit, you MUST check for unwanted files:**
+
+1. **Run `git status` to see all changes**
+2. **Check for and remove:**
+   - Temporary debug files (*.tmp, *.log, debug.*)
+   - Built test binaries (aid, test executables)
+   - Test output files (.*.aid.txt in root directory)
+   - IDE/editor files (.vscode/, .idea/, *.swp)
+   - Personal test files not meant for the repo
+   - Any one-off debugging scripts
+
+3. **Use `.gitignore` properly:**
+   - Check if unwanted files should be in .gitignore
+   - Add patterns for commonly generated files
+   - Never commit files that should be ignored
+
+4. **Clean commit checklist:**
+   ```bash
+   # Before committing, run:
+   git status              # Check what will be committed
+   git diff --cached       # Review actual changes
+   ls -la                  # Look for unwanted files in root
+   find . -name "*.tmp"    # Find temporary files
+   find . -name "*.log"    # Find log files
+   ```
+
+5. **If you accidentally staged unwanted files:**
+   ```bash
+   git reset HEAD <file>   # Unstage specific file
+   git clean -n            # Preview what would be cleaned
+   git clean -f            # Remove untracked files (careful!)
+   ```
+
+Remember: A clean repository is a professional repository!
+
 ## Next Steps & TODOs
 
 1. **Tree-sitter WASM integration** - Replace line-based parser
