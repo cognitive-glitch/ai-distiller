@@ -109,6 +109,60 @@ class UserController
 	
 	// Should parse without errors
 	assert.Empty(t, file.Errors)
+	
+	// Find UserController class
+	var controller *ir.DistilledClass
+	for _, child := range file.Children {
+		if class, ok := child.(*ir.DistilledClass); ok && class.Name == "UserController" {
+			controller = class
+			break
+		}
+	}
+	require.NotNil(t, controller, "UserController class not found")
+	
+	// Check class has attribute
+	assert.NotEmpty(t, controller.Decorators, "UserController should have decorators")
+	assert.Contains(t, controller.Decorators[0], "Route", "UserController should have Route attribute")
+	
+	// Check constructor property promotion
+	fieldCount := 0
+	var apiKeyField *ir.DistilledField
+	for _, child := range controller.Children {
+		if field, ok := child.(*ir.DistilledField); ok {
+			fieldCount++
+			if field.Name == "apiKey" {
+				apiKeyField = field
+			}
+		}
+	}
+	assert.Equal(t, 2, fieldCount, "Expected 2 promoted properties")
+	require.NotNil(t, apiKeyField, "apiKey field not found")
+	assert.Equal(t, ir.VisibilityPrivate, apiKeyField.Visibility, "apiKey should be private")
+	
+	// Check for readonly modifier
+	hasReadonly := false
+	for _, mod := range apiKeyField.Modifiers {
+		if mod == ir.ModifierReadonly {
+			hasReadonly = true
+			break
+		}
+	}
+	assert.True(t, hasReadonly, "apiKey should have readonly modifier")
+	
+	// Check method with attribute
+	var showMethod *ir.DistilledFunction
+	for _, child := range controller.Children {
+		if fn, ok := child.(*ir.DistilledFunction); ok && fn.Name == "show" {
+			showMethod = fn
+			break
+		}
+	}
+	require.NotNil(t, showMethod, "show method not found")
+	assert.NotEmpty(t, showMethod.Decorators, "show method should have decorators")
+	
+	// Check union type parameter
+	assert.Len(t, showMethod.Parameters, 1, "show method should have 1 parameter")
+	assert.Contains(t, showMethod.Parameters[0].Type.Name, "|", "Parameter should have union type")
 }
 
 func TestProcessorNamespaceAndUse(t *testing.T) {
@@ -142,14 +196,27 @@ class UserService implements ServiceInterface
 	
 	// Check that imports are captured
 	importCount := 0
+	var loggableImport, cacheableImport *ir.DistilledImport
 	for _, child := range file.Children {
-		if _, ok := child.(*ir.DistilledImport); ok {
+		if imp, ok := child.(*ir.DistilledImport); ok {
 			importCount++
+			if strings.Contains(imp.Module, "Loggable") {
+				loggableImport = imp
+			}
+			if strings.Contains(imp.Module, "Cacheable") {
+				cacheableImport = imp
+			}
 		}
 	}
 	
 	// Should have at least some imports
 	assert.Greater(t, importCount, 0, "No imports found")
+	
+	// Check grouped use statements are parsed correctly
+	assert.NotNil(t, loggableImport, "Loggable import not found")
+	assert.NotNil(t, cacheableImport, "Cacheable import not found")
+	assert.Contains(t, loggableImport.Module, "App\\Traits\\Loggable")
+	assert.Contains(t, cacheableImport.Module, "App\\Traits\\Cacheable")
 }
 
 func TestProcessorTraits(t *testing.T) {
@@ -186,6 +253,36 @@ class User
 	
 	// Should have parsed traits and class
 	assert.GreaterOrEqual(t, len(file.Children), 3, "Expected at least 3 top-level nodes")
+	
+	// Check for trait markers
+	hasTraitMarker := false
+	for _, child := range file.Children {
+		if comment, ok := child.(*ir.DistilledComment); ok && comment.Text == "PHP Trait" {
+			hasTraitMarker = true
+			break
+		}
+	}
+	assert.True(t, hasTraitMarker, "PHP Trait marker not found")
+	
+	// Check for User class with trait use comment
+	var userClass *ir.DistilledClass
+	for _, child := range file.Children {
+		if class, ok := child.(*ir.DistilledClass); ok && class.Name == "User" {
+			userClass = class
+			break
+		}
+	}
+	require.NotNil(t, userClass, "User class not found")
+	
+	// Check for trait use comment in User class
+	hasTraitUse := false
+	for _, child := range userClass.Children {
+		if comment, ok := child.(*ir.DistilledComment); ok && strings.Contains(comment.Text, "Uses traits:") {
+			hasTraitUse = true
+			break
+		}
+	}
+	assert.True(t, hasTraitUse, "Trait use comment not found in User class")
 }
 
 func TestProcessorInterfaces(t *testing.T) {
@@ -234,6 +331,31 @@ class Model implements Serializable
 	
 	// Should have parsed interfaces and class
 	assert.GreaterOrEqual(t, len(file.Children), 4, "Expected at least 4 top-level nodes")
+	
+	// Check that interfaces are properly parsed as DistilledInterface
+	interfaceCount := 0
+	var jsonable, arrayable, serializable *ir.DistilledInterface
+	for _, child := range file.Children {
+		if intf, ok := child.(*ir.DistilledInterface); ok {
+			interfaceCount++
+			switch intf.Name {
+			case "Jsonable":
+				jsonable = intf
+			case "Arrayable":
+				arrayable = intf
+			case "Serializable":
+				serializable = intf
+			}
+		}
+	}
+	
+	assert.Equal(t, 3, interfaceCount, "Expected 3 interfaces")
+	assert.NotNil(t, jsonable, "Jsonable interface not found")
+	assert.NotNil(t, arrayable, "Arrayable interface not found")
+	assert.NotNil(t, serializable, "Serializable interface not found")
+	
+	// Check that Serializable extends other interfaces
+	assert.Equal(t, 2, len(serializable.Extends), "Serializable should extend 2 interfaces")
 }
 
 func TestProcessorFallbackToLineBased(t *testing.T) {

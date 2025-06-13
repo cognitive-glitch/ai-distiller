@@ -952,10 +952,13 @@ func (p *TreeSitterProcessor) processInterface(node *sitter.Node, file *ir.Disti
 		case "name":
 			intf.Name = p.getNodeText(child)
 			
-		case "interface_extends_clause":
+		case "interface_extends_clause", "base_clause":
 			// Interfaces can extend multiple interfaces
+			// Debug: print child types
+			//fmt.Printf("DEBUG: interface_extends_clause has %d children\n", child.ChildCount())
 			for j := 0; j < int(child.ChildCount()); j++ {
 				grandchild := child.Child(j)
+				//fmt.Printf("DEBUG: child[%d] type=%s text=%s\n", j, grandchild.Type(), p.getNodeText(grandchild))
 				if grandchild.Type() == "qualified_name" || grandchild.Type() == "name" {
 					// Don't resolve the full name, just use the short name or alias
 					// The imports are already tracked separately

@@ -151,7 +151,12 @@ Currently supports 12+ languages via tree-sitter:
 - **Beta**: Ruby, Swift, Kotlin, PHP, C++
 - **Coming Soon**: Zig, Scala, Clojure
 
-See [language-specific documentation](docs/lang/) for details.
+#### Language-Specific Documentation:
+- [Python](docs/lang/python.md) - Full Python 3.x support with type hints, async/await, decorators
+- [PHP](docs/lang/php.md) - PHP 7.4+ with PHP 8.x features (attributes, union types, enums)
+- More language guides coming soon!
+
+See [all language documentation](docs/lang/) for complete details.
 
 ## 🔒 Security Considerations
 
