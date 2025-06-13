@@ -1,0 +1,40 @@
+<file path="/home/janreges/ai-distiller/test-data/javascript/construct3_temp/cjs_module.js">
+# Private variable not exported
++final privateKey = "secret"
++legacyProcessor(data: any) -> processed:
+-_internalHelper()
+# CommonJS class pattern
++LegacyClass(name)
+# Export using CommonJS
+# module.exports = {
+    legacyProcessor,
+    version: "1.0-cjs",
+    LegacyClass,
+    // Dynamic export
+    getConfig: function() {
+        return {
+            mode: process.env.NODE_ENV || 'development',
+            helper: _internalHelper()
+        };
+    }
+}
+# Also export a single function as the module
+</file>
+
+<file path="/home/janreges/ai-distiller/test-data/javascript/construct3_temp/construct_3_modules.js">
+import path
+# Node built-in import
+import url
+# ES module specific features
++final __filename = fileURLToPath(import.meta.url)
++final __dirname = path.dirname(__filename)
++final esmProcessor(data: any)
++async dynamicCjsImport() -> Promise<any>
+# Named exports
++final MODULE_VERSION = '2.0-esm'
++getConfig() -> Config
+# Re-export pattern
+# Exports: esmProcessor as processor
+# Default export
+</file>
+

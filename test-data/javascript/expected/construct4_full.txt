@@ -1,0 +1,106 @@
+<file path="/home/janreges/ai-distiller/test-data/javascript/construct_4_react.jsx">
+import react
+import prop-types
++final useWindowWidth():
+    {
+        const [width, setWidth] = useState(window.innerWidth);
+        
+        useEffect(() => {
+            const handleResize = () => setWidth(window.innerWidth);
+            window.addEventListener('resize', handleResize);
+            
+            // Cleanup function
+            return () => window.removeEventListener('resize', handleResize);
+        }, []); // Empty dependency array
+        
+        return width;
+    }
++ComplexComponent({ title, items = [], onItemClick }):
+    {
+        const [count, setCount] = useState(0);
+        const [selectedId, setSelectedId] = useState(null);
+        const width = useWindowWidth();
+        
+        // Memoized computation
+        const expensiveValue = useMemo(() => {
+            console.log('Computing expensive value...');
+            return items.reduce((sum, item) => sum + item.name.length, 0);
+        }, [items]);
+        
+        // Callback with dependencies
+        const handleClick = useCallback((itemId) => {
+            setSelectedId(itemId);
+            setCount(c => c + 1);
+            onItemClick?.(itemId);
+        }, [onItemClick]);
+        
+        // Effect with cleanup
+        useEffect(() => {
+            if (selectedId) {
+                console.log(`Selected item: ${selectedId}`);
+            }
+        }, [selectedId]);
+        
+        // Conditional classes
+        const containerClass = `container ${width < 600 ? 'narrow' : 'wide'}`;
+        
+        return (
+            <div className={containerClass} data-testid="complex-component">
+                <header>
+                    <h1>{title}</h1>
+                    <span className="counter">Count: {count}</span>
+                </header>
+                
+                {/* Conditional rendering */}
+                {count > 5 && (
+                    <div className="alert">
+                        Count is greater than 5!
+                    </div>
+                )}
+                
+                {/* List rendering with keys */}
+                <ul className="item-list">
+                    {items.map(item => (
+                        <li 
+                            key={item.id}
+                            className={selectedId === item.id ? 'selected' : ''}
+                            onClick={() => handleClick(item.id)}
+                        >
+                            {item.name}
+                            {selectedId === item.id && <span> ✓</span>}
+                        </li>
+                    ))}
+                </ul>
+                
+                {/* Fragment usage */}
+                <>
+                    <p>Total characters in names: {expensiveValue}</p>
+                    <p>Window width: {width}px</p>
+                </>
+                
+                {/* Self-closing component */}
+                <ItemCounter count={count} />
+            </div>
+        );
+    }
+# PropTypes definition
+# Simple functional component
++final ItemCounter({ count })
+# Higher-order component
++final withLogging(WrappedComponent):
+    {
+        const WithLoggingComponent = (props) => {
+            useEffect(() => {
+                console.log(`${WrappedComponent.name} mounted`);
+                return () => console.log(`${WrappedComponent.name} unmounted`);
+            }, []);
+            
+            return <WrappedComponent {...props} />;
+        };
+        
+        WithLoggingComponent.displayName = `withLogging(${WrappedComponent.name})`;
+        return WithLoggingComponent;
+    }
+# Export components
+# Exports: useWindowWidth, ItemCounter, withLogging
+</file>

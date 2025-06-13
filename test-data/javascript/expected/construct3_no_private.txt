@@ -1,0 +1,79 @@
+<file path="/home/janreges/ai-distiller/test-data/javascript/construct3_temp/cjs_module.js">
+# Private variable not exported
++final privateKey = "secret"
++legacyProcessor(data: any) -> processed::
+    {
+        return { 
+            processed: data, 
+            timestamp: Date.now(),
+            _internal: privateKey // Uses private variable
+        };
+    }
+# CommonJS class pattern
++LegacyClass(name):
+    {
+        this.name = name;
+        this._id = Math.random();
+    }
+# Export using CommonJS
+# module.exports = {
+    legacyProcessor,
+    version: "1.0-cjs",
+    LegacyClass,
+    // Dynamic export
+    getConfig: function() {
+        return {
+            mode: process.env.NODE_ENV || 'development',
+            helper: _internalHelper()
+        };
+    }
+}
+# Also export a single function as the module
+</file>
+
+<file path="/home/janreges/ai-distiller/test-data/javascript/construct3_temp/construct_3_modules.js">
+import path
+# Node built-in import
+import url
+# ES module specific features
++final __filename = fileURLToPath(import.meta.url)
++final __dirname = path.dirname(__filename)
++final esmProcessor(data: any):
+    {
+        const file = path.basename(import.meta.url);
+        return { 
+            processed: data, 
+            sourceFile: file,
+            moduleType: 'ESM'
+        };
+    }
++async dynamicCjsImport() -> Promise<any>:
+    {
+        // Dynamic import of a CJS module from an ESM context
+        const cjsModule = await import('./cjs_module.js');
+        const { legacyProcessor, version, LegacyClass } = cjsModule.default || cjsModule;
+        
+        console.log(`Dynamically loaded CJS module version: ${version}`);
+        
+        // Use the imported CJS functionality
+        const instance = new LegacyClass('ESM-created');
+        return {
+            processed: legacyProcessor("dynamic_data"),
+            instance: instance.getName(),
+            staticCall: LegacyClass.staticMethod()
+        };
+    }
+# Named exports
++final MODULE_VERSION = '2.0-esm'
++getConfig() -> Config:
+    {
+        return {
+            environment: process.env.NODE_ENV || 'development',
+            debug: process.env.DEBUG === 'true'
+        };
+    }
+# Re-export pattern
+# Exports: esmProcessor as processor
+# Default export
+</file>
+

@@ -242,6 +242,12 @@ func (f *TextFormatter) formatField(w io.Writer, field *ir.DistilledField, inden
 }
 
 func (f *TextFormatter) formatComment(w io.Writer, comment *ir.DistilledComment, indent string) error {
+	// Special handling for export comments
+	if comment.Format == "export" {
+		fmt.Fprintf(w, "%s# %s\n", indent, comment.Text)
+		return nil
+	}
+	
 	// Format as Python comment or docstring
 	lines := strings.Split(comment.Text, "\n")
 	if len(lines) > 1 || strings.Contains(comment.Text, "\n") {

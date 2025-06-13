@@ -308,6 +308,8 @@ exclude:
   - [Python](docs/lang/python.md)
   - [TypeScript](docs/lang/typescript.md)
   - [Go](docs/lang/go.md)
+  - [JavaScript](docs/lang/javascript.md)
+  - [PHP](docs/lang/php.md)
   - [More...](docs/lang/)
 - [Output Formats](docs/formats.md)
 - [Performance Tuning](docs/performance.md)

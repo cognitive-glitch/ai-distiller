@@ -281,6 +281,10 @@ func (p *TreeSitterProcessor) processNode(node *sitter.Node, file *ir.DistilledF
 	case "comment":
 		p.processComment(node, file, parent)
 		
+	case "expression_statement":
+		// Check for module.exports = ...
+		p.processExpressionStatement(node, file, parent)
+		
 	default:
 		// Process children for other node types
 		for i := 0; i < int(node.ChildCount()); i++ {
@@ -884,6 +888,9 @@ func (p *TreeSitterProcessor) processVariableDeclarator(node *sitter.Node, file 
 					
 					p.addNode(file, parent, fn)
 					return
+				} else if child.Type() == "object" {
+					// Simple object literal analysis
+					field.DefaultValue = p.processObjectLiteral(child)
 				} else {
 					field.DefaultValue = p.getNodeText(child)
 				}
@@ -947,6 +954,33 @@ func (p *TreeSitterProcessor) processFunctionExpression(node *sitter.Node, fn *i
 			endByte := child.EndByte()
 			if int(startByte) < len(p.source) && int(endByte) <= len(p.source) {
 				fn.Implementation = string(p.source[startByte:endByte])
+			}
+		}
+	}
+}
+
+// processExpressionStatement processes expression statements, checking for module.exports
+func (p *TreeSitterProcessor) processExpressionStatement(node *sitter.Node, file *ir.DistilledFile, parent ir.DistilledNode) {
+	// Look for assignment expressions
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		if child.Type() == "assignment_expression" {
+			// Check if it's module.exports = ...
+			left := child.ChildByFieldName("left")
+			right := child.ChildByFieldName("right")
+			
+			if left != nil && right != nil {
+				leftText := p.getNodeText(left)
+				if leftText == "module.exports" {
+					// This is a module.exports assignment
+					// For now, just add as a comment to indicate it's exported
+					comment := &ir.DistilledComment{
+						BaseNode: p.nodeLocation(node),
+						Text:     fmt.Sprintf("module.exports = %s", p.getNodeText(right)),
+						Format:   "export",
+					}
+					p.addNode(file, parent, comment)
+				}
 			}
 		}
 	}
@@ -1021,6 +1055,254 @@ func (p *TreeSitterProcessor) addNode(file *ir.DistilledFile, parent ir.Distille
 	} else {
 		file.Children = append(file.Children, node)
 	}
+}
+
+// processObjectLiteral creates a simplified representation of an object literal
+func (p *TreeSitterProcessor) processObjectLiteral(node *sitter.Node) string {
+	var members []string
+	
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		childType := child.Type()
+		
+		// Skip punctuation nodes
+		if childType == "{" || childType == "}" || childType == "," {
+			continue
+		}
+		
+		if childType == "spread_element" {
+			// Handle spread syntax like ...otherObject
+			// The spread element has the entire "...identifier" as its text
+			spreadText := p.getNodeText(child)
+			if spreadText != "" {
+				members = append(members, spreadText)
+			}
+		} else if childType == "pair" {
+			// Get key
+			key := ""
+			
+			keyNode := child.ChildByFieldName("key")
+			valueNode := child.ChildByFieldName("value")
+			
+			if keyNode != nil {
+				key = p.getNodeText(keyNode)
+			}
+			
+			if valueNode != nil {
+				valueType := valueNode.Type()
+				if valueType == "function_expression" || valueType == "arrow_function" {
+					// It's a method - extract parameters, async prefix and return type
+					params := p.extractFunctionParams(valueNode)
+					returnType := p.extractReturnType(valueNode)
+					asyncPrefix := p.extractAsyncPrefix(valueNode)
+					
+					methodSig := fmt.Sprintf("%s%s(%s)", asyncPrefix, key, params)
+					if returnType != "" {
+						methodSig += " -> " + returnType
+					}
+					members = append(members, methodSig)
+				} else {
+					// It's a property
+					members = append(members, key)
+				}
+			}
+		} else if child.Type() == "method_definition" {
+			// Handle method definitions (including getters/setters)
+			methodStr := p.processMethodDefinition(child)
+			if methodStr != "" {
+				members = append(members, methodStr)
+			}
+		}
+	}
+	
+	if len(members) > 0 {
+		return fmt.Sprintf("{ %s }", strings.Join(members, ", "))
+	}
+	return "{}"
+}
+
+// extractFunctionParams extracts parameter names from a function node
+func (p *TreeSitterProcessor) extractFunctionParams(node *sitter.Node) string {
+	var params []string
+	
+	// Find formal_parameters node
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		if child.Type() == "formal_parameters" {
+			// Extract each parameter
+			for j := 0; j < int(child.ChildCount()); j++ {
+				paramNode := child.Child(j)
+				switch paramNode.Type() {
+				case "identifier":
+					params = append(params, p.getNodeText(paramNode))
+				case "assignment_pattern":
+					// Parameter with default value
+					for k := 0; k < int(paramNode.ChildCount()); k++ {
+						if paramNode.Child(k).Type() == "identifier" {
+							paramName := p.getNodeText(paramNode.Child(k))
+							// Find default value
+							var defaultVal string
+							for l := k + 1; l < int(paramNode.ChildCount()); l++ {
+								if paramNode.Child(l).Type() != "=" {
+									defaultVal = p.getNodeText(paramNode.Child(l))
+									break
+								}
+							}
+							if defaultVal != "" {
+								params = append(params, fmt.Sprintf("%s = %s", paramName, defaultVal))
+							} else {
+								params = append(params, paramName)
+							}
+							break
+						}
+					}
+				case "rest_pattern":
+					// ...args
+					for k := 0; k < int(paramNode.ChildCount()); k++ {
+						if paramNode.Child(k).Type() == "identifier" {
+							params = append(params, "..."+p.getNodeText(paramNode.Child(k)))
+						}
+					}
+				case "object_pattern", "array_pattern":
+					// Destructuring - just show the pattern
+					params = append(params, p.getNodeText(paramNode))
+				}
+			}
+			break
+		} else if child.Type() == "identifier" && node.Type() == "arrow_function" {
+			// Single parameter arrow function without parentheses
+			params = append(params, p.getNodeText(child))
+			break
+		}
+	}
+	
+	return strings.Join(params, ", ")
+}
+
+// processMethodDefinition processes method definitions including getters/setters
+func (p *TreeSitterProcessor) processMethodDefinition(node *sitter.Node) string {
+	var name, params string
+	var isGetter, isSetter, isAsync, isGenerator bool
+	
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		switch child.Type() {
+		case "get":
+			isGetter = true
+		case "set":
+			isSetter = true
+		case "async":
+			isAsync = true
+		case "*":
+			isGenerator = true
+		case "property_identifier":
+			name = p.getNodeText(child)
+		case "formal_parameters":
+			params = p.extractParametersFromNode(child)
+		}
+	}
+	
+	// Build method signature
+	prefix := ""
+	if isAsync {
+		prefix = "async "
+	}
+	if isGenerator {
+		prefix += "*"
+	}
+	
+	if isGetter {
+		return fmt.Sprintf("get %s()", name)
+	} else if isSetter {
+		if params == "" {
+			params = "value" // Default parameter name for setters
+		}
+		return fmt.Sprintf("set %s(%s)", name, params)
+	} else if name != "" {
+		// Check for return type from JSDoc
+		returnType := ""
+		nodeLine := int(node.StartPoint().Row) + 1
+		if jsdoc, exists := p.jsdocComments[nodeLine]; exists && jsdoc.returnType != "" {
+			returnType = jsdoc.returnType
+		} else if isAsync {
+			returnType = "Promise"
+		}
+		
+		methodSig := fmt.Sprintf("%s%s(%s)", prefix, name, params)
+		if returnType != "" {
+			methodSig += " -> " + returnType
+		}
+		return methodSig
+	}
+	
+	return ""
+}
+
+// extractParametersFromNode extracts parameters from a formal_parameters node
+func (p *TreeSitterProcessor) extractParametersFromNode(node *sitter.Node) string {
+	var params []string
+	
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		switch child.Type() {
+		case "identifier":
+			params = append(params, p.getNodeText(child))
+		case "assignment_pattern":
+			// Parameter with default value
+			for j := 0; j < int(child.ChildCount()); j++ {
+				if child.Child(j).Type() == "identifier" {
+					params = append(params, p.getNodeText(child.Child(j)))
+					break
+				}
+			}
+		}
+	}
+	
+	return strings.Join(params, ", ")
+}
+
+// extractReturnType extracts return type from JSDoc or async detection
+func (p *TreeSitterProcessor) extractReturnType(node *sitter.Node) string {
+	// Check if it's an async function
+	for i := 0; i < int(node.ChildCount()); i++ {
+		if node.Child(i).Type() == "async" {
+			// For now, just mark async functions as returning Promise
+			return "Promise"
+		}
+	}
+	
+	// Check JSDoc comments for return type
+	nodeLine := int(node.StartPoint().Row) + 1
+	if jsdoc, exists := p.jsdocComments[nodeLine]; exists && jsdoc.returnType != "" {
+		return jsdoc.returnType
+	}
+	
+	return ""
+}
+
+// extractAsyncPrefix checks if function is async or generator
+func (p *TreeSitterProcessor) extractAsyncPrefix(node *sitter.Node) string {
+	var isAsync, isGenerator bool
+	
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		switch child.Type() {
+		case "async":
+			isAsync = true
+		case "*":
+			isGenerator = true
+		}
+	}
+	
+	prefix := ""
+	if isAsync {
+		prefix = "async "
+	}
+	if isGenerator {
+		prefix += "*"
+	}
+	
+	return prefix
 }
 
 // Close cleans up resources
