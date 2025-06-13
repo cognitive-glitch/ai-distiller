@@ -78,6 +78,8 @@ func (p *TreeSitterProcessor) processNode(node *sitter.Node, source []byte, file
 		p.processFieldDeclaration(node, source, file, parent)
 	case "constructor_declaration":
 		p.processConstructorDeclaration(node, source, file, parent)
+	case "block_comment":
+		p.processJavaDocComment(node, source, file, parent)
 	default:
 		// Recursively process children
 		for i := 0; i < int(node.ChildCount()); i++ {
@@ -310,7 +312,7 @@ func (p *TreeSitterProcessor) processMethodDeclaration(node *sitter.Node, source
 		case "modifiers":
 			p.extractMethodModifiers(child, source, method)
 		case "type_parameters":
-			// TODO: Handle generic methods
+			p.extractMethodTypeParameters(child, source, method)
 		case "void_type":
 			method.Returns = &ir.TypeRef{Name: "void"}
 		case "type_identifier", "integral_type", "floating_point_type", "boolean_type":
@@ -579,32 +581,47 @@ func (p *TreeSitterProcessor) extractFieldModifiers(node *sitter.Node, source []
 // extractAnnotation extracts annotation information as decorator
 func (p *TreeSitterProcessor) extractAnnotation(node *sitter.Node, source []byte, decorators *[]string) {
 	var annName string
+	var annArgs []string
 
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		switch child.Type() {
-		case "identifier":
-			annName = "@" + string(source[child.StartByte():child.EndByte()])
+		case "identifier", "scoped_identifier":
+			annName = string(source[child.StartByte():child.EndByte()])
 		case "annotation_argument_list":
-			// For simplicity, just append the whole annotation with arguments
-			annName = "@" + string(source[node.StartByte()+1:node.EndByte()])
-			break
+			annArgs = p.extractAnnotationArguments(child, source)
 		}
 	}
 
 	if annName != "" {
-		*decorators = append(*decorators, annName)
+		fullAnnotation := "@" + annName
+		if len(annArgs) > 0 {
+			fullAnnotation += "(" + strings.Join(annArgs, ", ") + ")"
+		}
+		*decorators = append(*decorators, fullAnnotation)
 	}
 }
 
 // extractTypeParameters extracts generic type parameters
 func (p *TreeSitterProcessor) extractTypeParameters(node *sitter.Node, source []byte, class *ir.DistilledClass) {
-	// TODO: Extract and store type parameters
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		if child.Type() == "type_parameter" {
+			typeParam := p.extractTypeParameter(child, source)
+			class.TypeParams = append(class.TypeParams, *typeParam)
+		}
+	}
 }
 
 // extractInterfaceTypeParameters extracts generic type parameters for interfaces
 func (p *TreeSitterProcessor) extractInterfaceTypeParameters(node *sitter.Node, source []byte, iface *ir.DistilledInterface) {
-	// TODO: Extract and store type parameters
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		if child.Type() == "type_parameter" {
+			typeParam := p.extractTypeParameter(child, source)
+			iface.TypeParams = append(iface.TypeParams, *typeParam)
+		}
+	}
 }
 
 // extractSuperclass extracts the superclass
@@ -907,3 +924,165 @@ func (p *TreeSitterProcessor) addToParent(file *ir.DistilledFile, parent ir.Dist
 		file.Children = append(file.Children, child)
 	}
 }
+
+// extractTypeParameter extracts a single type parameter
+func (p *TreeSitterProcessor) extractTypeParameter(node *sitter.Node, source []byte) *ir.TypeParam {
+	param := &ir.TypeParam{}
+	
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		switch child.Type() {
+		case "type_identifier":
+			param.Name = string(source[child.StartByte():child.EndByte()])
+		case "type_bound":
+			// Extract type constraints (extends clauses)
+			for j := 0; j < int(child.ChildCount()); j++ {
+				boundChild := child.Child(j)
+				if boundChild.Type() == "type_identifier" || boundChild.Type() == "generic_type" || boundChild.Type() == "scoped_type_identifier" {
+					constraint := p.extractType(boundChild, source)
+					param.Constraints = append(param.Constraints, *constraint)
+				} else if boundChild.Type() == "intersection_type" {
+					// Handle intersection types like T extends A & B
+					p.extractIntersectionTypes(boundChild, source, &param.Constraints)
+				}
+			}
+		}
+	}
+	
+	return param
+}
+
+// extractIntersectionTypes extracts intersection type constraints
+func (p *TreeSitterProcessor) extractIntersectionTypes(node *sitter.Node, source []byte, constraints *[]ir.TypeRef) {
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		if child.Type() == "type_identifier" || child.Type() == "generic_type" || child.Type() == "scoped_type_identifier" {
+			constraint := p.extractType(child, source)
+			*constraints = append(*constraints, *constraint)
+		}
+	}
+}
+
+// extractMethodTypeParameters extracts generic type parameters for methods
+func (p *TreeSitterProcessor) extractMethodTypeParameters(node *sitter.Node, source []byte, method *ir.DistilledFunction) {
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		if child.Type() == "type_parameter" {
+			typeParam := p.extractTypeParameter(child, source)
+			method.TypeParams = append(method.TypeParams, *typeParam)
+		}
+	}
+}
+
+// extractAnnotationArguments extracts annotation arguments
+func (p *TreeSitterProcessor) extractAnnotationArguments(node *sitter.Node, source []byte) []string {
+	var args []string
+	
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		switch child.Type() {
+		case "element_value_pair":
+			// Named argument like value="test" or timeout=5000
+			arg := p.extractElementValuePair(child, source)
+			if arg != "" {
+				args = append(args, arg)
+			}
+		case "string_literal", "decimal_integer_literal", "hex_integer_literal", 
+			 "octal_integer_literal", "binary_integer_literal", "decimal_floating_point_literal",
+			 "true", "false", "null_literal":
+			// Direct value argument
+			args = append(args, string(source[child.StartByte():child.EndByte()]))
+		case "identifier":
+			// Enum constant or reference
+			args = append(args, string(source[child.StartByte():child.EndByte()]))
+		case "field_access":
+			// Static field access like String.class
+			args = append(args, string(source[child.StartByte():child.EndByte()]))
+		case "array_initializer":
+			// Array values like {1, 2, 3}
+			args = append(args, string(source[child.StartByte():child.EndByte()]))
+		}
+	}
+	
+	return args
+}
+
+// extractElementValuePair extracts key=value pairs from annotations
+func (p *TreeSitterProcessor) extractElementValuePair(node *sitter.Node, source []byte) string {
+	var key, value string
+	
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		switch child.Type() {
+		case "identifier":
+			if key == "" {
+				key = string(source[child.StartByte():child.EndByte()])
+			}
+		case "=":
+			// Skip assignment operator
+		case "string_literal", "decimal_integer_literal", "hex_integer_literal", 
+			 "octal_integer_literal", "binary_integer_literal", "decimal_floating_point_literal",
+			 "true", "false", "null_literal", "field_access", "array_initializer":
+			value = string(source[child.StartByte():child.EndByte()])
+		}
+	}
+	
+	if key != "" && value != "" {
+		return key + "=" + value
+	} else if value != "" {
+		return value // Single value without key
+	}
+	
+	return ""
+}
+
+// processJavaDocComment processes JavaDoc comments (/** ... */)
+func (p *TreeSitterProcessor) processJavaDocComment(node *sitter.Node, source []byte, file *ir.DistilledFile, parent ir.DistilledNode) {
+	text := string(source[node.StartByte():node.EndByte()])
+	
+	// Only process JavaDoc comments (start with /**)
+	if !strings.HasPrefix(text, "/**") {
+		return
+	}
+	
+	javaDoc := p.parseJavaDoc(text)
+	if javaDoc != nil {
+		p.addToParent(file, parent, javaDoc)
+	}
+}
+
+// parseJavaDoc parses a JavaDoc comment and extracts structured information
+func (p *TreeSitterProcessor) parseJavaDoc(text string) *ir.DistilledComment {
+	// Remove /** and */ delimiters
+	content := text
+	if strings.HasPrefix(content, "/**") {
+		content = content[3:]
+	}
+	if strings.HasSuffix(content, "*/") {
+		content = content[:len(content)-2]
+	}
+	
+	// Clean up the content by removing leading asterisks and extra whitespace
+	lines := strings.Split(content, "\n")
+	var cleanedLines []string
+	
+	for _, line := range lines {
+		cleaned := strings.TrimSpace(line)
+		if strings.HasPrefix(cleaned, "*") {
+			cleaned = strings.TrimSpace(cleaned[1:])
+		}
+		if cleaned != "" {
+			cleanedLines = append(cleanedLines, cleaned)
+		}
+	}
+	
+	if len(cleanedLines) == 0 {
+		return nil
+	}
+	
+	return &ir.DistilledComment{
+		Text:   strings.Join(cleanedLines, " "),
+		Format: "doc",
+	}
+}
+

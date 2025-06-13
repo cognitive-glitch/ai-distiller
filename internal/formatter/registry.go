@@ -101,6 +101,6 @@ func init() {
 	})
 	
 	Register("text", func(opts Options) Formatter {
-		return NewTextFormatter(opts)
+		return NewLanguageAwareTextFormatter(opts)
 	})
 }
