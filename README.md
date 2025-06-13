@@ -76,27 +76,19 @@ make build
 
 ### 🤖 Use with Claude Desktop (MCP)
 
-AI Distiller can integrate directly with Claude Desktop through the Model Context Protocol:
+AI Distiller integrates seamlessly with Claude Desktop through the Model Context Protocol:
 
 ```bash
-# Start MCP server (coming in v0.3.0)
-./aid --mcp-server
-
-# Or configure in Claude Desktop's config.json:
-{
-  "mcpServers": {
-    "ai-distiller": {
-      "command": "/path/to/aid",
-      "args": ["--mcp-server"],
-      "env": {
-        "AID_ROOT": "/path/to/your/project"
-      }
-    }
-  }
-}
+# One-line installation (coming in v0.3.0)
+claude mcp add ai-distiller -- npx -y @janreges/ai-distiller-mcp
 ```
 
-Then in Claude: "Analyze the structure of the authentication module" → AI Distiller automatically provides the context!
+Then in Claude: 
+- "Show me all classes in the auth module" → `distillDirectory` provides complete namespace overview
+- "What's the User model structure?" → `distillFile` shows detailed class info
+- "Find all SQL queries" → `search` locates patterns across codebase
+
+No more copy-pasting code into Claude!
 
 ## 📊 Real Performance Numbers
 
@@ -274,16 +266,17 @@ aid --mcp-server --cache disk --cache-size 500
 ```
 
 **Available MCP Tools:**
+- `distillDirectory` - Extract structure from entire directories/namespaces 🌟
 - `distillFile` - Extract structure from a single file
 - `listFiles` - List files in directory with language stats
 - `getFileContent` - Read raw file content
 - `search` - Search codebase with regex support
 
 **Example Claude Prompts:**
-- "Show me all public methods in the UserService class"
-- "Find all TODO comments in the codebase"
-- "What's the structure of the authentication module?"
-- "Search for SQL queries that modify the users table"
+- "Show me all classes and interfaces in the src/services namespace"
+- "What's the complete API surface of the auth module?"
+- "Find all middleware implementations"
+- "Give me an overview of the database models structure"
 
 ### Configuration File
 

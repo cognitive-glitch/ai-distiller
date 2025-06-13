@@ -504,34 +504,60 @@ listFiles("auth/", pattern="*.py")
 
 > **You**: We need to implement API rate limiting. Show me all middleware classes and where request handling happens.
 
-> **Claude**: Let me search for middleware patterns and request handling in your codebase.
+> **Claude**: Let me analyze your middleware architecture comprehensively.
 
 *Claude calls multiple MCP tools:*
 ```
+distillDirectory("middleware/", strip_implementation=true)
 search("class.*Middleware", is_regex=true)
-search("def process_request", is_regex=false)
-distillFile("middleware/base.py", strip_implementation=true)
+distillFile("app.py", strip_implementation=true)
 ```
 
-> I found your middleware architecture:
-> 1. Base middleware class at `middleware/base.py` with `process_request()` and `process_response()`
-> 2. Existing middleware: `AuthMiddleware`, `CORSMiddleware`, `LoggingMiddleware`
-> 3. Request flow goes through `app.py:handle_request()` → middleware chain
+> I found your complete middleware architecture:
 >
-> Here's a rate limiting middleware that fits your patterns:
+> From `distillDirectory` on `middleware/`:
+> ```
+> BaseMiddleware (abstract):
+>   + process_request(request: Request) -> Optional[Response]
+>   + process_response(request: Request, response: Response) -> Response
+>
+> AuthMiddleware(BaseMiddleware):
+>   + __init__(jwt_secret: str, excluded_paths: List[str])
+>   + process_request(request: Request) -> Optional[Response]
+>
+> CORSMiddleware(BaseMiddleware):
+>   + __init__(allowed_origins: List[str], allowed_methods: List[str])
+>   + process_response(request: Request, response: Response) -> Response
+>
+> LoggingMiddleware(BaseMiddleware):
+>   + __init__(logger: Logger, log_body: bool = False)
+>   + process_request(request: Request) -> Optional[Response]
+>   + process_response(request: Request, response: Response) -> Response
+> ```
+>
+> Your request flow: `app.py:handle_request()` → middleware chain (ordered list)
+>
+> Here's a rate limiting middleware that fits your established patterns:
 >
 > ```python
 > class RateLimitMiddleware(BaseMiddleware):
->     def __init__(self, requests_per_minute: int = 60):
->         self.cache = {}  # In production, use Redis
+>     def __init__(self, requests_per_minute: int = 60, 
+>                  redis_client: Optional[Redis] = None):
 >         self.limit = requests_per_minute
+>         self.redis = redis_client or {}  # Fallback to memory
 >     
 >     def process_request(self, request: Request) -> Optional[Response]:
 >         client_id = self._get_client_id(request)
 >         if self._is_rate_limited(client_id):
->             return Response(status=429, body="Rate limit exceeded")
+>             return Response(
+>                 status=429, 
+>                 body={"error": "Rate limit exceeded"},
+>                 headers={"Retry-After": str(self._get_retry_after(client_id))}
+>             )
 >         return None
 > ```
+
+**Power of distillDirectory**: Notice how `distillDirectory` gave us the complete middleware namespace structure in one call, showing all classes with their methods and signatures. This is much more efficient than calling `distillFile` on each file separately!
 
 ### With Documentation Tools
 

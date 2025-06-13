@@ -18,7 +18,17 @@ This approach ensures:
 
 ## Installation
 
-### Quick Start (Coming in v0.3.0)
+### Quick Start with Claude Code (Coming in v0.3.0)
+
+```bash
+# One-line installation for Claude Code users
+claude mcp add ai-distiller -- npx -y @janreges/ai-distiller-mcp
+
+# Or manual installation
+npm install -g @janreges/ai-distiller-mcp
+```
+
+### Alternative: Native Binary Installation
 
 ```bash
 # macOS/Linux
@@ -32,6 +42,8 @@ scoop install ai-distiller
 
 ### Configure Claude Desktop
 
+For manual configuration or customization:
+
 1. Open Claude Desktop → Settings → Developer → Edit Config
 2. Add AI Distiller configuration:
 
@@ -39,8 +51,8 @@ scoop install ai-distiller
 {
   "mcpServers": {
     "ai-distiller": {
-      "command": "aid",
-      "args": ["--mcp-server"],
+      "command": "npx",
+      "args": ["-y", "@janreges/ai-distiller-mcp"],
       "env": {
         "AID_ROOT": "/path/to/your/project",
         "AID_CACHE_DIR": "~/.cache/aid"
@@ -55,7 +67,28 @@ scoop install ai-distiller
 
 ## Available MCP Tools
 
-### 1. `distillFile`
+### 1. `distillDirectory` 🌟
+
+Extracts structure from an entire directory or namespace - **the killer feature** for understanding code organization.
+
+**Parameters:**
+- `directory_path` (string, required): Directory path relative to root
+- `recursive` (boolean): Include subdirectories (default: true)
+- `strip_comments` (boolean): Remove comments and docstrings
+- `strip_implementation` (boolean): Keep only signatures
+- `strip_non_public` (boolean): Hide private/internal members
+- `output_format` (string): "text", "json", or "md"
+- `group_by` (string): "file" (default) or "type" (group all classes together)
+
+**Example:**
+```
+Claude: Let me analyze the entire authentication module structure...
+[Calling distillDirectory with directory_path="src/auth/", strip_implementation=true]
+```
+
+**Returns:** Consolidated view of all classes, interfaces, and functions in the directory, perfect for understanding module architecture.
+
+### 2. `distillFile`
 
 Extracts structure from a single source file.
 
@@ -72,7 +105,7 @@ Claude: Let me analyze the user service structure...
 [Calling distillFile with file_path="services/user_service.py", strip_implementation=true]
 ```
 
-### 2. `listFiles`
+### 3. `listFiles`
 
 Lists files in a directory with language statistics.
 
@@ -140,17 +173,28 @@ Claude: Let me find all SQL queries...
 
 *Claude's MCP calls:*
 1. `listFiles("/", recursive=true)` - Get project layout
-2. `distillFile("main.py", strip_implementation=true)` - Entry point
-3. `search("class.*Service", is_regex=true)` - Find service layer
-4. `distillFile` on key service files
+2. `distillDirectory("src/", strip_implementation=true, group_by="type")` - Complete src overview
+3. `distillFile("main.py", strip_implementation=true)` - Entry point details
+4. `distillDirectory("src/models/", strip_implementation=true)` - Data layer structure
 
-> **Claude**: Here's the architecture overview:
-> - **Entry Point**: `main.py` initializes a Flask application
-> - **Service Layer**: Found 3 services (UserService, AuthService, EmailService)
-> - **Data Layer**: SQLAlchemy models in `models/` directory
-> - **API Routes**: RESTful endpoints in `routes/` following a consistent pattern
+> **Claude**: Here's the architecture overview based on the complete namespace analysis:
 > 
-> The project follows a typical MVC pattern with clear separation of concerns...
+> **Service Layer** (from `src/services/`):
+> - `UserService`: 8 public methods for user management
+> - `AuthService`: JWT-based authentication with 5 endpoints
+> - `EmailService`: Async email handling with template support
+> 
+> **Data Models** (from `src/models/`):
+> - 12 SQLAlchemy models with relationships
+> - Base classes: `TimestampedModel`, `SoftDeleteModel`
+> - Key entities: `User`, `Organization`, `Project`, `Permission`
+> 
+> **API Structure** (from `src/routes/`):
+> - RESTful endpoints grouped by resource
+> - Consistent middleware chain: auth → validation → rate-limit
+> - OpenAPI schema generation built-in
+> 
+> The project follows Domain-Driven Design with clear bounded contexts...
 
 ### 2. Implementing a New Feature
 
