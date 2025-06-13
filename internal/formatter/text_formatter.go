@@ -122,6 +122,11 @@ func (f *TextFormatter) formatImport(w io.Writer, imp *ir.DistilledImport, inden
 func (f *TextFormatter) formatClass(w io.Writer, class *ir.DistilledClass, indent int) error {
 	indentStr := strings.Repeat("    ", indent)
 	
+	// Format decorators/attributes
+	for _, dec := range class.Decorators {
+		fmt.Fprintf(w, "\n%s@%s", indentStr, dec)
+	}
+	
 	// Format class declaration
 	fmt.Fprintf(w, "\n%sclass %s", indentStr, class.Name)
 	
@@ -169,9 +174,10 @@ func (f *TextFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, in
 		fmt.Fprintf(w, "%s@%s\n", indent, dec)
 	}
 	
-	// Format function signature with visibility prefix (no keyword needed)
+	// Format function signature with visibility prefix and modifiers
 	visPrefix := getVisibilityPrefix(fn.Visibility)
-	fmt.Fprintf(w, "%s%s%s(", indent, visPrefix, fn.Name)
+	modifiers := formatModifiers(fn.Modifiers)
+	fmt.Fprintf(w, "%s%s%s%s(", indent, visPrefix, modifiers, fn.Name)
 	
 	// Format parameters
 	params := make([]string, len(fn.Parameters))

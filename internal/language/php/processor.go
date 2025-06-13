@@ -8,6 +8,7 @@ import (
 
 	"github.com/janreges/ai-distiller/internal/ir"
 	"github.com/janreges/ai-distiller/internal/processor"
+	"github.com/janreges/ai-distiller/internal/stripper"
 )
 
 // Processor implements the LanguageProcessor interface for PHP
@@ -52,15 +53,32 @@ func (p *Processor) ProcessFile(filename string, opts processor.ProcessOptions) 
 	
 	// Use tree-sitter parser
 	if p.useTreeSitter {
-		processor, err := NewTreeSitterProcessor()
+		treeparser, err := NewTreeSitterProcessor()
 		if err == nil {
-			defer processor.Close()
-			file, err := processor.ProcessSource(ctx, source, filename)
-			if err == nil {
-				// Apply options to filter the result
-				return p.applyOptions(file, opts), nil
+			defer treeparser.Close()
+			file, err := treeparser.ProcessSource(ctx, source, filename)
+			if err != nil {
+				// Fall back to line-based parser on error
+				return p.parseLineBasedPHP(ctx, source, filename, opts)
 			}
-			// Fall back to line-based parser on error
+			
+			// Apply standardized stripper for filtering
+			stripperOpts := stripper.Options{
+				RemovePrivate:         !opts.IncludePrivate,
+				RemoveImplementations: !opts.IncludeImplementation,
+				RemoveComments:        !opts.IncludeComments,
+				RemoveImports:         !opts.IncludeImports,
+			}
+			
+			// Only apply stripper if we need to remove something
+			if stripperOpts.RemovePrivate || stripperOpts.RemoveImplementations || 
+			   stripperOpts.RemoveComments || stripperOpts.RemoveImports {
+				s := stripper.New(stripperOpts)
+				stripped := file.Accept(s)
+				return stripped.(*ir.DistilledFile), nil
+			}
+			
+			return file, nil
 		}
 	}
 	
@@ -78,15 +96,32 @@ func (p *Processor) ProcessWithOptions(ctx context.Context, reader io.Reader, fi
 
 	// Use tree-sitter parser
 	if p.useTreeSitter {
-		processor, err := NewTreeSitterProcessor()
+		treeparser, err := NewTreeSitterProcessor()
 		if err == nil {
-			defer processor.Close()
-			file, err := processor.ProcessSource(ctx, source, filename)
-			if err == nil {
-				// Apply options to filter the result
-				return p.applyOptions(file, opts), nil
+			defer treeparser.Close()
+			file, err := treeparser.ProcessSource(ctx, source, filename)
+			if err != nil {
+				// Fall back to line-based parser on error
+				return p.parseLineBasedPHP(ctx, source, filename, opts)
 			}
-			// Fall back to line-based parser on error
+			
+			// Apply standardized stripper for filtering
+			stripperOpts := stripper.Options{
+				RemovePrivate:         !opts.IncludePrivate,
+				RemoveImplementations: !opts.IncludeImplementation,
+				RemoveComments:        !opts.IncludeComments,
+				RemoveImports:         !opts.IncludeImports,
+			}
+			
+			// Only apply stripper if we need to remove something
+			if stripperOpts.RemovePrivate || stripperOpts.RemoveImplementations || 
+			   stripperOpts.RemoveComments || stripperOpts.RemoveImports {
+				s := stripper.New(stripperOpts)
+				stripped := file.Accept(s)
+				return stripped.(*ir.DistilledFile), nil
+			}
+			
+			return file, nil
 		}
 	}
 
@@ -115,48 +150,3 @@ func (p *Processor) parseLineBasedPHP(ctx context.Context, source []byte, filena
 	return file, nil
 }
 
-// applyOptions filters the IR based on processing options
-func (p *Processor) applyOptions(file *ir.DistilledFile, opts processor.ProcessOptions) *ir.DistilledFile {
-	if !opts.IncludeComments || !opts.IncludeImports || !opts.IncludePrivate || !opts.IncludeImplementation {
-		// Create a visitor to filter nodes
-		filterVisitor := ir.NewFuncVisitor(func(node ir.DistilledNode) ir.DistilledNode {
-			switch n := node.(type) {
-			case *ir.DistilledComment:
-				if !opts.IncludeComments {
-					return nil
-				}
-			case *ir.DistilledImport:
-				if !opts.IncludeImports {
-					return nil
-				}
-			case *ir.DistilledFunction:
-				if !opts.IncludePrivate && isPrivate(n.Name) {
-					return nil
-				}
-				if !opts.IncludeImplementation {
-					// Clear implementation
-					n.Implementation = ""
-				}
-			case *ir.DistilledClass:
-				if !opts.IncludePrivate && isPrivate(n.Name) {
-					return nil
-				}
-			}
-			return node
-		})
-
-		// Apply filter
-		walker := ir.NewWalker(filterVisitor)
-		if filtered := walker.Walk(file); filtered != nil {
-			return filtered.(*ir.DistilledFile)
-		}
-	}
-
-	return file
-}
-
-func isPrivate(name string) bool {
-	// In PHP, names starting with _ are conventionally private
-	// But actual visibility is determined by access modifiers
-	return len(name) > 0 && name[0] == '_'
-}

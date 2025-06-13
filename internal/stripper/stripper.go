@@ -283,7 +283,8 @@ func (s *Stripper) shouldRemoveByVisibility(name string, visibility ir.Visibilit
 			return false
 		default:
 			// For implicit visibility, check language conventions
-			if strings.HasPrefix(name, "_") && s.options.RemovePrivateOnly {
+			// Exception: PHP __construct, __destruct etc. are magic methods and should not be removed
+			if strings.HasPrefix(name, "_") && !strings.HasPrefix(name, "__") && s.options.RemovePrivateOnly {
 				return true
 			}
 			return false
@@ -300,7 +301,8 @@ func (s *Stripper) shouldRemoveByVisibility(name string, visibility ir.Visibilit
 		}
 		
 		// If no explicit visibility, use language conventions
-		if strings.HasPrefix(name, "_") {
+		// Exception: PHP __construct, __destruct etc. are magic methods and should not be removed
+		if strings.HasPrefix(name, "_") && !strings.HasPrefix(name, "__") {
 			return true
 		}
 	}

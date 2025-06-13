@@ -307,11 +307,28 @@ func (p *TreeSitterProcessor) processUseDeclaration(node *sitter.Node, file *ir.
 		}
 	}
 	
-	// Process use clauses
+	// Check if this is a grouped use statement
+	var groupPrefix string
+	var hasGroup bool
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
-		if child.Type() == "namespace_use_clause" {
-			p.processUseClause(child, file, parent, importType)
+		if child.Type() == "namespace_name" || child.Type() == "qualified_name" {
+			groupPrefix = p.getNodeText(child)
+		}
+		if child.Type() == "namespace_use_group" {
+			hasGroup = true
+			// Process the group with the prefix
+			p.processUseGroup(child, file, parent, importType, groupPrefix)
+		}
+	}
+	
+	// If not a grouped statement, process normally
+	if !hasGroup {
+		for i := 0; i < int(node.ChildCount()); i++ {
+			child := node.Child(i)
+			if child.Type() == "namespace_use_clause" {
+				p.processUseClause(child, file, parent, importType)
+			}
 		}
 	}
 }
@@ -366,6 +383,66 @@ func (p *TreeSitterProcessor) processUseClause(node *sitter.Node, file *ir.Disti
 	}
 }
 
+// processUseGroup processes grouped use statements
+func (p *TreeSitterProcessor) processUseGroup(node *sitter.Node, file *ir.DistilledFile, parent ir.DistilledNode, importType string, prefix string) {
+	
+	// Process each item in the group
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		if child.Type() == "namespace_use_clause" {
+			// Handle each individual import in the group
+			var itemName string
+			var alias string
+			
+			for j := 0; j < int(child.ChildCount()); j++ {
+				grandchild := child.Child(j)
+				switch grandchild.Type() {
+				case "name", "qualified_name":
+					itemName = p.getNodeText(grandchild)
+				case "namespace_aliasing_clause":
+					// Get the alias
+					for k := 0; k < int(grandchild.ChildCount()); k++ {
+						if grandchild.Child(k).Type() == "name" {
+							alias = p.getNodeText(grandchild.Child(k))
+							break
+						}
+					}
+				}
+			}
+			
+			if itemName != "" {
+				fullName := prefix + "\\" + itemName
+				
+				// Store alias mapping
+				if alias != "" {
+					p.useAliases[alias] = fullName
+				} else {
+					// Use the last part of the name as the alias
+					parts := strings.Split(itemName, "\\")
+					if len(parts) > 0 {
+						p.useAliases[parts[len(parts)-1]] = fullName
+					}
+				}
+				
+				// Create import node
+				imp := &ir.DistilledImport{
+					BaseNode:   p.nodeLocation(child),
+					ImportType: "use",
+					Module:     fullName,
+					Symbols: []ir.ImportedSymbol{
+						{
+							Name:  fullName,
+							Alias: alias,
+						},
+					},
+				}
+				
+				p.addNode(file, parent, imp)
+			}
+		}
+	}
+}
+
 // processClass processes class declarations
 func (p *TreeSitterProcessor) processClass(node *sitter.Node, file *ir.DistilledFile, parent ir.DistilledNode) {
 	class := &ir.DistilledClass{
@@ -380,9 +457,21 @@ func (p *TreeSitterProcessor) processClass(node *sitter.Node, file *ir.Distilled
 	// Track current class
 	prevClass := p.currentClass
 	
+	// First pass: get class name for better debugging
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		if child.Type() == "name" {
+			class.Name = p.getNodeText(child)
+			p.currentClass = class.Name
+			break
+		}
+	}
+	
 	// Process class parts
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
+		// Debug
+		// fmt.Printf("Class %s child %d: %s = %s\n", class.Name, i, child.Type(), p.getNodeText(child))
 		switch child.Type() {
 		case "visibility_modifier":
 			// Handle visibility
@@ -405,15 +494,16 @@ func (p *TreeSitterProcessor) processClass(node *sitter.Node, file *ir.Distilled
 			class.Modifiers = append(class.Modifiers, ir.ModifierReadonly)
 			
 		case "name":
-			class.Name = p.getNodeText(child)
-			p.currentClass = class.Name
+			// Already set in first pass
 			
 		case "base_clause":
 			// Extends clause
 			for j := 0; j < int(child.ChildCount()); j++ {
 				if child.Child(j).Type() == "qualified_name" || child.Child(j).Type() == "name" {
+					// Don't resolve the full name, just use the short name or alias
+					// The imports are already tracked separately
 					class.Extends = append(class.Extends, ir.TypeRef{
-						Name: p.resolveTypeName(p.getNodeText(child.Child(j))),
+						Name: p.getNodeText(child.Child(j)),
 					})
 				}
 			}
@@ -423,15 +513,17 @@ func (p *TreeSitterProcessor) processClass(node *sitter.Node, file *ir.Distilled
 			for j := 0; j < int(child.ChildCount()); j++ {
 				grandchild := child.Child(j)
 				if grandchild.Type() == "qualified_name" || grandchild.Type() == "name" {
+					// Don't resolve the full name, just use the short name or alias
+					// The imports are already tracked separately
 					class.Implements = append(class.Implements, ir.TypeRef{
-						Name: p.resolveTypeName(p.getNodeText(grandchild)),
+						Name: p.getNodeText(grandchild),
 					})
 				}
 			}
 			
 		case "attribute_list":
 			// PHP 8 attributes
-			p.processAttributes(child, class.Decorators)
+			p.processAttributes(child, &class.Decorators)
 			
 		case "declaration_list":
 			// Class body
@@ -486,7 +578,7 @@ func (p *TreeSitterProcessor) processMethod(node *sitter.Node, file *ir.Distille
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		// Debug: print all child types
-		// fmt.Printf("Method child %d: %s = %s\n", i, child.Type(), p.getNodeText(child))
+		//fmt.Printf("Class child %d: %s = %s\n", i, child.Type(), p.getNodeText(child))
 		switch child.Type() {
 		case "visibility_modifier":
 			visibility := p.getNodeText(child)
@@ -509,13 +601,19 @@ func (p *TreeSitterProcessor) processMethod(node *sitter.Node, file *ir.Distille
 			fn.Modifiers = append(fn.Modifiers, ir.ModifierFinal)
 			
 		case "attribute_list":
-			p.processAttributes(child, fn.Decorators)
+			p.processAttributes(child, &fn.Decorators)
 			
 		case "name":
 			fn.Name = p.getNodeText(child)
 			
 		case "formal_parameters":
 			p.processParameters(child, fn)
+			// For constructor, handle property promotion
+			if fn.Name == "__construct" && parent != nil {
+				if class, ok := parent.(*ir.DistilledClass); ok {
+					p.processPromotedProperties(child, class)
+				}
+			}
 			
 		case ":":
 			// Return type follows the colon
@@ -605,7 +703,7 @@ func (p *TreeSitterProcessor) processProperty(node *sitter.Node, file *ir.Distil
 			}
 			
 		case "attribute_list":
-			p.processAttributes(child, attributes)
+			p.processAttributes(child, &attributes)
 			
 		case "property_element":
 			// Individual property with possible initializer
@@ -676,7 +774,7 @@ func (p *TreeSitterProcessor) processFunction(node *sitter.Node, file *ir.Distil
 		child := node.Child(i)
 		switch child.Type() {
 		case "attribute_list":
-			p.processAttributes(child, fn.Decorators)
+			p.processAttributes(child, &fn.Decorators)
 			
 		case "name":
 			fn.Name = p.getNodeText(child)
@@ -789,16 +887,62 @@ func (p *TreeSitterProcessor) processParameter(node *sitter.Node) ir.Parameter {
 	return param
 }
 
+// processPromotedProperties processes constructor promoted properties
+func (p *TreeSitterProcessor) processPromotedProperties(parametersNode *sitter.Node, class *ir.DistilledClass) {
+	for i := 0; i < int(parametersNode.ChildCount()); i++ {
+		child := parametersNode.Child(i)
+		if child.Type() == "property_promotion_parameter" {
+			// This is a promoted property
+			field := &ir.DistilledField{
+				BaseNode:   p.nodeLocation(child),
+				Visibility: ir.VisibilityPublic, // Default
+				Modifiers:  []ir.Modifier{},
+			}
+			
+			// Process promotion parameter parts
+			for j := 0; j < int(child.ChildCount()); j++ {
+				paramChild := child.Child(j)
+				switch paramChild.Type() {
+				case "visibility_modifier":
+					visibility := p.getNodeText(paramChild)
+					if visibility == "private" {
+						field.Visibility = ir.VisibilityPrivate
+					} else if visibility == "protected" {
+						field.Visibility = ir.VisibilityProtected
+					} else {
+						field.Visibility = ir.VisibilityPublic
+					}
+					
+				case "readonly_modifier":
+					field.Modifiers = append(field.Modifiers, ir.ModifierReadonly)
+					
+				case "type", "union_type", "intersection_type", "optional_type", "primitive_type", "named_type":
+					field.Type = &ir.TypeRef{
+						Name: p.getNodeText(paramChild),
+					}
+					
+				case "variable_name":
+					field.Name = strings.TrimPrefix(p.getNodeText(paramChild), "$")
+					
+				case "default_value":
+					field.DefaultValue = p.getNodeText(paramChild)
+				}
+			}
+			
+			// Add the field to the class
+			class.Children = append(class.Children, field)
+		}
+	}
+}
+
 // processInterface processes interface declarations
 func (p *TreeSitterProcessor) processInterface(node *sitter.Node, file *ir.DistilledFile, parent ir.DistilledNode) {
-	// For now, treat interfaces as classes with a special modifier
-	class := &ir.DistilledClass{
+	// Use proper DistilledInterface type
+	intf := &ir.DistilledInterface{
 		BaseNode:   p.nodeLocation(node),
 		Visibility: ir.VisibilityPublic,
-		Modifiers:  []ir.Modifier{ir.ModifierAbstract}, // Interfaces are implicitly abstract
 		Extends:    []ir.TypeRef{},
 		Children:   []ir.DistilledNode{},
-		Decorators: []string{},
 	}
 	
 	// Process interface parts
@@ -806,35 +950,50 @@ func (p *TreeSitterProcessor) processInterface(node *sitter.Node, file *ir.Disti
 		child := node.Child(i)
 		switch child.Type() {
 		case "name":
-			class.Name = p.getNodeText(child)
+			intf.Name = p.getNodeText(child)
 			
 		case "interface_extends_clause":
 			// Interfaces can extend multiple interfaces
 			for j := 0; j < int(child.ChildCount()); j++ {
 				grandchild := child.Child(j)
 				if grandchild.Type() == "qualified_name" || grandchild.Type() == "name" {
-					class.Extends = append(class.Extends, ir.TypeRef{
-						Name: p.resolveTypeName(p.getNodeText(grandchild)),
+					// Don't resolve the full name, just use the short name or alias
+					// The imports are already tracked separately
+					intf.Extends = append(intf.Extends, ir.TypeRef{
+						Name: p.getNodeText(grandchild),
 					})
 				}
 			}
 			
 		case "declaration_list":
-			// Interface body
-			p.processClassBody(child, file, class)
+			// Interface body - process methods
+			for j := 0; j < int(child.ChildCount()); j++ {
+				methodNode := child.Child(j)
+				if methodNode.Type() == "method_declaration" {
+					p.processMethod(methodNode, file, intf)
+				}
+			}
 		}
 	}
 	
-	p.addNode(file, parent, class)
+	p.addNode(file, parent, intf)
 }
 
 // processTrait processes trait declarations
 func (p *TreeSitterProcessor) processTrait(node *sitter.Node, file *ir.DistilledFile, parent ir.DistilledNode) {
-	// For now, treat traits as classes with a special note
+	// Create a special comment to indicate this is a trait
+	comment := &ir.DistilledComment{
+		BaseNode: p.nodeLocation(node),
+		Text:     "PHP Trait",
+		Format:   "line",
+	}
+	p.addNode(file, parent, comment)
+	
+	// Process trait as a class but with a special indicator
 	class := &ir.DistilledClass{
 		BaseNode:   p.nodeLocation(node),
 		Visibility: ir.VisibilityPublic,
-		Modifiers:  []ir.Modifier{}, // Could add a custom "trait" modifier
+		Modifiers:  []ir.Modifier{}, 
 		Children:   []ir.DistilledNode{},
 		Decorators: []string{},
 	}
@@ -844,7 +1003,8 @@ func (p *TreeSitterProcessor) processTrait(node *sitter.Node, file *ir.Distilled
 		child := node.Child(i)
 		switch child.Type() {
 		case "name":
-			class.Name = p.getNodeText(child)
+			// Prefix with "trait " to distinguish from classes
+			class.Name = "trait " + p.getNodeText(child)
 			
 		case "declaration_list":
 			// Trait body
@@ -966,7 +1126,8 @@ func (p *TreeSitterProcessor) processTraitUse(node *sitter.Node, file *ir.Distil
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		if child.Type() == "qualified_name" || child.Type() == "name" {
-			traits = append(traits, p.resolveTypeName(p.getNodeText(child)))
+			// Don't resolve the full name, just use the short name or alias
+			traits = append(traits, p.getNodeText(child))
 		}
 	}
 	
@@ -1024,16 +1185,19 @@ func (p *TreeSitterProcessor) extractPHPDocTypes(docText string, node ir.Distill
 }
 
 // processAttributes processes PHP 8 attributes
-func (p *TreeSitterProcessor) processAttributes(node *sitter.Node, decorators []string) {
+func (p *TreeSitterProcessor) processAttributes(node *sitter.Node, decorators *[]string) {
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
-		if child.Type() == "attribute" {
-			// Get attribute text
-			text := p.getNodeText(child)
-			// Remove #[ and ]
-			text = strings.TrimPrefix(text, "#[")
-			text = strings.TrimSuffix(text, "]")
-			decorators = append(decorators, text)
+		if child.Type() == "attribute_group" {
+			// Process each attribute in the group
+			for j := 0; j < int(child.ChildCount()); j++ {
+				grandchild := child.Child(j)
+				if grandchild.Type() == "attribute" {
+					// Get attribute text
+					text := p.getNodeText(grandchild)
+					*decorators = append(*decorators, text)
+				}
+			}
 		}
 	}
 }
@@ -1098,6 +1262,8 @@ func (p *TreeSitterProcessor) addNode(file *ir.DistilledFile, parent ir.Distille
 	if parent != nil {
 		switch p := parent.(type) {
 		case *ir.DistilledClass:
+			p.Children = append(p.Children, node)
+		case *ir.DistilledInterface:
 			p.Children = append(p.Children, node)
 		case *ir.DistilledFunction:
 			// Functions don't typically have children in PHP

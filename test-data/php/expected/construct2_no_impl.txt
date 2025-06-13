@@ -1,0 +1,12 @@
+<file path="/home/janreges/ai-distiller/test-data/php/construct2_simple.php">
+# Using PHP 8 Constructor Property Promotion
+
+class User:
+    -readonly id: int
+    -name: string
+    -email: string
+    +__construct(id: int, name: string, email: string)
+    +getId() -> int
+    +getDisplayName() -> string
+    +changeEmail(newEmail: string) -> void
+</file>

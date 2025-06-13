@@ -1,0 +1,32 @@
+<file path="/home/janreges/ai-distiller/test-data/php/construct3_medium.php">
+
+interface Loggable:
+    +log(message: string) -> void
+
+class AbstractStorage:
+    #storagePath: string
+    +__construct(storagePath: string):
+        {
+                $this->storagePath = rtrim($storagePath, '/');
+            }
+    #abstract save(key: string, data: string) -> bool
+    +final getStoragePath() -> string:
+        {
+                return $this->storagePath;
+            }
+
+class FileLogger(AbstractStorage) implements Loggable:
+    +__construct(logDirectory: string):
+        {
+                parent::__construct($logDirectory);
+            }
+    +log(message: string) -> void:
+        {
+                $this->save('log_' . date('Y-m-d'), $message . PHP_EOL);
+            }
+    #save(key: string, data: string) -> bool:
+        {
+                $file = $this->storagePath . '/' . $key . '.log';
+                return file_put_contents($file, $data, FILE_APPEND) !== false;
+            }
+</file>
