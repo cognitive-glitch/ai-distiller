@@ -2,6 +2,7 @@ package golang
 
 import (
 	"context"
+	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -46,6 +47,19 @@ func (p *ASTParser) ProcessSource(ctx context.Context, source []byte, filename s
 		Children: []ir.DistilledNode{},
 		Errors:   []ir.DistilledError{},
 	}
+	
+	// Extract build constraints from comments
+	buildConstraints := p.extractBuildConstraints(file.Comments)
+	if len(buildConstraints) > 0 {
+		// Add build constraints as a comment at the top
+		constraintComment := &ir.DistilledComment{
+			BaseNode: ir.BaseNode{
+				Location: p.getLocation(file.Pos(), file.Pos()),
+			},
+			Text: fmt.Sprintf("@build_constraint(%s)", strings.Join(buildConstraints, ", ")),
+		}
+		distilledFile.Children = append(distilledFile.Children, constraintComment)
+	}
 
 	// Process package declaration
 	if file.Name != nil {
@@ -66,13 +80,354 @@ func (p *ASTParser) ProcessSource(ctx context.Context, source []byte, filename s
 		}
 	}
 
-	// Process declarations
+	// Two-pass processing to associate methods with their receiver types
+	
+	// First pass: collect types and non-method functions
+	typeMap := make(map[string]ir.DistilledNode) // Map from type name to the distilled node
+	var functions []*ir.DistilledFunction
+	
 	for _, decl := range file.Decls {
-		nodes := p.processDecl(decl)
-		distilledFile.Children = append(distilledFile.Children, nodes...)
+		switch d := decl.(type) {
+		case *ast.FuncDecl:
+			fn := p.processFunction(d)
+			if fn != nil {
+				functions = append(functions, fn)
+			}
+		case *ast.GenDecl:
+			nodes := p.processGenDecl(d)
+			for _, node := range nodes {
+				// Add non-type nodes directly
+				if class, ok := node.(*ir.DistilledClass); ok {
+					typeMap[class.Name] = class
+					distilledFile.Children = append(distilledFile.Children, node)
+				} else if intf, ok := node.(*ir.DistilledInterface); ok {
+					typeMap[intf.Name] = intf
+					distilledFile.Children = append(distilledFile.Children, node)
+				} else {
+					// Constants, variables, type aliases - add directly
+					distilledFile.Children = append(distilledFile.Children, node)
+				}
+			}
+		}
 	}
+	
+	// Second pass: associate methods with their types
+	for _, fn := range functions {
+		receiverType := p.getReceiverTypeName(fn)
+		if receiverType != "" {
+			// This is a method - clean up parameters and add to the appropriate type
+			p.cleanMethodParameters(fn)
+			if targetType, exists := typeMap[receiverType]; exists {
+				switch target := targetType.(type) {
+				case *ir.DistilledClass:
+					target.Children = append(target.Children, fn)
+				case *ir.DistilledInterface:
+					target.Children = append(target.Children, fn)
+				}
+			} else {
+				// Receiver type not found - add as top-level function for now
+				distilledFile.Children = append(distilledFile.Children, fn)
+			}
+		} else {
+			// This is a regular function - add as top-level
+			distilledFile.Children = append(distilledFile.Children, fn)
+		}
+	}
+	
+	// Third pass: analyze interface satisfaction and add "implements" relationships
+	p.analyzeInterfaceSatisfaction(typeMap)
 
 	return distilledFile, nil
+}
+
+// getReceiverTypeName extracts the receiver type name from a method
+func (p *ASTParser) getReceiverTypeName(fn *ir.DistilledFunction) string {
+	// Check if function has AbstractMethod modifier (indicating it has a receiver)
+	hasReceiverModifier := false
+	for _, mod := range fn.Modifiers {
+		if mod == ir.ModifierAbstract {
+			hasReceiverModifier = true
+			break
+		}
+	}
+	
+	if hasReceiverModifier && len(fn.Parameters) > 0 {
+		receiverType := fn.Parameters[0].Type.Name
+		// Strip pointer if present (*User -> User, *Cache[K,V] -> Cache[K,V])
+		if strings.HasPrefix(receiverType, "*") {
+			receiverType = receiverType[1:]
+		}
+		
+		// Extract base type name for generic types (Cache[K,V] -> Cache)
+		if bracketIndex := strings.Index(receiverType, "["); bracketIndex != -1 {
+			return receiverType[:bracketIndex]
+		}
+		
+		return receiverType
+	}
+	return ""
+}
+
+// cleanMethodParameters removes the receiver parameter from the parameter list
+func (p *ASTParser) cleanMethodParameters(fn *ir.DistilledFunction) {
+	// Remove the receiver parameter (first parameter for methods)
+	hasReceiverModifier := false
+	for _, mod := range fn.Modifiers {
+		if mod == ir.ModifierAbstract {
+			hasReceiverModifier = true
+			break
+		}
+	}
+	
+	if hasReceiverModifier && len(fn.Parameters) > 0 {
+		fn.Parameters = fn.Parameters[1:]
+		// Also remove the Abstract modifier since it was just used to mark methods
+		newModifiers := []ir.Modifier{}
+		for _, mod := range fn.Modifiers {
+			if mod != ir.ModifierAbstract {
+				newModifiers = append(newModifiers, mod)
+			}
+		}
+		fn.Modifiers = newModifiers
+	}
+}
+
+// analyzeInterfaceSatisfaction determines which structs implement which interfaces
+func (p *ASTParser) analyzeInterfaceSatisfaction(typeMap map[string]ir.DistilledNode) {
+	// Collect all interfaces and their method sets
+	interfaces := make(map[string]*ir.DistilledInterface)
+	for _, node := range typeMap {
+		if intf, ok := node.(*ir.DistilledInterface); ok {
+			interfaces[intf.Name] = intf
+		}
+	}
+	
+	// Check each struct/class against each interface
+	for _, node := range typeMap {
+		if class, ok := node.(*ir.DistilledClass); ok {
+			// Build method set for this class
+			classMethods := p.buildMethodSet(class)
+			
+			// Check against each interface
+			for intfName, intf := range interfaces {
+				if p.satisfiesInterface(classMethods, intf) {
+					// Add implements relationship
+					class.Implements = append(class.Implements, ir.TypeRef{Name: intfName})
+				}
+			}
+		}
+	}
+}
+
+// buildMethodSet creates a map of method signatures for a class
+func (p *ASTParser) buildMethodSet(class *ir.DistilledClass) map[string]*ir.DistilledFunction {
+	methods := make(map[string]*ir.DistilledFunction)
+	for _, child := range class.Children {
+		if fn, ok := child.(*ir.DistilledFunction); ok {
+			signature := p.getMethodSignature(fn)
+			methods[signature] = fn
+		}
+	}
+	return methods
+}
+
+// satisfiesInterface checks if a class method set satisfies an interface
+func (p *ASTParser) satisfiesInterface(classMethods map[string]*ir.DistilledFunction, intf *ir.DistilledInterface) bool {
+	// Check that all interface methods are implemented
+	for _, child := range intf.Children {
+		if intfMethod, ok := child.(*ir.DistilledFunction); ok {
+			signature := p.getMethodSignature(intfMethod)
+			if _, exists := classMethods[signature]; !exists {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+// getMethodSignature creates a string representation of a method signature
+func (p *ASTParser) getMethodSignature(fn *ir.DistilledFunction) string {
+	var sig strings.Builder
+	sig.WriteString(fn.Name)
+	sig.WriteString("(")
+	
+	// Add parameter types
+	for i, param := range fn.Parameters {
+		if i > 0 {
+			sig.WriteString(", ")
+		}
+		sig.WriteString(param.Type.Name)
+	}
+	sig.WriteString(")")
+	
+	// Add return type
+	if fn.Returns != nil {
+		sig.WriteString(" -> ")
+		sig.WriteString(fn.Returns.Name)
+	}
+	
+	return sig.String()
+}
+
+// extractImplementationWithConcurrency extracts function body highlighting concurrency constructs
+func (p *ASTParser) extractImplementationWithConcurrency(body *ast.BlockStmt) string {
+	var impl strings.Builder
+	
+	for _, stmt := range body.List {
+		line := p.processStatement(stmt, 0)
+		if line != "" {
+			impl.WriteString(line)
+			impl.WriteString("\n")
+		}
+	}
+	
+	return strings.TrimSpace(impl.String())
+}
+
+// processStatement processes a single statement, highlighting concurrency constructs
+func (p *ASTParser) processStatement(stmt ast.Stmt, indent int) string {
+	indentStr := strings.Repeat("    ", indent)
+	
+	switch s := stmt.(type) {
+	case *ast.GoStmt:
+		// Highlight goroutine spawn
+		call := p.processCallExpr(s.Call)
+		return fmt.Sprintf("%sgo %s", indentStr, call)
+		
+	case *ast.SelectStmt:
+		// Represent select statement
+		return p.processSelectStmt(s, indent)
+		
+	case *ast.SendStmt:
+		// Channel send
+		channel := p.exprToString(s.Chan)
+		value := p.exprToString(s.Value)
+		return fmt.Sprintf("%s%s <- %s", indentStr, channel, value)
+		
+	case *ast.ExprStmt:
+		// Regular expression statement
+		if callExpr, ok := s.X.(*ast.CallExpr); ok {
+			if p.isChannelReceive(callExpr) {
+				return fmt.Sprintf("%s<-%s", indentStr, p.exprToString(callExpr.Fun))
+			}
+		}
+		return fmt.Sprintf("%s%s", indentStr, p.exprToString(s.X))
+		
+	case *ast.AssignStmt:
+		// Assignment, check for channel receives
+		var lhs, rhs []string
+		for _, expr := range s.Lhs {
+			lhs = append(lhs, p.exprToString(expr))
+		}
+		for _, expr := range s.Rhs {
+			rhs = append(rhs, p.exprToString(expr))
+		}
+		op := ":="
+		if s.Tok.String() != ":=" {
+			op = "="
+		}
+		return fmt.Sprintf("%s%s %s %s", indentStr, strings.Join(lhs, ", "), op, strings.Join(rhs, ", "))
+		
+	case *ast.BlockStmt:
+		// Nested block
+		var result strings.Builder
+		for _, stmt := range s.List {
+			line := p.processStatement(stmt, indent)
+			if line != "" {
+				result.WriteString(line)
+				result.WriteString("\n")
+			}
+		}
+		return strings.TrimSpace(result.String())
+		
+	case *ast.ForStmt:
+		// For loop - capture the body
+		var result strings.Builder
+		result.WriteString(fmt.Sprintf("%sfor loop:", indentStr))
+		if s.Body != nil {
+			result.WriteString("\n")
+			bodyStr := p.processStatement(s.Body, indent+1)
+			result.WriteString(bodyStr)
+		}
+		return result.String()
+		
+	case *ast.IfStmt:
+		// If statement
+		cond := p.exprToString(s.Cond)
+		return fmt.Sprintf("%sif %s:", indentStr, cond)
+		
+	default:
+		// Generic statement
+		start := p.fset.Position(stmt.Pos()).Offset
+		end := p.fset.Position(stmt.End()).Offset
+		if start >= 0 && end <= len(p.source) && start < end {
+			return indentStr + strings.TrimSpace(string(p.source[start:end]))
+		}
+		return ""
+	}
+}
+
+// processSelectStmt processes a select statement
+func (p *ASTParser) processSelectStmt(stmt *ast.SelectStmt, indent int) string {
+	indentStr := strings.Repeat("    ", indent)
+	var result strings.Builder
+	
+	result.WriteString(fmt.Sprintf("%sselect:", indentStr))
+	
+	for _, clause := range stmt.Body.List {
+		if commClause, ok := clause.(*ast.CommClause); ok {
+			result.WriteString("\n")
+			if commClause.Comm == nil {
+				result.WriteString(fmt.Sprintf("%s    default:", indentStr))
+			} else {
+				commStr := p.processStatement(commClause.Comm, 0)
+				result.WriteString(fmt.Sprintf("%s    case %s:", indentStr, strings.TrimSpace(commStr)))
+			}
+		}
+	}
+	
+	return result.String()
+}
+
+// processCallExpr processes a function call expression
+func (p *ASTParser) processCallExpr(call *ast.CallExpr) string {
+	fun := p.exprToString(call.Fun)
+	var args []string
+	for _, arg := range call.Args {
+		args = append(args, p.exprToString(arg))
+	}
+	return fmt.Sprintf("%s(%s)", fun, strings.Join(args, ", "))
+}
+
+// isChannelReceive checks if a call expression is a channel receive
+func (p *ASTParser) isChannelReceive(call *ast.CallExpr) bool {
+	// This is a simplified check - in practice, we'd need more sophisticated analysis
+	return false
+}
+
+// extractBuildConstraints extracts build constraints from comments
+func (p *ASTParser) extractBuildConstraints(comments []*ast.CommentGroup) []string {
+	var constraints []string
+	
+	for _, group := range comments {
+		for _, comment := range group.List {
+			text := comment.Text
+			
+			// Check for //go:build directive
+			if strings.HasPrefix(text, "//go:build ") {
+				constraint := strings.TrimSpace(text[10:]) // Remove "//go:build "
+				constraints = append(constraints, constraint)
+			}
+			
+			// Check for legacy // +build directive
+			if strings.HasPrefix(text, "// +build ") {
+				constraint := strings.TrimSpace(text[9:]) // Remove "// +build "
+				constraints = append(constraints, constraint)
+			}
+		}
+	}
+	
+	return constraints
 }
 
 // processImport processes an import specification
@@ -196,23 +551,51 @@ func (p *ASTParser) processGenDecl(decl *ast.GenDecl) []ir.DistilledNode {
 
 // processTypeSpec processes a type specification
 func (p *ASTParser) processTypeSpec(spec *ast.TypeSpec) ir.DistilledNode {
+	// Extract type parameters if present
+	var typeParams string
+	if spec.TypeParams != nil {
+		var params []string
+		for _, field := range spec.TypeParams.List {
+			for _, name := range field.Names {
+				paramStr := name.Name
+				if field.Type != nil {
+					paramStr += " " + p.typeToString(field.Type)
+				}
+				params = append(params, paramStr)
+			}
+		}
+		if len(params) > 0 {
+			typeParams = "[" + strings.Join(params, ", ") + "]"
+		}
+	}
+	
 	switch t := spec.Type.(type) {
 	case *ast.StructType:
-		return p.processStruct(spec.Name.Name, t)
+		return p.processStructWithParams(spec.Name.Name, typeParams, t)
 	case *ast.InterfaceType:
-		return p.processInterface(spec.Name.Name, t)
+		return p.processInterfaceWithParams(spec.Name.Name, typeParams, t)
 	default:
 		// Type alias
 		alias := &ir.DistilledTypeAlias{
 			BaseNode: ir.BaseNode{
 				Location: p.getLocation(spec.Pos(), spec.End()),
 			},
-			Name:       spec.Name.Name,
+			Name:       spec.Name.Name + typeParams,
 			Visibility: p.getVisibility(spec.Name.Name),
 			Type:       ir.TypeRef{Name: p.typeToString(spec.Type)},
 		}
 		return alias
 	}
+}
+
+// processStructWithParams processes a struct type with optional type parameters
+func (p *ASTParser) processStructWithParams(name, typeParams string, structType *ast.StructType) *ir.DistilledClass {
+	return p.processStruct(name+typeParams, structType)
+}
+
+// processInterfaceWithParams processes an interface type with optional type parameters
+func (p *ASTParser) processInterfaceWithParams(name, typeParams string, interfaceType *ast.InterfaceType) *ir.DistilledInterface {
+	return p.processInterface(name+typeParams, interfaceType)
 }
 
 // processStruct processes a struct type
@@ -241,7 +624,7 @@ func (p *ASTParser) processStruct(name string, structType *ast.StructType) *ir.D
 				Name:       fieldType, // Use type name as field name
 				Type:       &ir.TypeRef{Name: fieldType},
 				Visibility: ir.VisibilityPublic,
-				Modifiers:  []ir.Modifier{ir.ModifierStatic}, // Mark as embedded
+				Modifiers:  []ir.Modifier{ir.ModifierEmbedded}, // Mark as embedded
 			}
 			class.Children = append(class.Children, embedField)
 		} else {
@@ -386,9 +769,12 @@ func (p *ASTParser) processFunction(fn *ast.FuncDecl) *ir.DistilledFunction {
 		}
 	}
 
-	// Extract function body if exists
+	// Extract function body if exists and detect concurrency patterns
 	if fn.Body != nil {
-		// Count interesting constructs
+		// Parse the implementation to capture goroutines, channels, and select statements
+		distilledFn.Implementation = p.extractImplementationWithConcurrency(fn.Body)
+		
+		// Check for interesting constructs for modifiers
 		var goroutines, channels, defers int
 		ast.Inspect(fn.Body, func(n ast.Node) bool {
 			switch n.(type) {
@@ -519,6 +905,16 @@ func (p *ASTParser) typeToString(expr ast.Expr) string {
 		return p.typeToString(t.X) + "." + t.Sel.Name
 	case *ast.Ellipsis:
 		return "..." + p.typeToString(t.Elt)
+	case *ast.IndexExpr:
+		// Generic type with single type parameter: T[K]
+		return p.typeToString(t.X) + "[" + p.typeToString(t.Index) + "]"
+	case *ast.IndexListExpr:
+		// Generic type with multiple type parameters: T[K, V]
+		var indices []string
+		for _, index := range t.Indices {
+			indices = append(indices, p.typeToString(index))
+		}
+		return p.typeToString(t.X) + "[" + strings.Join(indices, ", ") + "]"
 	default:
 		// Fallback: get the source text
 		start := p.fset.Position(expr.Pos()).Offset

@@ -80,6 +80,7 @@ const (
 	ModifierPartial   Modifier = "partial"
 	ModifierVolatile  Modifier = "volatile"
 	ModifierTransient Modifier = "transient"
+	ModifierEmbedded  Modifier = "embedded"
 )
 
 // DistilledNode is the base interface for all IR nodes

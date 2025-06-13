@@ -1,0 +1,35 @@
+//go:build linux
+
+// cache_linux.go
+package cache
+
+import "sync"
+
+// Cache is a generic, thread-safe key-value store.
+// This implementation is specific to Linux.
+type Cache[K comparable, V any] struct {
+	mu   sync.RWMutex
+	data map[K]V
+}
+
+// New creates a new Cache.
+func New[K comparable, V any]() *Cache[K, V] {
+	return &Cache[K, V]{
+		data: make(map[K]V),
+	}
+}
+
+// Set adds or updates a value in the cache.
+func (c *Cache[K, V]) Set(key K, value V) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.data[key] = value
+}
+
+// Get retrieves a value from the cache.
+func (c *Cache[K, V]) Get(key K) (V, bool) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	val, ok := c.data[key]
+	return val, ok
+}

@@ -10,12 +10,12 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/tetratelabs/wazero v1.9.0
 	github.com/tree-sitter/tree-sitter-c-sharp v0.23.1
+	github.com/tree-sitter/tree-sitter-cpp v0.23.4
 	github.com/tree-sitter/tree-sitter-java v0.23.5
 	github.com/tree-sitter/tree-sitter-javascript v0.23.1
 	github.com/tree-sitter/tree-sitter-php v0.23.12
 	github.com/tree-sitter/tree-sitter-python v0.23.2
 	github.com/tree-sitter/tree-sitter-ruby v0.23.1
-	github.com/tree-sitter/tree-sitter-cpp v0.23.4
 )
 
 require (

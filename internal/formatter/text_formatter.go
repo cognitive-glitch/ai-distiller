@@ -134,6 +134,19 @@ func (f *TextFormatter) formatClass(w io.Writer, class *ir.DistilledClass, inden
 		fmt.Fprintf(w, "(%s)", strings.Join(bases, ", "))
 	}
 	
+	// Add implements relationships
+	if len(class.Implements) > 0 {
+		implements := make([]string, len(class.Implements))
+		for i, impl := range class.Implements {
+			implements[i] = impl.Name
+		}
+		if len(class.Extends) > 0 {
+			fmt.Fprintf(w, " implements %s", strings.Join(implements, ", "))
+		} else {
+			fmt.Fprintf(w, " implements %s", strings.Join(implements, ", "))
+		}
+	}
+	
 	fmt.Fprintln(w, ":")
 	
 	// Format class body
@@ -341,6 +354,8 @@ func formatModifiers(modifiers []ir.Modifier) string {
 			mods = append(mods, "async")
 		case ir.ModifierReadonly:
 			mods = append(mods, "readonly")
+		case ir.ModifierEmbedded:
+			mods = append(mods, "embeds")
 		}
 	}
 	

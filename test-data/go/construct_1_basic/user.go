@@ -1,0 +1,30 @@
+// user.go
+package user
+
+import "fmt"
+
+// User represents a user in the system.
+// The distiller should identify this struct and its fields.
+type User struct {
+	ID    string // Public field
+	email string // Private field
+}
+
+// NewUser creates a new User.
+// This is a common Go pattern for a constructor.
+func NewUser(id, email string) *User {
+	return &User{
+		ID:    id,
+		email: email,
+	}
+}
+
+// UpdateEmail changes the user's email.
+// The distiller must associate this method with the User struct via the pointer receiver.
+func (u *User) UpdateEmail(newEmail string) error {
+	if newEmail == "" {
+		return fmt.Errorf("email cannot be empty")
+	}
+	u.email = newEmail
+	return nil
+}

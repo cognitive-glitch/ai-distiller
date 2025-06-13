@@ -432,3 +432,87 @@ Remember: A clean repository is a professional repository!
 5. **Release automation** - GitHub Actions for multi-platform builds
 
 Remember: The goal is to make code understandable for AI, not humans. Optimize for context efficiency!
+
+## Comprehensive Language Testing Protocol
+
+### Original Instructions from User
+
+The user requested systematic comprehensive testing of AI Distiller across all 12+ supported programming languages with the following specific workflow:
+
+### Testing Workflow for Each Language
+
+1. **Gemini Construct Design Phase**
+   - Collaborate with Gemini to design 5 constructs per language (basic → very complex)
+   - Each construct should represent real-world code patterns
+   - Focus on language-specific features and idiomatic patterns
+   - Constructs should progressively increase in complexity:
+     - Construct 1: Basic (simple functions, basic types)
+     - Construct 2: Simple (classes/structs, basic OOP)
+     - Construct 3: Medium (interfaces, inheritance, advanced features)
+     - Construct 4: Complex (advanced language features, frameworks)
+     - Construct 5: Very Complex (edge cases, meta-programming, extreme patterns)
+
+2. **Implementation Phase**
+   - Create source files (.py, .ts, .go, etc.) for each construct
+   - Generate expected output files for 3 distillation options:
+     - `expected_full.txt` - Full distillation (all content)
+     - `expected_no_private.txt` - `--strip non-public` (hide private/internal members)
+     - `expected_no_impl.txt` - `--strip implementation` (preserve signatures only)
+
+3. **Testing Phase** 
+   - Implement comprehensive unit tests (5 constructs × 3 options = 15 test cases per language)
+   - Tests must validate actual parsing results, not mock data
+   - Include construct-specific validations for language features
+
+4. **CRITICAL: Gemini Output Review Phase**
+   - **Generate actual distillation outputs** using AI Distiller
+   - **Send outputs to Gemini for accuracy verification**
+   - Gemini reviews against 4 criteria:
+     a. **Correctness Against Specification** - Accuracy, completeness, signature integrity
+     b. **Idiomatic Representation** - Natural language feel, clean formatting
+     c. **Edge Case Robustness** - Complex syntax handling, feature interpretation
+     d. **Contextual Integrity** - Import handling, dependency preservation
+   - Fix any issues identified by Gemini
+   - Iterate until Gemini confirms outputs are correct
+
+5. **Completion and Progression**
+   - Mark language as completed only after Gemini approval
+   - Commit comprehensive implementation
+   - Move to next language systematically
+
+### Language Priority Order
+
+Based on project support and complexity:
+1. ✅ **Python** - Completed (5 constructs, 15 tests, Gemini review pending)
+2. ✅ **TypeScript** - Completed (6 constructs, 18 tests, Gemini review pending)
+3. 🔄 **Go** - In progress (constructs designed by Gemini)
+4. **Rust** - Planned
+5. **Swift** - Planned
+6. **Ruby** - Planned
+7. **Java** - Planned
+8. **C#** - Planned
+9. **Kotlin** - Planned
+10. **C++** - Planned
+11. **JavaScript** - Planned
+12. **PHP** - Planned
+
+### Current Status & Next Actions
+
+**IMMEDIATE PRIORITY:** Before continuing with Go, must complete Gemini review of Python and TypeScript actual outputs as specified in original instructions.
+
+### Key Testing Principles
+
+- **No mocks or simulated data** - All tests use real AI Distiller output
+- **Gemini collaboration is mandatory** - Both for design and output verification
+- **Systematic progression** - Complete each language fully before moving to next
+- **Real-world relevance** - Constructs represent actual development patterns
+- **Language-specific focus** - Test unique features of each language
+
+### Communication Protocol
+
+- **User communication:** Czech language for general discussion
+- **Technical documentation:** English for all code, comments, technical specs  
+- **Gemini communication:** English only, use 'pro' model for deep analysis
+- **o3 communication:** English only, use 'o3' model (not 'o3-mini') when needed
+
+This comprehensive testing ensures AI Distiller can accurately handle real-world codebases across all supported languages with verified accuracy.
