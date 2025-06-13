@@ -1,0 +1,28 @@
+<file path="construct_5_very_complex.go">
+package verycomplex
+
+import (
+    "C"
+    "fmt"
+    "reflect"
+    "unsafe"
+)
+
+var readmeContent []byte
+
+type UnsafeStruct struct
+    ID int64
+    data uintptr
+
+func (s *UnsafeStruct) SetData(p *[1024]byte)
+    s.data = uintptr(unsafe.Pointer(p))
+
+func Inspect(v any)
+    val := reflect.ValueOf(v)
+    if val.Kind() == reflect.Ptr:
+    for loop:
+    field := val.Type().Field(i)
+        cMsg := C.CString(fmt.Sprintf("Field: %s, Tag: %s", field.Name, field.Tag))
+        defer C.free(unsafe.Pointer(cMsg))
+        C.myprint(cMsg)
+</file>

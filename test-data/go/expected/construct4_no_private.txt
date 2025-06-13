@@ -1,0 +1,27 @@
+<file path="construct_4_complex.go">
+package complex
+
+type Number interface
+    ~int | ~int64 | ~float32 | ~float64
+
+type Node[T any] struct
+    Value T
+    Next *Node[T]
+
+func Map(input []T, f func) []V
+    output := make([]V, len(input))
+    for i, v := range input {
+    		output[i] = f(v)
+    	}
+    return output
+
+func ProcessNumericChan(ch <-chan *Node[T]) T
+    var total T
+    for node := range ch {
+    		total += node.Value // This operation is only valid because of the Number constraint.
+    	}
+    defer func() {
+    		println("Final total:", total)
+    	}()
+    return total
+</file>

@@ -1,0 +1,21 @@
+<file path="construct_2_simple.go">
+package simple
+
+import (
+    "io"
+)
+
+type Writer interface
+    Write(p []byte) (n int, err error)
+
+type Data struct
+
+func (d Data) ReadValue() string
+    return d.value
+
+func (d *Data) UpdateValue(v string)
+    d.value = v
+
+func NewData(v string) *Data
+    return &Data{value: v}
+</file>

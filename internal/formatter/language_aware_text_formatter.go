@@ -24,6 +24,7 @@ func NewLanguageAwareTextFormatter(options Options) *LanguageAwareTextFormatter 
 	
 	// Register built-in language formatters
 	f.RegisterLanguageFormatter("java", NewJavaFormatter())
+	f.RegisterLanguageFormatter("go", NewGoFormatter())
 	// Python formatter can be added later by refactoring existing code
 	// f.RegisterLanguageFormatter("python", NewPythonFormatter())
 	
@@ -45,6 +46,11 @@ func (f *LanguageAwareTextFormatter) Format(w io.Writer, file *ir.DistilledFile)
 	// Get language-specific formatter
 	langFormatter := f.getLanguageFormatter(file.Language)
 	
+	// Reset formatter state for new file
+	if langFormatter != nil {
+		langFormatter.Reset()
+	}
+	
 	// Write file contents
 	for _, child := range file.Children {
 		if langFormatter != nil {
@@ -57,6 +63,11 @@ func (f *LanguageAwareTextFormatter) Format(w io.Writer, file *ir.DistilledFile)
 				return err
 			}
 		}
+	}
+	
+	// For Go formatter, ensure import block is closed
+	if goFormatter, ok := langFormatter.(*GoFormatter); ok && goFormatter.lastWasImport {
+		fmt.Fprintln(w, ")")
 	}
 	
 	// Write file footer

@@ -61,6 +61,20 @@ func (p *ASTParser) ProcessSource(ctx context.Context, source []byte, filename s
 		distilledFile.Children = append(distilledFile.Children, constraintComment)
 	}
 
+	// Process package declaration with doc comments
+	if file.Doc != nil {
+		// Add package documentation comments
+		for _, comment := range file.Doc.List {
+			docComment := &ir.DistilledComment{
+				BaseNode: ir.BaseNode{
+					Location: p.getLocation(comment.Pos(), comment.End()),
+				},
+				Text: strings.TrimPrefix(comment.Text, "//"),
+			}
+			distilledFile.Children = append(distilledFile.Children, docComment)
+		}
+	}
+	
 	// Process package declaration
 	if file.Name != nil {
 		pkg := &ir.DistilledPackage{
@@ -84,14 +98,35 @@ func (p *ASTParser) ProcessSource(ctx context.Context, source []byte, filename s
 	
 	// First pass: collect types and non-method functions
 	typeMap := make(map[string]ir.DistilledNode) // Map from type name to the distilled node
-	var functions []*ir.DistilledFunction
+	type functionWithDoc struct {
+		fn *ir.DistilledFunction
+		docComments []ir.DistilledNode
+	}
+	var functions []functionWithDoc
 	
 	for _, decl := range file.Decls {
 		switch d := decl.(type) {
 		case *ast.FuncDecl:
+			// Extract function doc comments
+			var docComments []ir.DistilledNode
+			if d.Doc != nil {
+				for _, comment := range d.Doc.List {
+					text := strings.TrimSpace(strings.TrimPrefix(comment.Text, "//"))
+					if text != "" {
+						docComment := &ir.DistilledComment{
+							BaseNode: ir.BaseNode{
+								Location: p.getLocation(comment.Pos(), comment.End()),
+							},
+							Text: text,
+							Format: "doc",
+						}
+						docComments = append(docComments, docComment)
+					}
+				}
+			}
 			fn := p.processFunction(d)
 			if fn != nil {
-				functions = append(functions, fn)
+				functions = append(functions, functionWithDoc{fn: fn, docComments: docComments})
 			}
 		case *ast.GenDecl:
 			nodes := p.processGenDecl(d)
@@ -112,30 +147,49 @@ func (p *ASTParser) ProcessSource(ctx context.Context, source []byte, filename s
 	}
 	
 	// Second pass: associate methods with their types
-	for _, fn := range functions {
+	for _, fnWithDoc := range functions {
+		fn := fnWithDoc.fn
 		receiverType := p.getReceiverTypeName(fn)
 		if receiverType != "" {
-			// This is a method - clean up parameters and add to the appropriate type
-			p.cleanMethodParameters(fn)
+			// This is a method - add to the appropriate type
+			// Note: We keep the receiver parameter for the formatter to process
+			// p.cleanMethodParameters(fn) // DISABLED: formatter needs receiver info
 			if targetType, exists := typeMap[receiverType]; exists {
 				switch target := targetType.(type) {
 				case *ir.DistilledClass:
+					// Add doc comments before the method
+					for _, doc := range fnWithDoc.docComments {
+						target.Children = append(target.Children, doc)
+					}
 					target.Children = append(target.Children, fn)
 				case *ir.DistilledInterface:
+					// Add doc comments before the method
+					for _, doc := range fnWithDoc.docComments {
+						target.Children = append(target.Children, doc)
+					}
 					target.Children = append(target.Children, fn)
 				}
 			} else {
 				// Receiver type not found - add as top-level function for now
+				for _, doc := range fnWithDoc.docComments {
+					distilledFile.Children = append(distilledFile.Children, doc)
+				}
 				distilledFile.Children = append(distilledFile.Children, fn)
 			}
 		} else {
 			// This is a regular function - add as top-level
+			for _, doc := range fnWithDoc.docComments {
+				distilledFile.Children = append(distilledFile.Children, doc)
+			}
 			distilledFile.Children = append(distilledFile.Children, fn)
 		}
 	}
 	
 	// Third pass: analyze interface satisfaction and add "implements" relationships
 	p.analyzeInterfaceSatisfaction(typeMap)
+	
+	// Fourth pass: process remaining comments
+	p.processComments(file, distilledFile)
 
 	return distilledFile, nil
 }
@@ -405,6 +459,119 @@ func (p *ASTParser) isChannelReceive(call *ast.CallExpr) bool {
 	return false
 }
 
+// processComments adds all comments to the distilled file in the correct positions
+func (p *ASTParser) processComments(file *ast.File, distilledFile *ir.DistilledFile) {
+	// This function is now called after all other processing is done,
+	// so we just need to handle inline and trailing comments that weren't
+	// already processed as doc comments
+	
+	processedComments := make(map[*ast.Comment]bool)
+	
+	// Mark package doc comments as processed (already added)
+	if file.Doc != nil {
+		for _, c := range file.Doc.List {
+			processedComments[c] = true
+		}
+	}
+	
+	// Mark declaration doc comments as processed
+	for _, decl := range file.Decls {
+		switch d := decl.(type) {
+		case *ast.FuncDecl:
+			if d.Doc != nil {
+				for _, c := range d.Doc.List {
+					processedComments[c] = true
+				}
+			}
+		case *ast.GenDecl:
+			if d.Doc != nil {
+				for _, c := range d.Doc.List {
+					processedComments[c] = true
+				}
+			}
+			// Also check specs within GenDecl
+			for _, spec := range d.Specs {
+				switch s := spec.(type) {
+				case *ast.ValueSpec:
+					if s.Doc != nil {
+						for _, c := range s.Doc.List {
+							processedComments[c] = true
+						}
+					}
+					if s.Comment != nil {
+						for _, c := range s.Comment.List {
+							processedComments[c] = true
+						}
+					}
+				case *ast.TypeSpec:
+					if s.Doc != nil {
+						for _, c := range s.Doc.List {
+							processedComments[c] = true
+						}
+					}
+					if s.Comment != nil {
+						for _, c := range s.Comment.List {
+							processedComments[c] = true
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	// Now add inline and line comments that haven't been processed
+	for _, cg := range file.Comments {
+		for _, c := range cg.List {
+			if !processedComments[c] {
+				// This is an inline or line comment
+				text := strings.TrimSpace(strings.TrimPrefix(c.Text, "//"))
+				if strings.HasPrefix(text, " ") {
+					text = strings.TrimSpace(text)
+				}
+				// Also handle /* */ style comments
+				if strings.HasPrefix(c.Text, "/*") && strings.HasSuffix(c.Text, "*/") {
+					text = strings.TrimSpace(c.Text[2:len(c.Text)-2])
+				}
+				if text != "" {
+					distilledComment := &ir.DistilledComment{
+						BaseNode: ir.BaseNode{
+							Location: p.getLocation(c.Pos(), c.End()),
+						},
+						Text: text,
+					}
+					// Insert comment at the appropriate position based on line number
+					p.insertCommentAtPosition(distilledFile, distilledComment)
+				}
+			}
+		}
+	}
+}
+
+// insertCommentAtPosition inserts a comment at the correct position based on its location
+func (p *ASTParser) insertCommentAtPosition(file *ir.DistilledFile, comment *ir.DistilledComment) {
+	// Find the appropriate position to insert the comment based on line numbers
+	commentLine := comment.Location.StartLine
+	
+	// Find the right position to insert
+	insertIndex := len(file.Children)
+	for i, child := range file.Children {
+		childLine := child.GetLocation().StartLine
+		if childLine > commentLine {
+			insertIndex = i
+			break
+		}
+	}
+	
+	// Insert at the appropriate position
+	if insertIndex == len(file.Children) {
+		file.Children = append(file.Children, comment)
+	} else {
+		// Insert in the middle
+		file.Children = append(file.Children[:insertIndex+1], file.Children[insertIndex:]...)
+		file.Children[insertIndex] = comment
+	}
+}
+
 // extractBuildConstraints extracts build constraints from comments
 func (p *ASTParser) extractBuildConstraints(comments []*ast.CommentGroup) []string {
 	var constraints []string
@@ -502,20 +669,66 @@ func (p *ASTParser) processDecl(decl ast.Decl) []ir.DistilledNode {
 // processGenDecl processes a general declaration (type, const, var)
 func (p *ASTParser) processGenDecl(decl *ast.GenDecl) []ir.DistilledNode {
 	var nodes []ir.DistilledNode
+	
+	// Process declaration-level doc comments
+	if decl.Doc != nil {
+		for _, comment := range decl.Doc.List {
+			text := strings.TrimSpace(strings.TrimPrefix(comment.Text, "//"))
+			if text != "" {
+				docComment := &ir.DistilledComment{
+					BaseNode: ir.BaseNode{
+						Location: p.getLocation(comment.Pos(), comment.End()),
+					},
+					Text: text,
+					Format: "doc",
+				}
+				nodes = append(nodes, docComment)
+			}
+		}
+	}
 
 	for _, spec := range decl.Specs {
 		switch s := spec.(type) {
 		case *ast.TypeSpec:
+			// Add type doc comment if present
+			if s.Doc != nil {
+				for _, comment := range s.Doc.List {
+					text := strings.TrimSpace(strings.TrimPrefix(comment.Text, "//"))
+					if text != "" {
+						docComment := &ir.DistilledComment{
+							BaseNode: ir.BaseNode{
+								Location: p.getLocation(comment.Pos(), comment.End()),
+							},
+							Text: text,
+							Format: "doc",
+						}
+						nodes = append(nodes, docComment)
+					}
+				}
+			}
 			node := p.processTypeSpec(s)
 			if node != nil {
 				nodes = append(nodes, node)
 			}
 		case *ast.ValueSpec:
+			// Add value doc comment if present
+			if s.Doc != nil {
+				for _, comment := range s.Doc.List {
+					text := strings.TrimSpace(strings.TrimPrefix(comment.Text, "//"))
+					if text != "" {
+						docComment := &ir.DistilledComment{
+							BaseNode: ir.BaseNode{
+								Location: p.getLocation(comment.Pos(), comment.End()),
+							},
+							Text: text,
+							Format: "doc",
+						}
+						nodes = append(nodes, docComment)
+					}
+				}
+			}
 			// Process const/var declarations
 			for i, name := range s.Names {
-				if name.Name == "_" {
-					continue
-				}
 
 				field := &ir.DistilledField{
 					BaseNode: ir.BaseNode{
@@ -833,7 +1046,14 @@ func (p *ASTParser) processFuncType(name string, funcType *ast.FuncType) *ir.Dis
 		} else {
 			var returns []string
 			for _, result := range funcType.Results.List {
-				returns = append(returns, p.typeToString(result.Type))
+				resultType := p.typeToString(result.Type)
+				if len(result.Names) == 0 {
+					returns = append(returns, resultType)
+				} else {
+					for _, name := range result.Names {
+						returns = append(returns, name.Name+" "+resultType)
+					}
+				}
 			}
 			fn.Returns = &ir.TypeRef{Name: "(" + strings.Join(returns, ", ") + ")"}
 		}

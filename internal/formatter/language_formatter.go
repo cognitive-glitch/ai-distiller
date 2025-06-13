@@ -12,6 +12,9 @@ type LanguageFormatter interface {
 	
 	// GetLanguage returns the language this formatter supports
 	GetLanguage() string
+	
+	// Reset resets the formatter state for a new file (optional)
+	Reset()
 }
 
 // BaseLanguageFormatter provides common functionality for language formatters
@@ -27,4 +30,9 @@ func NewBaseLanguageFormatter(language string) BaseLanguageFormatter {
 // GetLanguage returns the supported language
 func (f *BaseLanguageFormatter) GetLanguage() string {
 	return f.language
+}
+
+// Reset provides a default no-op implementation
+func (f *BaseLanguageFormatter) Reset() {
+	// Default implementation does nothing
 }
