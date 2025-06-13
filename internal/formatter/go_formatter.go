@@ -162,7 +162,7 @@ func (f *GoFormatter) formatStruct(w io.Writer, class *ir.DistilledClass, indent
 	// Class comments are handled separately
 	
 	// Format struct declaration
-	fmt.Fprintf(w, "\n%stype %s struct", indentStr, class.Name)
+	fmt.Fprintf(w, "\n%stype %s struct {", indentStr, class.Name)
 	
 	// Check if there are fields
 	hasFields := false
@@ -181,9 +181,10 @@ func (f *GoFormatter) formatStruct(w io.Writer, class *ir.DistilledClass, indent
 				f.formatStructField(w, field, indent+1)
 			}
 		}
+		fmt.Fprintf(w, "%s}\n", indentStr)
 	} else {
 		// Empty struct
-		fmt.Fprintln(w)
+		fmt.Fprintln(w, "}")
 	}
 	
 	// Format methods
@@ -233,7 +234,7 @@ func (f *GoFormatter) formatInterface(w io.Writer, intf *ir.DistilledInterface, 
 	
 	// Interface comments are handled separately
 	
-	fmt.Fprintf(w, "\n%stype %s interface", indentStr, intf.Name)
+	fmt.Fprintf(w, "\n%stype %s interface {", indentStr, intf.Name)
 	
 	// Check for type constraints or embedded interfaces
 	if len(intf.Extends) > 0 {
@@ -248,6 +249,7 @@ func (f *GoFormatter) formatInterface(w io.Writer, intf *ir.DistilledInterface, 
 			fmt.Fprintf(w, "%s", ext.Name)
 		}
 		fmt.Fprintln(w)
+		fmt.Fprintf(w, "%s}\n", indentStr)
 	} else if len(intf.Children) > 0 {
 		fmt.Fprintln(w)
 		// Format methods
@@ -256,9 +258,10 @@ func (f *GoFormatter) formatInterface(w io.Writer, intf *ir.DistilledInterface, 
 				f.formatInterfaceMethod(w, fn, indent+1)
 			}
 		}
+		fmt.Fprintf(w, "%s}\n", indentStr)
 	} else {
 		// Empty interface
-		fmt.Fprintln(w)
+		fmt.Fprintln(w, "}")
 	}
 	
 	return nil
