@@ -5,6 +5,7 @@ import (
 	"github.com/janreges/ai-distiller/internal/language/javascript"
 	"github.com/janreges/ai-distiller/internal/language/php"
 	"github.com/janreges/ai-distiller/internal/language/python"
+	"github.com/janreges/ai-distiller/internal/language/ruby"
 	"github.com/janreges/ai-distiller/internal/language/rust"
 	"github.com/janreges/ai-distiller/internal/language/swift"
 	"github.com/janreges/ai-distiller/internal/language/typescript"
@@ -55,10 +56,15 @@ func RegisterAll() error {
 		return err
 	}
 
+	// Register Ruby processor
+	rubyProc := ruby.NewProcessor()
+	if err := processor.Register(rubyProc); err != nil {
+		return err
+	}
+
 	// TODO: Register other language processors
 	// - Java
 	// - C#
-	// - Ruby
 	// - etc.
 
 	return nil
