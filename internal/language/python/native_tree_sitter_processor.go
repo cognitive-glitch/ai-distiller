@@ -57,6 +57,9 @@ func (p *NativeTreeSitterProcessor) ProcessSource(ctx context.Context, source []
 	// Process root node
 	p.processNode(tree.RootNode(), file, nil)
 	
+	// Analyze protocol satisfaction
+	p.analyzeProtocolSatisfaction(file)
+	
 	return file, nil
 }
 
@@ -684,4 +687,121 @@ func (p *NativeTreeSitterProcessor) extractDocstring(bodyNode *sitter.Node) stri
 		}
 	}
 	return ""
+}
+
+// analyzeProtocolSatisfaction analyzes protocol implementations using duck typing
+func (p *NativeTreeSitterProcessor) analyzeProtocolSatisfaction(file *ir.DistilledFile) {
+	// Collect all protocols and classes
+	protocols := make(map[string]*ir.DistilledClass)
+	classes := make(map[string]*ir.DistilledClass)
+	
+	for _, child := range file.Children {
+		if class, ok := child.(*ir.DistilledClass); ok {
+			// Check if it's a Protocol by looking for Protocol in inheritance
+			isProtocol := false
+			for _, ext := range class.Extends {
+				if ext.Name == "Protocol" {
+					isProtocol = true
+					break
+				}
+			}
+			
+			if isProtocol {
+				protocols[class.Name] = class
+			} else {
+				classes[class.Name] = class
+			}
+		}
+	}
+	
+	// For each class, check if it satisfies any protocols (duck typing)
+	for _, class := range classes {
+		for protocolName, protocol := range protocols {
+			if p.classSatisfiesProtocol(class, protocol) {
+				// Add implicit protocol satisfaction
+				class.Implements = append(class.Implements, ir.TypeRef{
+					Name: protocolName + " (duck typing)",
+				})
+			}
+		}
+	}
+}
+
+// classSatisfiesProtocol checks if a class satisfies a protocol via duck typing
+func (p *NativeTreeSitterProcessor) classSatisfiesProtocol(class *ir.DistilledClass, protocol *ir.DistilledClass) bool {
+	// Create method map for the class
+	classMethods := make(map[string]*ir.DistilledFunction)
+	
+	for _, child := range class.Children {
+		if method, ok := child.(*ir.DistilledFunction); ok {
+			// Only consider public methods for protocol satisfaction
+			if method.Visibility == ir.VisibilityPublic {
+				classMethods[method.Name] = method
+			}
+		}
+	}
+	
+	// Check if class has all protocol methods
+	for _, child := range protocol.Children {
+		if protocolMethod, ok := child.(*ir.DistilledFunction); ok {
+			classMethod, exists := classMethods[protocolMethod.Name]
+			if !exists {
+				return false
+			}
+			
+			// Check method signature compatibility (simplified)
+			if !p.methodSignaturesCompatible(classMethod, protocolMethod) {
+				return false
+			}
+		}
+	}
+	
+	return true
+}
+
+// methodSignaturesCompatible checks if two method signatures are compatible
+func (p *NativeTreeSitterProcessor) methodSignaturesCompatible(classMethod, protocolMethod *ir.DistilledFunction) bool {
+	// Check parameter count (excluding 'self')
+	classParams := p.getNonSelfParameters(classMethod.Parameters)
+	protocolParams := p.getNonSelfParameters(protocolMethod.Parameters)
+	
+	if len(classParams) != len(protocolParams) {
+		return false
+	}
+	
+	// Check parameter types (if specified)
+	for i, classParam := range classParams {
+		protocolParam := protocolParams[i]
+		
+		// If protocol specifies type, class must match (simplified check)
+		if protocolParam.Type.Name != "" && classParam.Type.Name != "" {
+			if !p.typesCompatible(classParam.Type, protocolParam.Type) {
+				return false
+			}
+		}
+	}
+	
+	// Check return type compatibility
+	if protocolMethod.Returns != nil && classMethod.Returns != nil {
+		return p.typesCompatible(*classMethod.Returns, *protocolMethod.Returns)
+	}
+	
+	return true
+}
+
+// getNonSelfParameters filters out 'self' parameter
+func (p *NativeTreeSitterProcessor) getNonSelfParameters(params []ir.Parameter) []ir.Parameter {
+	var result []ir.Parameter
+	for _, param := range params {
+		if param.Name != "self" && param.Name != "cls" {
+			result = append(result, param)
+		}
+	}
+	return result
+}
+
+// typesCompatible checks if two types are compatible (simplified)
+func (p *NativeTreeSitterProcessor) typesCompatible(type1, type2 ir.TypeRef) bool {
+	// Simple string comparison for now
+	return strings.TrimSpace(type1.Name) == strings.TrimSpace(type2.Name)
 }

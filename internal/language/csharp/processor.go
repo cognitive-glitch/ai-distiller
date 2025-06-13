@@ -7,6 +7,7 @@ import (
 
 	"github.com/janreges/ai-distiller/internal/ir"
 	"github.com/janreges/ai-distiller/internal/processor"
+	"github.com/janreges/ai-distiller/internal/stripper"
 )
 
 // Processor handles C# source code processing
@@ -41,7 +42,32 @@ func (p *Processor) Process(ctx context.Context, reader io.Reader, filename stri
 
 // ProcessWithOptions implements processor.LanguageProcessor
 func (p *Processor) ProcessWithOptions(ctx context.Context, reader io.Reader, filename string, opts processor.ProcessOptions) (*ir.DistilledFile, error) {
-	// For now, just use the standard Process method
-	// TODO: Implement options for C# processor
-	return p.Process(ctx, reader, filename)
+	// Process using tree-sitter
+	result, err := p.Process(ctx, reader, filename)
+	if err != nil {
+		return nil, err
+	}
+
+	// Apply stripper if any options are set
+	stripperOpts := stripper.Options{
+		RemovePrivate:         !opts.IncludePrivate && !opts.RemovePrivateOnly && !opts.RemoveProtectedOnly,
+		RemovePrivateOnly:     opts.RemovePrivateOnly,
+		RemoveProtectedOnly:   opts.RemoveProtectedOnly,
+		RemoveImplementations: !opts.IncludeImplementation,
+		RemoveComments:        !opts.IncludeComments,
+		RemoveImports:         !opts.IncludeImports,
+	}
+
+	// Only strip if there's something to strip
+	if stripperOpts.RemovePrivate || stripperOpts.RemovePrivateOnly || stripperOpts.RemoveProtectedOnly ||
+		stripperOpts.RemoveImplementations || stripperOpts.RemoveComments || stripperOpts.RemoveImports {
+
+		s := stripper.New(stripperOpts)
+		stripped := result.Accept(s)
+		if strippedFile, ok := stripped.(*ir.DistilledFile); ok {
+			return strippedFile, nil
+		}
+	}
+
+	return result, nil
 }
