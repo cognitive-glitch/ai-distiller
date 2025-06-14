@@ -167,7 +167,23 @@ func (f *KotlinFormatter) formatClass(class *ir.DistilledClass, indent int) stri
 		}
 	}
 
-	parts = append(parts, f.addVisibilityPrefix(class.Visibility)+indentStr+classDecl)
+	parts = append(parts, indentStr+classDecl+" {")
+
+	// Format children (methods, properties, etc.) if not a data class
+	// Data classes have their properties in constructor
+	if !isDataClass {
+		for _, child := range class.Children {
+			switch n := child.(type) {
+			case *ir.DistilledFunction:
+				parts = append(parts, f.formatFunction(n, indent+1))
+			case *ir.DistilledField:
+				parts = append(parts, f.formatField(n, indent+1))
+			}
+		}
+	}
+	
+	// Add closing brace
+	parts = append(parts, indentStr+"}")
 
 	return strings.Join(parts, "\n")
 }
@@ -213,7 +229,20 @@ func (f *KotlinFormatter) formatInterface(intf *ir.DistilledInterface, indent in
 		intfDecl += " : " + strings.Join(extends, ", ")
 	}
 
-	return f.addVisibilityPrefix(intf.Visibility) + indentStr + intfDecl
+	var parts []string
+	parts = append(parts, indentStr+intfDecl+" {")
+	
+	// Format children (methods)
+	for _, child := range intf.Children {
+		if fn, ok := child.(*ir.DistilledFunction); ok {
+			parts = append(parts, f.formatFunction(fn, indent+1))
+		}
+	}
+	
+	// Add closing brace
+	parts = append(parts, indentStr+"}")
+	
+	return strings.Join(parts, "\n")
 }
 
 func (f *KotlinFormatter) formatEnum(enum *ir.DistilledEnum, indent int) string {
@@ -234,7 +263,28 @@ func (f *KotlinFormatter) formatEnum(enum *ir.DistilledEnum, indent int) string 
 	}
 	enumDecl += "enum class " + enum.Name
 
-	return f.addVisibilityPrefix(enum.Visibility) + indentStr + enumDecl
+	var parts []string
+	parts = append(parts, f.addVisibilityPrefix(enum.Visibility)+indentStr+enumDecl+" {")
+	
+	// Format enum values and methods
+	for _, child := range enum.Children {
+		switch n := child.(type) {
+		case *ir.DistilledFunction:
+			parts = append(parts, f.formatFunction(n, indent+1))
+		case *ir.DistilledField:
+			// Enum values
+			valueStr := indentStr + "    " + n.Name
+			if n.DefaultValue != "" {
+				valueStr += "(" + n.DefaultValue + ")"
+			}
+			parts = append(parts, valueStr)
+		}
+	}
+	
+	// Add closing brace
+	parts = append(parts, indentStr+"}")
+	
+	return strings.Join(parts, "\n")
 }
 
 func (f *KotlinFormatter) formatFunction(fn *ir.DistilledFunction, indent int) string {
@@ -266,15 +316,11 @@ func (f *KotlinFormatter) formatFunction(fn *ir.DistilledFunction, indent int) s
 		}
 	}
 
-	// Function keyword
-	funKeyword := "fun"
-
 	// Function signature
 	signature := strings.Join(modifiers, " ")
 	if signature != "" {
 		signature += " "
 	}
-	signature += funKeyword + " "
 
 	// Generics
 	if len(fn.TypeParams) > 0 {
@@ -310,7 +356,56 @@ func (f *KotlinFormatter) formatFunction(fn *ir.DistilledFunction, indent int) s
 		signature += ": " + fn.Returns.Name
 	}
 
-	return f.addVisibilityPrefix(fn.Visibility) + indentStr + signature
+	// Add implementation if present
+	if fn.Implementation != "" {
+		signature += " {\n"
+		// Strip leading and trailing braces from implementation if present
+		impl := fn.Implementation
+		lines := strings.Split(impl, "\n")
+		
+		// Find first and last non-empty lines
+		firstNonEmpty := -1
+		lastNonEmpty := -1
+		for i, line := range lines {
+			if strings.TrimSpace(line) != "" {
+				if firstNonEmpty == -1 {
+					firstNonEmpty = i
+				}
+				lastNonEmpty = i
+			}
+		}
+		
+		// Check if first and last lines are braces
+		if firstNonEmpty >= 0 && lastNonEmpty >= 0 && firstNonEmpty < lastNonEmpty {
+			firstLine := strings.TrimSpace(lines[firstNonEmpty])
+			lastLine := strings.TrimSpace(lines[lastNonEmpty])
+			if firstLine == "{" && lastLine == "}" {
+				// Remove brace lines
+				lines = lines[firstNonEmpty+1:lastNonEmpty]
+			}
+		}
+		
+		// Join back and add
+		impl = strings.Join(lines, "\n")
+		impl = strings.TrimSpace(impl)
+		
+		// If implementation is empty after stripping braces, don't add anything
+		if impl == "" {
+			// Don't add implementation block
+		} else {
+			signature += impl
+			if !strings.HasSuffix(impl, "\n") {
+				signature += "\n"
+			}
+			signature += indentStr + "}"
+		}
+	}
+
+	// Top-level functions (indent == 0) don't have visibility prefix
+	if indent == 0 {
+		return signature
+	}
+	return indentStr + f.addVisibilityPrefix(fn.Visibility) + signature
 }
 
 func (f *KotlinFormatter) formatField(field *ir.DistilledField, indent int) string {
@@ -353,20 +448,20 @@ func (f *KotlinFormatter) formatField(field *ir.DistilledField, indent int) stri
 		fieldDecl += " = " + field.DefaultValue
 	}
 
-	return f.addVisibilityPrefix(field.Visibility) + indentStr + fieldDecl
+	return indentStr + f.addVisibilityPrefix(field.Visibility) + fieldDecl
 }
 
 func (f *KotlinFormatter) addVisibilityPrefix(visibility ir.Visibility) string {
 	switch visibility {
 	case ir.VisibilityPublic:
-		return "+ "
+		return "" // No prefix for public
 	case ir.VisibilityPrivate:
-		return "- "
+		return "-"
 	case ir.VisibilityProtected:
-		return "# "
+		return "*"
 	case ir.VisibilityInternal:
-		return "~ "
+		return "~"
 	default:
-		return "+ " // Default is public in Kotlin
+		return "" // Default is public in Kotlin
 	}
 }

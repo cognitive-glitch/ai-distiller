@@ -67,11 +67,8 @@ func (f *RubyFormatter) formatClass(w io.Writer, class *ir.DistilledClass, inden
 	// Add blank line before class
 	fmt.Fprintln(w)
 	
-	// Get visibility prefix
-	visPrefix := f.getVisibilityPrefix(class.Visibility)
-	
 	// Format class declaration
-	fmt.Fprintf(w, "%s%sclass %s", indentStr, visPrefix, class.Name)
+	fmt.Fprintf(w, "%sclass %s", indentStr, class.Name)
 	
 	// Add inheritance
 	if len(class.Extends) > 0 {
@@ -97,11 +94,8 @@ func (f *RubyFormatter) formatModule(w io.Writer, mod *ir.DistilledInterface, in
 	// Add blank line before module
 	fmt.Fprintln(w)
 	
-	// Get visibility prefix
-	visPrefix := f.getVisibilityPrefix(mod.Visibility)
-	
 	// Format module declaration
-	fmt.Fprintf(w, "%s%smodule %s\n", indentStr, visPrefix, mod.Name)
+	fmt.Fprintf(w, "%smodule %s\n", indentStr, mod.Name)
 	
 	// Format module members
 	for _, child := range mod.Children {
@@ -227,9 +221,11 @@ func (f *RubyFormatter) getVisibilityPrefix(visibility ir.Visibility) string {
 	case ir.VisibilityPrivate:
 		return "-"
 	case ir.VisibilityProtected:
-		return "#"
+		return "*"
 	case ir.VisibilityPublic:
-		return "+"
+		return "" // No prefix for public
+	case ir.VisibilityInternal:
+		return "~"
 	default:
 		return ""
 	}

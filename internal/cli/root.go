@@ -206,8 +206,8 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("path does not exist: %s", inputPath)
 	}
 
-	// Generate output filename if not specified
-	if outputFile == "" {
+	// Generate output filename if not specified and not using stdout
+	if outputFile == "" && !outputToStdout {
 		outputFile = generateOutputFilename(absPath, stripOptions)
 	}
 

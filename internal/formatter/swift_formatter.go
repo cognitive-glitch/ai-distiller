@@ -39,6 +39,8 @@ func (f *SwiftFormatter) FormatNode(w io.Writer, node ir.DistilledNode, indent i
 		return f.formatTypeAlias(w, n, indentStr)
 	case *ir.DistilledComment:
 		return f.formatComment(w, n, indentStr)
+	case *ir.DistilledEnum:
+		return f.formatEnum(w, n, indent)
 	default:
 		// Skip unknown nodes
 		return nil
@@ -334,14 +336,61 @@ func (f *SwiftFormatter) formatParameters(w io.Writer, params []ir.Parameter) {
 	}
 }
 
+func (f *SwiftFormatter) formatEnum(w io.Writer, enum *ir.DistilledEnum, indent int) error {
+	indentStr := strings.Repeat("    ", indent)
+	
+	// Add blank line before enum
+	fmt.Fprintln(w)
+	
+	// Get visibility prefix
+	visPrefix := f.getVisibilityPrefix(enum.Visibility)
+	
+	// Format enum declaration
+	fmt.Fprintf(w, "%s%senum %s", indentStr, visPrefix, enum.Name)
+	
+	// Check if enum has a raw value type
+	if enum.Type != nil && enum.Type.Name != "" {
+		fmt.Fprintf(w, ": %s", enum.Type.Name)
+	}
+	
+	fmt.Fprintln(w, ":")
+	
+	// Format enum cases
+	for _, child := range enum.Children {
+		switch c := child.(type) {
+		case *ir.DistilledField:
+			// Enum case
+			fmt.Fprintf(w, "%s    case %s", indentStr, c.Name)
+			if c.DefaultValue != "" {
+				fmt.Fprintf(w, " = %s", c.DefaultValue)
+			} else if c.Type != nil && c.Type.Name != "" {
+				// Associated values
+				fmt.Fprintf(w, "%s", c.Type.Name)
+			}
+			fmt.Fprintln(w)
+		default:
+			// Other members (methods, etc.)
+			f.FormatNode(w, child, indent+1)
+		}
+	}
+	
+	return nil
+}
+
 func (f *SwiftFormatter) getVisibilityPrefix(visibility ir.Visibility) string {
 	switch visibility {
 	case ir.VisibilityPrivate:
 		return "-"
 	case ir.VisibilityProtected:
-		return "#"
+		return "*"
 	case ir.VisibilityPublic:
-		return "+"
+		return "" // No prefix for public
+	case ir.VisibilityInternal:
+		return "~"
+	case ir.VisibilityFilePrivate:
+		return "-" // File-private is similar to private
+	case ir.VisibilityOpen:
+		return "" // Open is similar to public
 	default:
 		return ""
 	}

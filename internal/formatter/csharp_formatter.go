@@ -27,23 +27,74 @@ func (f *CSharpFormatter) FormatNode(w io.Writer, node ir.DistilledNode, indent 
 		_, err := fmt.Fprintln(w, f.formatImport(n))
 		return err
 	case *ir.DistilledClass:
+		// Format class declaration
 		_, err := fmt.Fprintln(w, f.formatClass(n, indent))
-		return err
+		if err != nil {
+			return err
+		}
+		// Format class members
+		for _, child := range n.Children {
+			if err := f.FormatNode(w, child, indent+1); err != nil {
+				return err
+			}
+		}
+		return nil
 	case *ir.DistilledInterface:
+		// Format interface declaration
 		_, err := fmt.Fprintln(w, f.formatInterface(n, indent))
-		return err
+		if err != nil {
+			return err
+		}
+		// Format interface members
+		for _, child := range n.Children {
+			if err := f.FormatNode(w, child, indent+1); err != nil {
+				return err
+			}
+		}
+		return nil
 	case *ir.DistilledStruct:
+		// Format struct declaration
 		_, err := fmt.Fprintln(w, f.formatStruct(n, indent))
-		return err
+		if err != nil {
+			return err
+		}
+		// Format struct members
+		for _, child := range n.Children {
+			if err := f.FormatNode(w, child, indent+1); err != nil {
+				return err
+			}
+		}
+		return nil
 	case *ir.DistilledEnum:
+		// Format enum declaration
 		_, err := fmt.Fprintln(w, f.formatEnum(n, indent))
-		return err
+		if err != nil {
+			return err
+		}
+		// Format enum members
+		for _, child := range n.Children {
+			if err := f.FormatNode(w, child, indent+1); err != nil {
+				return err
+			}
+		}
+		return nil
 	case *ir.DistilledFunction:
 		_, err := fmt.Fprintln(w, f.formatFunction(n, indent))
 		return err
 	case *ir.DistilledField:
 		_, err := fmt.Fprintln(w, f.formatField(n, indent))
 		return err
+	case *ir.DistilledPackage:
+		// Format package/namespace declaration
+		indentStr := strings.Repeat("    ", indent)
+		fmt.Fprintf(w, "%snamespace %s\n", indentStr, n.Name)
+		// Format package members
+		for _, child := range n.Children {
+			if err := f.FormatNode(w, child, indent); err != nil {
+				return err
+			}
+		}
+		return nil
 	default:
 		// For nodes with children, process them recursively
 		children := node.GetChildren()
@@ -66,7 +117,6 @@ func (f *CSharpFormatter) formatImport(imp *ir.DistilledImport) string {
 
 func (f *CSharpFormatter) formatClass(class *ir.DistilledClass, indent int) string {
 	indentStr := strings.Repeat("    ", indent)
-	var parts []string
 
 	// Access modifier
 	modifiers := []string{}
@@ -119,9 +169,7 @@ func (f *CSharpFormatter) formatClass(class *ir.DistilledClass, indent int) stri
 		classDecl += " : " + strings.Join(bases, ", ")
 	}
 
-	parts = append(parts, f.addVisibilityPrefix(class.Visibility)+indentStr+classDecl)
-
-	return strings.Join(parts, "\n")
+	return indentStr + f.addVisibilityPrefix(class.Visibility) + classDecl
 }
 
 func (f *CSharpFormatter) formatInterface(intf *ir.DistilledInterface, indent int) string {
@@ -160,7 +208,7 @@ func (f *CSharpFormatter) formatInterface(intf *ir.DistilledInterface, indent in
 		intfDecl += " : " + strings.Join(extends, ", ")
 	}
 
-	return f.addVisibilityPrefix(intf.Visibility) + indentStr + intfDecl
+	return indentStr + f.addVisibilityPrefix(intf.Visibility) + intfDecl
 }
 
 func (f *CSharpFormatter) formatStruct(strct *ir.DistilledStruct, indent int) string {
@@ -190,7 +238,7 @@ func (f *CSharpFormatter) formatStruct(strct *ir.DistilledStruct, indent int) st
 		structDecl += "<" + strings.Join(genericParams, ", ") + ">"
 	}
 
-	return f.addVisibilityPrefix(strct.Visibility) + indentStr + structDecl
+	return indentStr + f.addVisibilityPrefix(strct.Visibility) + structDecl
 }
 
 func (f *CSharpFormatter) formatEnum(enum *ir.DistilledEnum, indent int) string {
@@ -216,7 +264,7 @@ func (f *CSharpFormatter) formatEnum(enum *ir.DistilledEnum, indent int) string 
 		enumDecl += " : " + enum.Type.Name
 	}
 
-	return f.addVisibilityPrefix(enum.Visibility) + indentStr + enumDecl
+	return indentStr + f.addVisibilityPrefix(enum.Visibility) + enumDecl
 }
 
 func (f *CSharpFormatter) formatFunction(fn *ir.DistilledFunction, indent int) string {
@@ -289,7 +337,7 @@ func (f *CSharpFormatter) formatFunction(fn *ir.DistilledFunction, indent int) s
 	}
 	signature += "(" + strings.Join(params, ", ") + ")"
 
-	return f.addVisibilityPrefix(fn.Visibility) + indentStr + signature
+	return indentStr + f.addVisibilityPrefix(fn.Visibility) + signature
 }
 
 func (f *CSharpFormatter) formatField(field *ir.DistilledField, indent int) string {
@@ -340,20 +388,24 @@ func (f *CSharpFormatter) formatField(field *ir.DistilledField, indent int) stri
 
 	fieldDecl += ";"
 
-	return f.addVisibilityPrefix(field.Visibility) + indentStr + fieldDecl
+	return indentStr + f.addVisibilityPrefix(field.Visibility) + fieldDecl
 }
 
 func (f *CSharpFormatter) addVisibilityPrefix(visibility ir.Visibility) string {
 	switch visibility {
 	case ir.VisibilityPublic:
-		return "+ "
+		return "" // No prefix for public
 	case ir.VisibilityPrivate:
-		return "- "
+		return "-"
 	case ir.VisibilityProtected:
-		return "# "
+		return "*"
 	case ir.VisibilityInternal:
-		return "~ "
+		return "~"
+	case ir.VisibilityProtectedInternal:
+		return "*~" // C# protected internal
+	case ir.VisibilityPrivateProtected:
+		return "-*" // C# private protected
 	default:
-		return "~ " // default to internal
+		return "~" // default to internal
 	}
 }

@@ -332,11 +332,13 @@ func (f *JavaScriptFormatter) formatComment(w io.Writer, comment *ir.DistilledCo
 func (f *JavaScriptFormatter) getVisibilityPrefix(visibility ir.Visibility) string {
 	switch visibility {
 	case ir.VisibilityPrivate:
-		return "- " // Private methods/fields (# prefix or _convention)
+		return "-" // Private methods/fields (# prefix or _convention)
 	case ir.VisibilityProtected:
-		return "# " // Protected (convention-based)
+		return "*" // Protected (convention-based)
 	case ir.VisibilityPublic:
-		return "+ " // Explicitly public
+		return "" // No prefix for public
+	case ir.VisibilityInternal:
+		return "~" // Internal/package-private
 	default:
 		return "" // Default visibility (implicitly public)
 	}

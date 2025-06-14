@@ -39,6 +39,11 @@ func (f *PHPFormatter) FormatNode(w io.Writer, node ir.DistilledNode, indent int
 		_, err := fmt.Fprintln(w, f.formatFunction(n, indent))
 		return err
 	case *ir.DistilledField:
+		// Top-level fields in PHP are constants or global variables
+		if indent == 0 {
+			_, err := fmt.Fprintln(w, f.formatGlobalField(n))
+			return err
+		}
 		_, err := fmt.Fprintln(w, f.formatField(n, indent))
 		return err
 	default:
@@ -113,7 +118,20 @@ func (f *PHPFormatter) formatClass(class *ir.DistilledClass, indent int) string 
 		classDecl += " implements " + strings.Join(implements, ", ")
 	}
 
-	parts = append(parts, f.addVisibilityPrefix(class.Visibility)+indentStr+classDecl+" {")
+	parts = append(parts, indentStr+classDecl+" {")
+
+	// Format children (methods, properties, etc.)
+	for _, child := range class.Children {
+		switch n := child.(type) {
+		case *ir.DistilledFunction:
+			parts = append(parts, f.formatFunction(n, indent+1))
+		case *ir.DistilledField:
+			parts = append(parts, f.formatField(n, indent+1))
+		}
+	}
+	
+	// Add closing brace
+	parts = append(parts, indentStr+"}")
 
 	return strings.Join(parts, "\n")
 }
@@ -134,7 +152,17 @@ func (f *PHPFormatter) formatInterface(intf *ir.DistilledInterface, indent int) 
 		intfDecl += " extends " + strings.Join(extends, ", ")
 	}
 
-	parts = append(parts, f.addVisibilityPrefix(intf.Visibility)+indentStr+intfDecl+" {")
+	parts = append(parts, indentStr+intfDecl+" {")
+
+	// Format children (methods)
+	for _, child := range intf.Children {
+		if fn, ok := child.(*ir.DistilledFunction); ok {
+			parts = append(parts, f.formatFunction(fn, indent+1))
+		}
+	}
+	
+	// Add closing brace
+	parts = append(parts, indentStr+"}")
 
 	return strings.Join(parts, "\n")
 }
@@ -150,23 +178,36 @@ func (f *PHPFormatter) formatEnum(enum *ir.DistilledEnum, indent int) string {
 		enumDecl += ": " + enum.Type.Name
 	}
 
-	return f.addVisibilityPrefix(enum.Visibility) + indentStr + enumDecl + " {"  
+	var parts []string
+	parts = append(parts, indentStr+enumDecl+" {")
+	
+	// Format enum members and methods
+	for _, child := range enum.Children {
+		switch n := child.(type) {
+		case *ir.DistilledFunction:
+			parts = append(parts, f.formatFunction(n, indent+1))
+		case *ir.DistilledField:
+			// Enum cases are represented as fields
+			caseStr := indentStr + "    case " + n.Name
+			if n.DefaultValue != "" {
+				caseStr += " = " + n.DefaultValue
+			}
+			caseStr += ";"
+			parts = append(parts, caseStr)
+		}
+	}
+	
+	// Add closing brace
+	parts = append(parts, indentStr+"}")
+	
+	return strings.Join(parts, "\n")
 }
 
 func (f *PHPFormatter) formatFunction(fn *ir.DistilledFunction, indent int) string {
 	indentStr := strings.Repeat("    ", indent)
 
-	// Access modifiers
+	// Check modifiers (but not visibility - that's handled by visibility prefix)
 	modifiers := []string{}
-	if fn.Visibility == ir.VisibilityPublic {
-		modifiers = append(modifiers, "public")
-	} else if fn.Visibility == ir.VisibilityProtected {
-		modifiers = append(modifiers, "protected")
-	} else if fn.Visibility == ir.VisibilityPrivate {
-		modifiers = append(modifiers, "private")
-	}
-
-	// Check modifiers
 	for _, mod := range fn.Modifiers {
 		if mod == ir.ModifierStatic {
 			modifiers = append(modifiers, "static")
@@ -182,7 +223,7 @@ func (f *PHPFormatter) formatFunction(fn *ir.DistilledFunction, indent int) stri
 	if len(modifiers) > 0 {
 		signature = strings.Join(modifiers, " ") + " "
 	}
-	signature += "function " + fn.Name
+	signature += fn.Name
 
 	// Parameters
 	params := []string{}
@@ -226,23 +267,66 @@ func (f *PHPFormatter) formatFunction(fn *ir.DistilledFunction, indent int) stri
 		signature += ": " + returnType
 	}
 
-	return f.addVisibilityPrefix(fn.Visibility) + indentStr + signature
+	// Add implementation if present
+	if fn.Implementation != "" {
+		// Check if implementation is just empty braces
+		impl := strings.TrimSpace(fn.Implementation)
+		if impl == "{}" || impl == "{\n}" {
+			// Empty implementation - don't add anything
+		} else {
+			signature += " {\n"
+			// Strip leading and trailing braces from implementation if present
+			lines := strings.Split(fn.Implementation, "\n")
+			
+			// Find first and last non-empty lines
+			firstNonEmpty := -1
+			lastNonEmpty := -1
+			for i, line := range lines {
+				if strings.TrimSpace(line) != "" {
+					if firstNonEmpty == -1 {
+						firstNonEmpty = i
+					}
+					lastNonEmpty = i
+				}
+			}
+			
+			// Check if first and last lines are braces
+			if firstNonEmpty >= 0 && lastNonEmpty >= 0 && firstNonEmpty < lastNonEmpty {
+				firstLine := strings.TrimSpace(lines[firstNonEmpty])
+				lastLine := strings.TrimSpace(lines[lastNonEmpty])
+				if firstLine == "{" && lastLine == "}" {
+					// Remove brace lines
+					lines = lines[firstNonEmpty+1:lastNonEmpty]
+				}
+			}
+			
+			// Join back and add
+			impl = strings.Join(lines, "\n")
+			impl = strings.TrimSpace(impl)
+			
+			// Add implementation with proper closing
+			if impl != "" {
+				signature += impl
+				if !strings.HasSuffix(impl, "\n") {
+					signature += "\n"
+				}
+			}
+			signature += indentStr + "}"
+		}
+	}
+
+	// Global functions (indent == 0) don't have visibility prefix
+	if indent == 0 {
+		return signature
+	}
+	return indentStr + f.addVisibilityPrefix(fn.Visibility) + signature
 }
 
 func (f *PHPFormatter) formatField(field *ir.DistilledField, indent int) string {
 	indentStr := strings.Repeat("    ", indent)
 
-	// Access modifiers
+	// Check modifiers (but not visibility - that's handled by visibility prefix)
 	modifiers := []string{}
-	if field.Visibility == ir.VisibilityPublic {
-		modifiers = append(modifiers, "public")
-	} else if field.Visibility == ir.VisibilityProtected {
-		modifiers = append(modifiers, "protected")
-	} else if field.Visibility == ir.VisibilityPrivate {
-		modifiers = append(modifiers, "private")
-	}
-
-	// Check modifiers
 	for _, mod := range field.Modifiers {
 		if mod == ir.ModifierStatic {
 			modifiers = append(modifiers, "static")
@@ -276,18 +360,50 @@ func (f *PHPFormatter) formatField(field *ir.DistilledField, indent int) string 
 
 	fieldDecl += ";"
 
-	return f.addVisibilityPrefix(field.Visibility) + indentStr + fieldDecl
+	return indentStr + f.addVisibilityPrefix(field.Visibility) + fieldDecl
+}
+
+func (f *PHPFormatter) formatGlobalField(field *ir.DistilledField) string {
+	// Global fields are usually constants in PHP
+	isConst := false
+	for _, mod := range field.Modifiers {
+		if mod == ir.ModifierStatic || mod == ir.ModifierFinal {
+			isConst = true
+			break
+		}
+	}
+	
+	fieldDecl := ""
+	if isConst {
+		fieldDecl = "const " + field.Name
+	} else {
+		// Global variable with $ prefix
+		fieldName := field.Name
+		if !strings.HasPrefix(fieldName, "$") {
+			fieldName = "$" + fieldName
+		}
+		fieldDecl = fieldName
+	}
+	
+	// Add value if specified
+	if field.DefaultValue != "" {
+		fieldDecl += " = " + field.DefaultValue
+	}
+	
+	return fieldDecl
 }
 
 func (f *PHPFormatter) addVisibilityPrefix(visibility ir.Visibility) string {
 	switch visibility {
 	case ir.VisibilityPublic:
-		return "+ "
+		return "" // No prefix for public
 	case ir.VisibilityPrivate:
-		return "- "
+		return "-"
 	case ir.VisibilityProtected:
-		return "# "
+		return "*"
+	case ir.VisibilityInternal:
+		return "~"
 	default:
-		return "+ " // Default is public in PHP
+		return "" // Default is public in PHP
 	}
 }

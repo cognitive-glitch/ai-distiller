@@ -335,23 +335,23 @@ func (f *TextFormatter) formatPackage(w io.Writer, pkg *ir.DistilledPackage, ind
 func getVisibilityPrefix(vis ir.Visibility) string {
 	switch vis {
 	case ir.VisibilityPublic:
-		return "+"  // UML public
+		return ""   // No prefix for public
 	case ir.VisibilityPrivate:
-		return "-"  // UML private
+		return "-"  // Private
 	case ir.VisibilityProtected:
-		return "#"  // UML protected
+		return "*"  // Protected
 	case ir.VisibilityInternal:
-		return "~"  // UML package/internal (distinct from private)
+		return "~"  // UML package/internal
 	case ir.VisibilityFilePrivate:
-		return "_"  // Swift fileprivate -> file-scoped private
+		return "-"  // Swift fileprivate -> similar to private
 	case ir.VisibilityOpen:
-		return "+"   // Swift open -> treat as public
+		return ""   // Swift open -> treat as public
 	case ir.VisibilityProtectedInternal:
-		return "#_"  // C# protected internal -> combination of protected + internal
+		return "*~" // C# protected internal -> combination
 	case ir.VisibilityPrivateProtected:
-		return "-#"  // C# private protected -> combination of private + protected
+		return "-*" // C# private protected -> combination
 	default:
-		return "+"   // Default to public
+		return ""   // Default to public (no prefix)
 	}
 }
 

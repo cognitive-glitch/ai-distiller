@@ -87,8 +87,21 @@ func (f *RustFormatter) formatStruct(w io.Writer, class *ir.DistilledClass, inde
 	// Get visibility prefix
 	visPrefix := f.getVisibilityPrefix(class.Visibility)
 	
-	// Format struct declaration
-	fmt.Fprintf(w, "%s%sstruct %s", indentStr, visPrefix, class.Name)
+	// Check if this is actually a module (classes without ModifierStruct are modules in Rust)
+	isModule := true
+	for _, mod := range class.Modifiers {
+		if mod == ir.ModifierStruct {
+			isModule = false
+			break
+		}
+	}
+	
+	// Format declaration
+	if isModule {
+		fmt.Fprintf(w, "%s%smod %s", indentStr, visPrefix, class.Name)
+	} else {
+		fmt.Fprintf(w, "%s%sstruct %s", indentStr, visPrefix, class.Name)
+	}
 	
 	// Add generic type parameters
 	if len(class.TypeParams) > 0 {
@@ -102,55 +115,78 @@ func (f *RustFormatter) formatStruct(w io.Writer, class *ir.DistilledClass, inde
 		fmt.Fprintf(w, "<%s>", strings.Join(typeParams, ", "))
 	}
 	
-	// Check if there are fields
-	hasFields := false
-	for _, child := range class.Children {
-		if _, ok := child.(*ir.DistilledField); ok {
-			hasFields = true
-			break
-		}
-	}
-	
-	if hasFields {
-		fmt.Fprintln(w, " {")
-		// Format fields
-		for _, child := range class.Children {
-			if field, ok := child.(*ir.DistilledField); ok {
-				f.formatStructField(w, field, indent+1)
+	// Handle modules vs structs differently
+	if isModule {
+		// Modules have a body with various items
+		if len(class.Children) > 0 {
+			fmt.Fprintln(w, " {")
+			// Format all children in the module
+			for _, child := range class.Children {
+				switch n := child.(type) {
+				case *ir.DistilledField:
+					f.formatField(w, n, indentStr+"    ")
+				case *ir.DistilledFunction:
+					f.formatFunction(w, n, indentStr+"    ")
+				case *ir.DistilledComment:
+					f.formatComment(w, n, indentStr+"    ")
+				}
 			}
+			fmt.Fprintf(w, "%s}\n", indentStr)
+		} else {
+			fmt.Fprintln(w, ";")
 		}
-		fmt.Fprintf(w, "%s}\n", indentStr)
 	} else {
-		// Unit struct
-		fmt.Fprintln(w, ";")
-	}
-	
-	// Format impl blocks (methods)
-	var methods []*ir.DistilledFunction
-	for _, child := range class.Children {
-		if fn, ok := child.(*ir.DistilledFunction); ok {
-			methods = append(methods, fn)
-		}
-	}
-	
-	if len(methods) > 0 {
-		fmt.Fprintln(w)
-		fmt.Fprintf(w, "%simpl %s", indentStr, class.Name)
-		
-		// Add generic type parameters for impl
-		if len(class.TypeParams) > 0 {
-			typeParams := make([]string, len(class.TypeParams))
-			for i, param := range class.TypeParams {
-				typeParams[i] = param.Name
+		// Regular struct handling
+		// Check if there are fields
+		hasFields := false
+		for _, child := range class.Children {
+			if _, ok := child.(*ir.DistilledField); ok {
+				hasFields = true
+				break
 			}
-			fmt.Fprintf(w, "<%s>", strings.Join(typeParams, ", "))
 		}
 		
-		fmt.Fprintln(w, " {")
-		for _, method := range methods {
-			f.formatImplMethod(w, method, indent+1)
+		if hasFields {
+			fmt.Fprintln(w, " {")
+			// Format fields
+			for _, child := range class.Children {
+				if field, ok := child.(*ir.DistilledField); ok {
+					f.formatStructField(w, field, indent+1)
+				}
+			}
+			fmt.Fprintf(w, "%s}\n", indentStr)
+		} else {
+			// Unit struct
+			fmt.Fprintln(w, ";")
 		}
-		fmt.Fprintf(w, "%s}\n", indentStr)
+		
+		// Format impl blocks (methods)
+		var methods []*ir.DistilledFunction
+		for _, child := range class.Children {
+			if fn, ok := child.(*ir.DistilledFunction); ok {
+				methods = append(methods, fn)
+			}
+		}
+		
+		if len(methods) > 0 {
+			fmt.Fprintln(w)
+			fmt.Fprintf(w, "%simpl %s", indentStr, class.Name)
+			
+			// Add generic type parameters for impl
+			if len(class.TypeParams) > 0 {
+				typeParams := make([]string, len(class.TypeParams))
+				for i, param := range class.TypeParams {
+					typeParams[i] = param.Name
+				}
+				fmt.Fprintf(w, "<%s>", strings.Join(typeParams, ", "))
+			}
+			
+			fmt.Fprintln(w, " {")
+			for _, method := range methods {
+				f.formatImplMethod(w, method, indent+1)
+			}
+			fmt.Fprintf(w, "%s}\n", indentStr)
+		}
 	}
 	
 	return nil
@@ -165,7 +201,11 @@ func (f *RustFormatter) formatStructField(w io.Writer, field *ir.DistilledField,
 		vis = "pub "
 	}
 	
-	fmt.Fprintf(w, "%s%s%s: %s,\n", indentStr, vis, field.Name, field.Type.Name)
+	typeName := ""
+	if field.Type != nil {
+		typeName = field.Type.Name
+	}
+	fmt.Fprintf(w, "%s%s%s: %s,\n", indentStr, vis, field.Name, typeName)
 	return nil
 }
 
@@ -408,10 +448,14 @@ func (f *RustFormatter) formatField(w io.Writer, field *ir.DistilledField, inden
 	}
 	
 	// Format field/constant
+	typeName := ""
+	if field.Type != nil {
+		typeName = field.Type.Name
+	}
 	if isConst {
-		fmt.Fprintf(w, "\n%s%sconst %s: %s", indent, visPrefix, strings.ToUpper(field.Name), field.Type.Name)
+		fmt.Fprintf(w, "\n%s%sconst %s: %s", indent, visPrefix, strings.ToUpper(field.Name), typeName)
 	} else if isStatic {
-		fmt.Fprintf(w, "\n%s%sstatic %s: %s", indent, visPrefix, field.Name, field.Type.Name)
+		fmt.Fprintf(w, "\n%s%sstatic %s: %s", indent, visPrefix, field.Name, typeName)
 	} else {
 		// Regular field (shouldn't appear at top level in Rust)
 		fmt.Fprintf(w, "%s%slet %s", indent, visPrefix, field.Name)
@@ -478,9 +522,11 @@ func (f *RustFormatter) getVisibilityPrefix(visibility ir.Visibility) string {
 	case ir.VisibilityPrivate:
 		return "-"
 	case ir.VisibilityProtected:
-		return "#"
+		return "*"
 	case ir.VisibilityPublic:
-		return "+"
+		return "" // No prefix for public
+	case ir.VisibilityInternal:
+		return "~"
 	default:
 		return ""
 	}

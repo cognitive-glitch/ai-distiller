@@ -21,6 +21,8 @@ func NewPythonFormatter() *PythonFormatter {
 
 // FormatNode formats a Python node
 func (f *PythonFormatter) FormatNode(w io.Writer, node ir.DistilledNode, indent int) error {
+	// DEBUG
+	// fmt.Fprintf(os.Stderr, "DEBUG: PythonFormatter.FormatNode called with node type %T\n", node)
 	switch n := node.(type) {
 	case *ir.DistilledComment:
 		return f.formatComment(w, n, indent)
@@ -129,6 +131,8 @@ func (f *PythonFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, 
 	
 	// Get visibility prefix
 	visPrefix := getVisibilityPrefix(fn.Visibility)
+	// DEBUG: Print visibility info
+	// fmt.Fprintf(os.Stderr, "DEBUG: Function %s, Visibility=%v, Prefix=%q\n", fn.Name, fn.Visibility, visPrefix)
 	
 	// Check for special modifiers
 	modifiers := ""

@@ -104,13 +104,17 @@ func (f *CppFormatter) formatClass(class *ir.DistilledClass, indent int) string 
 		classDecl += " : " + strings.Join(bases, ", ")
 	}
 
-	// Add visibility prefix based on default visibility
-	visPrefix := "+ " // Default public for struct
-	if classType == "class" {
-		visPrefix = "- " // Default private for class
-	}
+	parts = append(parts, indentStr+classDecl+" {")
 
-	parts = append(parts, visPrefix+indentStr+classDecl+" {")
+	// Format children (methods, fields, etc.)
+	for _, child := range class.Children {
+		switch n := child.(type) {
+		case *ir.DistilledFunction:
+			parts = append(parts, f.formatFunction(n, indent+1))
+		case *ir.DistilledField:
+			parts = append(parts, f.formatField(n, indent+1))
+		}
+	}
 
 	return strings.Join(parts, "\n")
 }
@@ -135,10 +139,17 @@ func (f *CppFormatter) formatStruct(strct *ir.DistilledStruct, indent int) strin
 	// Struct declaration
 	structDecl := "struct " + strct.Name
 
-	// Add visibility prefix based on default visibility
-	visPrefix := "+ " // Default public for struct
+	parts = append(parts, indentStr+structDecl+" {")
 
-	parts = append(parts, visPrefix+indentStr+structDecl+" {")
+	// Format children (methods, fields, etc.)
+	for _, child := range strct.Children {
+		switch n := child.(type) {
+		case *ir.DistilledFunction:
+			parts = append(parts, f.formatFunction(n, indent+1))
+		case *ir.DistilledField:
+			parts = append(parts, f.formatField(n, indent+1))
+		}
+	}
 
 	return strings.Join(parts, "\n")
 }
@@ -154,7 +165,21 @@ func (f *CppFormatter) formatEnum(enum *ir.DistilledEnum, indent int) string {
 		enumDecl += " : " + enum.Type.Name
 	}
 
-	return f.addVisibilityPrefix(enum.Visibility) + indentStr + enumDecl + " {"  
+	var parts []string
+	parts = append(parts, indentStr+enumDecl+" {")
+	
+	// Format enum values
+	for _, child := range enum.Children {
+		if field, ok := child.(*ir.DistilledField); ok {
+			valueStr := indentStr + "    " + field.Name
+			if field.DefaultValue != "" {
+				valueStr += " = " + field.DefaultValue
+			}
+			parts = append(parts, valueStr)
+		}
+	}
+	
+	return strings.Join(parts, "\n")
 }
 
 func (f *CppFormatter) formatFunction(fn *ir.DistilledFunction, indent int) string {
@@ -230,7 +255,57 @@ func (f *CppFormatter) formatFunction(fn *ir.DistilledFunction, indent int) stri
 		}
 	}
 
-	result := templateLine + f.addVisibilityPrefix(fn.Visibility) + indentStr + signature
+	// Add implementation if present
+	if fn.Implementation != "" {
+		signature += " {\n"
+		// Strip leading and trailing braces from implementation if present
+		impl := fn.Implementation
+		lines := strings.Split(impl, "\n")
+		
+		// Find first and last non-empty lines
+		firstNonEmpty := -1
+		lastNonEmpty := -1
+		for i, line := range lines {
+			if strings.TrimSpace(line) != "" {
+				if firstNonEmpty == -1 {
+					firstNonEmpty = i
+				}
+				lastNonEmpty = i
+			}
+		}
+		
+		// Check if first and last lines are braces
+		if firstNonEmpty >= 0 && lastNonEmpty >= 0 && firstNonEmpty < lastNonEmpty {
+			firstLine := strings.TrimSpace(lines[firstNonEmpty])
+			lastLine := strings.TrimSpace(lines[lastNonEmpty])
+			if firstLine == "{" && lastLine == "}" {
+				// Remove brace lines
+				lines = lines[firstNonEmpty+1:lastNonEmpty]
+			}
+		}
+		
+		// Join back and add
+		impl = strings.Join(lines, "\n")
+		impl = strings.TrimSpace(impl)
+		
+		// If implementation is empty after stripping braces, don't add anything
+		if impl == "" {
+			// Don't add implementation block
+		} else {
+			signature += impl
+			if !strings.HasSuffix(impl, "\n") {
+				signature += "\n"
+			}
+			signature += indentStr + "}"
+		}
+	}
+
+	// Top-level functions (indent == 0) don't have visibility prefix
+	if indent == 0 {
+		result := templateLine + signature
+		return result
+	}
+	result := templateLine + indentStr + f.addVisibilityPrefix(fn.Visibility) + signature
 	return result
 }
 
@@ -273,18 +348,20 @@ func (f *CppFormatter) formatField(field *ir.DistilledField, indent int) string 
 
 	fieldDecl += ";"
 
-	return f.addVisibilityPrefix(field.Visibility) + indentStr + fieldDecl
+	return indentStr + f.addVisibilityPrefix(field.Visibility) + fieldDecl
 }
 
 func (f *CppFormatter) addVisibilityPrefix(visibility ir.Visibility) string {
 	switch visibility {
 	case ir.VisibilityPublic:
-		return "+ "
+		return "" // No prefix for public
 	case ir.VisibilityPrivate:
-		return "- "
+		return "-"
 	case ir.VisibilityProtected:
-		return "# "
+		return "*"
+	case ir.VisibilityInternal:
+		return "~"
 	default:
-		return "- " // Default is private in C++ classes
+		return "-" // Default is private in C++ classes
 	}
 }
