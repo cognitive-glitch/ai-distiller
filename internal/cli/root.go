@@ -64,10 +64,10 @@ func initFlags() {
 	// Output flags
 	rootCmd.Flags().StringVarP(&outputFile, "output", "o", "", "Output file path (default: .<dir>.[options].aid.txt)")
 	rootCmd.Flags().BoolVar(&outputToStdout, "stdout", false, "Print to stdout (in addition to file)")
-	rootCmd.Flags().StringVar(&outputFormat, "format", "md", "Output format: md|text|jsonl|json-structured|xml")
+	rootCmd.Flags().StringVar(&outputFormat, "format", "text", "Output format: md|text|jsonl|json-structured|xml (default: text)")
 
 	// Processing flags
-	rootCmd.Flags().StringSliceVar(&stripOptions, "strip", nil, "Remove items: comments,imports,implementation,non-public,private,protected")
+	rootCmd.Flags().StringSliceVar(&stripOptions, "strip", []string{"comments", "implementation", "non-public"}, "Remove items: comments,imports,implementation,non-public,private,protected (default: comments,implementation,non-public)")
 	rootCmd.Flags().StringVar(&includeGlob, "include", "", "Include file patterns (default: all supported)")
 	rootCmd.Flags().StringVar(&excludeGlob, "exclude", "", "Exclude file patterns")
 	rootCmd.Flags().BoolVarP(&recursive, "recursive", "r", true, "Process directories recursively")

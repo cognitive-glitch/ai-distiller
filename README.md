@@ -138,8 +138,11 @@ Remove exactly what you don't need:
 - `--strip non-public` - Hide private/internal members
 - `--strip imports` - Remove import statements
 
+**Default behavior** (optimized for AI): `--strip comments,implementation,non-public`
+This shows only public API signatures - perfect for understanding codebase structure.
+
 ### 📝 Multiple Output Formats
-- **Text** (`--format text`) - Ultra-compact for AI consumption
+- **Text** (`--format text`) - Ultra-compact for AI consumption (default)
 - **Markdown** (`--format md`) - Human-readable with emojis
 - **JSON** (`--format json`) - Structured data for tools
 - **JSONL** (`--format jsonl`) - Streaming format

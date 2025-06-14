@@ -31,13 +31,14 @@ aid --strip non-public --stdout       # Print only public members to stdout
 ### Important Flags
 
 - `--strip <items>` - **THE MOST IMPORTANT FLAG**
-  - Values: `comments`, `imports`, `implementation`, `non-public`
+  - Values: `comments`, `imports`, `implementation`, `non-public`, `private`, `protected`
   - Comma-separated: `--strip comments,implementation`
-  - Default: Nothing stripped (full output)
+  - Default: `comments,implementation,non-public` (optimized for AI - shows only public API signatures)
+  - Use `--strip ""` to show everything (full output)
   
 - `--format <fmt>` - Output format
-  - `md` (default) - Human-readable Markdown
-  - `text` - Ultra-compact plaintext (best for AI)
+  - `text` (default) - Ultra-compact plaintext (best for AI)
+  - `md` - Human-readable Markdown with emojis
   - `jsonl` - One JSON object per file
   - `json-structured` - Rich semantic data
   - `xml` - Structured XML
