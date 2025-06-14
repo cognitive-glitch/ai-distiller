@@ -32,6 +32,16 @@ test:
 	@echo "==> Running tests"
 	$(GOTEST) -v -race -coverprofile=coverage.txt -covermode=atomic ./...
 
+# Run integration tests with new test runner
+test-integration:
+	@echo "==> Running integration tests"
+	$(GOTEST) -v ./internal/testrunner
+
+# Update expected test files
+test-update:
+	@echo "==> Updating expected test files"
+	UPDATE_EXPECTED=true $(GOTEST) -v ./internal/testrunner
+
 # Run benchmarks
 bench:
 	@echo "==> Running benchmarks"
