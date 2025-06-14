@@ -27,8 +27,17 @@ func NewLanguageAwareTextFormatter(options Options) *LanguageAwareTextFormatter 
 	f.RegisterLanguageFormatter("java", NewJavaFormatter())
 	f.RegisterLanguageFormatter("go", NewGoFormatter())
 	f.RegisterLanguageFormatter("typescript", NewTypeScriptFormatter())
-	// Python formatter can be added later by refactoring existing code
-	// f.RegisterLanguageFormatter("python", NewPythonFormatter())
+	f.RegisterLanguageFormatter("python", NewPythonFormatter())
+	f.RegisterLanguageFormatter("javascript", NewJavaScriptFormatter())
+	f.RegisterLanguageFormatter("swift", NewSwiftFormatter())
+	f.RegisterLanguageFormatter("ruby", NewRubyFormatter())
+	f.RegisterLanguageFormatter("rust", NewRustFormatter())
+	f.RegisterLanguageFormatter("csharp", NewCSharpFormatter())
+	f.RegisterLanguageFormatter("c#", NewCSharpFormatter()) // Alias
+	f.RegisterLanguageFormatter("kotlin", NewKotlinFormatter())
+	f.RegisterLanguageFormatter("cpp", NewCppFormatter())
+	f.RegisterLanguageFormatter("c++", NewCppFormatter()) // Alias
+	f.RegisterLanguageFormatter("php", NewPHPFormatter())
 	
 	return f
 }
