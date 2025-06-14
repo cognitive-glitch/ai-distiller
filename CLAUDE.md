@@ -46,6 +46,32 @@ aid --strip non-public --stdout       # Print only public members to stdout
   - Default pattern: `.<dirname>.[strip-options].aid.txt`
   - Example: `.MyProject.ncom.nimpl.aid.txt`
 
+## Quick Testing with stdin
+
+For rapid testing and experimentation with AI Distiller, use stdin input:
+
+```bash
+# Test code snippets without creating files
+echo 'class UserService:
+    def get_user(self, id):
+        return self.db.find(id)' | aid --format text
+
+# Automatic language detection + automatic --stdout
+cat snippet.ts | aid
+
+# Force specific language if needed
+echo 'const x = 10' | aid --lang javascript --strip implementation
+```
+
+**Benefits for AI assistants:**
+- No need to create temporary files
+- Instant feedback on code structure extraction
+- Perfect for testing parser behavior
+- Automatic `--stdout` when using stdin
+- Language auto-detection from code patterns
+
+**Supported languages for auto-detection:** python, typescript, javascript, go, ruby, swift, rust, java, c#, kotlin, c++, php
+
 ## Expected Output Examples
 
 ### Text Format (Ultra-Compact for AI)
