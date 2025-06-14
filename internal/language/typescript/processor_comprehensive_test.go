@@ -19,33 +19,33 @@ func TestTypeScriptConstructs(t *testing.T) {
 	}{
 		{
 			name:     "Construct 1 - Basic validation utilities",
-			testDir:  "construct_1_basic",
-			filename: "validation_utils.ts",
+			testDir:  "01_basic",
+			filename: "source.ts",
 		},
 		{
 			name:     "Construct 2 - Simple user model class",
-			testDir:  "construct_2_simple", 
-			filename: "user_model.ts",
+			testDir:  "02_simple", 
+			filename: "source.ts",
 		},
 		{
 			name:     "Construct 3 - Medium notification service",
-			testDir:  "construct_3_medium",
-			filename: "notification_service.ts",
+			testDir:  "03_medium",
+			filename: "source.ts",
 		},
 		{
-			name:     "Construct 4 - Complex plugin manager (legacy decorators)",
-			testDir:  "construct_4_complex",
-			filename: "plugin_manager.ts",
+			name:     "Construct 4 - Complex plugin manager",
+			testDir:  "04_complex",
+			filename: "source.ts",
 		},
 		{
 			name:     "Construct 4b - Modern decorators plugin manager",
-			testDir:  "construct_4b_modern_decorators",
-			filename: "plugin_manager_modern.ts",
+			testDir:  "04b_modern_decorators",
+			filename: "source.ts",
 		},
 		{
 			name:     "Construct 5 - Very complex event emitter",
-			testDir:  "construct_5_very_complex",
-			filename: "event_emitter.ts",
+			testDir:  "05_very_complex",
+			filename: "source.ts",
 		},
 	}
 

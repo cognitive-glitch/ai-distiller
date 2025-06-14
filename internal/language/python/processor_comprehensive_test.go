@@ -19,28 +19,28 @@ func TestPythonConstructs(t *testing.T) {
 	}{
 		{
 			name:     "Construct 1 - Basic validation utils",
-			testDir:  "construct_1_basic",
-			filename: "validation_utils.py",
+			testDir:  "01_basic",
+			filename: "source.py",
 		},
 		{
 			name:     "Construct 2 - Simple user model",
-			testDir:  "construct_2_simple", 
-			filename: "user_model.py",
+			testDir:  "02_simple", 
+			filename: "source.py",
 		},
 		{
 			name:     "Construct 3 - Medium notification service",
-			testDir:  "construct_3_medium",
-			filename: "notification_service.py",
+			testDir:  "03_medium",
+			filename: "source.py",
 		},
 		{
 			name:     "Construct 4 - Complex plugin manager",
-			testDir:  "construct_4_complex",
-			filename: "plugin_manager.py",
+			testDir:  "04_complex",
+			filename: "source.py",
 		},
 		{
 			name:     "Construct 5 - Very complex dynamic config",
-			testDir:  "construct_5_very_complex",
-			filename: "dynamic_config.py",
+			testDir:  "05_very_complex",
+			filename: "source.py",
 		},
 	}
 

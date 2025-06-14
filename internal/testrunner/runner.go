@@ -50,9 +50,26 @@ func NewWithGoRun(testDataDir, projectRoot string) *Runner {
 
 // parseFlags extracts flags from expected filename based on parameter encoding
 // e.g., "Test5-Complex.implementation=0.comments=0.public=1.expected" -> ["--implementation=0", "--comments=0", "--public=1"]
+// Also supports simple aliases: "public.expected" -> ["--private=0"], "no_impl.expected" -> ["--implementation=0"]
 func parseParametersFromFilename(filename string) []string {
 	// Remove the .expected extension
 	name := strings.TrimSuffix(filename, ".expected")
+	
+	// Handle simple aliases first (legacy naming support)
+	simpleAliases := map[string][]string{
+		"default":        {},
+		"public":         {"--private=0"},
+		"no_private":     {"--private=0"},
+		"no_impl":        {"--implementation=0"},
+		"public.no_impl": {"--private=0", "--implementation=0"},
+		"no_private.no_impl": {"--private=0", "--implementation=0"},
+	}
+	
+	if flags, exists := simpleAliases[name]; exists {
+		// Sort flags for consistency
+		sort.Strings(flags)
+		return flags
+	}
 	
 	// Find first dot to separate test name from parameters
 	parts := strings.Split(name, ".")
@@ -71,6 +88,8 @@ func parseParametersFromFilename(filename string) []string {
 		}
 	}
 	
+	// Sort flags for consistency with flagsToFilename
+	sort.Strings(flags)
 	return flags
 }
 
@@ -113,18 +132,24 @@ func (r *Runner) DiscoverTests() ([]TestCase, error) {
 				continue // Skip scenarios without source files
 			}
 			
-			// Find expected files
+			// Find expected files - require expected/ directory
 			expectedDir := filepath.Join(scenarioDir, "expected")
 			if _, err := os.Stat(expectedDir); os.IsNotExist(err) {
-				// If no expected directory, assume default.expected
-				tests = append(tests, TestCase{
-					Language:     language,
-					ScenarioName: scenarioName,
-					SourceFile:   sourceFile,
-					ExpectedFile: filepath.Join(scenarioDir, "default.expected"),
-					Flags:        []string{},
-				})
-				continue
+				if r.updateMode {
+					// Create expected directory in update mode
+					if err := os.MkdirAll(expectedDir, 0755); err != nil {
+						return nil, fmt.Errorf("creating expected dir for %s/%s: %w", language, scenarioName, err)
+					}
+					// Create default expected file placeholder
+					tests = append(tests, TestCase{
+						Language:     language,
+						ScenarioName: scenarioName,
+						SourceFile:   sourceFile,
+						ExpectedFile: filepath.Join(expectedDir, "default.expected"),
+						Flags:        []string{},
+					})
+				}
+				continue // Skip scenarios without expected directory unless in update mode
 			}
 			
 			// Read all expected files

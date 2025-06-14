@@ -42,6 +42,11 @@ test-update:
 	@echo "==> Updating expected test files"
 	UPDATE_EXPECTED=true $(GOTEST) -v ./internal/testrunner
 
+# Audit test structure for consistency issues
+test-audit:
+	@echo "==> Auditing test structure"
+	@go run -ldflags "-X main.mode=audit" ./cmd/test-audit
+
 # Run benchmarks
 bench:
 	@echo "==> Running benchmarks"
