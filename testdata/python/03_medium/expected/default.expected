@@ -1,0 +1,13 @@
+<file path="/home/janreges/ai-distiller/testdata/python/03_medium/source.py">
+from abc import ABC, abstractmethod
+
+class BaseNotifier(ABC):
+    @abstractmethod
+    +send(self, message: str) -> None
+
+class EmailNotifier(BaseNotifier):
+    +__init__(self, smtp_host: str, port: int, from_address: str)
+    @property
+    +connection_info(self) -> str
+    +send(self, message: str) -> None
+</file>

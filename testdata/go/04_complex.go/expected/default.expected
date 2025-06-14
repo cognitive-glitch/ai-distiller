@@ -1,0 +1,14 @@
+<file path="/home/janreges/ai-distiller/testdata/go/04_complex.go/source.go">
+package complex
+
+type Number interface
+    ~int | ~int64 | ~float32 | ~float64
+
+type Node[T any] struct
+    Value T
+    Next *Node[T]
+
+func Map(input []T, f func) []V
+
+func ProcessNumericChan(ch <-chan *Node[T]) T
+</file>

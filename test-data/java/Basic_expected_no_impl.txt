@@ -1,9 +1,0 @@
-<file path="Basic.java">
-package com.aidi.test.basic;
-
-+class Basic {
-    -static final String GREETING_PREFIX = "Hello, ";
-    +static void main(String[] args);
-    -static String createGreeting(String name, int count);
-}
-</file>

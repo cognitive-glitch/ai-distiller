@@ -1,0 +1,16 @@
+<file path="/home/janreges/ai-distiller/testdata/go/01_basic.go/source.go">
+package basic
+
+import (
+    "fmt"
+    m "math"
+)
+
+const Pi = 3.14159
+
+var IsEnabled = true
+
+var UserCount int64 = 100
+
+func Add(x int, y int) int
+</file>

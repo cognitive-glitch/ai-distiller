@@ -1,0 +1,14 @@
+<file path="/home/janreges/ai-distiller/testdata/typescript/04_complex/source.ts">
+type PluginSettings = {
+  [K in 'timeout' | 'retries']?: K extends 'timeout' ? number : number;
+}
+
+interface IPlugin:
+    property name: string
+    method execute(data: any): void
+
+class PluginManager:
+    function constructor(settings: PluginSettings)
+    function registerPlugin(plugin: IPlugin) -> void
+    function runAll(data: any) -> void
+</file>

@@ -1,0 +1,5 @@
+<file path="/home/janreges/ai-distiller/testdata/typescript/01_basic/source.ts">
+type UserID = string | number
+const isValidEmail(email: string) -> boolean
+const formatUserID(id: UserID) -> string
+</file>

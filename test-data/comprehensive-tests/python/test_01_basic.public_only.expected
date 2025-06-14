@@ -1,7 +1,0 @@
-<file path="/home/janreges/ai-distiller/test-data/comprehensive-tests/python/test_01_basic.py">
-# test_01_basic.py
-from typing import List
-+def process_data(items: List[str], repeat: int = 2) -> List[str]
-+sample_data = ["a", "b", "c"]
-+result = process_data(sample_data)
-</file>
