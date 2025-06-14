@@ -1,0 +1,37 @@
+<file path="/home/janreges/ai-distiller/testdata/javascript/05_very_complex/source.js">
+const TASK_METADATA: symbol = Symbol('taskMetadata')
+const TaskPrototype: object = { init(id, generatorFunc, props), getMetadata(key) -> any, _updateMetadata(key, value) }
+
+class CooperativeScheduler:
+    constructor()
+        // implementation
+    registerTask(generatorFunc: GeneratorFunction, options = {}) -> number
+        // implementation
+    start()
+        // implementation
+    async shutdown(timeout = 5000) -> Promise<void>
+        // implementation
+    getMetrics() -> object
+        // implementation
+    inspectTask(taskId: number) -> object
+        // implementation
+
+class MemoryPool:
+    constructor(factory: Function, maxSize: number = 10)
+        // implementation
+    acquire() -> object
+        // implementation
+    release(obj: object)
+        // implementation
+    getStats() -> object
+        // implementation
+const delay = (ms)
+* function counterTask()
+    // implementation
+* function dataFetcherTask(task)
+    // implementation
+* function complexIteratorTask()
+    // implementation
+const scheduler = new CooperativeScheduler()
+const objectPool = new MemoryPool(() => ({ data: null, reset() { this.data = null; } }))
+</file>

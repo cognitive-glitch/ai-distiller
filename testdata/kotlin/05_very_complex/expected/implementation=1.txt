@@ -1,0 +1,253 @@
+<file path="/home/janreges/ai-distiller/testdata/kotlin/05_very_complex/source.kt">
+import kotlinx.coroutines
+import kotlinx.coroutines.channels
+import kotlinx.coroutines.flow
+import kotlin.reflect
+import kotlin.reflect.full
+import kotlin.contracts
+import kotlin.experimental.ExperimentalTypeInference
+import kotlin.properties.PropertyDelegateProvider
+import kotlin.properties.ReadOnlyProperty
+import kotlin.time.Duration.Companion.seconds
+class AutoGenerate {
+    var strategy: GenerationStrategy
+    var includeMethods: Array
+    var excludeMethods: Array
+    constructor(strategy: GenerationStrategy, includeMethods: Array, excludeMethods: Array)
+}
+enum class GenerationStrategy {
+    DEFAULT
+    BUILDER
+    FACTORY
+    OBSERVER
+    PROXY
+}
+class ConfigurationDsl {
+}
+class DatabaseContext {
+    var connectionPool: ConnectionPool
+    suspend withTransaction(block: TransactionScope.() -> T): T
+}
+class TransactionScope {
+    var transactionId: String
+    suspend execute(query: String, params: Any): T
+    suspend rollback()
+    suspend commit()
+}
+class ConnectionPool {
+    suspend borrowConnection(): DatabaseConnection
+    suspend returnConnection(connection: DatabaseConnection)
+    getStatistics(): PoolStatistics
+}
+abstract class AdvancedGenericRepository {
+    abstract suspend findWithProjection(query: Q, projector: (E) -> T): Flow<T>
+    abstract suspend aggregateBy(query: Q, keySelector: (E) -> K, valueSelector: (E) -> V, aggregator: (K, List<V>) -> V): Map<K, V>
+    inline transformAndValidate(entities: List, transformer: (E) -> T, validator: (T) -> U): List<U>
+}
+class Entity {
+    var id: ID
+    var version: Long
+    var metadata: EntityMetadata
+}
+class Auditable {
+    var auditInfo: AuditInfo
+    updateAuditInfo(actor: String, action: String)
+}
+class Validatable {
+    suspend validate(context: ValidationContext): ValidationResult
+}
+data class ValidationContext(var rules: List, var services: ServiceLocator, var currentUser: UserContext, var environment: Environment) {
+}
+class ServiceLocator {
+    suspend resolve(type: KClass): T
+    suspend resolveOptional(type: KClass): T?
+    suspend resolveAll(type: KClass): List<T>
+}
+class ManagedProperty {
+    constructor(factory, lifecycle: PropertyLifecycle)
+    override provideDelegate(thisRef: Any, property: KProperty): ReadOnlyProperty<Any?, T>
+}
+class PropertyLifecycle {
+    suspend onCreate(name: String, value: T): T
+    suspend onAccess(name: String, value: T): T
+    suspend onDestroy(name: String, value: T)
+}
+class DefaultPropertyLifecycle {
+    override suspend onCreate(name: String, value: T): T {
+= value
+    }
+    override suspend onAccess(name: String, value: T): T {
+= value
+    }
+    override suspend onDestroy(name: String, value: T)
+}
+class PlatformSpecificRepository {
+    constructor()
+    suspend performNativeOperation(): String
+    getPlatformCapabilities(): PlatformCapabilities
+}
+class PlatformCapabilities {
+    var supportsAdvancedFeatures: Boolean
+    var nativeLibraryVersion: String
+    var platformIdentifier: String
+}
+sealed class ProcessingState {
+}
+class AdvancedCoroutineScope {
+    constructor(context: CoroutineContext)
+    var coroutineContext: CoroutineContext
+    asyncWithTimeout(timeout: kotlin.time.Duration, block: CoroutineScope.() -> T): Deferred<Result<T>> {
+= async {
+        try {
+            withTimeout(timeout) {
+                Result.success(block())
+            }
+        } catch (e: TimeoutCancellationException) {
+            Result.failure(e)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    }
+}
+class ProcessingPipelineBuilder {
+    inline transform(transformer: (T) -> R): ProcessingPipelineBuilder<R>
+    filter(predicate: (T) -> Boolean): ProcessingPipelineBuilder<T>
+    validate(validator: (T) -> ValidationResult): ProcessingPipelineBuilder<T>
+    build(): ProcessingPipeline<T>
+}
+sealed class ProcessingStage {
+    abstract suspend process(input: I): O
+}
+class TransformationStage {
+    constructor(transformer)
+    override suspend process(input: I): O {
+= transformer(input)
+    }
+}
+class FilterStage {
+    constructor(predicate)
+    override suspend process(input: T): T?
+}
+class ValidationStage {
+    constructor(validator)
+    override suspend process(input: T): T
+}
+class ProcessingPipeline {
+    constructor(stages: List)
+    suspend execute(input: T): ProcessingState<T, Exception>
+}
+class MetaEntityProcessor {
+    suspend processEntity(entity: T): ProcessedEntity<T>
+}
+data class ProcessedEntity(var original: T, var properties: List, var generatedMethods: Map) {
+}
+data class ProcessedProperty(var name: String, var type: KType, var value: Any, var annotations: List) {
+}
+sealed class DomainEvent {
+    var eventId: String
+    var timestamp: Long
+    var source: String
+}
+class EventStore {
+    suspend append(events: List): EventAppendResult
+    suspend getEvents(streamId: String, fromVersion: Long): Flow<DomainEvent>
+    suspend getEventsByType(eventType: KClass): Flow<DomainEvent>
+    suspend createSnapshot(aggregateId: String, snapshot: AggregateSnapshot): SnapshotResult
+}
+sealed class EventAppendResult {
+}
+data class AggregateSnapshot(var aggregateId: String, var version: Long, var data: Map, var timestamp: Long) {
+}
+sealed class SnapshotResult {
+}
+main() {
+= runBlocking {
+    println("=== Very Complex Kotlin Features Demo ===")
+    
+    // Advanced coroutine scope usage
+    val advancedScope = AdvancedCoroutineScope()
+    
+    // Complex processing pipeline
+    val pipeline = ProcessingPipelineBuilder<String>()
+        .filter { it.isNotBlank() }
+        .transform<Int> { it.length }
+        .filter { it > 3 }
+        .validate { if (it < 100) ValidationResult.Valid else ValidationResult.Invalid(listOf("Too long")) }
+        .build()
+    
+    val testInput = "Hello, World!"
+    val result = pipeline.execute(testInput)
+    
+    when (result) {
+        is ProcessingState.Success -> println("Pipeline success: ${result.result}")
+        is ProcessingState.Failure -> println("Pipeline failed: ${result.error.message}")
+        else -> println("Unexpected pipeline state: $result")
+    }
+    
+    // Meta entity processing
+    val processor = MetaEntityProcessor()
+    val sampleEntity = SampleEntity("test", 42)
+    val processedEntity = processor.processEntity(sampleEntity)
+    
+    println("Processed entity with ${processedEntity.properties.size} properties")
+    println("Generated methods: ${processedEntity.generatedMethods.keys}")
+    
+    // Advanced property delegation
+    val managedConfig = ConfigurationWithManagedProperties()
+    println("Database URL: ${managedConfig.databaseUrl}")
+    println("Service endpoint: ${managedConfig.serviceEndpoint}")
+    
+    // Demonstration of complex async operations
+    advancedScope.launch {
+        val asyncResult = advancedScope.asyncWithTimeout(5.seconds) {
+            delay(1000)
+            "Async operation completed successfully"
+        }
+        
+        when (val outcome = asyncResult.await()) {
+            is kotlin.Result -> {
+                outcome.fold(
+                    onSuccess = { println("Async success: $it") },
+                    onFailure = { println("Async failure: ${it.message}") }
+                )
+            }
+        }
+    }.join()
+    
+    println("=== Demo completed ===")
+}
+}
+data class SampleEntity(var name: String, var value: Int) {
+}
+class ConfigurationWithManagedProperties {
+    var databaseUrl: String
+    var serviceEndpoint: String
+}
+sealed class ValidationResult {
+}
+class ValidationException {
+    constructor(message: String)
+}
+class Query {
+}
+class QueryResult {
+}
+class ValidationRule {
+}
+class UserContext {
+}
+class Environment {
+}
+data class AuditInfo(var createdBy: String, var createdAt: Long) {
+}
+data class EntityMetadata(var tags: Set) {
+}
+data class PoolStatistics(var activeConnections: Int, var idleConnections: Int) {
+}
+class DatabaseConnection {
+}
+String.capitalize(): String {
+= this.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+}
+</file>

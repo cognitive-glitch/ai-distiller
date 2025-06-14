@@ -1,0 +1,38 @@
+<file path="/home/janreges/ai-distiller/testdata/java/02_simple/source.java">
+package com.aidi.test.oop;
+import java.util.Objects;
+
+class SimpleOOP {
+    final String id;
+    SimpleOOP(String id, String name) 
+    {
+            this.id = Objects.requireNonNull(id, "ID cannot be null");
+            this.name = name;
+            this.version = 1;
+            this.dirty = true;
+        }
+    SimpleOOP(String id) 
+    {
+            this(id, "Default Name");
+        }
+    String getName() 
+    {
+            return name;
+        }
+    void setName(String name) 
+    {
+            this.name = name;
+            this.version++;
+            this.dirty = true;
+        }
+    @Override
+    String toString() 
+    {
+            return "SimpleOOP{" +
+                   "id='" + id + '\'' +
+                   ", name='" + name + '\'' +
+                   ", version=" + version +
+                   '}';
+        }
+}
+</file>

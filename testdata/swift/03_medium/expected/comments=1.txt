@@ -1,0 +1,45 @@
+<file path="/home/janreges/ai-distiller/testdata/swift/03_medium/source.swift">
+// //
+// //  03_medium.swift
+// //  DistillerSample
+// //
+// //  Demonstrates: generics, extensions, protocol with associatedtype,
+// //  constrained extensions, custom error types, higher-order functions.
+// //
+import Foundation
+// // MARK: - Generic Stack
+// /// A simple LIFO stack.
+
+class Stack:
+    // /// Pushes a new element.
+    func push(_: Element)
+    // /// Returns the top element without removing it.
+    func peek() -> Element?
+    // /// Removes and returns the top element.
+    func pop() -> Element?
+    // /// Private helper for validation
+    // /// Internal method for debugging
+// // Constrained extension adding `average()` only when `Element` is numeric.
+
+class :
+    // /// Computes the arithmetic mean of all integers in the stack.
+    // /// - Throws: `MathError.emptyStack` if there are no elements.
+    // /// Private helper for numeric validation
+// /// Errors for math-centric operations.
+
+class MathError:
+// // MARK: - Protocol & Extension with AssociatedType
+// /// Describes a cache that stores key/value pairs.
+
+protocol Cacheable:
+// /// Dictionary already satisfies `Cacheable` when paired properly.
+// /// Generic cache with expiration
+
+class ExpiringCache:
+    func insert(_: Value, for: Key)
+    func value(for: Key) -> Value?
+    func contains(key: Key) -> Bool
+    // /// Private cleanup method
+    // /// Internal method for cache statistics
+// // MARK: - Demo
+</file>

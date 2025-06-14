@@ -1,0 +1,10 @@
+<file path="/home/janreges/ai-distiller/testdata/python/example_new_format/source.py">
+"""Example Python module to demonstrate new test format"""
+
+class Calculator:
+    # A simple calculator class
+    __init__(self)
+    add(self, a: float, b: float) -> float
+    @property
+    history(self) -> list
+</file>

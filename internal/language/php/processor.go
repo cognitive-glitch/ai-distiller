@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/janreges/ai-distiller/internal/ir"
 	"github.com/janreges/ai-distiller/internal/processor"
@@ -54,26 +55,30 @@ func (p *Processor) ProcessFile(filename string, opts processor.ProcessOptions) 
 	// Use tree-sitter parser
 	if p.useTreeSitter {
 		treeparser, err := NewTreeSitterProcessor()
-		if err == nil {
-			defer treeparser.Close()
-			file, err := treeparser.ProcessSource(ctx, source, filename)
-			if err != nil {
-				// Fall back to line-based parser on error
-				return p.parseLineBasedPHP(ctx, source, filename, opts)
-			}
-			
-			// Apply standardized stripper for filtering
-			stripperOpts := opts.ToStripperOptions()
-			
-			// Only apply stripper if we need to remove something
-			if stripperOpts.HasAnyOption() {
-				s := stripper.New(stripperOpts)
-				stripped := file.Accept(s)
-				return stripped.(*ir.DistilledFile), nil
-			}
-			
-			return file, nil
+		if err != nil {
+			// Tree-sitter processor creation failed
+			fmt.Fprintf(os.Stderr, "PHP: Failed to create tree-sitter processor: %v\n", err)
+			return p.parseLineBasedPHP(ctx, source, filename, opts)
 		}
+		defer treeparser.Close()
+		file, err := treeparser.ProcessSource(ctx, source, filename)
+		if err != nil {
+			// Fall back to line-based parser on error
+			fmt.Fprintf(os.Stderr, "PHP: Tree-sitter parse failed: %v\n", err)
+			return p.parseLineBasedPHP(ctx, source, filename, opts)
+		}
+		
+		// Apply standardized stripper for filtering
+		stripperOpts := opts.ToStripperOptions()
+		
+		// Only apply stripper if we need to remove something
+		if stripperOpts.HasAnyOption() {
+			s := stripper.New(stripperOpts)
+			stripped := file.Accept(s)
+			return stripped.(*ir.DistilledFile), nil
+		}
+		
+		return file, nil
 	}
 	
 	// Fall back to line-based parser
@@ -91,26 +96,30 @@ func (p *Processor) ProcessWithOptions(ctx context.Context, reader io.Reader, fi
 	// Use tree-sitter parser
 	if p.useTreeSitter {
 		treeparser, err := NewTreeSitterProcessor()
-		if err == nil {
-			defer treeparser.Close()
-			file, err := treeparser.ProcessSource(ctx, source, filename)
-			if err != nil {
-				// Fall back to line-based parser on error
-				return p.parseLineBasedPHP(ctx, source, filename, opts)
-			}
-			
-			// Apply standardized stripper for filtering
-			stripperOpts := opts.ToStripperOptions()
-			
-			// Only apply stripper if we need to remove something
-			if stripperOpts.HasAnyOption() {
-				s := stripper.New(stripperOpts)
-				stripped := file.Accept(s)
-				return stripped.(*ir.DistilledFile), nil
-			}
-			
-			return file, nil
+		if err != nil {
+			// Tree-sitter processor creation failed
+			fmt.Fprintf(os.Stderr, "PHP: Failed to create tree-sitter processor: %v\n", err)
+			return p.parseLineBasedPHP(ctx, source, filename, opts)
 		}
+		defer treeparser.Close()
+		file, err := treeparser.ProcessSource(ctx, source, filename)
+		if err != nil {
+			// Fall back to line-based parser on error
+			fmt.Fprintf(os.Stderr, "PHP: Tree-sitter parse failed: %v\n", err)
+			return p.parseLineBasedPHP(ctx, source, filename, opts)
+		}
+		
+		// Apply standardized stripper for filtering
+		stripperOpts := opts.ToStripperOptions()
+		
+		// Only apply stripper if we need to remove something
+		if stripperOpts.HasAnyOption() {
+			s := stripper.New(stripperOpts)
+			stripped := file.Accept(s)
+			return stripped.(*ir.DistilledFile), nil
+		}
+		
+		return file, nil
 	}
 
 	// Fall back to line-based parser
@@ -119,20 +128,30 @@ func (p *Processor) ProcessWithOptions(ctx context.Context, reader io.Reader, fi
 
 // parseLineBasedPHP provides a simple line-based PHP parser as fallback
 func (p *Processor) parseLineBasedPHP(ctx context.Context, source []byte, filename string, opts processor.ProcessOptions) (*ir.DistilledFile, error) {
-	// TODO: Implement basic line-based PHP parser
-	// For now, return a minimal structure
+	// Create a minimal file structure with an error
 	file := &ir.DistilledFile{
 		BaseNode: ir.BaseNode{
 			Location: ir.Location{
 				StartLine: 1,
-				EndLine:   1,
+				EndLine:   len(strings.Split(string(source), "\n")),
 			},
 		},
 		Path:     filename,
 		Language: "php",
 		Version:  "8.x",
 		Children: []ir.DistilledNode{},
-		Errors:   []ir.DistilledError{},
+		Errors: []ir.DistilledError{
+			{
+				BaseNode: ir.BaseNode{
+					Location: ir.Location{
+						StartLine: 1,
+						EndLine:   1,
+					},
+				},
+				Message:  "PHP parser fallback: tree-sitter parser not available",
+				Severity: "warning",
+			},
+		},
 	}
 	
 	return file, nil

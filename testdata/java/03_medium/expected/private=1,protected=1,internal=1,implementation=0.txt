@@ -1,0 +1,35 @@
+<file path="/home/janreges/ai-distiller/testdata/java/03_medium/source.java">
+package com.aidi.test.inheritance;
+import java.util.List;
+import java.util.Optional;
+
+interface DataStore<T> {
+    void save(T item);
+    Optional<T> findById(String id);
+    List<T> findAll();
+}
+
+abstract class BaseStore<T> implements DataStore {
+    @Override
+    void save(T item);
+    *abstract void log(T item);
+}
+
+class UserStore extends BaseStore {
+    @Override
+    Optional<User> findById(String id);
+    @Override
+    List<User> findAll();
+    @Override
+    @Auditable("USER_LOG")
+    *void log(User item);
+}
+
+class User {
+    -String name;
+    User(String name);
+    String getName();
+    @Override
+    String toString();
+}
+</file>

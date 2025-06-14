@@ -1,0 +1,12 @@
+<file path="/home/janreges/ai-distiller/testdata/typescript/02_simple/source.ts">
+
+class UserModel:
+    field public readonly id: number
+    field public username: string
+    function constructor(id: number, username: string, email: string)
+        // implementation
+    function getProfileInfo()
+        // implementation
+    function recordLogin() -> void
+        // implementation
+</file>

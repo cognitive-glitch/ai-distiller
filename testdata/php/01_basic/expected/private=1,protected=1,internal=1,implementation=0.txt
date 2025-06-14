@@ -1,0 +1,29 @@
+<file path="/home/janreges/ai-distiller/testdata/php/01_basic/source.php">
+class User {
+    int $id;
+    string $name;
+    -string $email;
+    *?DateTime $createdAt;
+    -array User preferences $preferences;
+    __construct(int $id, string $name, string $email)
+    getEmail(): string
+    setEmail(string $email): void
+    getPreference(string $key, mixed $default): mixed
+    setPreference(string $key, mixed $value): void
+    isActive(): bool
+    *formatUserInfo(): string
+    toArray(): array
+}
+class UserManager {
+    -array<int, User> Users storage $users;
+    addUser(User $user): void
+    findUser(int $id): ?User
+    getActiveUsers(): User[]
+    getUserCount(): int
+}
+validateEmail(string $email): bool
+createUserFromArray(array $data): User
+const USER_STATUS_ACTIVE = 'active'
+const USER_STATUS_INACTIVE = 'inactive'
+const MAX_USERS_PER_PAGE = 25
+</file>

@@ -1,0 +1,63 @@
+<file path="/home/janreges/ai-distiller/testdata/php/04_complex/source.php">
+class Route {
+    readonly string $path;
+    readonly string $method;
+    readonly array $middleware;
+    __construct(string $path, string $method, array $middleware)
+}
+class Validate {
+    readonly string $rule;
+    readonly string $message;
+    __construct(string $rule, string $message)
+}
+class Inject {
+    readonly ?string $service;
+    __construct(?string $service)
+}
+class AttributeProcessor {
+    -WeakMap $classCache;
+    __construct()
+    processAttributes(object $instance): array Processed attributes
+    -processClassAttributes(ReflectionClass $reflection): array
+    -processMethodAttributes(ReflectionClass $reflection): array
+    -processPropertyAttributes(ReflectionClass $reflection): array
+    findMethodsWithAttribute(ReflectionClass $reflection, string $attributeClass): Generator
+}
+class ApiController {
+    -AttributeProcessor $attributeProcessor;
+    __construct()
+    getUserProfile(int $id): array
+    updateUserProfile(int $id, array $data): array
+    deleteUser(int $id): array
+    getRoutes(): array
+}
+class UserCreateDto {
+    string $name;
+    string $email;
+    int $age;
+    array User preferences $preferences;
+    static fromArray(array $data): self
+    validate(): array Validation errors
+    -validateRule(mixed $value, string $rule, string $message): ?string
+}
+class ServiceLocator {
+    -array Service factories $factories;
+    -SplObjectStorage $singletons;
+    -array Service metadata $metadata;
+    __construct()
+    register(string $id, Closure $factory, bool $singleton, array $metadata): void
+    resolve(string $id): mixed
+    createWithDependencies(string $className): object
+    has(string $id): bool
+    getMetadata(string $id): array
+    getServiceIds(): array
+}
+class ComplexUserService {
+    -UserRepository $repository;
+    -EventDispatcher $dispatcher;
+    -AttributeProcessor $processor;
+    __construct(UserRepository $repository, EventDispatcher $dispatcher, AttributeProcessor $processor)
+    createUser(UserCreateDto $dto): array
+    processUsers(array $users): Generator
+}
+</file>

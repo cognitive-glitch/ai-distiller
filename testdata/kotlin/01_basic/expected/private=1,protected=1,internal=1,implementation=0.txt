@@ -1,0 +1,33 @@
+<file path="/home/janreges/ai-distiller/testdata/kotlin/01_basic/source.kt">
+import kotlin.collections.List
+import java.time.LocalDateTime
+data class User(var id: Long, var name: String, var email: String, var createdAt: LocalDateTime) {
+}
+sealed class UserState {
+}
+String.isValidEmail(): Boolean
+var secondOrNull: T
+class UserService {
+    -private var users: MutableList
+    ~internal var isInitialized: Boolean
+    addUser(user: User): Boolean
+    findUserById(id: Long): User?
+    getUserState(userId: Long): String
+    -private determineUserState(user: User): UserState
+    *protected validateUserData(user: User): Boolean
+}
+enum class UserRole {
+    ADMIN(("Administrator", setOf("read", "write", "delete", "manage")))
+    MODERATOR(("Moderator", setOf("read", "write", "moderate")))
+    USER(("User", setOf("read", "write_own")))
+    hasPermission(permission: String): Boolean
+}
+class UserConstants {
+    var MAX_USERNAME_LENGTH
+    var MIN_PASSWORD_LENGTH
+    var ALLOWED_EMAIL_DOMAINS
+    isAllowedEmailDomain(email: String): Boolean
+}
+inline T.applyIf(condition: Boolean, block: T.() -> T): T
+main()
+</file>

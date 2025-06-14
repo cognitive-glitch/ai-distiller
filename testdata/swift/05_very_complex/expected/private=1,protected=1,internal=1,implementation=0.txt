@@ -1,0 +1,106 @@
+<file path="/home/janreges/ai-distiller/testdata/swift/05_very_complex/source.swift">
+import Foundation
+
+protocol Event:
+
+~class :
+    var name: String
+    -func isValidEvent() -> Bool
+
+protocol EventHandler:
+
+-class Weak:
+    ~var value: T?
+    -var isAlive: Bool
+
+-class AnyEventHandler:
+    -var _handle: (any Event) async -> Void
+    -var canHandle: (any Event.Type) -> Bool
+    ~var objectId: ObjectIdentifier
+    ~func handle(event)
+    -func canHandleEvent(_: E.Type) -> Bool
+
+class EventBus:
+    -var handlers: [String: [Weak<AnyObject>]]
+    -var handlerMap: [ObjectIdentifier: AnyEventHandler]
+    -var eventHistory: [String]
+    func subscribe(_: H)
+    func post(_: E)
+    -func cleanupExpiredHandlers()
+    ~var handlerCount: Int
+func (handler: H, bus: EventBus)
+func (lhs: T, rhs: U) -> (T, U)
+func detailedDebugLog(_: T) -> String
+
+class ReflectionAnalyzer:
+    func analyze(_: T) -> StructureInfo
+    -func analyzeType(_: T.Type) -> String
+
+class StructureInfo:
+    var typeName: String
+    var properties: [PropertyInfo]
+    var childCount: Int
+    -func isValid() -> Bool
+
+class PropertyInfo:
+    var name: String
+    var type: String
+    -func validateProperty() -> Bool
+
+class ThreadSafeQueue:
+    -var elements: [T]
+    -var lock
+    func enqueue(_: T)
+    func dequeue() -> T?
+    func makeIterator() -> IndexingIterator<[T]>
+    -func validateQueue() -> Bool
+    ~var count: Int
+
+class CircularBuffer:
+    -var storage: [Element?]
+    -var head
+    -var tail
+    -var capacity: Int
+    var startIndex: Int
+    var endIndex: Int
+    func index(after: Int) -> Int
+    ~var actualIndex
+    var count: Int
+    -func isValidBuffer() -> Bool
+    ~func append(_: Element)
+
+class ConcurrentEventLogger:
+    var monitor: ActivityMonitor
+    var delegate: EventLoggerDelegate?
+    -var eventBus: EventBus
+    -var queue
+    func logEvent(_: E)
+    -func cleanup()
+
+protocol EventLoggerDelegate:
+
+class ActivityMonitor:
+    -var logs
+    -var analysisCache: [String: StructureInfo]
+    func record(_: String)
+    func analyze(_: T) -> StructureInfo
+    -func clearCache()
+    ~var totalLogs: Int
+
+~class UserLoggedInEvent:
+
+    ~class Payload:
+        ~var userId: UUID
+        ~var name: String
+        ~var timestamp: Date
+    ~var payload: Payload
+
+~class DataDownloadedEvent:
+    ~var payload: Data
+
+~class UserActivityLogger:
+    ~var monitor: ActivityMonitor
+    ~func handle(event: UserLoggedInEvent)
+    -func validateActivity() -> Bool
+-func veryComplexDemo()
+</file>

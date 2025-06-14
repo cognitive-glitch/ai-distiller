@@ -7,6 +7,7 @@ import (
 
 	"github.com/janreges/ai-distiller/internal/ir"
 	"github.com/janreges/ai-distiller/internal/processor"
+	"github.com/janreges/ai-distiller/internal/stripper"
 )
 
 // Processor handles C++ source code processing
@@ -41,6 +42,29 @@ func (p *Processor) Process(ctx context.Context, reader io.Reader, filename stri
 
 // ProcessWithOptions implements processor.LanguageProcessor
 func (p *Processor) ProcessWithOptions(ctx context.Context, reader io.Reader, filename string, opts processor.ProcessOptions) (*ir.DistilledFile, error) {
-	// For now, just use the standard Process method
-	return p.Process(ctx, reader, filename)
+	// Read source code
+	source, err := io.ReadAll(reader)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read source: %w", err)
+	}
+
+	// Use the shared tree-sitter parser instance
+	file, err := p.tsProcessor.ProcessSource(ctx, source, filename)
+	if err != nil {
+		return nil, err
+	}
+	
+	// Apply stripper if any options are set
+	stripperOpts := opts.ToStripperOptions()
+	
+	// Only strip if there's something to strip
+	if stripperOpts.HasAnyOption() {
+		s := stripper.New(stripperOpts)
+		stripped := file.Accept(s)
+		if strippedFile, ok := stripped.(*ir.DistilledFile); ok {
+			return strippedFile, nil
+		}
+	}
+	
+	return file, nil
 }

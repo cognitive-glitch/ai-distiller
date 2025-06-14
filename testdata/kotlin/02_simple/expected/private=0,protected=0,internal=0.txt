@@ -1,0 +1,69 @@
+<file path="/home/janreges/ai-distiller/testdata/kotlin/02_simple/source.kt">
+import kotlin.properties.Delegates
+import kotlin.random.Random
+class Entity {
+    var id: String
+    var createdAt: Long
+    getAge(): Long
+    getEntityType(): String
+}
+class Auditable {
+    var lastModified: Long
+    var modifiedBy: String
+    markModified(by: String)
+}
+abstract class BaseEntity {
+    var id: String
+    var createdAt: Long
+    constructor(id: String, createdAt: Long)
+    setActive(active: Boolean)
+    abstract validate(): Boolean
+    getStatusMessage(): String
+}
+class Product {
+    var name: String
+    var category: String
+    constructor(id: String, name: String, category: String, _price: Double)
+    var lastModified: Long
+    var modifiedBy: String
+    var price: Double
+    var description: String
+    var stock: Int
+    var discount: Double
+    override getEntityType(): String
+    override validate(): Boolean
+    override getStatusMessage(): String
+    applyDiscount(discountPercent: Double): Double
+}
+class Category {
+    var name: String
+    constructor(id: String, name: String, auditDelegate: Auditable)
+}
+class AuditImpl {
+    var lastModified: Long
+    var modifiedBy: String
+}
+class ProductService {
+    constructor(auditService: AuditService)
+    addProduct(product: Product): Result<Unit>
+    findProduct(id: String): Product?
+    getProductsInCategory(categoryName: String): List<Product>
+}
+class AuditService {
+    logAction(action: String, entityId: String)
+    getAuditLog(): List<AuditEntry>
+}
+class ConfigManager {
+    setConfig(key: String, value: String)
+    getConfig(key: String): String?
+    getConfigOrDefault(key: String, default: String): String
+}
+class ShoppingCart {
+    constructor()
+    constructor(customerId: String)
+    var customerId: String
+    addItem(product: Product, quantity: Int)
+    calculateTotal(): Double
+}
+main()
+</file>

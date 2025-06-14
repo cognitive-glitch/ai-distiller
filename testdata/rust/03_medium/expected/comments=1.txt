@@ -1,0 +1,51 @@
+<file path="/home/janreges/ai-distiller/testdata/rust/03_medium/source.rs">
+// 03_medium.rs
+// A test for generics, lifetimes, advanced traits, and error handling.
+use std::fmt::{Debug, Display};
+// A custom error type for our parsing operations.
+// The parser should handle enum definitions and derive attributes.
+
+struct enum AnalysisError {
+    pub IoError: (std::io::Error),
+    pub EmptyContent: ,
+    pub InvalidFormat: (String),
+}
+// A trait for a data source that can be analyzed.
+// This uses an associated type, a more advanced trait feature.
+
+struct trait DataSource;
+// Default method with lifetime parameters
+// A generic container for an analysis result.
+// It's generic over the type `T` which must implement `Display`.
+
+struct struct AnalysisResult;
+
+struct impl AnalysisResult<T>;
+
+impl impl AnalysisResult<T> {
+    pub fn new(source_id: String, result: T) -> Self
+}
+// Private validation method
+// Internal metadata setter
+// A generic function with a lifetime `'a` and trait bounds.
+// It analyzes a data source and returns a result.
+// The parser must correctly handle lifetimes and `where` clauses.
+
+fn analyze(source: &'a S) -> Result<AnalysisResult<String>, AnalysisError>
+// A mock analysis.
+// Advanced generic function with multiple lifetime parameters
+// An example implementation of our DataSource.
+
+struct impl DataSource for InMemorySource;
+
+struct impl Debug for InMemorySource;
+// Generic trait with lifetime bounds
+
+struct trait Processor;
+// Private helper method
+// Implementation for string processing
+
+struct struct StringProcessor;
+
+struct impl Processor<;
+</file>

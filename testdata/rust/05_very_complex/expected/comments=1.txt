@@ -1,0 +1,58 @@
+<file path="/home/janreges/ai-distiller/testdata/rust/05_very_complex/source.rs">
+// 05_very_complex.rs
+// A test for procedural macros, GATs, and advanced generic concepts.
+// --- Assume this proc-macro is defined in a separate crate ---
+// use my_proc_macros::Configurable;
+// To make this file self-contained, we define a dummy trait.
+// A real parser would see `#[derive(Configurable)]` and need to handle it.
+
+struct trait Configurable;
+// --- End of proc-macro simulation ---
+// A trait with a Generic Associated Type (GAT).
+// `Reader` has its own lifetime `'a`, which is tied to `&'a self`.
+
+struct trait DataSource;
+// Method with complex generic bounds
+// A struct that would use a procedural derive macro in a real project.
+// The parser must handle attributes on the struct and its fields.
+// #[derive(Configurable)] // This is what a real use-case would look like.
+
+struct struct ServerConfig {
+    pub host: String,
+    pub port: u16,
+}
+// A dummy implementation to make the code runnable.
+// A proc-macro would generate this automatically.
+
+struct impl Configurable for ServerConfig;
+// A function with a Higher-Rank Trait Bound (HRTB).
+// The `F` closure must work for *any* lifetime `'a`.
+
+fn process_all_sources(sources: Vec<&dyn DataSource>, mut processor: F)
+// The type of `reader` is tied to the lifetime of `source` in this loop iteration.
+// The closure `processor` must be able to handle this.
+// Advanced trait with const generics and GATs
+
+struct trait AdvancedContainer;
+// Implementation with const generics
+
+struct struct FixedArray;
+
+struct impl FixedArray<T, N>;
+
+impl impl FixedArray<T, N> {
+    pub fn new() -> Self
+}
+// Private validation method
+// Internal method for unsafe operations
+
+struct impl AdvancedContainer<N> for FixedArray<T, N>;
+// Advanced async trait with GATs
+
+struct trait AsyncDataProcessor;
+// Default implementation with complex bounds
+
+struct impl DataSource for FileSource;
+use std::io::Read;
+// Test const generics
+</file>

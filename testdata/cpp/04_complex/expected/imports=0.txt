@@ -1,0 +1,12 @@
+<file path="/home/janreges/ai-distiller/testdata/cpp/04_complex/source.cpp">
+void factorial(int n) const
+bool is_callable_v;
+void insert_if_possible(Container& container, T& value)
+void insert_if_possible(Container& container, T& value)
+void CompileTimeString(char )
+struct DataVisitor {
+    void operator()(int value)
+    void operator()(double value)
+    void operator()(& value)
+void demonstrateComplexFeatures()
+</file>

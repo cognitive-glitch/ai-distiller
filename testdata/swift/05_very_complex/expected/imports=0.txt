@@ -1,0 +1,47 @@
+<file path="/home/janreges/ai-distiller/testdata/swift/05_very_complex/source.swift">
+
+protocol Event:
+
+protocol EventHandler:
+
+class EventBus:
+    func subscribe(_: H)
+    func post(_: E)
+func (handler: H, bus: EventBus)
+func (lhs: T, rhs: U) -> (T, U)
+func detailedDebugLog(_: T) -> String
+
+class ReflectionAnalyzer:
+    func analyze(_: T) -> StructureInfo
+
+class StructureInfo:
+    var typeName: String
+    var properties: [PropertyInfo]
+    var childCount: Int
+
+class PropertyInfo:
+    var name: String
+    var type: String
+
+class ThreadSafeQueue:
+    func enqueue(_: T)
+    func dequeue() -> T?
+    func makeIterator() -> IndexingIterator<[T]>
+
+class CircularBuffer:
+    var startIndex: Int
+    var endIndex: Int
+    func index(after: Int) -> Int
+    var count: Int
+
+class ConcurrentEventLogger:
+    var monitor: ActivityMonitor
+    var delegate: EventLoggerDelegate?
+    func logEvent(_: E)
+
+protocol EventLoggerDelegate:
+
+class ActivityMonitor:
+    func record(_: String)
+    func analyze(_: T) -> StructureInfo
+</file>

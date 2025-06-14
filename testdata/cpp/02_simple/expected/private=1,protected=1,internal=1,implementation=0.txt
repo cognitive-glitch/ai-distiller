@@ -1,0 +1,151 @@
+<file path="/home/janreges/ai-distiller/testdata/cpp/02_simple/source.cpp">
+#include "iostream"
+#include "string"
+#include "vector"
+#include "memory"
+#include "algorithm"
+#include "iterator"
+#include "functional"
+#include "map"
+#include "set"
+class Employee {
+class LibraryItem {
+    void constructor(& id, & title) {
+{}
+    }
+    virtual void destructor() {
+= default
+    }
+    void () const {
+{ return id_; }
+    }
+    void () const {
+{ return title_; }
+    }
+    bool isAvailable() {
+{ return isAvailable_; }
+    }
+    virtual bool borrow() {
+if (isAvailable_) {
+            isAvailable_ = false;
+            return true;
+        }
+        return false;
+    }
+    virtual void returnItem() {
+isAvailable_ = true;
+    }
+    virtual void getDetails() = 0
+    *void setAvailability(bool status) {
+{ isAvailable_ = status; }
+    }
+    -auto id_;
+    -auto title_;
+    -bool isAvailable_;
+class Book : public LibraryItem {
+    void constructor(& id, & title, & author, & isbn) {
+{}
+    }
+    void () const {
+{ return author_; }
+    }
+    void () const {
+{ return isbn_; }
+    }
+    void getDetails() {
+return "Book: " + getTitle() + " by " + author_ + " (ISBN: " + isbn_ + ")";
+    }
+    -auto author_;
+    -auto isbn_;
+class Magazine : public LibraryItem {
+    void constructor(& id, & title, int issueNumber, & publisher) {
+{}
+    }
+    int getIssueNumber() {
+{ return issueNumber_; }
+    }
+    void () const {
+{ return publisher_; }
+    }
+    void getDetails() {
+return "Magazine: " + getTitle() + " Issue #" + 
+               std::to_string(issueNumber_) + " (" + publisher_ + ")";
+    }
+    -int issueNumber_;
+    -auto publisher_;
+class LibraryCatalog {
+    void addItem(auto item) {
+items_[item->getId()] = std::move(item);
+    }
+    LibraryItem () {
+auto it = items_.find(id);
+        return (it != items_.end()) ? it->second.get() : nullptr;
+    }
+    void getAvailableItems() {
+std::vector<LibraryItem*> available;
+        for (const auto& pair : items_) {
+            if (pair.second->isAvailable()) {
+                available.push_back(pair.second.get());
+            }
+        }
+        return available;
+    }
+    void searchByTitle(& searchTerm) {
+std::vector<LibraryItem*> results;
+        
+        // Convert search term to lowercase
+        std::string lowerSearchTerm = searchTerm;
+        std::transform(lowerSearchTerm.begin(), lowerSearchTerm.end(),
+                      lowerSearchTerm.begin(), ::tolower);
+        
+        for (const auto& pair : items_) {
+            std::string lowerTitle = pair.second->getTitle();
+            std::transform(lowerTitle.begin(), lowerTitle.end(),
+                          lowerTitle.begin(), ::tolower);
+            
+            if (lowerTitle.find(lowerSearchTerm) != std::string::npos) {
+                results.push_back(pair.second.get());
+            }
+        }
+        
+        return results;
+    }
+    size_t getItemCount() {
+{ return items_.size(); }
+    }
+    -auto items_;
+struct TitleComparator {
+    bool operator()(LibraryItem* a, LibraryItem* b) {
+return a->getTitle() < b->getTitle();
+    }
+class LibraryUtils {
+    static void sortByTitle(& items) {
+std::sort(items.begin(), items.end(), TitleComparator{});
+    }
+    static void filterItems(& items, Predicate pred) {
+std::vector<LibraryItem*> filtered;
+        std::copy_if(items.begin(), items.end(), 
+                    std::back_inserter(filtered), pred);
+        return filtered;
+    }
+    static size_t countItemsByType(& items) {
+return std::count_if(items.begin(), items.end(),
+                           [](const LibraryItem* item) {
+                               return dynamic_cast<const ItemType*>(item) != nullptr;
+                           });
+    }
+    -void constructor() {
+= delete
+    }
+class FileManager {
+    void constructor(& filename)
+    void destructor()
+    void constructor(FileManager )
+    FileManager ()
+    bool open()
+    void close()
+    bool isOpen()
+    -auto filename_;
+    -bool isOpen_;
+void demonstrateLibrarySystem()
+</file>

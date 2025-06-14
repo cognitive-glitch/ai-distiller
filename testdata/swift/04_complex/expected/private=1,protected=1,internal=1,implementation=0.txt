@@ -1,0 +1,56 @@
+<file path="/home/janreges/ai-distiller/testdata/swift/04_complex/source.swift">
+import Foundation
+import Combine
+
+class Clamped:
+    -var value: Value
+    -var range: ClosedRange<Value>
+    -var subject
+    var wrappedValue: Value
+    var projectedValue: AnyPublisher<Value, Never>
+    -func isInRange(_: Value) -> Bool
+
+class ValidationResult:
+
+class ConfigurationBuilder:
+    func buildBlock(_: ValidationResult) -> [ValidationResult]
+    func buildExpression(_: String) -> ValidationResult
+    func buildEither(first: [ValidationResult]) -> [ValidationResult]
+    func buildEither(second: [ValidationResult]) -> [ValidationResult]
+    -func buildOptional(_: [ValidationResult]?) -> [ValidationResult]
+
+protocol Describable:
+
+~class :
+    var description: String
+    -func validateDescription() -> Bool
+
+-class AudioSettings:
+    ~var volume: Int
+    ~var isMuted: Bool
+    ~var description: String
+    ~func reset()
+    -func validateAudioSettings() -> Bool
+
+class SettingsProxy:
+    -var settings: UserSettings
+    -func isValidProxy() -> Bool
+
+class UserSettings:
+    ~var username: String
+    ~var userAge: Int
+    -var audio
+    func asProxy() -> SettingsProxy
+    -func validateSettings() -> Bool
+    ~func syncWithRemote()
+
+~class SettingsViewModel:
+    -var settings: UserSettings
+    -var cancellables
+    -var ageDescription: String
+    ~func getAudioConfiguration()
+    ~func validate(isPremiumUser: Bool) -> [ValidationResult]
+    func serialize(_: T) -> Data?
+    -func cleanupConfiguration()
+-func complexDemo()
+</file>

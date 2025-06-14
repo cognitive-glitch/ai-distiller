@@ -1,0 +1,9 @@
+<file path="/home/janreges/ai-distiller/testdata/python/example_new_format/source.py">
+
+class Calculator:
+    __init__(self)
+    add(self, a: float, b: float) -> float
+    -_clear_history(self)
+    @property
+    history(self) -> list
+</file>

@@ -1,0 +1,11 @@
+<file path="/home/janreges/ai-distiller/testdata/python/02_simple/source.py">
+"""Represents a user account in the system."""
+from datetime import datetime
+
+class User:
+    # A simple representation of a user with basic attributes.
+    __init__(self, user_id: int, username: str, email: str)
+    deactivate(self) -> None
+    get_status(self) -> str
+    __repr__(self) -> str
+</file>

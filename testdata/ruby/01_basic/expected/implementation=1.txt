@@ -1,0 +1,64 @@
+<file path="/home/janreges/ai-distiller/testdata/ruby/01_basic/source.rb">
+
+module UserUtils
+    MIN_PASSWORD_LENGTH
+    EMAIL_REGEX
+    def self.valid_email?(email)
+        return false unless email.is_a?(String)
+            email.match?(EMAIL_REGEX)
+    end
+    def self.strong_password?(password)
+        return false unless password.is_a?(String)
+            return false if password.length < MIN_PASSWORD_LENGTH
+            
+            has_letter = password.match?(/[a-zA-Z]/)
+            has_digit = password.match?(/\d/)
+            has_letter && has_digit
+    end
+    def self.internal_helper
+        "This is a private module method"
+    end
+end
+
+class User
+    @@user_count
+    def self.count
+        @@user_count
+    end
+    def initialize(name, email)
+        @id = generate_id
+            @name = name
+            @email = email
+            @created_at = Time.now
+            @@user_count += 1
+    end
+    def to_s
+        "User(#{@id}): #{@name} <#{@email}>"
+    end
+    def valid?
+        UserUtils.valid_email?(@email) && !@name.empty?
+    end
+    def compare_creation_time(other_user)
+        @created_at <=> other_user.created_at
+    end
+    def generate_id
+        "user_#{Time.now.to_i}_#{rand(1000)}"
+    end
+end
+
+class AdminUser < User
+    def initialize(name, email, permissions = ...)
+        super(name, email)
+            @permissions = permissions || []
+    end
+    def to_s
+        "#{super} [Admin]"
+    end
+    def has_permission?(permission)
+        @permissions.include?(permission)
+    end
+    def validate_permissions
+        @permissions.all? { |p| p.is_a?(String) }
+    end
+end
+</file>

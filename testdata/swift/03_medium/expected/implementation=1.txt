@@ -1,0 +1,35 @@
+<file path="/home/janreges/ai-distiller/testdata/swift/03_medium/source.swift">
+import Foundation
+
+class Stack:
+    func push(_: Element):
+        {
+                storage.append(element)
+            }
+    func peek() -> Element?:
+        { storage.last }
+    func pop() -> Element?:
+        { storage.popLast() }
+
+class :
+
+class MathError:
+
+protocol Cacheable:
+
+class ExpiringCache:
+    func insert(_: Value, for: Key):
+        {
+                let expiration = Date().addingTimeInterval(timeToLive)
+                storage[key] = CacheEntry(value: value, expiration: expiration)
+            }
+    func value(for: Key) -> Value?:
+        {
+                guard let entry = storage[key] else { return nil }
+                return Date() < entry.expiration ? entry.value : nil
+            }
+    func contains(key: Key) -> Bool:
+        {
+                return value(for: key) != nil
+            }
+</file>

@@ -1,0 +1,37 @@
+<file path="/home/janreges/ai-distiller/testdata/cpp/01_basic/source.cpp">
+#include "iostream"
+#include "string"
+#include "vector"
+class Point {
+    void constructor()
+    void constructor(double x, double y)
+    void constructor(Point& other)
+    virtual void destructor()
+    double getX()
+    double getY()
+    void setX(double x)
+    void setY(double y)
+    virtual double distanceFromOrigin()
+    *bool validateCoordinates()
+    -double x_;
+    -double y_;
+    -void internalCalculation()
+class Point3D : public Point {
+    void constructor(double x, double y, double z)
+    double getZ()
+    void setZ(double z)
+    double distanceFromOrigin()
+    -double z_;
+class Container {
+    void constructor(T& value)
+    T () const
+    void setValue(T& value)
+    -T value_;
+T max(T& a, T& b) {
+return (a > b) ? a : b;
+}
+T min(T& a, T& b) {
+return (a < b) ? a : b;
+}
+int main()
+</file>

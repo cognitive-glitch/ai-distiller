@@ -1,0 +1,55 @@
+<file path="/home/janreges/ai-distiller/testdata/rust/04_complex/source.rs">
+// 04_complex.rs
+// A test for macros, async, unsafe FFI, and advanced ownership.
+use std::sync::{Arc, Mutex};
+use std::ffi::{c_char, CStr};
+use std::future::Future;
+use std::pin::Pin;
+// FFI: Declaring an external function from a C library.
+// The parser must handle `extern "C"` blocks.
+// Additional FFI function for complex validation
+// A simple declarative macro for creating a new, validated config.
+// The parser must handle the unique syntax of `macro_rules!`.
+// In a real scenario, more complex logic would be here.
+// Multiple macro patterns
+// Macro for generating validation functions
+// Using the macro to generate functions
+
+struct struct Config;
+// A service that uses a shared, mutable cache.
+// This tests `Arc<Mutex<T>>`, a very common concurrent pattern.
+
+struct struct AnalysisService;
+
+struct impl AnalysisService;
+
+impl impl AnalysisService {
+    pub fn new() -> Self
+}
+// Asynchronously validates a piece of code using the native FFI function.
+// This tests `async fn` syntax and `unsafe` blocks.
+// The `unsafe` block is a critical syntactic construct to parse.
+// Accessing shared state requires locking the mutex.
+// A private helper method.
+// Internal unsafe method for advanced operations
+// Private async method
+// Advanced trait with async methods
+
+struct trait AsyncProcessor;
+// Default async implementation
+// Implementation for the analysis service
+
+struct impl AsyncProcessor for AnalysisService;
+// Union type for advanced FFI
+
+struct impl FFIData;
+
+impl impl FFIData {
+    pub fn new_integer(value: i64) -> Self
+}
+// Unsafe getter
+// Private unsafe method
+// Note: This requires a tokio runtime to execute.
+// e.g., `#[tokio::main]`
+// Test generated validators
+</file>

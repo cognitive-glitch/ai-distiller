@@ -1,0 +1,7 @@
+<file path="/home/janreges/ai-distiller/testdata/csharp/04_complex/source.cs">
+public sealed class StringRangeAttribute : ValidationAttribute
+public class ModelValidatorBuilder
+public class SignupRequest
+public class Demo
+public class ServiceLocator
+</file>

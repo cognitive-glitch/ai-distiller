@@ -1,0 +1,72 @@
+<file path="/home/janreges/ai-distiller/testdata/ruby/03_medium/source.rb">
+
+module MetaProgrammingUtils
+    def self.included(base)
+    end
+
+    module ClassMethods
+        def add_dynamic_accessor(name, default_value = ...)
+        end
+        def delegate_to(target, *methods*)
+        end
+        def dynamic_methods
+        end
+    end
+end
+
+module EigenclassDemo
+    def self.extended(base)
+    end
+    def custom_new(*args*, &block)
+    end
+end
+
+module Trackable
+    def self.included(base)
+    end
+
+    module ClassMethods
+        def track_method(method_name)
+        end
+        def tracked_methods
+        end
+    end
+    def track_method_call(method_name, args)
+    end
+    def method_call_history
+    end
+end
+
+class ConfigurableModel
+    def initialize(initial_config = ...)
+    end
+    def self.add_validation(field, &validation_block)
+    end
+    def evaluate_expression(expression, context = ...)
+    end
+    def add_instance_method(method_name, &block)
+    end
+    def self.method_added(method_name)
+    end
+    def invoke_if_exists(method_name, *args*)
+    end
+    def configure(&block)
+    end
+end
+
+class DynamicConstants
+    def self.const_missing(const_name)
+    end
+    def self.create_constant(name, value)
+    end
+    def self.list_constants
+    end
+end
+
+class SmartDocument < ConfigurableModel
+    def initialize(config = ...)
+    end
+    def configure_smart_features
+    end
+end
+</file>

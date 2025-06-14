@@ -1,0 +1,9 @@
+<file path="/home/janreges/ai-distiller/testdata/csharp/03_medium/source.cs">
+public interface IRepository
+public interface IEntity
+public abstract class EntityBase : IEntity
+public class InMemoryRepository : IRepository
+public class CachedRepository : IRepository
+public class User : EntityBase<Guid>(Id)
+public class UserService
+</file>

@@ -1,0 +1,56 @@
+<file path="/home/janreges/ai-distiller/testdata/rust/05_very_complex/source.rs">
+
+struct trait Configurable;
+
+struct trait DataSource;
+
+struct struct ServerConfig {
+    pub host: String,
+    pub port: u16,
+    internal_key: Option<String>,
+}
+
+struct impl Configurable for ServerConfig;
+
+impl impl Configurable for ServerConfig {
+    fn from_source(source: &S) -> Self
+}
+
+fn process_all_sources(sources: Vec<&dyn DataSource>, mut processor: F)
+
+struct trait AdvancedContainer;
+
+struct struct FixedArray {
+    data: [Option<T>; N],
+}
+
+struct impl FixedArray<T, N>;
+
+impl impl FixedArray<T, N> {
+    pub fn new() -> Self
+}
+
+struct impl AdvancedContainer<N> for FixedArray<T, N> {
+    type Item: &'a T where T: 'a,
+}
+
+impl impl AdvancedContainer<N> for FixedArray<T, N> {
+    fn get_items() -> Self::Iterator<'a>
+}
+
+struct trait AsyncDataProcessor;
+
+-fn main()
+
+-struct struct FileSource;
+
+struct impl DataSource for FileSource {
+    type Reader: std::io::Cursor<&'a [u8]>,
+    type Config: T,
+}
+
+impl impl DataSource for FileSource {
+    fn get_reader() -> Self::Reader<'a>
+}
+use std::io::Read;
+</file>

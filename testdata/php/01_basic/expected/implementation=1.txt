@@ -1,0 +1,71 @@
+<file path="/home/janreges/ai-distiller/testdata/php/01_basic/source.php">
+class User {
+    int $id;
+    string $name;
+    __construct(int $id, string $name, string $email) {
+$this->id = $id;
+        $this->name = $name;
+        $this->setEmail($email);
+        $this->createdAt = new DateTime();
+    }
+    getEmail(): string {
+return $this->email;
+    }
+    setEmail(string $email): void {
+if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new InvalidArgumentException("Invalid email format");
+        }
+        $this->email = $email;
+    }
+    getPreference(string $key, mixed $default): mixed {
+return $this->preferences[$key] ?? $default;
+    }
+    setPreference(string $key, mixed $value): void {
+$this->preferences[$key] = $value;
+    }
+    isActive(): bool {
+if ($this->createdAt === null) {
+            return false;
+        }
+        
+        $thirtyDaysAgo = new DateTime('-30 days');
+        return $this->createdAt > $thirtyDaysAgo;
+    }
+    toArray(): array {
+return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'email' => $this->email,
+            'created_at' => $this->createdAt?->format('Y-m-d H:i:s'),
+            'is_active' => $this->isActive(),
+        ];
+    }
+}
+class UserManager {
+    addUser(User $user): void {
+$this->users[$user->id] = $user;
+    }
+    findUser(int $id): ?User {
+return $this->users[$id] ?? null;
+    }
+    getActiveUsers(): User[] {
+return array_filter($this->users, fn(User $user) => $user->isActive());
+    }
+    getUserCount(): int {
+return count($this->users);
+    }
+}
+validateEmail(string $email): bool {
+return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
+}
+createUserFromArray(array $data): User {
+if (!isset($data['id'], $data['name'], $data['email'])) {
+        throw new InvalidArgumentException("Missing required user data");
+    }
+    
+    return new User($data['id'], $data['name'], $data['email']);
+}
+const USER_STATUS_ACTIVE = 'active'
+const USER_STATUS_INACTIVE = 'inactive'
+const MAX_USERS_PER_PAGE = 25
+</file>

@@ -1,0 +1,21 @@
+<file path="/home/janreges/ai-distiller/testdata/swift/04_complex/source.swift">
+
+class Clamped:
+    var wrappedValue: Value
+    var projectedValue: AnyPublisher<Value, Never>
+
+class ValidationResult:
+
+class ConfigurationBuilder:
+    func buildBlock(_: ValidationResult) -> [ValidationResult]
+    func buildExpression(_: String) -> ValidationResult
+    func buildEither(first: [ValidationResult]) -> [ValidationResult]
+    func buildEither(second: [ValidationResult]) -> [ValidationResult]
+
+protocol Describable:
+
+class SettingsProxy:
+
+class UserSettings:
+    func asProxy() -> SettingsProxy
+</file>

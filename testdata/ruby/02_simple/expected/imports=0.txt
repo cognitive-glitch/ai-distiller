@@ -1,0 +1,67 @@
+<file path="/home/janreges/ai-distiller/testdata/ruby/02_simple/source.rb">
+
+module Loggable
+    def log(message, level:)
+    end
+    def self.included(base)
+    end
+
+    module ClassMethods
+        def enable_logging
+        end
+    end
+end
+
+module Serializable
+    def to_json(*args*)
+    end
+    def from_json(json_string)
+    end
+    def serializable_hash
+    end
+    def load_from_hash(hash)
+    end
+end
+
+module RoleManager
+    VALID_ROLES
+    def self.each_role
+    end
+    def self.find_role(pattern)
+    end
+    def self.role_stats
+    end
+end
+
+class Document
+    def initialize(title, content, author)
+    end
+    def process_content
+    end
+    def find_sections(pattern = ...)
+    end
+    def method_missing(method_name, *args*, &block)
+    end
+    def respond_to_missing?(method_name, include_private = ...)
+    end
+    def serializable_hash
+    end
+    def load_from_hash(hash)
+    end
+end
+
+class DocumentRepository
+    def initialize
+    end
+    def add_document(document)
+    end
+    def filter_documents(&block)
+    end
+    def sort_documents(sort_proc = ...)
+    end
+    def log_action(message)
+    end
+    def validate_document(document)
+    end
+end
+</file>

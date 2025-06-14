@@ -1,0 +1,74 @@
+<file path="/home/janreges/ai-distiller/testdata/cpp/04_complex/source.cpp">
+#include "iostream"
+#include "string"
+#include "vector"
+#include "memory"
+#include "algorithm"
+#include "functional"
+#include "type_traits"
+#include "utility"
+#include "tuple"
+#include "variant"
+#include "optional"
+#include "any"
+#include "thread"
+#include "future"
+#include "chrono"
+void factorial(int n) const
+bool is_callable_v;
+class Comparable {
+    bool operator!=(Derived& other)
+    bool operator>(Derived& other)
+    bool operator<=(Derived& other)
+    bool operator>=(Derived& other)
+    *void destructor()
+class Point {
+    void constructor(double x, double y)
+    bool operator==(Point& other)
+    bool operator<(Point& other)
+    double distance()
+    -double x_;
+    -double y_;
+class VariadicProcessor {
+    void constructor()
+    void get()
+    void forEach(F& f)
+    static size_t size()
+    -auto data_;
+    void forEachImpl(F& f, auto )
+void insert_if_possible(Container& container, T& value)
+void insert_if_possible(Container& container, T& value)
+void CompileTimeString(char )
+class Factory {
+    static void create()
+    static void createFromTuple(Tuple& tuple)
+    static void createFromTupleImpl(Tuple& tuple, auto )
+struct DataVisitor {
+    void operator()(int value)
+    void operator()(double value)
+    void operator()(& value)
+class AdvancedContainer {
+    void constructor(Compare& comp, Allocator& alloc)
+    void insert(T& value)
+    void emplace()
+    void find(T& value)
+    size_t size()
+    void begin()
+    void end()
+    *Compare () const
+    -auto data_;
+    -Compare compare_;
+    -Allocator allocator_;
+    -bool validateValue(T& value)
+class  {
+    void AdvancedContainer()
+    void insert(T* ptr)
+    size_t size()
+    -auto pointers_;
+class AsyncProcessor {
+    void processWithTimeout(T& data, int timeoutMs)
+    void processParallel(Container& items)
+    static void processData(T& data)
+    -static void processData(& data)
+void demonstrateComplexFeatures()
+</file>

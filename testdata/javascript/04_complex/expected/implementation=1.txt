@@ -1,0 +1,36 @@
+<file path="/home/janreges/ai-distiller/testdata/javascript/04_complex/source.js">
+const RAW_OBJECT_SYMBOL: symbol = Symbol('rawObject')
+const objectListeners: WeakMap<object, = new WeakMap()
+const mutationLog: Array<{type: = []
+const observableProxyHandler: ProxyHandler<object> = { get(target, key, receiver) -> any, set(target, key, value, receiver) -> boolean }
+
+class ObservableFactory:
+    static create(initialData: object) -> object
+        // implementation
+    static subscribe(observable: object, callback: Function)
+        // implementation
+    static unsubscribe(observable: object, callback: Function)
+        // implementation
+    static * getMutationHistory() -> Generator<string,
+        // implementation
+
+class ConfigManager:
+    constructor(config: object = {})
+        // implementation
+    get(key: string) -> any
+        // implementation
+    set(key: string, value: any)
+        // implementation
+    getChangeHistory() -> Array
+        // implementation
+const appConfig = ObservableFactory.create({
+    apiEndpoint: 'https://api.example.com/v1',
+    timeout: 5000,
+    features: {
+        newUI: false,
+        betaAccess: true
+    }
+})
+const loggerCallback = (change)
+    // implementation
+</file>

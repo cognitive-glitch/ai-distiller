@@ -1,0 +1,22 @@
+<file path="/home/janreges/ai-distiller/testdata/swift/02_simple/source.swift">
+import Foundation
+
+protocol Describable:
+
+class Point:
+    var x: Int
+    var y: Int
+    var magnitude: Double
+    var description: String
+
+class Rectangle:
+    var origin: Point
+    var size: (width: Int, height: Int)
+    var area: Int
+    var description: String
+
+class UIRectangle:
+    var description: String
+    func show()
+    func hide()
+</file>

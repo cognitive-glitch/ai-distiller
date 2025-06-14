@@ -1,0 +1,6 @@
+<file path="/home/janreges/ai-distiller/testdata/rust/01_basic/source.rs">
+
+struct mod settings;
+
+const CONST APP_NAME: &str = "AI Distiller";
+</file>

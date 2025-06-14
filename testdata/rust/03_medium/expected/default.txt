@@ -1,0 +1,30 @@
+<file path="/home/janreges/ai-distiller/testdata/rust/03_medium/source.rs">
+use std::fmt::{Debug, Display};
+
+mod AnalysisError {
+    let IoError: (std::io::Error);
+    let EmptyContent;
+    let InvalidFormat: (String);
+}
+
+mod DataSource;
+
+struct AnalysisResult;
+
+mod impl AnalysisResult<T> {
+
+    fn new(source_id: String, result: T) -> Self
+}
+
+fn analyze(source: &'a S) -> Result<AnalysisResult<String>, AnalysisError>
+
+mod impl DataSource for InMemorySource;
+
+mod impl Debug for InMemorySource;
+
+mod Processor;
+
+struct StringProcessor;
+
+mod impl Processor<;
+</file>

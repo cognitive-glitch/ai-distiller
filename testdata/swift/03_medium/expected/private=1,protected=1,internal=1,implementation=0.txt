@@ -1,0 +1,37 @@
+<file path="/home/janreges/ai-distiller/testdata/swift/03_medium/source.swift">
+import Foundation
+
+class Stack:
+    -var storage: [Element]
+    func push(_: Element)
+    func peek() -> Element?
+    func pop() -> Element?
+    -func isValid() -> Bool
+    ~var count: Int
+
+class :
+    ~func average() -> Double
+    -func validateNumericElements() -> Bool
+
+class MathError:
+
+protocol Cacheable:
+
+~class :
+    func insert(_: Value, for: Key)
+    func contains(key: Key) -> Bool
+
+class ExpiringCache:
+
+    -class CacheEntry:
+        ~var value: Value
+        ~var expiration: Date
+    -var storage: [Key: CacheEntry]
+    -var timeToLive: TimeInterval
+    func insert(_: Value, for: Key)
+    func value(for: Key) -> Value?
+    func contains(key: Key) -> Bool
+    -func removeExpiredEntries()
+    ~var cacheSize: Int
+-func mediumDemo()
+</file>

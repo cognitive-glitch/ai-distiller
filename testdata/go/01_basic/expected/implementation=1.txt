@@ -1,0 +1,21 @@
+<file path="/home/janreges/ai-distiller/testdata/go/01_basic/source.go">
+package user
+
+import (
+    "fmt"
+)
+
+type User struct
+    ID string
+
+func (u *User) UpdateEmail(newEmail string) error
+    if newEmail == "":
+    u.email = newEmail
+    return nil
+
+func NewUser(id string, email string) *User
+    return &User{
+    		ID:    id,
+    		email: email,
+    	}
+</file>

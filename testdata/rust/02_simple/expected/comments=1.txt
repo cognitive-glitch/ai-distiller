@@ -1,0 +1,42 @@
+<file path="/home/janreges/ai-distiller/testdata/rust/02_simple/source.rs">
+// 02_simple.rs
+// A test case for simple structs, impls, and traits.
+// Represents a source file to be processed.
+// The parser should handle struct definitions with public and private fields.
+
+struct struct SourceFile {
+    pub path: String,
+}
+// A trait for items that can be summarized.
+// This tests the ability to parse trait definitions and their methods.
+
+struct trait Summarizable;
+// Default implementation for short summary
+// Implementation of methods for the SourceFile struct.
+
+struct impl SourceFile;
+
+impl impl SourceFile {
+    pub fn new(path: String, content: String) -> Self
+}
+// A public method to access a derived property.
+// A private helper method.
+// Internal method for processing
+// Private validation method
+// Implementation of the Summarizable trait for SourceFile.
+// This is a critical pattern: `impl Trait for Struct`.
+
+struct impl Summarizable for SourceFile;
+// Additional trait for file operations
+
+struct trait FileOperations;
+// Error type for file operations
+
+struct enum FileError {
+    pub NotFound: ,
+    pub PermissionDenied: ,
+    pub InvalidContent: ,
+}
+
+struct impl FileOperations for SourceFile;
+</file>

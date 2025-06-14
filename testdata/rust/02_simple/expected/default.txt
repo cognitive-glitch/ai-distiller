@@ -1,0 +1,27 @@
+<file path="/home/janreges/ai-distiller/testdata/rust/02_simple/source.rs">
+
+struct SourceFile {
+    pub path: String,
+}
+
+mod Summarizable;
+
+mod impl SourceFile {
+
+    fn new(path: String, content: String) -> Self
+
+    fn line_count(&self: ) -> u32
+}
+
+mod impl Summarizable for SourceFile;
+
+mod FileOperations;
+
+mod FileError {
+    let NotFound;
+    let PermissionDenied;
+    let InvalidContent;
+}
+
+mod impl FileOperations for SourceFile;
+</file>

@@ -1,0 +1,42 @@
+<file path="/home/janreges/ai-distiller/testdata/rust/04_complex/source.rs">
+use std::sync::{Arc, Mutex};
+use std::ffi::{c_char, CStr};
+use std::future::Future;
+use std::pin::Pin;
+
+struct struct Config {
+    name: String,
+    version: u32,
+    is_validated: bool,
+}
+
+struct struct AnalysisService {
+    cache: Arc<Mutex<Vec<String>>>,
+    async_processor: Option<Pin<Box<dyn Future<Output = String> + Send>>>,
+}
+
+struct impl AnalysisService;
+
+impl impl AnalysisService {
+    pub fn new() -> Self
+}
+
+struct trait AsyncProcessor;
+
+struct impl AsyncProcessor for AnalysisService {
+    type Item: String,
+    type Error: &'static str,
+}
+
+impl impl AsyncProcessor for AnalysisService {
+    async fn process_async(&self: , item: Self::Item) -> Result<String, Self::Error>
+}
+
+struct impl FFIData;
+
+impl impl FFIData {
+    pub fn new_integer(value: i64) -> Self
+}
+
+-fn main()
+</file>

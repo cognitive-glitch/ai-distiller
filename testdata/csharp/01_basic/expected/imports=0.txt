@@ -1,0 +1,3 @@
+<file path="/home/janreges/ai-distiller/testdata/csharp/01_basic/source.cs">
+public class StringExtensions
+</file>

@@ -1,0 +1,40 @@
+<file path="/home/janreges/ai-distiller/testdata/rust/02_simple/source.rs">
+
+struct struct SourceFile {
+    pub path: String,
+    content: String, // This field is private.,
+    lines_of_code: u32,
+}
+
+struct trait Summarizable;
+
+struct impl SourceFile;
+
+impl impl SourceFile {
+    pub fn new(path: String, content: String) -> Self
+}
+
+struct impl Summarizable for SourceFile;
+
+impl impl Summarizable for SourceFile {
+    fn summary(&self: ) -> String
+}
+
+struct trait FileOperations;
+
+struct enum FileError {
+    pub NotFound: ,
+    pub PermissionDenied: ,
+    pub InvalidContent: ,
+}
+
+struct impl FileOperations for SourceFile {
+    type Error: FileError,
+}
+
+impl impl FileOperations for SourceFile {
+    fn read_content(&self: ) -> Result<&str, Self::Error>
+}
+
+-fn main()
+</file>

@@ -1,0 +1,26 @@
+<file path="/home/janreges/ai-distiller/testdata/rust/02_simple/source.rs">
+
+struct struct SourceFile {
+    pub path: String,
+}
+
+struct trait Summarizable;
+
+struct impl SourceFile;
+
+impl impl SourceFile {
+    pub fn new(path: String, content: String) -> Self
+}
+
+struct impl Summarizable for SourceFile;
+
+struct trait FileOperations;
+
+struct enum FileError {
+    pub NotFound: ,
+    pub PermissionDenied: ,
+    pub InvalidContent: ,
+}
+
+struct impl FileOperations for SourceFile;
+</file>

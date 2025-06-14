@@ -1,0 +1,33 @@
+<file path="/home/janreges/ai-distiller/testdata/javascript/04_complex/source.js">
+const RAW_OBJECT_SYMBOL: symbol = Symbol('rawObject')
+const objectListeners: WeakMap<object, = new WeakMap()
+const mutationLog: Array<{type: = []
+const observableProxyHandler: ProxyHandler<object> = { get(target, key, receiver) -> any, set(target, key, value, receiver) -> boolean }
+
+class ObservableFactory:
+    static create(initialData: object) -> object
+    static subscribe(observable: object, callback: Function)
+    static unsubscribe(observable: object, callback: Function)
+    static * getMutationHistory() -> Generator<string,
+
+class ConfigManager:
+    constructor(config: object = {})
+    get(key: string) -> any
+    set(key: string, value: any)
+    getChangeHistory() -> Array
+// Usage Example
+const appConfig = ObservableFactory.create({
+    apiEndpoint: 'https://api.example.com/v1',
+    timeout: 5000,
+    features: {
+        newUI: false,
+        betaAccess: true
+    }
+})
+const loggerCallback = (change)
+// Triggers proxy 'set' trap and notifies subscriber
+// Note: This is a shallow observation. Deep observation is more complex.
+// Adding a new property
+// This change will NOT notify the loggerCallback.
+// module.exports = { ObservableFactory, ConfigManager, appConfig }
+</file>

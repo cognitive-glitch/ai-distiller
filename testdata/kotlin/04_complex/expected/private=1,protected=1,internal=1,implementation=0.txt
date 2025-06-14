@@ -1,0 +1,120 @@
+<file path="/home/janreges/ai-distiller/testdata/kotlin/04_complex/source.kt">
+import kotlinx.coroutines
+import kotlinx.coroutines.channels
+import kotlinx.coroutines.flow
+import kotlinx.coroutines.selects.select
+import kotlin.reflect.KClass
+import kotlin.reflect.KProperty
+import kotlin.properties.ReadOnlyProperty
+import kotlin.properties.ReadWriteProperty
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
+class DatabaseDsl {
+}
+class QueryBuilder {
+    -private var entityClass: KClass
+    constructor(entityClass: KClass)
+    -private var conditions
+    -private var orderByClauses
+    -private var limitValue: Int
+    -private var offsetValue: Int
+    where(condition: ConditionBuilder<T>.() -> Unit)
+    orderBy(column: KProperty, direction: SortDirection)
+    limit(count: Int)
+    offset(count: Int)
+    ~internal build(): Query<T>
+}
+class ConditionBuilder {
+    -private var conditions
+    KProperty<V>.eq(value: V)
+    KProperty<V>.ne(value: V)
+    KProperty<V>.gt(value: V)
+    KProperty<V>.lt(value: V)
+    KProperty<V>.isIn(values: Collection)
+    ConditionBuilder<T>.and(other: ConditionBuilder<T>.() -> Unit)
+    ConditionBuilder<T>.or(other: ConditionBuilder<T>.() -> Unit)
+    ~internal getConditions(): List<Condition<T>>
+}
+sealed class Condition {
+}
+data class OrderBy(var column: String, var direction: SortDirection) {
+}
+enum class SortDirection {
+    ASC
+    DESC
+}
+data class Query(var entityClass: KClass, var conditions: List, var orderBy: List, var limit: Int, var offset: Int) {
+}
+class AdvancedRepository {
+    suspend findByQuery(query: Query): Flow<T>
+    suspend executeQuery(builder: QueryBuilder<T>.() -> Unit): Flow<T>
+}
+data class Product(var id: String, var name: String, var price: Double, var category: String, var inStock: Boolean, var rating: Double) {
+}
+class ProductRepository {
+    -private var products
+    -private var _productUpdates
+    var productUpdates: SharedFlow
+    override suspend findByQuery(query: Query): Flow<Product>
+    override suspend executeQuery(builder: QueryBuilder<Product>.() -> Unit): Flow<Product>
+    suspend addProduct(product: Product)
+    suspend updateProduct(id: String, updater: (Product) -> Product): Product?
+    -private evaluateConditions(product: Product, conditions: List): Boolean
+    -private evaluateCondition(product: Product, condition: Condition): Boolean
+    -private getPropertyValue(product: Product, propertyName: String): Any?
+    -private compareByOrderBy(a: Product, b: Product, orderBy: List): Int
+    -private suspend addSampleProducts()
+}
+sealed class ProductUpdate {
+}
+class ProductNotificationService {
+    -private var repository: ProductRepository
+    constructor(repository: ProductRepository)
+    -private var notificationChannel
+    -private var subscriptions
+    start(): Job
+    suspend subscribe(subscriberId: String): ReceiveChannel<Notification>
+    suspend unsubscribe(subscriberId: String)
+    suspend sendNotification(notification: Notification)
+}
+sealed class Notification {
+}
+class CachedProperty {
+    -private var initialValue: T
+    -private var validator: 
+    -private var ttl: Duration
+    constructor(initialValue: T, validator, ttl: Duration)
+    -private var value: T
+    -private var lastUpdated: Long
+    override getValue(thisRef: Any, property: KProperty): T
+    override setValue(thisRef: Any, property: KProperty, value: T)
+}
+class AsyncLazy {
+    -private var initializer: 
+    constructor(initializer)
+    -private var deferred: Deferred
+    override getValue(thisRef: Any, property: KProperty): Deferred<T>
+}
+class ServiceConfiguration {
+    var maxConcurrentRequests: Int
+    var databaseConnection: Deferred
+    var isEnabled: Boolean
+}
+class DataProcessingOrchestrator {
+    -private var inputChannel
+    -private var processingResults
+    -private var errorChannel
+    startProcessing(workerCount: Int): Job
+    -private suspend processData(workerId: Int)
+    suspend addItem(item: DataItem)
+    -private suspend processItem(item: DataItem): String
+}
+main()
+var notificationService
+var serviceJob
+var subscription
+var config
+var connection
+var orchestrator
+var processingJob
+</file>

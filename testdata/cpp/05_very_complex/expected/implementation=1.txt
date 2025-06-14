@@ -1,0 +1,112 @@
+<file path="/home/janreges/ai-distiller/testdata/cpp/05_very_complex/source.cpp">
+#include "iostream"
+#include "string"
+#include "vector"
+#include "memory"
+#include "algorithm"
+#include "functional"
+#include "type_traits"
+#include "utility"
+#include "tuple"
+#include "variant"
+#include "optional"
+#include "any"
+#include "thread"
+#include "future"
+#include "chrono"
+#include "concepts"
+#include "coroutine"
+#include "ranges"
+#include "span"
+struct SimpleTask {
+    void SimpleTask(auto h) {
+{}
+    }
+    void ~SimpleTask() {
+if (handle_) {
+            handle_.destroy();
+        }
+    }
+    void SimpleTask(SimpleTask& other) {
+{}
+    }
+    SimpleTask () {
+if (this != &other) {
+            if (handle_) {
+                handle_.destroy();
+            }
+            handle_ = std::exchange(other.handle_, {});
+        }
+        return *this;
+    }
+    void SimpleTask(SimpleTask )
+    SimpleTask ()
+size_t processString(char* str) {
+size_t len = 0;
+        while (str[len] != '\0') {
+            ++len;
+        }
+        return len;
+}
+T complexCalculation(T value) const {
+T result = value;
+        for (int i = 0; i < 5; ++i) {
+            result = result * static_cast<T>(2) + static_cast<T>(1);
+        }
+        return result;
+}
+void processRange(Range& range) {
+namespace views = std::views;
+        
+        return range | views::filter([](const auto& x) { return x > 0; })
+                    | views::transform([](const auto& x) { return x * 2; })
+                    | views::take(10);
+}
+void demonstrateVeryComplexFeatures() {
+// Concepts demonstration
+    AdvancedProcessor<int> intProcessor("IntProcessor");
+    auto result = intProcessor.process(42);
+    
+    // Coroutine demonstration
+    auto generator = intProcessor.generateSequence(1, 5);
+    std::vector<int> generated;
+    while (generator.next()) {
+        generated.push_back(generator.value());
+    }
+    
+    // Type-erased container
+    TypeErasedContainer container;
+    container.store(123);
+    container.store(3.14);
+    container.store(std::string("Hello"));
+    
+    // Process with lambda
+    container.processAll([](const std::any& value) {
+        // Type inspection would go here
+        std::cout << "Processing stored value" << std::endl;
+    });
+    
+    // Consteval demonstration
+    constexpr auto strLen = AdvancedFeatures::processString("Hello, World!");
+    constexpr auto calcResult = AdvancedFeatures::complexCalculation(5);
+    
+    // Ranges demonstration (C++20)
+    std::vector<int> numbers = {-2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+    auto processed = AdvancedFeatures::processRange(numbers);
+    
+    std::cout << "Int processor result: " << result << std::endl;
+    std::cout << "Generated values: " << generated.size() << std::endl;
+    std::cout << "Container size: " << container.size() << std::endl;
+    std::cout << "String length (consteval): " << strLen << std::endl;
+    std::cout << "Calculation result (constexpr): " << calcResult << std::endl;
+    
+    // Type analysis demonstration
+    using IntAnalysis = TypeAnalyzer<int>;
+    std::cout << "Int category: " << IntAnalysis::category() << std::endl;
+    std::cout << "Int size: " << IntAnalysis::size << std::endl;
+    
+    // Advanced method detection
+    constexpr bool hasSerialize = HasAdvancedMethods<std::string>::has_serialize;
+    std::cout << "String has serialize: " << (hasSerialize ? "true" : "false") << std::endl;
+}
+</file>

@@ -1,0 +1,22 @@
+<file path="/home/janreges/ai-distiller/testdata/javascript/02_simple/source.js">
+
+class UserModel:
+    constructor(id: number, email: string, name: string)
+        // implementation
+    get id() -> number
+        // implementation
+    get email() -> string
+        // implementation
+    set email(email: string)
+        // implementation
+    get createdAt() -> Date
+        // implementation
+    toString() -> string
+        // implementation
+    toJSON() -> Object
+        // implementation
+    static fromJSON(data: Object) -> UserModel
+        // implementation
+    static isValidUserData(data: Object) -> boolean
+        // implementation
+</file>

@@ -1,0 +1,26 @@
+<file path="/home/janreges/ai-distiller/testdata/rust/04_complex/source.rs">
+use std::sync::{Arc, Mutex};
+use std::ffi::{c_char, CStr};
+use std::future::Future;
+use std::pin::Pin;
+
+struct struct Config;
+
+struct struct AnalysisService;
+
+struct impl AnalysisService;
+
+impl impl AnalysisService {
+    pub fn new() -> Self
+}
+
+struct trait AsyncProcessor;
+
+struct impl AsyncProcessor for AnalysisService;
+
+struct impl FFIData;
+
+impl impl FFIData {
+    pub fn new_integer(value: i64) -> Self
+}
+</file>

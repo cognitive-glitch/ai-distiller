@@ -1,0 +1,28 @@
+<file path="/home/janreges/ai-distiller/testdata/rust/05_very_complex/source.rs">
+
+mod Configurable;
+
+mod DataSource;
+
+struct ServerConfig {
+    pub host: String,
+    pub port: u16,
+}
+
+mod impl Configurable for ServerConfig;
+
+fn process_all_sources(sources: Vec<&dyn DataSource>, mut processor: F)
+
+mod AdvancedContainer;
+
+struct FixedArray;
+
+mod impl FixedArray<T, N> {
+
+    fn new() -> Self
+}
+
+mod impl AdvancedContainer<N> for FixedArray<T, N>;
+
+mod AsyncDataProcessor;
+</file>

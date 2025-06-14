@@ -1,0 +1,45 @@
+<file path="/home/janreges/ai-distiller/testdata/php/05_very_complex/source.php">
+class ProxyTarget {
+    readonly array $interceptMethods;
+    readonly string $proxyClass;
+    __construct(array $interceptMethods, string $proxyClass)
+}
+class Intercept {
+    readonly string $before;
+    readonly string $after;
+    readonly bool $cache;
+    __construct(string $before, string $after, bool $cache)
+}
+class Memoize {
+    readonly int $ttl;
+    readonly string $keyGenerator;
+    __construct(int $ttl, string $keyGenerator)
+}
+class DynamicProxyFactory {
+    __construct()
+    createProxy(object $target): object
+    interceptMethod(object $target, string $methodName, array $arguments): mixed
+}
+interface ProxyInterface {
+    __getTarget(): object
+}
+class AsyncOperationManager {
+    execute(string $id, Closure $operation): void
+    resume(string $id, mixed $value): void
+    getResult(string $id): mixed
+    isComplete(string $id): bool
+    waitAll(): Generator
+}
+class OrderService {
+    __construct()
+    calculatePrice(array $items, string $currency): float
+    processOrder(array $orderData): string
+    generatePriceKey(string $methodName, array $arguments): string
+    getOrderStatus(string $orderId): array Status information
+}
+class MetaProgrammingDemo {
+    createDynamicClass(string $className, array $properties, array $methods): string
+    addMethod(object $object, string $methodName, Closure $implementation): void
+    analyzeObject(object $object): array Analysis result
+}
+</file>

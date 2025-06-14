@@ -1,0 +1,77 @@
+<file path="/home/janreges/ai-distiller/testdata/kotlin/03_medium/source.kt">
+import kotlinx.coroutines
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.collect
+import kotlin.reflect.KClass
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
+class Repository {
+    suspend findById(id: String): T?
+    suspend findAll(): List<T>
+    suspend count(): Long
+}
+class MutableRepository {
+    suspend save(entity: T): T
+    suspend update(entity: T): T
+    suspend delete(id: String): Boolean
+    suspend saveAll(entities: List): List<T>
+}
+abstract class BaseService {
+    constructor(repository: R)
+    inline findByType(): Flow<U>
+    suspend processEntities(transformer: (T) -> K, filter: (K) -> Boolean): List<K>
+    suspend findAndMap(id: String, mapper: (T) -> U): U?
+    abstract suspend validateEntity(entity: T): ValidationResult
+}
+class Entity {
+    var id: String
+    var version: Long
+    override compareTo(other: Entity): Int
+}
+data class User(var id: String, var version: Long, var name: String, var email: String, var role: UserRole) {
+}
+enum class UserRole {
+    ADMIN
+    MODERATOR
+    USER
+    GUEST
+}
+sealed class ValidationResult {
+    isValid(): Boolean
+    getErrors(): List<String>
+}
+class UserRepository {
+    override suspend findById(id: String): User?
+    override suspend findAll(): List<User>
+    override suspend count(): Long
+    override suspend save(entity: User): User
+    override suspend update(entity: User): User
+    override suspend delete(id: String): Boolean
+    override suspend saveAll(entities: List): List<User>
+    findByRoleFlow(role: UserRole): Flow<User>
+}
+class UserService {
+    constructor(repository: UserRepository)
+    override suspend validateEntity(entity: User): ValidationResult
+    inline getEventsOfType(): Flow<T>
+    suspend processUsersInBatches(batchSize: Int, processor: (List<User>) -> Unit)
+    suspend createUsersAsync(userDtos: List): List<User>
+}
+sealed class UserEvent {
+}
+data class UserDto(var name: String, var email: String, var role: UserRole) {
+}
+class Cache {
+    constructor(maxSize: Int)
+    get(key: K): V?
+    put(key: K, value: V, ttlMillis: Long)
+    clearExpired()
+}
+inline T?.requireNotNull(message: () -> String): T
+inline combineAndTransform(first: T, second: R, transformer: (T, R) -> S): S
+inline Any.safeCast(): T?
+suspend List<T>.forEachAsync(dispatcher: CoroutineDispatcher, action: (T) -> Unit)
+main()
+</file>

@@ -1,0 +1,26 @@
+<file path="/home/janreges/ai-distiller/testdata/java/05_very_complex/source.java">
+package com.aidi.test.modern;
+import java.util.stream.Stream;
+
+interface Shape {
+    double area();
+}
+
+record Circle implements Shape {
+    final double radius;
+    @Override
+    double area();
+}
+
+final class Rectangle implements Shape {
+    -final double length;
+    -final double width;
+    Rectangle(double length, double width);
+    @Override
+    double area();
+}
+
+class ModernJava {
+    static void main(String[] args);
+}
+</file>

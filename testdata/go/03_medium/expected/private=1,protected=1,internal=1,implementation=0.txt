@@ -1,0 +1,25 @@
+<file path="/home/janreges/ai-distiller/testdata/go/03_medium/source.go">
+package server
+
+import (
+    "fmt"
+)
+
+type Config struct
+    Port int
+    Host string
+
+func (c *Config) Validate() error
+
+type ConfigError struct
+    Field string
+    Reason string
+
+func (e *ConfigError) Error() string
+
+type Server struct
+    Config
+    listener string
+
+func (s *Server) Start() error
+</file>

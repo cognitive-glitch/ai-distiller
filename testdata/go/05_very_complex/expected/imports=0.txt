@@ -1,0 +1,11 @@
+<file path="/home/janreges/ai-distiller/testdata/go/05_very_complex/source.go">
+package cache
+
+type Cache[K comparable, V any] struct
+
+func New() *Cache[K, V]
+
+func Set(c *Cache[K, V], key K, value V)
+
+func Get(c *Cache[K, V], key K) (V, bool)
+</file>

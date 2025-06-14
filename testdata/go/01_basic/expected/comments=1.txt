@@ -1,0 +1,21 @@
+<file path="/home/janreges/ai-distiller/testdata/go/01_basic/source.go">
+//  user.go
+package user
+
+import (
+    "fmt"
+// User represents a user in the system.
+// The distiller should identify this struct and its fields.
+)
+
+type User struct
+    ID string
+
+func (u *User) UpdateEmail(newEmail string) error
+// Public field
+// Private field
+// NewUser creates a new User.
+// This is a common Go pattern for a constructor.
+
+func NewUser(id string, email string) *User
+</file>

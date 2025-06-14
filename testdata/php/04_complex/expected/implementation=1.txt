@@ -1,0 +1,214 @@
+<file path="/home/janreges/ai-distiller/testdata/php/04_complex/source.php">
+class Route {
+    readonly string $path;
+    readonly string $method;
+    readonly array $middleware;
+    __construct(string $path, string $method, array $middleware)
+}
+class Validate {
+    readonly string $rule;
+    readonly string $message;
+    __construct(string $rule, string $message)
+}
+class Inject {
+    readonly ?string $service;
+    __construct(?string $service)
+}
+class AttributeProcessor {
+    __construct() {
+$this->classCache = new WeakMap();
+    }
+    processAttributes(object $instance): array Processed attributes {
+$class = $instance::class;
+        $reflection = new ReflectionClass($class);
+        
+        if (isset($this->classCache[$instance])) {
+            return $this->classCache[$instance];
+        }
+
+        $result = [
+            'class' => $this->processClassAttributes($reflection),
+            'methods' => $this->processMethodAttributes($reflection),
+            'properties' => $this->processPropertyAttributes($reflection),
+        ];
+
+        $this->classCache[$instance] = $result;
+        return $result;
+    }
+    findMethodsWithAttribute(ReflectionClass $reflection, string $attributeClass): Generator {
+foreach ($reflection->getMethods() as $method) {
+            $attributes = $method->getAttributes($attributeClass);
+            foreach ($attributes as $attribute) {
+                yield $method => $attribute;
+            }
+        }
+    }
+}
+class ApiController {
+    __construct() {
+$this->attributeProcessor = new AttributeProcessor();
+    }
+    getUserProfile(int $id): array {
+return ['id' => $id, 'name' => 'John Doe'];
+    }
+    updateUserProfile(int $id, array $data): array {
+return ['id' => $id, 'updated' => true, 'data' => $data];
+    }
+    deleteUser(int $id): array {
+return ['id' => $id, 'deleted' => true];
+    }
+    getRoutes(): array {
+$reflection = new ReflectionClass($this);
+        $routes = [];
+
+        foreach ($this->attributeProcessor->findMethodsWithAttribute($reflection, Route::class) as $method => $attribute) {
+            $route = $attribute->newInstance();
+            $routes[] = [
+                'method' => $method->getName(),
+                'path' => $route->path,
+                'http_method' => $route->method,
+                'middleware' => $route->middleware,
+            ];
+        }
+
+        return $routes;
+    }
+}
+class UserCreateDto {
+    string $name;
+    string $email;
+    int $age;
+    array User preferences $preferences;
+    static fromArray(array $data): self {
+$dto = new self();
+        
+        foreach ($data as $key => $value) {
+            if (property_exists($dto, $key)) {
+                $dto->$key = $value;
+            }
+        }
+        
+        return $dto;
+    }
+    validate(): array Validation errors {
+$errors = [];
+        $reflection = new ReflectionClass($this);
+        
+        foreach ($reflection->getProperties() as $property) {
+            $propertyName = $property->getName();
+            $value = $property->getValue($this);
+            
+            foreach ($property->getAttributes(Validate::class) as $attribute) {
+                $validator = $attribute->newInstance();
+                $error = $this->validateRule($value, $validator->rule, $validator->message);
+                
+                if ($error) {
+                    $errors[$propertyName][] = $error;
+                }
+            }
+        }
+        
+        return $errors;
+    }
+}
+class ServiceLocator {
+    __construct() {
+$this->singletons = new SplObjectStorage();
+    }
+    register(string $id, Closure $factory, bool $singleton, array $metadata): void {
+$this->factories[$id] = $factory;
+        $this->metadata[$id] = $metadata + ['singleton' => $singleton];
+    }
+    resolve(string $id): mixed {
+if (!isset($this->factories[$id])) {
+            throw new \InvalidArgumentException("Service '{$id}' not registered");
+        }
+
+        $metadata = $this->metadata[$id];
+        
+        if ($metadata['singleton']) {
+            // Check if singleton already exists
+            foreach ($this->singletons as $service) {
+                if ($this->singletons[$service] === $id) {
+                    return $service;
+                }
+            }
+            
+            // Create new singleton
+            $instance = $this->factories[$id]($this);
+            $this->singletons[$instance] = $id;
+            return $instance;
+        }
+
+        return $this->factories[$id]($this);
+    }
+    createWithDependencies(string $className): object {
+$reflection = new ReflectionClass($className);
+        $constructor = $reflection->getConstructor();
+        
+        if (!$constructor) {
+            return new $className();
+        }
+
+        $dependencies = [];
+        
+        foreach ($constructor->getParameters() as $parameter) {
+            $injectAttributes = $parameter->getAttributes(Inject::class);
+            
+            if (!empty($injectAttributes)) {
+                $inject = $injectAttributes[0]->newInstance();
+                $serviceId = $inject->service ?? $parameter->getType()?->getName();
+                
+                if ($serviceId && $this->has($serviceId)) {
+                    $dependencies[] = $this->resolve($serviceId);
+                } else {
+                    $dependencies[] = $parameter->getDefaultValue();
+                }
+            } else {
+                $type = $parameter->getType();
+                if ($type && !$type->isBuiltin() && $this->has($type->getName())) {
+                    $dependencies[] = $this->resolve($type->getName());
+                } else {
+                    $dependencies[] = $parameter->getDefaultValue();
+                }
+            }
+        }
+
+        return $reflection->newInstanceArgs($dependencies);
+    }
+    has(string $id): bool {
+return isset($this->factories[$id]);
+    }
+    getMetadata(string $id): array {
+return $this->metadata[$id] ?? [];
+    }
+    getServiceIds(): array {
+return array_keys($this->factories);
+    }
+}
+class ComplexUserService {
+    __construct(UserRepository $repository, EventDispatcher $dispatcher, AttributeProcessor $processor)
+    createUser(UserCreateDto $dto): array {
+$errors = $dto->validate();
+        
+        if (!empty($errors)) {
+            return ['success' => false, 'errors' => $errors];
+        }
+
+        // Create user logic here
+        return ['success' => true, 'user_id' => 123];
+    }
+    processUsers(array $users): Generator {
+foreach ($users as $userData) {
+            $dto = UserCreateDto::fromArray($userData);
+            $result = $this->createUser($dto);
+            
+            yield [
+                'original' => $userData,
+                'processed' => $result,
+                'timestamp' => time(),
+            ];
+        }
+    }
+}
+</file>

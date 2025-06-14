@@ -1,0 +1,30 @@
+<file path="/home/janreges/ai-distiller/testdata/go/03_medium/source.go">
+package server
+
+import (
+    "fmt"
+)
+
+type Config struct
+    Port int
+    Host string
+
+func (c *Config) Validate() error
+    if c.Port <= 0:
+    return nil
+
+type ConfigError struct
+    Field string
+    Reason string
+
+func (e *ConfigError) Error() string
+    return fmt.Sprintf("config error on field '%s': %s", e.Field, e.Reason)
+
+type Server struct
+    Config
+
+func (s *Server) Start() error
+    if err != nil:
+    fmt.Printf("Starting server on %s:%d\n", s.Host, s.Port)
+    return nil
+</file>

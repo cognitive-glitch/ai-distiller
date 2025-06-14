@@ -1,0 +1,32 @@
+<file path="/home/janreges/ai-distiller/testdata/go/03_medium/source.go">
+//  server.go
+package server
+
+import (
+    "fmt"
+// Config holds server configuration.
+)
+
+type Config struct
+    Port int
+    Host string
+
+func (c *Config) Validate() error
+// ConfigError is a custom error for configuration issues.
+
+type ConfigError struct
+    Field string
+    Reason string
+
+func (e *ConfigError) Error() string
+// Server represents a network server.
+// It embeds Config, promoting its fields.
+
+type Server struct
+    Config
+
+func (s *Server) Start() error
+// The AI should understand that s.Validate() is a promoted method from Config.
+// This could be a *ConfigError
+// ... start listening on s.Host and s.Port
+</file>

@@ -1,0 +1,31 @@
+<file path="/home/janreges/ai-distiller/testdata/cpp/05_very_complex/source.cpp">
+struct SimpleTask {
+    void SimpleTask(auto h)
+    void ~SimpleTask()
+    void SimpleTask(SimpleTask& other)
+    SimpleTask ()
+    void SimpleTask(SimpleTask )
+    SimpleTask ()
+size_t processString(char* str) {
+size_t len = 0;
+        while (str[len] != '\0') {
+            ++len;
+        }
+        return len;
+}
+T complexCalculation(T value) const {
+T result = value;
+        for (int i = 0; i < 5; ++i) {
+            result = result * static_cast<T>(2) + static_cast<T>(1);
+        }
+        return result;
+}
+void processRange(Range& range) {
+namespace views = std::views;
+        
+        return range | views::filter([](const auto& x) { return x > 0; })
+                    | views::transform([](const auto& x) { return x * 2; })
+                    | views::take(10);
+}
+void demonstrateVeryComplexFeatures()
+</file>

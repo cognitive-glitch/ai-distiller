@@ -1,0 +1,57 @@
+<file path="/home/janreges/ai-distiller/testdata/rust/03_medium/source.rs">
+use std::fmt::{Debug, Display};
+
+struct enum AnalysisError {
+    pub IoError: (std::io::Error),
+    pub EmptyContent: ,
+    pub InvalidFormat: (String),
+}
+
+struct trait DataSource;
+
+struct struct AnalysisResult {
+    source_id: String,
+    result: T,
+    metadata: Option<String>,
+}
+
+struct impl AnalysisResult<T>;
+
+impl impl AnalysisResult<T> {
+    pub fn new(source_id: String, result: T) -> Self
+}
+
+fn analyze(source: &'a S) -> Result<AnalysisResult<String>, AnalysisError>
+
+-struct struct InMemorySource {
+    data: Vec<u8>,
+}
+
+struct impl DataSource for InMemorySource {
+    type Content: Vec<u8>,
+}
+
+impl impl DataSource for InMemorySource {
+    fn get_content(&self: ) -> Result<Self::Content, AnalysisError>
+}
+
+struct impl Debug for InMemorySource;
+
+impl impl Debug for InMemorySource {
+    fn fmt(&self: , f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result
+}
+
+struct trait Processor;
+
+struct struct StringProcessor;
+
+struct impl Processor< {
+    type Output: &'a str,
+}
+
+impl impl Processor< {
+    fn process(&self: , input: &'a String) -> Self::Output
+}
+
+-fn main()
+</file>

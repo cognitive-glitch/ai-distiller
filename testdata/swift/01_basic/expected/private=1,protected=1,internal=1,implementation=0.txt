@@ -1,0 +1,7 @@
+<file path="/home/janreges/ai-distiller/testdata/swift/01_basic/source.swift">
+import Foundation
+~func convert(_: Double, from: TemperatureScale, to: TemperatureScale) -> Double?
+-func demo()
+-func validateTemperature(_: Double, scale: TemperatureScale) -> Bool
+~var defaultScale: TemperatureScale
+</file>

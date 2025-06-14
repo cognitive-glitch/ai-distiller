@@ -1,0 +1,7 @@
+<file path="/home/janreges/ai-distiller/testdata/cpp/03_medium/source.cpp">
+bool has_process_method_v;
+void safeProcess(T& obj, & data)
+void safeProcess(T& obj, & data)
+void makeUnique()
+void demonstrateAdvancedFeatures()
+</file>

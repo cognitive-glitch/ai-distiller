@@ -1,0 +1,25 @@
+<file path="/home/janreges/ai-distiller/testdata/go/05_very_complex/source.go">
+package cache
+
+import (
+    "sync"
+)
+
+type Cache[K comparable, V any] struct
+
+func New() *Cache[K, V]
+    return &Cache[K, V]{
+    		data: make(map[K]V),
+    	}
+
+func Set(c *Cache[K, V], key K, value V)
+    c.mu.Lock()
+    defer c.mu.Unlock()
+    c.data[key] = value
+
+func Get(c *Cache[K, V], key K) (V, bool)
+    c.mu.RLock()
+    defer c.mu.RUnlock()
+    val, ok := c.data[key]
+    return val, ok
+</file>

@@ -1,0 +1,217 @@
+<file path="/home/janreges/ai-distiller/testdata/kotlin/03_medium/source.kt">
+import kotlinx.coroutines
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.collect
+import kotlin.reflect.KClass
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
+class Repository {
+    suspend findById(id: String): T?
+    suspend findAll(): List<T>
+    suspend count(): Long
+}
+class MutableRepository {
+    suspend save(entity: T): T
+    suspend update(entity: T): T
+    suspend delete(id: String): Boolean
+    suspend saveAll(entities: List): List<T>
+}
+abstract class BaseService {
+    constructor(repository: R)
+    inline findByType(): Flow<U> {
+= flow {
+        repository.findAll()
+            .filterIsInstance<U>()
+            .forEach { emit(it) }
+    }
+    }
+    suspend processEntities(transformer: (T) -> K, filter: (K) -> Boolean): List<K>
+    suspend findAndMap(id: String, mapper: (T) -> U): U?
+    abstract suspend validateEntity(entity: T): ValidationResult
+}
+class Entity {
+    var id: String
+    var version: Long
+    override compareTo(other: Entity): Int {
+= id.compareTo(other.id)
+    }
+}
+data class User(var id: String, var version: Long, var name: String, var email: String, var role: UserRole) {
+}
+enum class UserRole {
+    ADMIN
+    MODERATOR
+    USER
+    GUEST
+}
+sealed class ValidationResult {
+    isValid(): Boolean {
+= this is Valid
+    }
+    getErrors(): List<String> {
+= when (this) {
+        is Valid -> emptyList()
+        is Invalid -> errors
+    }
+    }
+}
+class UserRepository {
+    override suspend findById(id: String): User? {
+= withContext(Dispatchers.IO) {
+        delay(10) // Simulate database delay
+        mutex.withLock { users[id] }
+    }
+    }
+    override suspend findAll(): List<User> {
+= withContext(Dispatchers.IO) {
+        delay(20)
+        mutex.withLock { users.values.toList() }
+    }
+    }
+    override suspend count(): Long {
+= withContext(Dispatchers.IO) {
+        mutex.withLock { users.size.toLong() }
+    }
+    }
+    override suspend save(entity: User): User {
+= withContext(Dispatchers.IO) {
+        delay(15)
+        mutex.withLock {
+            users[entity.id] = entity
+            entity
+        }
+    }
+    }
+    override suspend update(entity: User): User {
+= withContext(Dispatchers.IO) {
+        delay(15)
+        mutex.withLock {
+            users[entity.id] = entity.copy(version = entity.version + 1)
+            users[entity.id]!!
+        }
+    }
+    }
+    override suspend delete(id: String): Boolean {
+= withContext(Dispatchers.IO) {
+        delay(10)
+        mutex.withLock { users.remove(id) != null }
+    }
+    }
+    override suspend saveAll(entities: List): List<User> {
+= withContext(Dispatchers.IO) {
+        delay(entities.size * 5L)
+        mutex.withLock {
+            entities.forEach { users[it.id] = it }
+            entities
+        }
+    }
+    }
+    findByRoleFlow(role: UserRole): Flow<User> {
+= flow {
+        findAll()
+            .filter { it.role == role }
+            .forEach { emit(it) }
+    }
+    }
+}
+class UserService {
+    constructor(repository: UserRepository)
+    override suspend validateEntity(entity: User): ValidationResult
+    inline getEventsOfType(): Flow<T> {
+= flow {
+        for (event in eventChannel) {
+            if (event is T) emit(event)
+        }
+    }
+    }
+    suspend processUsersInBatches(batchSize: Int, processor: (List<User>) -> Unit)
+    suspend createUsersAsync(userDtos: List): List<User> {
+= coroutineScope {
+        userDtos.map { dto ->
+            async(Dispatchers.IO) {
+                val user = User(
+                    id = generateId(),
+                    version = 1L,
+                    name = dto.name,
+                    email = dto.email,
+                    role = dto.role
+                )
+                
+                when (val validation = validateEntity(user)) {
+                    is ValidationResult.Valid -> {
+                        repository.save(user)
+                        eventChannel.trySend(UserEvent.Created(user.id))
+                        user
+                    }
+                    is ValidationResult.Invalid -> {
+                        throw IllegalArgumentException("Invalid user: ${validation.errors}")
+                    }
+                }
+            }
+        }.awaitAll()
+    }
+    }
+}
+sealed class UserEvent {
+}
+data class UserDto(var name: String, var email: String, var role: UserRole) {
+}
+class Cache {
+    constructor(maxSize: Int)
+    get(key: K): V?
+    put(key: K, value: V, ttlMillis: Long)
+    clearExpired()
+}
+inline T?.requireNotNull(message: () -> String): T
+inline combineAndTransform(first: T, second: R, transformer: (T, R) -> S): S
+inline Any.safeCast(): T?
+suspend List<T>.forEachAsync(dispatcher: CoroutineDispatcher, action: (T) -> Unit) {
+= coroutineScope {
+    map { async(dispatcher) { action(it) } }.awaitAll()
+}
+}
+main() {
+= runBlocking {
+    val userRepository = UserRepository()
+    val userService = UserService(userRepository)
+    val cache = Cache<String, User>()
+    
+    // Create users asynchronously
+    val userDtos = listOf(
+        UserDto("Alice", "alice@example.com", UserRole.ADMIN),
+        UserDto("Bob", "bob@example.com", UserRole.USER),
+        UserDto("Charlie", "charlie@example.com", UserRole.MODERATOR)
+    )
+    
+    val createdUsers = userService.createUsersAsync(userDtos)
+    println("Created ${createdUsers.size} users")
+    
+    // Use cache
+    createdUsers.forEach { user ->
+        cache.put(user.id, user)
+    }
+    
+    // Process users in batches
+    userService.processUsersInBatches(2) { batch ->
+        println("Processing batch of ${batch.size} users")
+        batch.forEach { user ->
+            println("- ${user.name} (${user.role})")
+        }
+    }
+    
+    // Use generic method with reified type
+    userService.findByType<User>().collect { user ->
+        println("Found user: ${user.name}")
+    }
+    
+    // Use extension function
+    val users = listOf("Alice", "Bob", "Charlie")
+    users.forEachAsync {
+        println("Processing $it asynchronously")
+        delay(100)
+    }
+}
+}
+</file>

@@ -1,0 +1,21 @@
+<file path="/home/janreges/ai-distiller/testdata/go/02_simple/source.go">
+package storage
+
+type Storer interface
+    Get(key string) ([]byte, error)
+    Set(key string, value []byte) error
+
+type PostgresStorer struct
+    ConnectionString string
+
+func (ps *PostgresStorer) Get(key string) ([]byte, error)
+
+func (ps *PostgresStorer) Set(key string, value []byte) error
+
+type MemoryStorer struct
+    data map[string][]byte
+
+func (ms MemoryStorer) Get(key string) ([]byte, error)
+
+func (ms MemoryStorer) Set(key string, value []byte) error
+</file>

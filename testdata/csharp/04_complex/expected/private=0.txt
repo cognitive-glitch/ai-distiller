@@ -1,0 +1,14 @@
+<file path="/home/janreges/ai-distiller/testdata/csharp/04_complex/source.cs">
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Reflection;
+using System.Threading.Tasks;
+public sealed class StringRangeAttribute : ValidationAttribute
+public class ModelValidatorBuilder
+public class SignupRequest
+public class Demo
+public class ServiceLocator
+</file>

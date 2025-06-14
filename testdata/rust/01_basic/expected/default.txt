@@ -1,0 +1,9 @@
+<file path="/home/janreges/ai-distiller/testdata/rust/01_basic/source.rs">
+
+mod settings {
+
+    const APP_NAME: &str = "AI Distiller";
+
+    fn get_version() -> String
+}
+</file>

@@ -1,0 +1,32 @@
+<file path="/home/janreges/ai-distiller/testdata/go/04_complex/source.go">
+package worker
+
+import (
+    "context"
+    "fmt"
+    "sync"
+    "time"
+)
+
+type Job struct
+    ID int
+
+type Worker struct
+
+type Dispatcher struct
+    JobChannel chan Job
+
+func (d *Dispatcher) Run(ctx context.Context)
+    var wg sync.WaitGroup
+    for loop:
+    wg.Add(1)
+        worker := Worker{...}
+        go worker.start(ctx)
+    wg.Wait()
+
+func NewDispatcher(maxWorkers int) *Dispatcher
+    return &Dispatcher{
+    		JobChannel: make(chan Job, 100),
+    		maxWorkers: maxWorkers,
+    	}
+</file>

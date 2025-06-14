@@ -1,0 +1,5 @@
+<file path="/home/janreges/ai-distiller/testdata/csharp/01_basic/source.cs">
+~internal class MathHelpers
+~internal class Greeting
+public class StringExtensions
+</file>

@@ -1,0 +1,80 @@
+<file path="/home/janreges/ai-distiller/testdata/kotlin/04_complex/source.kt">
+class DatabaseDsl {
+}
+class QueryBuilder {
+    constructor(entityClass: KClass)
+    where(condition: ConditionBuilder<T>.() -> Unit)
+    orderBy(column: KProperty, direction: SortDirection)
+    limit(count: Int)
+    offset(count: Int)
+}
+class ConditionBuilder {
+    KProperty<V>.eq(value: V)
+    KProperty<V>.ne(value: V)
+    KProperty<V>.gt(value: V)
+    KProperty<V>.lt(value: V)
+    KProperty<V>.isIn(values: Collection)
+    ConditionBuilder<T>.and(other: ConditionBuilder<T>.() -> Unit)
+    ConditionBuilder<T>.or(other: ConditionBuilder<T>.() -> Unit)
+}
+sealed class Condition {
+}
+data class OrderBy(var column: String, var direction: SortDirection) {
+}
+enum class SortDirection {
+    ASC
+    DESC
+}
+data class Query(var entityClass: KClass, var conditions: List, var orderBy: List, var limit: Int, var offset: Int) {
+}
+class AdvancedRepository {
+    suspend findByQuery(query: Query): Flow<T>
+    suspend executeQuery(builder: QueryBuilder<T>.() -> Unit): Flow<T>
+}
+data class Product(var id: String, var name: String, var price: Double, var category: String, var inStock: Boolean, var rating: Double) {
+}
+class ProductRepository {
+    var productUpdates: SharedFlow
+    override suspend findByQuery(query: Query): Flow<Product>
+    override suspend executeQuery(builder: QueryBuilder<Product>.() -> Unit): Flow<Product>
+    suspend addProduct(product: Product)
+    suspend updateProduct(id: String, updater: (Product) -> Product): Product?
+}
+sealed class ProductUpdate {
+}
+class ProductNotificationService {
+    constructor(repository: ProductRepository)
+    start(): Job
+    suspend subscribe(subscriberId: String): ReceiveChannel<Notification>
+    suspend unsubscribe(subscriberId: String)
+    suspend sendNotification(notification: Notification)
+}
+sealed class Notification {
+}
+class CachedProperty {
+    constructor(initialValue: T, validator, ttl: Duration)
+    override getValue(thisRef: Any, property: KProperty): T
+    override setValue(thisRef: Any, property: KProperty, value: T)
+}
+class AsyncLazy {
+    constructor(initializer)
+    override getValue(thisRef: Any, property: KProperty): Deferred<T>
+}
+class ServiceConfiguration {
+    var maxConcurrentRequests: Int
+    var databaseConnection: Deferred
+    var isEnabled: Boolean
+}
+class DataProcessingOrchestrator {
+    startProcessing(workerCount: Int): Job
+    suspend addItem(item: DataItem)
+}
+main()
+var notificationService
+var serviceJob
+var subscription
+var config
+var connection
+var orchestrator
+var processingJob
+</file>

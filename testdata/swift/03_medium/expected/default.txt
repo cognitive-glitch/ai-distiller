@@ -1,0 +1,19 @@
+<file path="/home/janreges/ai-distiller/testdata/swift/03_medium/source.swift">
+import Foundation
+
+class Stack:
+    func push(_: Element)
+    func peek() -> Element?
+    func pop() -> Element?
+
+class :
+
+class MathError:
+
+protocol Cacheable:
+
+class ExpiringCache:
+    func insert(_: Value, for: Key)
+    func value(for: Key) -> Value?
+    func contains(key: Key) -> Bool
+</file>

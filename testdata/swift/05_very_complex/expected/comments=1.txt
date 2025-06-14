@@ -1,0 +1,97 @@
+<file path="/home/janreges/ai-distiller/testdata/swift/05_very_complex/source.swift">
+// //
+// //  05_very_complex.swift
+// //  DistillerSample
+// //
+// //  Demonstrates: actors, advanced generics with type erasure, custom operators,
+// //  metaprogramming with Mirror, advanced memory management, concurrent programming,
+// //  protocol compositions, custom collection types.
+// //
+import Foundation
+// // MARK: - Core Protocols with Associated Types
+// /// A protocol defining a generic event with a specific payload.
+
+protocol Event:
+// /// A protocol for a type that can handle a specific kind of event.
+
+protocol EventHandler:
+// // MARK: - Type Erasure for Heterogeneous Storage
+// /// A weak reference wrapper to prevent retain cycles in the subscriber list.
+// /// A type-erased wrapper for any `EventHandler`.
+// /// This allows storing handlers for different event types in the same collection.
+// // MARK: - The Core Concurrent Component: The Actor
+// /// An actor that manages event subscriptions and dispatches events concurrently.
+
+class EventBus:
+    func subscribe(_: H)
+    func post(_: E)
+    // /// Private method for handler cleanup
+    // /// Internal method for bus statistics
+// // MARK: - Custom Operators and Precedence
+// /// Custom operator for subscribing an EventHandler to an EventBus.
+func (handler: H, bus: EventBus)
+// // Custom operator for event composition
+func (lhs: T, rhs: U) -> (T, U)
+// // MARK: - Metaprogramming with Mirror
+// /// Uses Mirror to generate a debug description of any event payload.
+func detailedDebugLog(_: T) -> String
+// /// Advanced reflection utility
+
+class ReflectionAnalyzer:
+    // /// Analyzes any object and returns its structure
+    func analyze(_: T) -> StructureInfo
+    // /// Private helper for type analysis
+
+class StructureInfo:
+    var typeName: String
+    var properties: [PropertyInfo]
+    var childCount: Int
+    // /// Private validation method
+
+class PropertyInfo:
+    var name: String
+    var type: String
+    // /// Private helper for property validation
+// // MARK: - Custom Collection Type
+// /// A basic thread-safe queue implementing Sequence.
+
+class ThreadSafeQueue:
+    func enqueue(_: T)
+    func dequeue() -> T?
+    func makeIterator() -> IndexingIterator<[T]>
+    // /// Private helper for queue validation
+    // /// Internal method for queue statistics
+// // Advanced collection with custom indexing
+
+class CircularBuffer:
+    var startIndex: Int
+    var endIndex: Int
+    func index(after: Int) -> Int
+    var count: Int
+    // /// Private helper for buffer validation
+    // /// Internal method for buffer manipulation
+// // MARK: - Advanced Memory Management and Concurrent Types
+// /// A service that demonstrates complex memory management patterns.
+
+class ConcurrentEventLogger:
+    // // Strong reference to monitor
+    var monitor: ActivityMonitor
+    // // Weak reference to prevent cycles
+    var delegate: EventLoggerDelegate?
+    // // Unowned reference (careful usage required)
+    func logEvent(_: E)
+    // /// Private cleanup method
+// /// Protocol for event logger delegation
+
+protocol EventLoggerDelegate:
+
+class ActivityMonitor:
+    func record(_: String)
+    func analyze(_: T) -> StructureInfo
+    // /// Private method for cache management
+    // /// Internal method for monitoring statistics
+// // MARK: - Example Usage
+// // Define some concrete events
+// // Define some concrete handlers
+// // MARK: - Demo
+</file>

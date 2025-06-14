@@ -1,0 +1,40 @@
+<file path="/home/janreges/ai-distiller/testdata/ruby/01_basic/source.rb">
+
+module UserUtils
+    MIN_PASSWORD_LENGTH
+    EMAIL_REGEX
+    def self.valid_email?(email)
+    end
+    def self.strong_password?(password)
+    end
+    def self.internal_helper
+    end
+end
+
+class User
+    @@user_count
+    def self.count
+    end
+    def initialize(name, email)
+    end
+    def to_s
+    end
+    def valid?
+    end
+    def compare_creation_time(other_user)
+    end
+    def generate_id
+    end
+end
+
+class AdminUser < User
+    def initialize(name, email, permissions = ...)
+    end
+    def to_s
+    end
+    def has_permission?(permission)
+    end
+    def validate_permissions
+    end
+end
+</file>

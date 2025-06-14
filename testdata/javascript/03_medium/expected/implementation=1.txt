@@ -1,0 +1,34 @@
+<file path="/home/janreges/ai-distiller/testdata/javascript/03_medium/source.js">
+const EventEmitter = require('events')
+const NotificationMixin = { async send(payload) -> Promise<boolean>, _validatePayload(payload) -> boolean }
+
+class BaseNotificationService extends EventEmitter:
+    constructor(serviceName: string)
+        // implementation
+    get stats() -> Object
+        // implementation
+    get isActive() -> boolean
+        // implementation
+    async send(payload: Object) -> Promise<boolean>
+        // implementation
+    async processNotification(payload: Object) -> Promise<boolean>
+        // implementation
+    deactivate()
+        // implementation
+    activate()
+        // implementation
+
+class EmailNotificationService extends BaseNotificationService:
+    constructor(config: Object = {})
+        // implementation
+    async send(payload: Object) -> Promise<boolean>
+        // implementation
+    getActiveConnections() -> number
+        // implementation
+
+class SMSNotificationService extends BaseNotificationService:
+    constructor(provider: string = 'default')
+        // implementation
+    async send(payload: Object) -> Promise<boolean>
+        // implementation
+</file>

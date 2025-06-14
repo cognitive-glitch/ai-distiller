@@ -437,6 +437,26 @@ make test-quick    # Quick smoke tests
 ### Issue: Performance degradation
 **Solution**: Profile with `go test -bench`, check for unnecessary allocations
 
+## Visibility Symbols in Text Format
+
+The text format uses these symbols for visibility:
+- **public**: no symbol (default)
+- **private**: `-` (minus)
+- **protected**: `*` (asterisk)
+- **internal/package-private**: `~` (tilde)
+
+Example:
+```
+class UserService:
+    -_cache: dict        # private field
+    *_logger: Logger     # protected field
+    ~_config: Config     # internal/package-private field
+    get_user(id: int)    # public method (no symbol)
+    -_validate()         # private method
+    *log_access()        # protected method
+    ~process_internal()  # internal method
+```
+
 ## Communication with User
 
 - Use **Czech** for general communication if user writes in Czech

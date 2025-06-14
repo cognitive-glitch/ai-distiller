@@ -1,0 +1,48 @@
+<file path="/home/janreges/ai-distiller/testdata/swift/02_simple/source.swift">
+// //
+// //  02_simple.swift
+// //  DistillerSample
+// //
+// //  Demonstrates: value vs. reference semantics, protocol conformance,
+// //  property observers, access control.
+// //
+import Foundation
+// // MARK: - Protocols
+// /// Something that can provide a textual description of itself.
+
+protocol Describable:
+// /// Two-dimensional, integer-backed positioning.
+
+class Point:
+    var x: Int
+    var y: Int
+    // /// Euclidean distance from origin (0,0).
+    var magnitude: Double
+    var description: String
+    // /// Private helper for coordinate validation
+    // /// Internal method for coordinate transformation
+// /// Models an axis-aligned rectangle.
+
+class Rectangle:
+    // // Stored properties
+    var origin: Point
+    var size: (width: Int, height: Int)
+    // // Lazy-calculated property cached for performance
+    // /// Designated initializer.
+    // /// Area is recomputed only when cache invalidated.
+    var area: Int
+    var description: String
+    // /// Private method for bounds checking
+    // /// Protected method for subclasses
+// /// Specialized rectangle for UI elements
+
+class UIRectangle:
+    // /// Override with additional behavior
+    var description: String
+    // /// Public method specific to UI rectangles
+    func show()
+    // /// Public method to hide rectangle
+    func hide()
+    // /// Private UI-specific validation
+// // MARK: - Demo
+</file>

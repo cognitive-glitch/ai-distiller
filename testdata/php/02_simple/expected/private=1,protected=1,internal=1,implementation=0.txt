@@ -1,0 +1,64 @@
+<file path="/home/janreges/ai-distiller/testdata/php/02_simple/source.php">
+interface PersistableInterface {
+    getId(): ?int
+    setId(int $id): void
+    getCreatedAt(): ?DateTimeInterface
+}
+interface CacheableInterface {
+    getCacheKey(): string
+    getCacheTtl(): int
+}
+abstract class BaseEntity implements PersistableInterface, JsonSerializable {
+    *?int $id;
+    *?DateTimeInterface $createdAt;
+    *?DateTimeInterface $updatedAt;
+    getId(): ?int
+    setId(int $id): void
+    getCreatedAt(): ?DateTimeInterface
+    setCreatedAt(DateTimeInterface $createdAt): void
+    getUpdatedAt(): ?DateTimeInterface
+    setUpdatedAt(DateTimeInterface $updatedAt): void
+    abstract getEntityName(): string
+    *abstract validate(): bool
+    jsonSerialize(): array
+}
+class trait TimestampableTrait {
+    *updateTimestamps(): void
+}
+class trait ValidatableTrait {
+    -array Validation errors $validationErrors;
+    *addValidationError(string $field, string $message): void
+    getValidationErrors(): array
+    *clearValidationErrors(): void
+    hasValidationErrors(): bool
+}
+class Product extends BaseEntity implements CacheableInterface {
+    -string $name;
+    -float $price;
+    -string $description;
+    -bool $isAvailable;
+    -array Product categories $categories;
+    static $CACHE_TTL = 3600;
+    __construct(string $name, float $price, string $description)
+    getName(): string
+    setName(string $name): void
+    getPrice(): float
+    setPrice(float $price): void
+    getEntityName(): string
+    *validate(): bool
+    getCacheKey(): string
+    getCacheTtl(): int
+    addCategory(string $category): void
+    static createSaleProduct(string $name, float $originalPrice, float $discountPercent): self
+}
+class Category extends BaseEntity {
+    readonly string $name;
+    readonly string $slug;
+    -?Category $parent;
+    __construct(string $name, string $slug)
+    getEntityName(): string
+    *validate(): bool
+    setParent(?Category $parent): void
+    getParent(): ?Category
+}
+</file>

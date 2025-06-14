@@ -1,0 +1,15 @@
+<file path="/home/janreges/ai-distiller/testdata/go/01_basic/source.go">
+package user
+
+import (
+    "fmt"
+)
+
+type User struct
+    ID string
+    email string
+
+func (u *User) UpdateEmail(newEmail string) error
+
+func NewUser(id string, email string) *User
+</file>

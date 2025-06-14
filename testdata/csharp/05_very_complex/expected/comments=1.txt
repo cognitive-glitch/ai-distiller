@@ -1,0 +1,13 @@
+<file path="/home/janreges/ai-distiller/testdata/csharp/05_very_complex/source.cs">
+using System;
+using System.Collections.Generic;
+using System.Numerics;
+using Microsoft.Extensions.DependencyInjection;
+public class VectorN
+public interface IAlgebraService
+public sealed class AlgebraService : IAlgebraService
+public abstract class CalcCommand
+public class CalcDispatcher
+public class MathProcessor
+public class Program
+</file>

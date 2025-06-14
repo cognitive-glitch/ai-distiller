@@ -42,6 +42,11 @@ test-update:
 	@echo "==> Updating expected test files"
 	UPDATE_EXPECTED=true $(GOTEST) -v ./internal/testrunner
 
+# Regenerate all expected test files
+test-regenerate:
+	@echo "==> Regenerating all expected test files"
+	@./scripts/regenerate-expected.sh
+
 # Audit test structure for consistency issues
 test-audit:
 	@echo "==> Auditing test structure"

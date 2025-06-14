@@ -1,0 +1,79 @@
+<file path="/home/janreges/ai-distiller/testdata/ruby/04_complex/source.rb">
+
+module DSLBuilder
+    def self.included(base)
+    end
+
+    module ClassMethods
+        def dsl_method(name, &default_block)
+        end
+        def chainable_attr(*names*)
+        end
+    end
+
+    class DSLContext
+        def initialize(target)
+        end
+        def method_missing(method_name, *args*, &block)
+        end
+        def respond_to_missing?(method_name, include_private = ...)
+        end
+    end
+end
+
+module FluentInterface
+    def self.included(base)
+    end
+
+    module ClassMethods
+        def fluent_builder(*method_names*)
+        end
+    end
+end
+
+module ReflectionUtils
+    def self.create_class(class_name, parent_class = ..., &block)
+    end
+    def self.analyze_class(klass)
+    end
+end
+
+class ConfigurationBuilder
+    def initialize
+    end
+    def add_middleware(middleware_class, *options*)
+    end
+    def add_plugin(plugin_name, &configuration_block)
+    end
+    def method_missing(method_name, *args*, &block)
+    end
+    def respond_to_missing?(method_name, include_private = ...)
+    end
+    def to_hash
+    end
+    def validate_configuration
+    end
+end
+
+class PluginConfiguration
+    def initialize
+    end
+    def option(key, value)
+    end
+    def timeout(seconds)
+    end
+    def retries(count)
+    end
+    def method_missing(method_name, *args*)
+    end
+    def respond_to_missing?(method_name, include_private = ...)
+    end
+    def to_hash
+    end
+end
+
+class DynamicClassFactory
+    def self.create_model(name, &definition)
+    end
+end
+</file>

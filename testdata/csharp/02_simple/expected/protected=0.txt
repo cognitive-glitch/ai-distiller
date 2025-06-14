@@ -1,0 +1,6 @@
+<file path="/home/janreges/ai-distiller/testdata/csharp/02_simple/source.cs">
+using System;
+public class BankAccount
+public struct Money
+public class SavingsAccount : BankAccount
+</file>

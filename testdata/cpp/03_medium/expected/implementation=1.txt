@@ -1,0 +1,56 @@
+<file path="/home/janreges/ai-distiller/testdata/cpp/03_medium/source.cpp">
+#include "iostream"
+#include "string"
+#include "vector"
+#include "memory"
+#include "algorithm"
+#include "functional"
+#include "type_traits"
+#include "future"
+#include "thread"
+#include "chrono"
+#include "exception"
+#include "utility"
+bool has_process_method_v;
+void safeProcess(T& obj, & data) {
+return obj.process(data);
+}
+void safeProcess(T& obj, & data) {
+return "";
+}
+void makeUnique() {
+return std::make_unique<T>(std::forward<Args>(args)...);
+}
+void demonstrateAdvancedFeatures() {
+// Resource management with custom deleter
+    auto customDeleter = [](TextProcessor* p) {
+        std::cout << "Custom deleting processor: " << p->getName() << std::endl;
+        delete p;
+    };
+    
+    ResourceManager<TextProcessor, decltype(customDeleter)> manager(
+        new TextProcessor("Advanced"), customDeleter);
+    
+    // Processing pipeline
+    ProcessingPipeline pipeline;
+    pipeline.addProcessor(makeUnique<TextProcessor>("First"));
+    pipeline.addProcessor(makeUnique<TextProcessor>("Second"));
+    
+    // Async processing
+    auto future = pipeline.processAsync("Hello World");
+    std::string result = future.get();
+    
+    // Template specialization
+    auto intSum = Calculator<int>::add(5, 10);
+    auto doubleSum = Calculator<double>::add(3.14, 2.86);
+    
+    // SFINAE demonstration
+    TextProcessor processor("SFINAE Test");
+    std::string sfResult = safeProcess(processor, "test data");
+    
+    std::cout << "Async result: " << result << std::endl;
+    std::cout << "Int sum: " << intSum << std::endl;
+    std::cout << "Double sum: " << doubleSum << std::endl;
+    std::cout << "SFINAE result: " << sfResult << std::endl;
+}
+</file>

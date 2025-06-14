@@ -1,0 +1,9 @@
+<file path="/home/janreges/ai-distiller/testdata/cpp/01_basic/source.cpp">
+T max(T& a, T& b) {
+return (a > b) ? a : b;
+}
+T min(T& a, T& b) {
+return (a < b) ? a : b;
+}
+int main()
+</file>

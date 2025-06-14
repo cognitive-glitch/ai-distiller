@@ -1,0 +1,32 @@
+<file path="/home/janreges/ai-distiller/testdata/cpp/01_basic/source.cpp">
+#include "iostream"
+#include "string"
+#include "vector"
+T max(T& a, T& b) {
+return (a > b) ? a : b;
+}
+T min(T& a, T& b) {
+return (a < b) ? a : b;
+}
+int main() {
+// Create some points
+    Point p1(3.0, 4.0);
+    Point3D p2(1.0, 2.0, 3.0);
+    
+    // Use containers
+    Container<int> intContainer(42);
+    Container<std::string> stringContainer("Hello");
+    
+    // Use utility functions
+    int maxVal = MathUtils::max(10, 20);
+    double minVal = MathUtils::min(1.5, 2.5);
+    
+    // Output results
+    std::cout << "Point distance: " << p1.distanceFromOrigin() << std::endl;
+    std::cout << "3D Point distance: " << p2.distanceFromOrigin() << std::endl;
+    std::cout << "Container value: " << intContainer.getValue() << std::endl;
+    std::cout << "Max value: " << maxVal << std::endl;
+    
+    return 0;
+}
+</file>
