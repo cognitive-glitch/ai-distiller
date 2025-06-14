@@ -179,9 +179,9 @@ func (p *LineParser) parseMod(file *ir.DistilledFile, matches []string) {
 				StartLine: p.currentLine + 1,
 			},
 		},
-		Name:       "mod " + name,
+		Name:       name,
 		Visibility: visibility,
-		Modifiers:  []ir.Modifier{},
+		Modifiers:  []ir.Modifier{}, // Rust modules are represented as classes
 		Children:   []ir.DistilledNode{},
 	}
 
@@ -189,13 +189,21 @@ func (p *LineParser) parseMod(file *ir.DistilledFile, matches []string) {
 	
 	// Check if it's a module with body
 	if p.currentLine < len(p.lines) {
-		nextLine := strings.TrimSpace(p.lines[p.currentLine])
-		if nextLine == "{" {
-			p.currentLine++
+		// Check if brace is on the same line
+		currentLineText := p.lines[p.currentLine-1]
+		if strings.HasSuffix(strings.TrimSpace(currentLineText), "{") {
 			endLine := p.parseBlock(file, mod)
 			mod.Location.EndLine = endLine
 		} else {
-			mod.Location.EndLine = mod.Location.StartLine
+			// Check next line
+			nextLine := strings.TrimSpace(p.lines[p.currentLine])
+			if nextLine == "{" {
+				p.currentLine++
+				endLine := p.parseBlock(file, mod)
+				mod.Location.EndLine = endLine
+				} else {
+				mod.Location.EndLine = mod.Location.StartLine
+			}
 		}
 	}
 
@@ -213,9 +221,9 @@ func (p *LineParser) parseStruct(file *ir.DistilledFile, matches []string) {
 				StartLine: p.currentLine + 1,
 			},
 		},
-		Name:       "struct " + name,
+		Name:       name,
 		Visibility: visibility,
-		Modifiers:  []ir.Modifier{},
+		Modifiers:  []ir.Modifier{ir.ModifierStruct},
 		Children:   []ir.DistilledNode{},
 	}
 
@@ -251,7 +259,7 @@ func (p *LineParser) parseEnum(file *ir.DistilledFile, matches []string) {
 				StartLine: p.currentLine + 1,
 			},
 		},
-		Name:       "enum " + name,
+		Name:       name,
 		Visibility: visibility,
 		Modifiers:  []ir.Modifier{},
 		Children:   []ir.DistilledNode{},
@@ -285,7 +293,7 @@ func (p *LineParser) parseTrait(file *ir.DistilledFile, matches []string) {
 				StartLine: p.currentLine + 1,
 			},
 		},
-		Name:       "trait " + name,
+		Name:       name,
 		Visibility: visibility,
 		Modifiers:  []ir.Modifier{ir.ModifierAbstract},
 		Children:   []ir.DistilledNode{},
@@ -379,10 +387,30 @@ func (p *LineParser) parseFunction(file *ir.DistilledFile, parent ir.DistilledNo
 	// Parse function body
 	if p.currentLine < len(p.lines) {
 		line := strings.TrimSpace(p.lines[p.currentLine])
-		if line == "{" {
+		prevLine := strings.TrimSpace(p.lines[p.currentLine-1])
+		
+		if strings.HasSuffix(prevLine, "{") {
+			// Opening brace is on the same line as function declaration
+			startLine := p.currentLine - 1
+			p.currentLine-- // Go back to the line with the brace
+			p.skipBlock()
+			p.currentLine++ // Move past the closing brace
+			fn.Location.EndLine = p.currentLine
+			
+			// Extract implementation
+			if p.currentLine > startLine {
+				var implLines []string
+				for i := startLine; i <= p.currentLine && i < len(p.lines); i++ {
+					implLines = append(implLines, p.lines[i])
+				}
+				fn.Implementation = strings.Join(implLines, "\n")
+			}
+		} else if line == "{" {
+			// Opening brace is on the next line
 			startLine := p.currentLine
 			p.skipBlock()
-			fn.Location.EndLine = p.currentLine + 1
+			p.currentLine++ // Move past the closing brace
+			fn.Location.EndLine = p.currentLine
 			
 			// Extract implementation
 			if p.currentLine > startLine {
@@ -393,7 +421,8 @@ func (p *LineParser) parseFunction(file *ir.DistilledFile, parent ir.DistilledNo
 				fn.Implementation = strings.Join(implLines, "\n")
 			}
 		} else {
-			fn.Location.EndLine = p.currentLine + 1
+			// No body (e.g., trait method declaration)
+			fn.Location.EndLine = p.currentLine
 		}
 	}
 
@@ -420,7 +449,7 @@ func (p *LineParser) parseConst(file *ir.DistilledFile, parent ir.DistilledNode,
 				EndLine:   p.currentLine + 1,
 			},
 		},
-		Name:         "const " + name,
+		Name:         name,
 		Visibility:   visibility,
 		Modifiers:    []ir.Modifier{ir.ModifierFinal},
 		Type:         &ir.TypeRef{Name: typeStr},
@@ -441,15 +470,10 @@ func (p *LineParser) parseConst(file *ir.DistilledFile, parent ir.DistilledNode,
 // parseStatic parses static declarations
 func (p *LineParser) parseStatic(file *ir.DistilledFile, parent ir.DistilledNode, matches []string) {
 	visibility := p.parseVisibility(matches[1])
-	isMut := matches[2] == "mut"
+	// isMut := matches[2] == "mut" // TODO: handle mutable statics differently if needed
 	name := matches[3]
 	typeStr := strings.TrimSpace(matches[4])
 	value := strings.TrimSpace(matches[5])
-
-	fieldName := "static " + name
-	if isMut {
-		fieldName = "static mut " + name
-	}
 
 	field := &ir.DistilledField{
 		BaseNode: ir.BaseNode{
@@ -458,7 +482,7 @@ func (p *LineParser) parseStatic(file *ir.DistilledFile, parent ir.DistilledNode
 				EndLine:   p.currentLine + 1,
 			},
 		},
-		Name:         fieldName,
+		Name:         name,
 		Visibility:   visibility,
 		Modifiers:    []ir.Modifier{ir.ModifierStatic},
 		Type:         &ir.TypeRef{Name: typeStr},
@@ -489,7 +513,7 @@ func (p *LineParser) parseType(file *ir.DistilledFile, parent ir.DistilledNode, 
 				EndLine:   p.currentLine + 1,
 			},
 		},
-		Name:       "type " + name,
+		Name:       name,
 		Visibility: visibility,
 		Type:       &ir.TypeRef{Name: typeStr},
 	}
@@ -509,6 +533,7 @@ func (p *LineParser) parseType(file *ir.DistilledFile, parent ir.DistilledNode, 
 // TODO: This uses simple brace counting which can be fooled by braces in strings/comments
 func (p *LineParser) parseBlock(file *ir.DistilledFile, parent ir.DistilledNode) int {
 	braceCount := 1
+	
 
 	for p.currentLine < len(p.lines) && braceCount > 0 {
 		line := p.lines[p.currentLine]
@@ -519,8 +544,6 @@ func (p *LineParser) parseBlock(file *ir.DistilledFile, parent ir.DistilledNode)
 
 		// Parse nested constructs BEFORE counting braces
 		if parent != nil && braceCount == 1 && trimmed != "}" {
-			// Debug - check all lines
-			// fmt.Printf("parseBlock: line %d, trimmed: %q, braceCount: %d, parent: %v\n", p.currentLine, trimmed, braceCount, parent != nil)
 			if matches := fnRe.FindStringSubmatch(trimmed); matches != nil {
 				p.parseFunction(file, parent, matches)
 				continue
@@ -749,9 +772,24 @@ func (p *LineParser) parseBlockComment(file *ir.DistilledFile, parent ir.Distill
 // Helper methods
 
 func (p *LineParser) parseVisibility(vis string) ir.Visibility {
-	if strings.Contains(vis, "pub") {
+	vis = strings.TrimSpace(vis)
+	
+	if vis == "" {
+		return ir.VisibilityPrivate
+	}
+	
+	if strings.HasPrefix(vis, "pub(crate)") {
+		return ir.VisibilityInternal
+	}
+	
+	if strings.HasPrefix(vis, "pub(super)") || strings.HasPrefix(vis, "pub(in") {
+		return ir.VisibilityInternal
+	}
+	
+	if strings.HasPrefix(vis, "pub") {
 		return ir.VisibilityPublic
 	}
+	
 	return ir.VisibilityPrivate
 }
 

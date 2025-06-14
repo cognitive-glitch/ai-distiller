@@ -494,7 +494,7 @@ func (p *TreeSitterProcessor) processMethodDeclaration(node *sitter.Node, source
 		case "void_keyword":
 			method.Returns = &ir.TypeRef{Name: "void"}
 			hasSeenType = true
-		case "predefined_type", "array_type", "generic_name", "qualified_name":
+		case "predefined_type", "array_type", "generic_name", "qualified_name", "tuple_type", "nullable_type":
 			if method.Returns == nil {
 				method.Returns = p.extractType(child, source)
 				hasSeenType = true
@@ -707,6 +707,18 @@ func (p *TreeSitterProcessor) processFieldDeclaration(node *sitter.Node, source 
 				fieldType = p.extractType(child, source)
 			}
 		case "variable_declaration":
+			// Extract type from variable_declaration if we haven't found it yet
+			if fieldType == nil {
+				for j := 0; j < int(child.ChildCount()); j++ {
+					varChild := child.Child(j)
+					switch varChild.Type() {
+					case "predefined_type", "array_type", "generic_name", "qualified_name", "identifier":
+						fieldType = p.extractType(varChild, source)
+						break
+					}
+				}
+			}
+			
 			// Process variable declarators
 			for j := 0; j < int(child.ChildCount()); j++ {
 				varChild := child.Child(j)
@@ -722,11 +734,16 @@ func (p *TreeSitterProcessor) processFieldDeclaration(node *sitter.Node, source 
 					}
 
 					// Extract field name and value
+					hasSeenEquals := false
 					for k := 0; k < int(varChild.ChildCount()); k++ {
 						declChild := varChild.Child(k)
 						switch declChild.Type() {
 						case "identifier":
-							field.Name = string(source[declChild.StartByte():declChild.EndByte()])
+							if !hasSeenEquals {
+								field.Name = string(source[declChild.StartByte():declChild.EndByte()])
+							}
+						case "=":
+							hasSeenEquals = true
 						case "equals_value_clause":
 							// Extract initializer
 							for l := 0; l < int(declChild.ChildCount()); l++ {
@@ -735,6 +752,11 @@ func (p *TreeSitterProcessor) processFieldDeclaration(node *sitter.Node, source 
 									field.DefaultValue = string(source[valueChild.StartByte():valueChild.EndByte()])
 									break
 								}
+							}
+						default:
+							// If we've seen equals, this is the value
+							if hasSeenEquals && field.DefaultValue == "" {
+								field.DefaultValue = string(source[declChild.StartByte():declChild.EndByte()])
 							}
 						}
 					}
@@ -1134,6 +1156,10 @@ func (p *TreeSitterProcessor) extractType(node *sitter.Node, source []byte) *ir.
 		typeName := string(source[node.StartByte():node.EndByte()])
 		typeName = strings.TrimSuffix(typeName, "?")
 		return &ir.TypeRef{Name: typeName, IsNullable: true}
+	case "tuple_type":
+		// Handle tuple types like (double C, double A)
+		// For now, just return the raw text representation
+		return &ir.TypeRef{Name: string(source[node.StartByte():node.EndByte()])}
 	}
 
 	// Default: return the raw text
@@ -1171,7 +1197,7 @@ func (p *TreeSitterProcessor) extractParameter(node *sitter.Node, source []byte)
 			case "params":
 				param.IsVariadic = true
 			}
-		case "predefined_type", "array_type", "generic_name", "qualified_name":
+		case "predefined_type", "array_type", "generic_name", "qualified_name", "nullable_type", "tuple_type":
 			if param.Type.Name == "" {
 				param.Type = *p.extractType(child, source)
 			}

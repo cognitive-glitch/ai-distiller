@@ -488,6 +488,32 @@ func (p *TreeSitterProcessor) processEnum(node *sitter.Node, file *ir.DistilledF
 		Children:   []ir.DistilledNode{},
 	}
 	
+	// Check for raw value type (inheritance)
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		if child.Type() == "type_inheritance_clause" || child.Type() == "inheritance_specifier" {
+			// Extract the raw value type
+			if child.Type() == "inheritance_specifier" {
+				// Direct raw value type
+				enum.Type = &ir.TypeRef{
+					Name: p.getNodeText(child),
+				}
+				break
+			} else {
+				// Process inheritance clause - take the first type as raw value type
+				for j := 0; j < int(child.ChildCount()); j++ {
+					inheritChild := child.Child(j)
+					if inheritChild.Type() == "user_type" || inheritChild.Type() == "inheritance_specifier" {
+						enum.Type = &ir.TypeRef{
+							Name: p.getNodeText(inheritChild),
+						}
+						break
+					}
+				}
+			}
+		}
+	}
+	
 	// Process enum body
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
@@ -497,20 +523,28 @@ func (p *TreeSitterProcessor) processEnum(node *sitter.Node, file *ir.DistilledF
 				bodyChild := child.Child(j)
 				if bodyChild.Type() == "enum_entry" {
 					// Add enum case as a field
-					caseName := ""
+					enumCase := &ir.DistilledField{
+						BaseNode: p.nodeLocation(bodyChild),
+						Visibility: ir.VisibilityPublic, // Enum cases are always public
+					}
+					
+					// Process enum entry children
+					hasEquals := false
 					for k := 0; k < int(bodyChild.ChildCount()); k++ {
 						caseChild := bodyChild.Child(k)
-						if caseChild.Type() == "simple_identifier" {
-							caseName = p.getNodeText(caseChild)
-							break
+						if caseChild.Type() == "simple_identifier" && enumCase.Name == "" {
+							enumCase.Name = p.getNodeText(caseChild)
+						} else if caseChild.Type() == "=" {
+							hasEquals = true
+						} else if hasEquals && (caseChild.Type() == "line_string_literal" || 
+							caseChild.Type() == "integer_literal" || 
+							caseChild.Type() == "real_literal") {
+							// Raw value
+							enumCase.DefaultValue = p.getNodeText(caseChild)
 						}
 					}
-					if caseName != "" {
-						enumCase := &ir.DistilledField{
-							BaseNode: p.nodeLocation(bodyChild),
-							Name:     caseName,
-							Visibility: ir.VisibilityPublic, // Enum cases are always public
-						}
+					
+					if enumCase.Name != "" {
 						enum.Children = append(enum.Children, enumCase)
 					}
 				}

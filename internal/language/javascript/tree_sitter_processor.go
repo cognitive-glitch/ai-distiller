@@ -699,6 +699,10 @@ func (p *TreeSitterProcessor) processFunction(node *sitter.Node, file *ir.Distil
 			
 		case "identifier":
 			fn.Name = p.getNodeText(child)
+			// Check for underscore prefix convention
+			if strings.HasPrefix(fn.Name, "_") {
+				fn.Visibility = ir.VisibilityPrivate
+			}
 			
 		case "formal_parameters":
 			p.processParameters(child, fn)
@@ -860,6 +864,10 @@ func (p *TreeSitterProcessor) processVariableDeclarator(node *sitter.Node, file 
 		switch child.Type() {
 		case "identifier":
 			field.Name = p.getNodeText(child)
+			// Check for underscore prefix convention
+			if strings.HasPrefix(field.Name, "_") {
+				field.Visibility = ir.VisibilityPrivate
+			}
 			
 		case "object_pattern", "array_pattern":
 			// Destructuring

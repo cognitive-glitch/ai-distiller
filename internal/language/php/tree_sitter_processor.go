@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"unicode"
 
 	sitter "github.com/smacker/go-tree-sitter"
 	tree_sitter_php "github.com/tree-sitter/tree-sitter-php/bindings/go"
@@ -164,30 +165,44 @@ func (p *TreeSitterProcessor) parsePHPDoc(text string) *PHPDocInfo {
 		
 		// Extract @var type for properties
 		if strings.HasPrefix(line, "@var ") {
-			parts := strings.Fields(line)
-			if len(parts) >= 2 {
-				info.propertyType = parts[1]
+			typeStr := strings.TrimSpace(strings.TrimPrefix(line, "@var"))
+			// For @var, take everything as the type (no parameter name)
+			if typeStr != "" {
+				info.propertyType = p.normalizeArrayType(typeStr)
 				hasTypeInfo = true
 			}
 		}
 		
 		// Extract @return type for functions
 		if strings.HasPrefix(line, "@return ") {
-			parts := strings.Fields(line)
-			if len(parts) >= 2 {
-				info.returnType = parts[1]
+			typeStr := strings.TrimSpace(strings.TrimPrefix(line, "@return"))
+			// For @return, take everything as the type (description is usually on next line)
+			if typeStr != "" {
+				info.returnType = p.normalizeArrayType(typeStr)
 				hasTypeInfo = true
 			}
 		}
 		
 		// Extract @param types for function parameters
 		if strings.HasPrefix(line, "@param ") {
-			parts := strings.Fields(line)
-			if len(parts) >= 3 {
-				typeName := parts[1]
-				paramName := strings.TrimPrefix(parts[2], "$")
-				info.paramTypes[paramName] = typeName
-				hasTypeInfo = true
+			paramStr := strings.TrimSpace(strings.TrimPrefix(line, "@param"))
+			// For @param, we need to find where the parameter name starts
+			// Complex types can have spaces, so we look for $paramName pattern
+			dollarPos := strings.Index(paramStr, "$")
+			if dollarPos > 0 {
+				// Extract type (everything before the $)
+				typeName := strings.TrimSpace(paramStr[:dollarPos])
+				// Extract parameter name
+				rest := paramStr[dollarPos+1:]
+				spacePos := strings.IndexFunc(rest, unicode.IsSpace)
+				paramName := rest
+				if spacePos > 0 {
+					paramName = rest[:spacePos]
+				}
+				if typeName != "" && paramName != "" {
+					info.paramTypes[paramName] = p.normalizeArrayType(typeName)
+					hasTypeInfo = true
+				}
 			}
 		}
 	}
@@ -196,6 +211,39 @@ func (p *TreeSitterProcessor) parsePHPDoc(text string) *PHPDocInfo {
 		return info
 	}
 	return nil
+}
+
+// normalizeArrayType normalizes array type notation from PHPDoc
+// Converts array<User> to User[], keeps User[] as is
+// For associative arrays like array<string, User>, keeps the full notation
+func (p *TreeSitterProcessor) normalizeArrayType(typeName string) string {
+	// Handle generic array notation: array<Type> or list<Type>
+	if (strings.HasPrefix(typeName, "array<") || strings.HasPrefix(typeName, "list<")) && strings.HasSuffix(typeName, ">") {
+		start := strings.Index(typeName, "<")
+		end := strings.LastIndex(typeName, ">")
+		if start != -1 && end > start {
+			innerType := typeName[start+1:end]
+			
+			// Check if it's associative array (has comma)
+			if strings.Contains(innerType, ",") {
+				// For associative arrays, keep the full notation
+				// This preserves array<string, User> and array<string, User[]>
+				return typeName
+			}
+			
+			// Simple array, convert to []
+			return innerType + "[]"
+		}
+	}
+	
+	// Handle collection types like Collection<User>
+	if strings.Contains(typeName, "<") && strings.HasSuffix(typeName, ">") {
+		// For other generic types, keep the original notation
+		// This includes Collection<User>, ArrayObject<User>, etc.
+		return typeName
+	}
+	
+	return typeName
 }
 
 // processNode recursively processes tree-sitter nodes
@@ -650,7 +698,7 @@ func (p *TreeSitterProcessor) processMethod(node *sitter.Node, file *ir.Distille
 		if docInfo.returnType != "" {
 			if fn.Returns == nil || fn.Returns.Name == "" {
 				fn.Returns = &ir.TypeRef{Name: docInfo.returnType}
-			} else if fn.Returns.Name == "array" && strings.HasSuffix(docInfo.returnType, "[]") {
+			} else if fn.Returns.Name == "array" {
 				// PHPDoc has more specific array type
 				fn.Returns = &ir.TypeRef{Name: docInfo.returnType}
 			}
@@ -661,7 +709,7 @@ func (p *TreeSitterProcessor) processMethod(node *sitter.Node, file *ir.Distille
 			if docType, exists := docInfo.paramTypes[fn.Parameters[i].Name]; exists {
 				if fn.Parameters[i].Type.Name == "" {
 					fn.Parameters[i].Type = ir.TypeRef{Name: docType}
-				} else if fn.Parameters[i].Type.Name == "array" && strings.HasSuffix(docType, "[]") {
+				} else if fn.Parameters[i].Type.Name == "array" {
 					// PHPDoc has more specific array type
 					fn.Parameters[i].Type = ir.TypeRef{Name: docType}
 				}
@@ -746,7 +794,7 @@ func (p *TreeSitterProcessor) processPropertyElement(node *sitter.Node, file *ir
 	if docInfo, exists := p.docblocks[nodeLine]; exists && docInfo.propertyType != "" {
 		if field.Type == nil || field.Type.Name == "" {
 			field.Type = &ir.TypeRef{Name: docInfo.propertyType}
-		} else if field.Type.Name == "array" && strings.HasSuffix(docInfo.propertyType, "[]") {
+		} else if field.Type.Name == "array" {
 			// PHPDoc has more specific array type
 			field.Type = &ir.TypeRef{Name: docInfo.propertyType}
 		}
@@ -812,7 +860,7 @@ func (p *TreeSitterProcessor) processFunction(node *sitter.Node, file *ir.Distil
 		if docInfo.returnType != "" {
 			if fn.Returns == nil || fn.Returns.Name == "" {
 				fn.Returns = &ir.TypeRef{Name: docInfo.returnType}
-			} else if fn.Returns.Name == "array" && strings.HasSuffix(docInfo.returnType, "[]") {
+			} else if fn.Returns.Name == "array" {
 				// PHPDoc has more specific array type
 				fn.Returns = &ir.TypeRef{Name: docInfo.returnType}
 			}
@@ -823,7 +871,7 @@ func (p *TreeSitterProcessor) processFunction(node *sitter.Node, file *ir.Distil
 			if docType, exists := docInfo.paramTypes[fn.Parameters[i].Name]; exists {
 				if fn.Parameters[i].Type.Name == "" {
 					fn.Parameters[i].Type = ir.TypeRef{Name: docType}
-				} else if fn.Parameters[i].Type.Name == "array" && strings.HasSuffix(docType, "[]") {
+				} else if fn.Parameters[i].Type.Name == "array" {
 					// PHPDoc has more specific array type
 					fn.Parameters[i].Type = ir.TypeRef{Name: docType}
 				}
