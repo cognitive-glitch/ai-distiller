@@ -26,7 +26,9 @@ func (f *TextFormatter) Format(w io.Writer, file *ir.DistilledFile) error {
 	fmt.Fprintf(w, "<file path=\"%s\">\n", file.Path)
 	
 	// Write file contents
+	// fmt.Printf("File has %d children\n", len(file.Children))
 	for _, child := range file.Children {
+		// fmt.Printf("  Child %d: type=%T\n", i, child)
 		if err := f.formatNode(w, child, 0); err != nil {
 			return err
 		}
@@ -187,8 +189,13 @@ func (f *TextFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, in
 	fmt.Fprintf(w, "%s%s%s%s(", indent, visPrefix, modifiers, fn.Name)
 	
 	// Format parameters
-	params := make([]string, len(fn.Parameters))
-	for i, param := range fn.Parameters {
+	// fmt.Printf("Function %s has %d parameters\n", fn.Name, len(fn.Parameters))
+	params := make([]string, 0, len(fn.Parameters))
+	for _, param := range fn.Parameters {
+		// fmt.Printf("  Param: name=%q, type=%q\n", param.Name, param.Type.Name)
+		if param.Name == "" {
+			continue // Skip empty parameters
+		}
 		paramStr := param.Name
 		if param.Type.Name != "" {
 			paramStr += ": " + param.Type.Name
@@ -196,7 +203,7 @@ func (f *TextFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, in
 		if param.DefaultValue != "" {
 			paramStr += " = " + param.DefaultValue
 		}
-		params[i] = paramStr
+		params = append(params, paramStr)
 	}
 	fmt.Fprintf(w, "%s)", strings.Join(params, ", "))
 	

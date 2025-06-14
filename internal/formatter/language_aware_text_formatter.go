@@ -3,6 +3,7 @@ package formatter
 import (
 	"fmt"
 	"io"
+	"strings"
 	"sync"
 
 	"github.com/janreges/ai-distiller/internal/ir"
@@ -25,6 +26,7 @@ func NewLanguageAwareTextFormatter(options Options) *LanguageAwareTextFormatter 
 	// Register built-in language formatters
 	f.RegisterLanguageFormatter("java", NewJavaFormatter())
 	f.RegisterLanguageFormatter("go", NewGoFormatter())
+	f.RegisterLanguageFormatter("typescript", NewTypeScriptFormatter())
 	// Python formatter can be added later by refactoring existing code
 	// f.RegisterLanguageFormatter("python", NewPythonFormatter())
 	
@@ -115,19 +117,237 @@ func (f *LanguageAwareTextFormatter) formatNodeGeneric(w io.Writer, node ir.Dist
 	case *ir.DistilledImport:
 		fmt.Fprintf(w, "import %s\n", n.Module)
 	case *ir.DistilledClass:
-		fmt.Fprintf(w, "\nclass %s:\n", n.Name)
+		// Format class with modifiers and extends
+		modifiers := ""
+		for _, mod := range n.Modifiers {
+			if mod == ir.ModifierAbstract {
+				modifiers += "abstract "
+			}
+		}
+		fmt.Fprintf(w, "\n%sclass %s", modifiers, n.Name)
+		
+		// Add generic type parameters
+		if len(n.TypeParams) > 0 {
+			typeParams := make([]string, len(n.TypeParams))
+			for i, param := range n.TypeParams {
+				typeParams[i] = param.Name
+				if len(param.Constraints) > 0 {
+					typeParams[i] += " extends " + param.Constraints[0].Name
+				}
+			}
+			fmt.Fprintf(w, "<%s>", strings.Join(typeParams, ", "))
+		}
+		
+		// Add extends clause
+		if len(n.Extends) > 0 {
+			extends := make([]string, len(n.Extends))
+			for i, ext := range n.Extends {
+				extends[i] = ext.Name
+			}
+			fmt.Fprintf(w, " extends %s", strings.Join(extends, ", "))
+		}
+		
+		// Add implements clause
+		if len(n.Implements) > 0 {
+			implements := make([]string, len(n.Implements))
+			for i, impl := range n.Implements {
+				implements[i] = impl.Name
+			}
+			fmt.Fprintf(w, " implements %s", strings.Join(implements, ", "))
+		}
+		
+		fmt.Fprintln(w, ":")
 		for _, child := range n.Children {
 			f.formatNodeGeneric(w, child, indent+1)
 		}
 	case *ir.DistilledFunction:
-		fmt.Fprintf(w, "    function %s()\n", n.Name)
+		// Format function with modifiers and parameters
+		visPrefix := ""
+		switch n.Visibility {
+		case ir.VisibilityPrivate:
+			visPrefix = "private "
+		case ir.VisibilityProtected:
+			visPrefix = "protected "
+		case ir.VisibilityPublic:
+			// Don't print "public" as it's the default
+		}
+		
+		modifiers := ""
+		for _, mod := range n.Modifiers {
+			if mod == ir.ModifierAbstract {
+				modifiers += "abstract "
+			} else if mod == ir.ModifierAsync {
+				modifiers += "async "
+			} else if mod == ir.ModifierStatic {
+				modifiers += "static "
+			}
+		}
+		fmt.Fprintf(w, "    %s%sfunction %s", visPrefix, modifiers, n.Name)
+		
+		// Add generic type parameters
+		if len(n.TypeParams) > 0 {
+			typeParams := make([]string, len(n.TypeParams))
+			for i, param := range n.TypeParams {
+				typeParams[i] = param.Name
+				if len(param.Constraints) > 0 {
+					typeParams[i] += " extends " + param.Constraints[0].Name
+				}
+			}
+			fmt.Fprintf(w, "<%s>", strings.Join(typeParams, ", "))
+		}
+		
+		fmt.Fprintf(w, "(")
+		
+		// Format parameters
+		params := make([]string, 0, len(n.Parameters))
+		for _, param := range n.Parameters {
+			if param.Name == "" {
+				continue
+			}
+			paramStr := param.Name
+			if param.Type.Name != "" {
+				paramStr += ": " + param.Type.Name
+			}
+			if param.DefaultValue != "" {
+				paramStr += " = " + param.DefaultValue
+			}
+			params = append(params, paramStr)
+		}
+		fmt.Fprintf(w, "%s)", strings.Join(params, ", "))
+		
+		// Format return type
+		if n.Returns != nil && n.Returns.Name != "" {
+			fmt.Fprintf(w, " -> %s", n.Returns.Name)
+		}
+		
+		fmt.Fprintln(w)
+		
 		if n.Implementation != "" {
 			fmt.Fprintln(w, "        // implementation")
 		}
 	case *ir.DistilledField:
-		fmt.Fprintf(w, "    field %s\n", n.Name)
+		// Format field with visibility and type
+		visPrefix := ""
+		switch n.Visibility {
+		case ir.VisibilityPrivate:
+			visPrefix = "private "
+		case ir.VisibilityProtected:
+			visPrefix = "protected "
+		case ir.VisibilityPublic:
+			visPrefix = "public "
+		}
+		
+		modifiers := ""
+		for _, mod := range n.Modifiers {
+			if mod == ir.ModifierReadonly {
+				modifiers += "readonly "
+			} else if mod == ir.ModifierStatic {
+				modifiers += "static "
+			} else if mod == ir.ModifierFinal {
+				modifiers += "const "
+			}
+		}
+		
+		// Top-level const variables should be shown differently from class fields
+		if indent == 0 && strings.Contains(modifiers, "const") {
+			// This is a top-level const variable
+			fmt.Fprintf(w, "%s%s", modifiers, n.Name)
+		} else {
+			// Regular field inside a class/interface
+			fmt.Fprintf(w, "    field %s%s%s", visPrefix, modifiers, n.Name)
+		}
+		if n.Type != nil && n.Type.Name != "" {
+			fmt.Fprintf(w, ": %s", n.Type.Name)
+		}
+		if n.DefaultValue != "" {
+			fmt.Fprintf(w, " = %s", n.DefaultValue)
+		}
+		fmt.Fprintln(w)
 	case *ir.DistilledComment:
 		fmt.Fprintf(w, "// %s\n", n.Text)
+	case *ir.DistilledTypeAlias:
+		// Format type with generic parameters
+		fmt.Fprintf(w, "type %s", n.Name)
+		if len(n.TypeParams) > 0 {
+			typeParams := make([]string, len(n.TypeParams))
+			for i, param := range n.TypeParams {
+				typeParams[i] = param.Name
+				if len(param.Constraints) > 0 {
+					typeParams[i] += " extends " + param.Constraints[0].Name
+				}
+			}
+			fmt.Fprintf(w, "<%s>", strings.Join(typeParams, ", "))
+		}
+		fmt.Fprintf(w, " = %s\n", n.Type.Name)
+	case *ir.DistilledInterface:
+		fmt.Fprintf(w, "\ninterface %s", n.Name)
+		if len(n.TypeParams) > 0 {
+			typeParams := make([]string, len(n.TypeParams))
+			for i, param := range n.TypeParams {
+				typeParams[i] = param.Name
+				if len(param.Constraints) > 0 {
+					typeParams[i] += " extends " + param.Constraints[0].Name
+				}
+			}
+			fmt.Fprintf(w, "<%s>", strings.Join(typeParams, ", "))
+		}
+		if len(n.Extends) > 0 {
+			extends := make([]string, len(n.Extends))
+			for i, ext := range n.Extends {
+				extends[i] = ext.Name
+			}
+			fmt.Fprintf(w, " extends %s", strings.Join(extends, ", "))
+		}
+		fmt.Fprintln(w, ":")
+		for _, child := range n.Children {
+			// For interfaces, format members as properties/methods, not fields
+			switch child.(type) {
+			case *ir.DistilledField:
+				field := child.(*ir.DistilledField)
+				fmt.Fprintf(w, "    property %s", field.Name)
+				if field.Type != nil && field.Type.Name != "" {
+					fmt.Fprintf(w, ": %s", field.Type.Name)
+				}
+				fmt.Fprintln(w)
+			case *ir.DistilledFunction:
+				// Format as method for interfaces
+				method := child.(*ir.DistilledFunction)
+				fmt.Fprintf(w, "    method %s", method.Name)
+				
+				// Add generic type parameters if any
+				if len(method.TypeParams) > 0 {
+					typeParams := make([]string, len(method.TypeParams))
+					for i, param := range method.TypeParams {
+						typeParams[i] = param.Name
+						if len(param.Constraints) > 0 {
+							typeParams[i] += " extends " + param.Constraints[0].Name
+						}
+					}
+					fmt.Fprintf(w, "<%s>", strings.Join(typeParams, ", "))
+				}
+				
+				fmt.Fprintf(w, "(")
+				params := make([]string, 0, len(method.Parameters))
+				for _, param := range method.Parameters {
+					if param.Name == "" {
+						continue
+					}
+					paramStr := param.Name
+					if param.Type.Name != "" {
+						paramStr += ": " + param.Type.Name
+					}
+					params = append(params, paramStr)
+				}
+				fmt.Fprintf(w, "%s)", strings.Join(params, ", "))
+				
+				if method.Returns != nil && method.Returns.Name != "" {
+					fmt.Fprintf(w, ": %s", method.Returns.Name)
+				}
+				fmt.Fprintln(w)
+			default:
+				f.formatNodeGeneric(w, child, indent+1)
+			}
+		}
 	default:
 		// Skip unknown nodes
 	}
