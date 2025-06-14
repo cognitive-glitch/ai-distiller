@@ -103,6 +103,11 @@ func MustRegisterAll() {
 	}
 }
 
+// GetProcessor returns a language processor by name
+func GetProcessor(language string) (processor.LanguageProcessor, bool) {
+	return processor.Get(language)
+}
+
 func init() {
 	// Register all language processors at startup
 	MustRegisterAll()

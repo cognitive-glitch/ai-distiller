@@ -1,15 +1,19 @@
 package cli
 
 import (
+	"bytes"
+	"context"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
-
+	
 	"github.com/spf13/cobra"
 	"github.com/janreges/ai-distiller/internal/formatter"
 	"github.com/janreges/ai-distiller/internal/ir"
 	"github.com/janreges/ai-distiller/internal/processor"
+	"github.com/janreges/ai-distiller/internal/language"
 	_ "github.com/janreges/ai-distiller/internal/language" // Register language processors
 )
 
@@ -29,6 +33,7 @@ var (
 	strict         bool
 	verbosity      int
 	useTreeSitter  bool
+	langOverride   string
 )
 
 // rootCmd represents the base command
@@ -77,6 +82,9 @@ func initFlags() {
 	// Experimental flags
 	rootCmd.Flags().BoolVar(&useTreeSitter, "tree-sitter", false, "Use tree-sitter parser (experimental)")
 
+	// Language override flag
+	rootCmd.Flags().StringVar(&langOverride, "lang", "auto", "Override language detection: auto|python|typescript|javascript|go|ruby|swift|rust|java|csharp|kotlin|cpp|php")
+
 	// Handle version flag specially
 	rootCmd.PreRun = func(cmd *cobra.Command, args []string) {
 		if v, _ := cmd.Flags().GetBool("version"); v {
@@ -87,7 +95,24 @@ func initFlags() {
 }
 
 func runDistiller(cmd *cobra.Command, args []string) error {
-	// Get input path
+	// Check if stdin is available (not a TTY) or explicitly requested with "-"
+	stdinAvailable := false
+	if len(args) > 0 && args[0] == "-" {
+		stdinAvailable = true
+	} else {
+		// Check if stdin is piped
+		stat, _ := os.Stdin.Stat()
+		if (stat.Mode() & os.ModeCharDevice) == 0 {
+			stdinAvailable = true
+		}
+	}
+	
+	// Handle stdin input
+	if stdinAvailable {
+		return processStdin()
+	}
+	
+	// Handle file/directory input
 	inputPath := "."
 	if len(args) > 0 {
 		inputPath = args[0]
@@ -245,4 +270,78 @@ func contains(slice []string, item string) bool {
 		}
 	}
 	return false
+}
+
+// processStdin handles input from stdin
+func processStdin() error {
+	// Force stdout output when reading from stdin
+	outputToStdout = true
+	
+	// Read stdin into buffer for language detection
+	var buffer bytes.Buffer
+	tee := io.TeeReader(os.Stdin, &buffer)
+	
+	// Read up to 64KB for detection
+	detectBuf := make([]byte, 64*1024)
+	n, _ := tee.Read(detectBuf)
+	detectBuf = detectBuf[:n]
+	
+	// Determine language
+	lang := langOverride
+	if lang == "auto" {
+		detector := language.NewDetector()
+		detectedLang, err := detector.DetectFromReader(bytes.NewReader(detectBuf))
+		if err != nil {
+			return fmt.Errorf("could not auto-detect language from stdin. Please specify with --lang flag")
+		}
+		lang = detectedLang
+		if verbosity > 0 {
+			fmt.Fprintf(os.Stderr, "Detected language: %s\n", lang)
+		}
+	}
+	
+	// Read the rest of stdin
+	remainingBytes, _ := io.ReadAll(tee)
+	fullContent := append(detectBuf, remainingBytes...)
+	
+	// Get language processor
+	langProc, ok := language.GetProcessor(lang)
+	if !ok {
+		return fmt.Errorf("no processor found for language: %s", lang)
+	}
+	
+	// Create processor options from flags
+	procOpts := processor.ProcessOptions{
+		IncludeComments:       !contains(stripOptions, "comments"),
+		IncludeImports:        !contains(stripOptions, "imports"),
+		IncludeImplementation: !contains(stripOptions, "implementation"),
+		IncludePrivate:        !contains(stripOptions, "non-public"),
+		RemovePrivateOnly:     contains(stripOptions, "private"),
+		RemoveProtectedOnly:   contains(stripOptions, "protected"),
+	}
+	
+	// Process the input
+	ctx := context.Background()
+	result, err := langProc.ProcessWithOptions(ctx, bytes.NewReader(fullContent), "stdin", procOpts)
+	if err != nil {
+		return fmt.Errorf("failed to process stdin: %w", err)
+	}
+	
+	// Create formatter based on format
+	formatterOpts := formatter.Options{}
+	formatter, err := formatter.Get(outputFormat, formatterOpts)
+	if err != nil {
+		return fmt.Errorf("failed to get formatter: %w", err)
+	}
+	
+	// Format and output
+	var output strings.Builder
+	if err := formatter.Format(&output, result); err != nil {
+		return fmt.Errorf("failed to format output: %w", err)
+	}
+	
+	// Always write to stdout for stdin input
+	fmt.Print(output.String())
+	
+	return nil
 }

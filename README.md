@@ -243,6 +243,30 @@ export class UserService {
 
 ## 🛠️ Advanced Usage
 
+### Processing from stdin
+
+AI Distiller can process code directly from stdin, perfect for:
+- Quick code snippet analysis
+- Pipeline integration
+- Testing without creating files
+- Dynamic code generation workflows
+
+```bash
+# Auto-detect language from stdin
+echo 'class User { getName() { return this.name; } }' | aid --format text
+
+# Explicit language specification
+cat mycode.php | aid --lang php --strip non-public
+
+# Use "-" to explicitly read from stdin
+aid - --lang python < snippet.py
+
+# Pipeline example: extract structure from generated code
+generate-code.sh | aid --lang typescript --format json
+```
+
+**Language Detection**: When using stdin without `--lang`, AI Distiller automatically detects the language based on syntax patterns. Supported languages for auto-detection: python, typescript, javascript, go, ruby, swift, rust, java, c#, kotlin, c++, php.
+
 ### Integration with AI Tools
 
 ```bash
