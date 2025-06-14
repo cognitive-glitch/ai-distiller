@@ -41,7 +41,7 @@ func TestAIDCLIIntegration(t *testing.T) {
 		},
 		{
 			name: "distill_no_private_markdown",
-			args: []string{"input/basic_class.py", "--format", "md", "--strip", "non-public"},
+			args: []string{"input/basic_class.py", "--format", "md", "--private", "0", "--protected", "0"},
 			validate: func(t *testing.T, output string) {
 				// Should not contain private method
 				if strings.Contains(output, "_calculate_id") {
@@ -56,7 +56,7 @@ func TestAIDCLIIntegration(t *testing.T) {
 		},
 		{
 			name: "distill_no_implementation_json",
-			args: []string{"input/basic_class.py", "--format", "json-structured", "--strip", "implementation"},
+			args: []string{"input/basic_class.py", "--format", "json-structured", "--implementation", "0"},
 			validate: func(t *testing.T, output string) {
 				var data map[string]interface{}
 				if err := json.Unmarshal([]byte(output), &data); err != nil {
@@ -72,7 +72,7 @@ func TestAIDCLIIntegration(t *testing.T) {
 		},
 		{
 			name: "distill_minimal_markdown",
-			args: []string{"input/basic_class.py", "--format", "md", "--strip", "comments,implementation"},
+			args: []string{"input/basic_class.py", "--format", "md", "--comments", "0", "--implementation", "0"},
 			validate: func(t *testing.T, output string) {
 				// Should only have structure
 				if strings.Contains(output, "```") {
@@ -122,6 +122,66 @@ func TestAIDCLIIntegration(t *testing.T) {
 				}
 			},
 		},
+		// New tests for individual filtering flags
+		{
+			name: "distill_with_new_flags_public_only",
+			args: []string{"input/basic_class.py", "--format", "text", "--public", "1", "--private", "0", "--protected", "0"},
+			validate: func(t *testing.T, output string) {
+				// Should contain public method
+				if !strings.Contains(output, "get_info") {
+					t.Error("Output should contain public method get_info")
+				}
+				// Should not contain private method
+				if strings.Contains(output, "_calculate_id") {
+					t.Error("Output should not contain private method _calculate_id")
+				}
+			},
+		},
+		{
+			name: "distill_with_new_flags_all_visibility",
+			args: []string{"input/basic_class.py", "--format", "text", "--public", "1", "--private", "1", "--protected", "1"},
+			validate: func(t *testing.T, output string) {
+				// Should contain both public and private methods
+				if !strings.Contains(output, "get_info") {
+					t.Error("Output should contain public method get_info")
+				}
+				if !strings.Contains(output, "_calculate_id") {
+					t.Error("Output should contain private method _calculate_id")
+				}
+			},
+		},
+		{
+			name: "distill_with_include_only",
+			args: []string{"input/basic_class.py", "--format", "text", "--include-only", "public,imports"},
+			validate: func(t *testing.T, output string) {
+				// Should contain imports
+				if !strings.Contains(output, "datetime") {
+					t.Error("Output should contain imports")
+				}
+				// Should contain public members only
+				if !strings.Contains(output, "get_info") {
+					t.Error("Output should contain public method")
+				}
+				// Should not contain private
+				if strings.Contains(output, "_calculate_id") {
+					t.Error("Output should not contain private method")
+				}
+			},
+		},
+		{
+			name: "distill_with_exclude_items",
+			args: []string{"input/basic_class.py", "--format", "text", "--exclude-items", "private,comments"},
+			validate: func(t *testing.T, output string) {
+				// Should not contain private
+				if strings.Contains(output, "_calculate_id") {
+					t.Error("Output should not contain private method")
+				}
+				// Should contain public
+				if !strings.Contains(output, "get_info") {
+					t.Error("Output should contain public method")
+				}
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -149,7 +209,7 @@ func TestOptionsInteraction(t *testing.T) {
 	}{
 		{
 			name: "strip_multiple_options",
-			args: []string{"--stdout", "input/basic_class.py", "--format", "md", "--strip", "non-public,implementation"},
+			args: []string{"--stdout", "input/basic_class.py", "--format", "md", "--private", "0", "--implementation", "0"},
 			shouldHave: []string{
 				"get_info",
 				"__init__",
@@ -161,13 +221,38 @@ func TestOptionsInteraction(t *testing.T) {
 		},
 		{
 			name: "strip_imports",
-			args: []string{"--stdout", "input/complex_imports.py", "--format", "md", "--strip", "imports"},
+			args: []string{"--stdout", "input/complex_imports.py", "--format", "md", "--imports", "0"},
 			shouldHave: []string{
 				"Container",
 			},
 			shouldNotHave: []string{
 				"📥 **Import**",
 				"import `os`",
+			},
+		},
+		// Test new group flags
+		{
+			name: "new_group_include_only",
+			args: []string{"--stdout", "input/basic_class.py", "--format", "text", "--include-only", "public"},
+			shouldHave: []string{
+				"get_info",
+				"Person",
+			},
+			shouldNotHave: []string{
+				"_calculate_id",
+				"datetime", // imports not included
+			},
+		},
+		{
+			name: "new_group_exclude_items", 
+			args: []string{"--stdout", "input/basic_class.py", "--format", "text", "--exclude-items", "implementation,comments"},
+			shouldHave: []string{
+				"get_info",
+				"_calculate_id",
+				"datetime", // imports included
+			},
+			shouldNotHave: []string{
+				"self.age", // implementation detail
 			},
 		},
 	}

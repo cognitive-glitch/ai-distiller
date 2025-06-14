@@ -63,16 +63,10 @@ func (p *Processor) ProcessFile(filename string, opts processor.ProcessOptions) 
 			}
 			
 			// Apply standardized stripper for filtering
-			stripperOpts := stripper.Options{
-				RemovePrivate:         !opts.IncludePrivate,
-				RemoveImplementations: !opts.IncludeImplementation,
-				RemoveComments:        !opts.IncludeComments,
-				RemoveImports:         !opts.IncludeImports,
-			}
+			stripperOpts := opts.ToStripperOptions()
 			
 			// Only apply stripper if we need to remove something
-			if stripperOpts.RemovePrivate || stripperOpts.RemoveImplementations || 
-			   stripperOpts.RemoveComments || stripperOpts.RemoveImports {
+			if stripperOpts.HasAnyOption() {
 				s := stripper.New(stripperOpts)
 				stripped := file.Accept(s)
 				return stripped.(*ir.DistilledFile), nil
@@ -106,16 +100,10 @@ func (p *Processor) ProcessWithOptions(ctx context.Context, reader io.Reader, fi
 			}
 			
 			// Apply standardized stripper for filtering
-			stripperOpts := stripper.Options{
-				RemovePrivate:         !opts.IncludePrivate,
-				RemoveImplementations: !opts.IncludeImplementation,
-				RemoveComments:        !opts.IncludeComments,
-				RemoveImports:         !opts.IncludeImports,
-			}
+			stripperOpts := opts.ToStripperOptions()
 			
 			// Only apply stripper if we need to remove something
-			if stripperOpts.RemovePrivate || stripperOpts.RemoveImplementations || 
-			   stripperOpts.RemoveComments || stripperOpts.RemoveImports {
+			if stripperOpts.HasAnyOption() {
 				s := stripper.New(stripperOpts)
 				stripped := file.Accept(s)
 				return stripped.(*ir.DistilledFile), nil

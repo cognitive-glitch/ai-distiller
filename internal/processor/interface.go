@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/janreges/ai-distiller/internal/ir"
+	"github.com/janreges/ai-distiller/internal/stripper"
 )
 
 // LanguageProcessor defines the interface for language-specific processors
@@ -50,6 +51,15 @@ type ProcessOptions struct {
 	
 	// RemoveProtectedOnly removes only protected members (not private)
 	RemoveProtectedOnly bool
+	
+	// RemoveInternalOnly removes only internal/package-private members
+	RemoveInternalOnly bool
+	
+	// IncludeDocstrings includes documentation comments (when false, removes them)
+	IncludeDocstrings bool
+	
+	// IncludeAnnotations includes decorators/annotations (when false, removes them)
+	IncludeAnnotations bool
 
 	// MaxDepth limits the depth of nested structures
 	MaxDepth int
@@ -71,6 +81,11 @@ func DefaultProcessOptions() ProcessOptions {
 		IncludeComments:       true,
 		IncludeImports:        true,
 		IncludePrivate:        true,
+		RemovePrivateOnly:     false,
+		RemoveProtectedOnly:   false,
+		RemoveInternalOnly:    false,
+		IncludeDocstrings:     true,
+		IncludeAnnotations:    true,
 		MaxDepth:              100,
 		Strict:                false,
 		SymbolResolution:      true,
@@ -165,4 +180,19 @@ func (p BaseProcessor) CanProcess(filename string) bool {
 		}
 	}
 	return false
+}
+
+// ToStripperOptions converts ProcessOptions to stripper.Options
+func (opts ProcessOptions) ToStripperOptions() stripper.Options {
+	return stripper.Options{
+		RemovePrivate:         !opts.IncludePrivate && !opts.RemovePrivateOnly && !opts.RemoveProtectedOnly && !opts.RemoveInternalOnly,
+		RemovePrivateOnly:     opts.RemovePrivateOnly,
+		RemoveProtectedOnly:   opts.RemoveProtectedOnly,
+		RemoveInternalOnly:    opts.RemoveInternalOnly,
+		RemoveImplementations: !opts.IncludeImplementation,
+		RemoveComments:        !opts.IncludeComments,
+		RemoveImports:         !opts.IncludeImports,
+		RemoveDocstrings:      !opts.IncludeDocstrings,
+		RemoveAnnotations:     !opts.IncludeAnnotations,
+	}
 }

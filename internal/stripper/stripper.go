@@ -11,9 +11,19 @@ type Options struct {
 	RemovePrivate         bool  // Removes both private and protected (legacy)
 	RemovePrivateOnly     bool  // Removes only private members
 	RemoveProtectedOnly   bool  // Removes only protected members
+	RemoveInternalOnly    bool  // Removes only internal/package-private members
 	RemoveImplementations bool
 	RemoveComments        bool
 	RemoveImports         bool
+	RemoveDocstrings      bool  // Remove documentation comments specifically
+	RemoveAnnotations     bool  // Remove decorators/annotations
+}
+
+// HasAnyOption returns true if any stripping option is enabled
+func (o Options) HasAnyOption() bool {
+	return o.RemovePrivate || o.RemovePrivateOnly || o.RemoveProtectedOnly || o.RemoveInternalOnly ||
+		o.RemoveImplementations || o.RemoveComments || o.RemoveImports || 
+		o.RemoveDocstrings || o.RemoveAnnotations
 }
 
 // Stripper removes specified elements from the IR based on options
@@ -271,20 +281,32 @@ func (s *Stripper) visitChildren(node ir.DistilledNode) ir.DistilledNode {
 // shouldRemoveByVisibility checks if a node should be removed based on visibility settings
 func (s *Stripper) shouldRemoveByVisibility(name string, visibility ir.Visibility) bool {
 	// Check specific visibility removal options first
-	if s.options.RemovePrivateOnly || s.options.RemoveProtectedOnly {
+	if s.options.RemovePrivateOnly || s.options.RemoveProtectedOnly || s.options.RemoveInternalOnly {
 		switch visibility {
-		case ir.VisibilityPrivate, ir.VisibilityInternal, ir.VisibilityFilePrivate:
+		case ir.VisibilityPrivate, ir.VisibilityFilePrivate:
 			// Remove if private-only flag is set
 			return s.options.RemovePrivateOnly
-		case ir.VisibilityProtected:
+		case ir.VisibilityInternal, ir.VisibilityPackage:
+			// Remove if internal-only flag is set
+			return s.options.RemoveInternalOnly
+		case ir.VisibilityProtected, ir.VisibilityProtectedInternal:
 			// Remove if protected-only flag is set
 			return s.options.RemoveProtectedOnly
+		case ir.VisibilityPrivateProtected:
+			// C# private protected - remove if either private or protected is being removed
+			return s.options.RemovePrivateOnly || s.options.RemoveProtectedOnly
 		case ir.VisibilityPublic, ir.VisibilityOpen:
 			return false
 		default:
 			// For implicit visibility, check language conventions
 			if strings.HasPrefix(name, "_") && s.options.RemovePrivateOnly {
 				return true
+			}
+			// Go convention: lowercase = package-private (internal)
+			if len(name) > 0 && name[0] >= 'a' && name[0] <= 'z' && s.options.RemoveInternalOnly {
+				// This should be handled by the language processor setting proper visibility
+				// but we keep it as a fallback
+				return false // Let the language processor handle this
 			}
 			return false
 		}
@@ -293,7 +315,9 @@ func (s *Stripper) shouldRemoveByVisibility(name string, visibility ir.Visibilit
 	// Legacy behavior: RemovePrivate removes both private and protected
 	if s.options.RemovePrivate {
 		switch visibility {
-		case ir.VisibilityPrivate, ir.VisibilityProtected, ir.VisibilityInternal, ir.VisibilityFilePrivate:
+		case ir.VisibilityPrivate, ir.VisibilityProtected, ir.VisibilityInternal, 
+			 ir.VisibilityFilePrivate, ir.VisibilityPackage, ir.VisibilityProtectedInternal,
+			 ir.VisibilityPrivateProtected:
 			return true
 		case ir.VisibilityPublic, ir.VisibilityOpen:
 			return false

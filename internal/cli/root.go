@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	
 	"github.com/spf13/cobra"
@@ -25,7 +26,7 @@ var (
 	outputFile     string
 	outputToStdout bool
 	outputFormat   string
-	stripOptions   []string
+	stripOptions   []string // Deprecated, kept for backward compatibility
 	includeGlob    string
 	excludeGlob    string
 	recursive      bool
@@ -34,6 +35,21 @@ var (
 	verbosity      int
 	useTreeSitter  bool
 	langOverride   string
+	
+	// New filtering flags
+	includePublic         *bool
+	includeProtected      *bool
+	includeInternal       *bool
+	includePrivate        *bool
+	includeComments       *bool
+	includeDocstrings     *bool
+	includeImplementation *bool
+	includeImports        *bool
+	includeAnnotations    *bool
+	
+	// Group flags
+	includeList           string
+	excludeList           string
 )
 
 // rootCmd represents the base command
@@ -46,7 +62,31 @@ Large Language Models (LLMs).
 
 By extracting the essential structure, APIs, and relationships from source code,
 AI Distiller creates compact, semantic "blueprints" that enable LLMs to reason 
-effectively about complex software projects.`,
+effectively about complex software projects.
+
+FILTERING OPTIONS:
+  Visibility filters (default: public=1, others=0):
+    --public=0/1      Include public members
+    --protected=0/1   Include protected members  
+    --internal=0/1    Include internal/package-private members
+    --private=0/1     Include private members
+
+  Content filters:
+    --comments=0/1       Include comments (default: 0)
+    --docstrings=0/1     Include documentation (default: 1)
+    --implementation=0/1 Include function bodies (default: 0)
+    --imports=0/1        Include imports (default: 1)
+    --annotations=0/1    Include decorators/annotations (default: 1)
+
+  Group filters (alternative syntax):
+    --include-only=public,protected  Include only specified categories
+    --exclude-items=private,comments Exclude specified categories
+
+EXAMPLES:
+  aid                           # Default: public APIs only
+  aid --private=1 --protected=1 # Include all visibility levels
+  aid --implementation=1        # Include function bodies
+  aid --include-only=public,protected,imports  # Only these items`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: runDistiller,
 }
@@ -66,8 +106,11 @@ func initFlags() {
 	rootCmd.Flags().BoolVar(&outputToStdout, "stdout", false, "Print to stdout (in addition to file)")
 	rootCmd.Flags().StringVar(&outputFormat, "format", "text", "Output format: md|text|jsonl|json-structured|xml (default: text)")
 
-	// Processing flags
-	rootCmd.Flags().StringSliceVar(&stripOptions, "strip", []string{"comments", "implementation", "non-public"}, "Remove items: comments,imports,implementation,non-public,private,protected (default: comments,implementation,non-public)")
+	// Legacy processing flags (deprecated)
+	rootCmd.Flags().StringSliceVar(&stripOptions, "strip", nil, "DEPRECATED: Use individual filtering flags instead")
+	rootCmd.Flags().MarkDeprecated("strip", "use individual filtering flags like --public=1, --private=0, etc.")
+	
+	// File pattern flags
 	rootCmd.Flags().StringVar(&includeGlob, "include", "", "Include file patterns (default: all supported)")
 	rootCmd.Flags().StringVar(&excludeGlob, "exclude", "", "Exclude file patterns")
 	rootCmd.Flags().BoolVarP(&recursive, "recursive", "r", true, "Process directories recursively")
@@ -84,12 +127,46 @@ func initFlags() {
 
 	// Language override flag
 	rootCmd.Flags().StringVar(&langOverride, "lang", "auto", "Override language detection: auto|python|typescript|javascript|go|ruby|swift|rust|java|csharp|kotlin|cpp|php")
+	
+	// New filtering flags - visibility
+	rootCmd.Flags().String("public", "1", "Include public members (0/1, default: 1)")
+	rootCmd.Flags().String("protected", "0", "Include protected members (0/1, default: 0)")
+	rootCmd.Flags().String("internal", "0", "Include internal/package-private members (0/1, default: 0)")
+	rootCmd.Flags().String("private", "0", "Include private members (0/1, default: 0)")
+	
+	// New filtering flags - content
+	rootCmd.Flags().String("comments", "0", "Include comments (0/1, default: 0)")
+	rootCmd.Flags().String("docstrings", "1", "Include documentation comments (0/1, default: 1)")
+	rootCmd.Flags().String("implementation", "0", "Include function/method bodies (0/1, default: 0)")
+	rootCmd.Flags().String("imports", "1", "Include import statements (0/1, default: 1)")
+	rootCmd.Flags().String("annotations", "1", "Include decorators/annotations (0/1, default: 1)")
+	
+	// Group filtering flags
+	rootCmd.Flags().StringVar(&includeList, "include-only", "", "Include only these categories (comma-separated)")
+	rootCmd.Flags().StringVar(&excludeList, "exclude-items", "", "Exclude these categories (comma-separated)")
 
 	// Handle version flag specially
 	rootCmd.PreRun = func(cmd *cobra.Command, args []string) {
 		if v, _ := cmd.Flags().GetBool("version"); v {
 			fmt.Printf("aid version %s\n", Version)
 			os.Exit(0)
+		}
+		
+		// Parse boolean flags
+		parseBoolFlag(cmd, "public", &includePublic)
+		parseBoolFlag(cmd, "protected", &includeProtected)
+		parseBoolFlag(cmd, "internal", &includeInternal)
+		parseBoolFlag(cmd, "private", &includePrivate)
+		parseBoolFlag(cmd, "comments", &includeComments)
+		parseBoolFlag(cmd, "docstrings", &includeDocstrings)
+		parseBoolFlag(cmd, "implementation", &includeImplementation)
+		parseBoolFlag(cmd, "imports", &includeImports)
+		parseBoolFlag(cmd, "annotations", &includeAnnotations)
+		
+		// Validate mutually exclusive flags
+		if includeList != "" && excludeList != "" {
+			fmt.Fprintf(os.Stderr, "Error: --include-only and --exclude-items are mutually exclusive\n")
+			os.Exit(1)
 		}
 	}
 }
@@ -152,14 +229,7 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 	}
 
 	// Create processor options from flags
-	procOpts := processor.ProcessOptions{
-		IncludeComments:       !contains(stripOptions, "comments"),
-		IncludeImports:        !contains(stripOptions, "imports"),
-		IncludeImplementation: !contains(stripOptions, "implementation"),
-		IncludePrivate:        !contains(stripOptions, "non-public"),
-		RemovePrivateOnly:     contains(stripOptions, "private"),
-		RemoveProtectedOnly:   contains(stripOptions, "protected"),
-	}
+	procOpts := createProcessOptionsFromFlags()
 
 	// Create the processor
 	proc := processor.New()
@@ -234,11 +304,41 @@ func generateOutputFilename(path string, stripOptions []string) string {
 		dirName = "current"
 	}
 
-	// Build options suffix
-	optionsSuffix := ""
-	if len(stripOptions) > 0 {
-		// Create abbreviated options
-		abbrev := make([]string, 0, len(stripOptions))
+	// Build options suffix based on what's excluded from defaults
+	var abbrev []string
+	
+	// Check if using new flag system
+	if len(stripOptions) == 0 {
+		// New flag system - check what differs from defaults
+		if !getBoolFlag(includePublic, true) {
+			abbrev = append(abbrev, "npub")
+		}
+		if getBoolFlag(includeProtected, false) {
+			abbrev = append(abbrev, "prot")
+		}
+		if getBoolFlag(includeInternal, false) {
+			abbrev = append(abbrev, "int")
+		}
+		if getBoolFlag(includePrivate, false) {
+			abbrev = append(abbrev, "priv")
+		}
+		if getBoolFlag(includeComments, false) {
+			abbrev = append(abbrev, "com")
+		}
+		if !getBoolFlag(includeDocstrings, true) {
+			abbrev = append(abbrev, "ndoc")
+		}
+		if getBoolFlag(includeImplementation, false) {
+			abbrev = append(abbrev, "impl")
+		}
+		if !getBoolFlag(includeImports, true) {
+			abbrev = append(abbrev, "nimp")
+		}
+		if !getBoolFlag(includeAnnotations, true) {
+			abbrev = append(abbrev, "nann")
+		}
+	} else {
+		// Legacy --strip system
 		for _, opt := range stripOptions {
 			switch opt {
 			case "comments":
@@ -255,9 +355,11 @@ func generateOutputFilename(path string, stripOptions []string) string {
 				abbrev = append(abbrev, "nprot")
 			}
 		}
-		if len(abbrev) > 0 {
-			optionsSuffix = "." + strings.Join(abbrev, ".")
-		}
+	}
+	
+	optionsSuffix := ""
+	if len(abbrev) > 0 {
+		optionsSuffix = "." + strings.Join(abbrev, ".")
 	}
 
 	return fmt.Sprintf(".%s%s.aid.txt", dirName, optionsSuffix)
@@ -311,14 +413,7 @@ func processStdin() error {
 	}
 	
 	// Create processor options from flags
-	procOpts := processor.ProcessOptions{
-		IncludeComments:       !contains(stripOptions, "comments"),
-		IncludeImports:        !contains(stripOptions, "imports"),
-		IncludeImplementation: !contains(stripOptions, "implementation"),
-		IncludePrivate:        !contains(stripOptions, "non-public"),
-		RemovePrivateOnly:     contains(stripOptions, "private"),
-		RemoveProtectedOnly:   contains(stripOptions, "protected"),
-	}
+	procOpts := createProcessOptionsFromFlags()
 	
 	// Process the input
 	ctx := context.Background()
@@ -344,4 +439,165 @@ func processStdin() error {
 	fmt.Print(output.String())
 	
 	return nil
+}
+
+// parseBoolFlag parses a string flag as boolean (0/1)
+func parseBoolFlag(cmd *cobra.Command, name string, target **bool) {
+	if val, err := cmd.Flags().GetString(name); err == nil && val != "" {
+		b, err := strconv.ParseBool(val)
+		if err != nil {
+			// Try parsing as 0/1
+			if val == "0" {
+				b = false
+			} else if val == "1" {
+				b = true
+			} else {
+				fmt.Fprintf(os.Stderr, "Error: --%s must be 0 or 1, got %q\n", name, val)
+				os.Exit(1)
+			}
+		}
+		*target = &b
+	}
+}
+
+// createProcessOptionsFromFlags creates ProcessOptions from the new flag system
+func createProcessOptionsFromFlags() processor.ProcessOptions {
+	opts := processor.ProcessOptions{}
+	
+	// Handle legacy --strip flag if present
+	if len(stripOptions) > 0 {
+		if verbosity > 0 {
+			fmt.Fprintf(os.Stderr, "Warning: --strip is deprecated. Use individual filtering flags instead.\n")
+		}
+		// Apply legacy strip options
+		opts.IncludeComments = !contains(stripOptions, "comments")
+		opts.IncludeImports = !contains(stripOptions, "imports")
+		opts.IncludeImplementation = !contains(stripOptions, "implementation")
+		opts.IncludePrivate = !contains(stripOptions, "non-public")
+		opts.RemovePrivateOnly = contains(stripOptions, "private")
+		opts.RemoveProtectedOnly = contains(stripOptions, "protected")
+		return opts
+	}
+	
+	// Process include/exclude lists if provided
+	if includeList != "" {
+		return processIncludeList(includeList)
+	}
+	if excludeList != "" {
+		return processExcludeList(excludeList)
+	}
+	
+	// Use individual flags with defaults
+	opts.IncludeComments = getBoolFlag(includeComments, false)
+	opts.IncludeImports = getBoolFlag(includeImports, true)
+	opts.IncludeImplementation = getBoolFlag(includeImplementation, false)
+	
+	// Handle visibility flags
+	includePublicVal := getBoolFlag(includePublic, true)
+	includeProtectedVal := getBoolFlag(includeProtected, false)
+	includeInternalVal := getBoolFlag(includeInternal, false)
+	includePrivateVal := getBoolFlag(includePrivate, false)
+	
+	// Convert to stripper options
+	// If only public is included, remove all non-public
+	if includePublicVal && !includeProtectedVal && !includeInternalVal && !includePrivateVal {
+		opts.IncludePrivate = false
+	} else {
+		opts.IncludePrivate = true
+		// Set specific removal flags based on what's NOT included
+		opts.RemovePrivateOnly = !includePrivateVal
+		opts.RemoveProtectedOnly = !includeProtectedVal
+		opts.RemoveInternalOnly = !includeInternalVal
+	}
+	
+	// Handle docstrings and annotations
+	opts.IncludeDocstrings = getBoolFlag(includeDocstrings, true)
+	opts.IncludeAnnotations = getBoolFlag(includeAnnotations, true)
+	
+	return opts
+}
+
+// getBoolFlag returns the value of a bool flag or its default
+func getBoolFlag(flag *bool, defaultVal bool) bool {
+	if flag == nil {
+		return defaultVal
+	}
+	return *flag
+}
+
+// processIncludeList processes the --include-only flag
+func processIncludeList(list string) processor.ProcessOptions {
+	opts := processor.ProcessOptions{
+		// Start with everything excluded
+		IncludeComments: false,
+		IncludeImports: false,
+		IncludeImplementation: false,
+		IncludePrivate: false,
+	}
+	
+	items := strings.Split(list, ",")
+	for _, item := range items {
+		switch strings.TrimSpace(item) {
+		case "public":
+			// This is the default, nothing to change
+		case "protected":
+			opts.IncludePrivate = true
+			opts.RemovePrivateOnly = true
+		case "internal":
+			opts.IncludePrivate = true
+			opts.RemoveProtectedOnly = true
+		case "private":
+			opts.IncludePrivate = true
+		case "comments":
+			opts.IncludeComments = true
+		case "docstrings":
+			// TODO: Implement separate docstring handling
+			opts.IncludeComments = true
+		case "implementation":
+			opts.IncludeImplementation = true
+		case "imports":
+			opts.IncludeImports = true
+		case "annotations":
+			// TODO: Implement annotation handling
+		}
+	}
+	
+	return opts
+}
+
+// processExcludeList processes the --exclude-items flag
+func processExcludeList(list string) processor.ProcessOptions {
+	opts := processor.ProcessOptions{
+		// Start with everything included
+		IncludeComments: true,
+		IncludeImports: true,
+		IncludeImplementation: true,
+		IncludePrivate: true,
+	}
+	
+	items := strings.Split(list, ",")
+	for _, item := range items {
+		switch strings.TrimSpace(item) {
+		case "private":
+			opts.RemovePrivateOnly = true
+		case "protected":
+			opts.RemoveProtectedOnly = true
+		case "internal":
+			// Internal is often grouped with private in many languages
+			opts.RemovePrivateOnly = true
+		case "comments":
+			opts.IncludeComments = false
+		case "docstrings":
+			// TODO: Implement separate docstring handling
+			opts.IncludeComments = false
+		case "implementation":
+			opts.IncludeImplementation = false
+		case "imports":
+			opts.IncludeImports = false
+		case "annotations":
+			// TODO: Implement annotation handling
+		}
+	}
+	
+	return opts
 }

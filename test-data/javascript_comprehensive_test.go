@@ -1,13 +1,15 @@
 package test_data
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/janreges/ai-distiller/internal/formatter"
+	"github.com/janreges/ai-distiller/internal/language"
 	"github.com/janreges/ai-distiller/internal/processor"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -209,7 +211,7 @@ func TestJavaScriptComprehensive(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Read the construct source file
-			sourceFile := filepath.Join("test-data", tt.constructFile)
+			sourceFile := tt.constructFile
 			source, err := os.ReadFile(sourceFile)
 			require.NoError(t, err, "Failed to read construct file")
 
@@ -218,7 +220,7 @@ func TestJavaScriptComprehensive(t *testing.T) {
 			require.NoError(t, err, "Failed to process JavaScript file")
 
 			// Read expected output
-			expectedFile := filepath.Join("test-data", tt.expectedFile)
+			expectedFile := tt.expectedFile
 			expected, err := os.ReadFile(expectedFile)
 			require.NoError(t, err, "Failed to read expected file")
 
@@ -232,7 +234,7 @@ func TestJavaScriptComprehensive(t *testing.T) {
 					tt.description, expectedNormalized, actualNormalized)
 
 				// Save actual output for debugging
-				debugFile := filepath.Join("test-data", "javascript", "debug",
+				debugFile := filepath.Join("javascript", "debug",
 					strings.ReplaceAll(tt.name, "/", "_")+".actual.txt")
 				os.MkdirAll(filepath.Dir(debugFile), 0755)
 				os.WriteFile(debugFile, []byte(result), 0644)
@@ -243,8 +245,8 @@ func TestJavaScriptComprehensive(t *testing.T) {
 
 func processJavaScriptFile(t *testing.T, source, filename string, opts processor.ProcessOptions) (string, error) {
 	// Get the JavaScript processor
-	proc := processor.GetByLanguage("javascript")
-	require.NotNil(t, proc, "JavaScript processor not found")
+	proc, ok := language.GetProcessor("javascript")
+	require.True(t, ok, "JavaScript processor not found")
 
 	// Process the file
 	ctx := context.Background()
@@ -256,8 +258,9 @@ func processJavaScriptFile(t *testing.T, source, filename string, opts processor
 
 	// Format output as text
 	var buf strings.Builder
-	formatter := &TextFormatter{}
-	err = formatter.Format(&buf, file)
+	textFormatter, err := formatter.Get("text", formatter.Options{})
+	require.NoError(t, err)
+	err = textFormatter.Format(&buf, file)
 	if err != nil {
 		return "", err
 	}

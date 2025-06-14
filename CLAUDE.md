@@ -30,12 +30,51 @@ aid --strip non-public --stdout       # Print only public members to stdout
 
 ### Important Flags
 
-- `--strip <items>` - **THE MOST IMPORTANT FLAG**
+**NEW: Individual Filtering Flags (Recommended)**
+
+The new flag system provides precise control over what to include:
+
+**Visibility Flags** (control which members to show based on access level):
+- `--public=0/1` (default: 1) - Include public members
+- `--protected=0/1` (default: 0) - Include protected members
+- `--internal=0/1` (default: 0) - Include internal/package-private members
+- `--private=0/1` (default: 0) - Include private members
+
+**Content Flags** (control what content to include):
+- `--comments=0/1` (default: 0) - Include comments
+- `--docstrings=0/1` (default: 1) - Include documentation comments
+- `--implementation=0/1` (default: 0) - Include function/method bodies
+- `--imports=0/1` (default: 1) - Include import statements
+- `--annotations=0/1` (default: 1) - Include decorators/annotations
+
+**Group Filtering** (alternative syntax):
+- `--include-only=public,protected,imports` - Include only these categories
+- `--exclude-items=private,comments` - Exclude these categories
+
+**Examples:**
+```bash
+# Default: public APIs only
+aid src/
+
+# Include all visibility levels
+aid src/ --public=1 --protected=1 --internal=1 --private=1
+
+# Include implementation details
+aid src/ --implementation=1
+
+# Exclude comments but include everything else
+aid src/ --exclude-items=comments
+
+# Only public and protected members with imports
+aid src/ --include-only=public,protected,imports
+```
+
+**Legacy Flag (Deprecated):**
+- `--strip <items>` - Still works but deprecated
   - Values: `comments`, `imports`, `implementation`, `non-public`, `private`, `protected`
   - Comma-separated: `--strip comments,implementation`
-  - Default: `comments,implementation,non-public` (optimized for AI - shows only public API signatures)
-  - Use `--strip ""` to show everything (full output)
   
+**Output Format:**
 - `--format <fmt>` - Output format
   - `text` (default) - Ultra-compact plaintext (best for AI)
   - `md` - Human-readable Markdown with emojis
@@ -43,9 +82,10 @@ aid --strip non-public --stdout       # Print only public members to stdout
   - `json-structured` - Rich semantic data
   - `xml` - Structured XML
 
+**Output File:**
 - `-o, --output <file>` - Output file (default: auto-generated)
-  - Default pattern: `.<dirname>.[strip-options].aid.txt`
-  - Example: `.MyProject.ncom.nimpl.aid.txt`
+  - Default pattern: `.<dirname>.[options].aid.txt`
+  - Example: `.MyProject.prot.int.impl.aid.txt` (includes protected, internal, implementation)
 
 ## Quick Testing with stdin
 

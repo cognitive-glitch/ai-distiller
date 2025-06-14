@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/janreges/ai-distiller/internal/processor"
 )
 
 func TestGenerateOutputFilename(t *testing.T) {
@@ -15,52 +16,106 @@ func TestGenerateOutputFilename(t *testing.T) {
 		name         string
 		path         string
 		stripOptions []string
+		setupFlags   func()
 		expected     string
 	}{
 		{
 			name:         "NoStripOptions",
 			path:         "/home/user/myproject",
 			stripOptions: []string{},
+			setupFlags:   func() { resetAllFlags() },
 			expected:     ".myproject.aid.txt",
 		},
 		{
 			name:         "WithComments",
 			path:         "/home/user/myproject",
 			stripOptions: []string{"comments"},
+			setupFlags:   func() { resetAllFlags() },
 			expected:     ".myproject.ncom.aid.txt",
 		},
 		{
 			name:         "MultipleOptions",
 			path:         "/home/user/myproject",
 			stripOptions: []string{"comments", "imports", "implementation"},
+			setupFlags:   func() { resetAllFlags() },
 			expected:     ".myproject.ncom.nimp.nimpl.aid.txt",
 		},
 		{
 			name:         "AllOptions",
 			path:         "/home/user/myproject",
 			stripOptions: []string{"comments", "imports", "implementation", "non-public"},
+			setupFlags:   func() { resetAllFlags() },
 			expected:     ".myproject.ncom.nimp.nimpl.npub.aid.txt",
 		},
 		{
 			name:         "CurrentDirectory",
 			path:         ".",
 			stripOptions: []string{},
+			setupFlags:   func() { resetAllFlags() },
 			expected:     ".current.aid.txt",
 		},
 		{
 			name:         "RootDirectory",
 			path:         "/",
 			stripOptions: []string{},
+			setupFlags:   func() { resetAllFlags() },
 			expected:     ".current.aid.txt",
+		},
+		{
+			name:         "NewFlagsWithPrivate",
+			path:         "/home/user/myproject",
+			stripOptions: []string{},
+			setupFlags: func() {
+				resetAllFlags()
+				includePrivate = boolPtr(true)
+			},
+			expected:     ".myproject.priv.aid.txt",
+		},
+		{
+			name:         "NewFlagsWithProtectedAndImplementation",
+			path:         "/home/user/myproject",
+			stripOptions: []string{},
+			setupFlags: func() {
+				resetAllFlags()
+				includeProtected = boolPtr(true)
+				includeImplementation = boolPtr(true)
+			},
+			expected:     ".myproject.prot.impl.aid.txt",
+		},
+		{
+			name:         "NewFlagsWithComments",
+			path:         "/home/user/myproject",
+			stripOptions: []string{},
+			setupFlags: func() {
+				resetAllFlags()
+				includeComments = boolPtr(true)
+			},
+			expected:     ".myproject.com.aid.txt",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			tt.setupFlags()
 			result := generateOutputFilename(tt.path, tt.stripOptions)
 			assert.Equal(t, tt.expected, result)
 		})
 	}
+}
+
+// Helper function to reset all flags
+func resetAllFlags() {
+	includePublic = nil
+	includeProtected = nil
+	includeInternal = nil
+	includePrivate = nil
+	includeComments = nil
+	includeDocstrings = nil
+	includeImplementation = nil
+	includeImports = nil
+	includeAnnotations = nil
+	includeList = ""
+	excludeList = ""
 }
 
 func TestContains(t *testing.T) {
@@ -109,7 +164,7 @@ func TestCLIFlags(t *testing.T) {
 		// Reset flags to defaults
 		outputFile = ""
 		outputToStdout = false
-		outputFormat = "md"
+		outputFormat = "text"
 		stripOptions = nil
 		includeGlob = ""
 		excludeGlob = ""
@@ -117,11 +172,22 @@ func TestCLIFlags(t *testing.T) {
 		absolutePaths = false
 		strict = false
 		verbosity = 0
+		includePublic = nil
+		includeProtected = nil
+		includeInternal = nil
+		includePrivate = nil
+		includeComments = nil
+		includeDocstrings = nil
+		includeImplementation = nil
+		includeImports = nil
+		includeAnnotations = nil
+		includeList = ""
+		excludeList = ""
 
 		// Test default values
 		assert.Equal(t, "", outputFile)
 		assert.False(t, outputToStdout)
-		assert.Equal(t, "md", outputFormat)
+		assert.Equal(t, "text", outputFormat)
 		assert.True(t, recursive)
 		assert.False(t, strict)
 	})
@@ -175,6 +241,66 @@ func TestCLIFlags(t *testing.T) {
 		verbose, _ := cmd.Flags().GetCount("verbose")
 		assert.Equal(t, 3, verbose)
 	})
+
+	t.Run("ParseNewFilterFlags", func(t *testing.T) {
+		// Create a new command instance for testing
+		cmd := rootCmd
+		cmd.ResetFlags()
+		initFlags() // Re-initialize flags
+
+		// Test parsing new filtering flags
+		args := []string{
+			"--public", "1",
+			"--protected", "0",
+			"--private", "1",
+			"--internal", "0",
+			"--comments", "1",
+			"--docstrings", "0",
+			"--implementation", "1",
+			"--imports", "0",
+			"--annotations", "1",
+		}
+
+		cmd.ParseFlags(args)
+
+		// Verify flags were parsed correctly
+		public, _ := cmd.Flags().GetString("public")
+		assert.Equal(t, "1", public)
+
+		protected, _ := cmd.Flags().GetString("protected")
+		assert.Equal(t, "0", protected)
+
+		private, _ := cmd.Flags().GetString("private")
+		assert.Equal(t, "1", private)
+
+		comments, _ := cmd.Flags().GetString("comments")
+		assert.Equal(t, "1", comments)
+
+		implementation, _ := cmd.Flags().GetString("implementation")
+		assert.Equal(t, "1", implementation)
+	})
+
+	t.Run("ParseGroupFilterFlags", func(t *testing.T) {
+		// Create a new command instance for testing
+		cmd := rootCmd
+		cmd.ResetFlags()
+		initFlags() // Re-initialize flags
+
+		// Test parsing group filter flags
+		args := []string{
+			"--include-only", "public,protected,imports",
+			"--exclude-items", "comments,implementation",
+		}
+
+		cmd.ParseFlags(args)
+
+		// Verify flags were parsed correctly
+		includeOnly, _ := cmd.Flags().GetString("include-only")
+		assert.Equal(t, "public,protected,imports", includeOnly)
+
+		excludeItems, _ := cmd.Flags().GetString("exclude-items")
+		assert.Equal(t, "comments,implementation", excludeItems)
+	})
 }
 
 func TestVersionFlag(t *testing.T) {
@@ -204,10 +330,15 @@ func TestVersionFlag(t *testing.T) {
 
 func TestRunDistillerValidation(t *testing.T) {
 	t.Run("InvalidOutputFormat", func(t *testing.T) {
+		// Reset all flags before test
+		resetAllFlags()
+		
 		// Create temp directory for testing
 		tempDir := t.TempDir()
 
 		cmd := rootCmd
+		cmd.ResetFlags()
+		initFlags()
 		cmd.SetArgs([]string{tempDir, "--format", "invalid"})
 
 		err := cmd.Execute()
@@ -216,7 +347,12 @@ func TestRunDistillerValidation(t *testing.T) {
 	})
 
 	t.Run("NonExistentPath", func(t *testing.T) {
+		// Reset all flags before test
+		resetAllFlags()
+		
 		cmd := rootCmd
+		cmd.ResetFlags()
+		initFlags()
 		cmd.SetArgs([]string{"/non/existent/path"})
 
 		err := cmd.Execute()
@@ -225,14 +361,19 @@ func TestRunDistillerValidation(t *testing.T) {
 	})
 
 	t.Run("ValidPath", func(t *testing.T) {
+		// Reset all flags before test
+		resetAllFlags()
+		
 		// Create temp directory
 		tempDir := t.TempDir()
 
 		// Reset output file and format to defaults
 		outputFile = ""
-		outputFormat = "md"
+		outputFormat = "text"
 
 		cmd := rootCmd
+		cmd.ResetFlags()
+		initFlags()
 		cmd.SetArgs([]string{tempDir})
 
 		// This will return "not yet implemented" which is expected for now
@@ -243,8 +384,13 @@ func TestRunDistillerValidation(t *testing.T) {
 }
 
 func TestCLIHelp(t *testing.T) {
+	// Reset all flags before test
+	resetAllFlags()
+	
 	buf := new(bytes.Buffer)
 	cmd := rootCmd
+	cmd.ResetFlags()
+	initFlags()
 	cmd.SetOut(buf)
 	cmd.SetArgs([]string{"--help"})
 
@@ -258,7 +404,12 @@ func TestCLIHelp(t *testing.T) {
 	assert.Contains(t, output, "aid [path]")
 	assert.Contains(t, output, "--output")
 	assert.Contains(t, output, "--format")
-	assert.Contains(t, output, "--strip")
+	// Check for new flags instead of deprecated --strip
+	assert.Contains(t, output, "--public")
+	assert.Contains(t, output, "--private")
+	assert.Contains(t, output, "--protected")
+	assert.Contains(t, output, "--comments")
+	assert.Contains(t, output, "--implementation")
 	assert.Contains(t, output, "--recursive")
 }
 
@@ -321,4 +472,133 @@ func TestVerboseOutput(t *testing.T) {
 	cmd.ParseFlags([]string{"-vvv"})
 	v, _ = cmd.Flags().GetCount("verbose")
 	assert.Equal(t, 3, v)
+}
+
+func TestGetBoolFlag(t *testing.T) {
+	tests := []struct {
+		name        string
+		flag        *bool
+		defaultVal  bool
+		expected    bool
+	}{
+		{
+			name:       "NilFlagReturnsDefault",
+			flag:       nil,
+			defaultVal: true,
+			expected:   true,
+		},
+		{
+			name:       "TrueFlag",
+			flag:       boolPtr(true),
+			defaultVal: false,
+			expected:   true,
+		},
+		{
+			name:       "FalseFlag",
+			flag:       boolPtr(false),
+			defaultVal: true,
+			expected:   false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := getBoolFlag(tt.flag, tt.defaultVal)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestProcessIncludeList(t *testing.T) {
+	tests := []struct {
+		name     string
+		list     string
+		expected processor.ProcessOptions
+	}{
+		{
+			name: "IncludePublicOnly",
+			list: "public",
+			expected: processor.ProcessOptions{
+				IncludeComments:       false,
+				IncludeImports:        false,
+				IncludeImplementation: false,
+				IncludePrivate:        false,
+			},
+		},
+		{
+			name: "IncludePublicAndPrivate",
+			list: "public,private",
+			expected: processor.ProcessOptions{
+				IncludeComments:       false,
+				IncludeImports:        false,
+				IncludeImplementation: false,
+				IncludePrivate:        true,
+			},
+		},
+		{
+			name: "IncludeAllContent",
+			list: "public,comments,implementation,imports",
+			expected: processor.ProcessOptions{
+				IncludeComments:       true,
+				IncludeImports:        true,
+				IncludeImplementation: true,
+				IncludePrivate:        false,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := processIncludeList(tt.list)
+			assert.Equal(t, tt.expected.IncludeComments, result.IncludeComments)
+			assert.Equal(t, tt.expected.IncludeImports, result.IncludeImports)
+			assert.Equal(t, tt.expected.IncludeImplementation, result.IncludeImplementation)
+			assert.Equal(t, tt.expected.IncludePrivate, result.IncludePrivate)
+		})
+	}
+}
+
+func TestProcessExcludeList(t *testing.T) {
+	tests := []struct {
+		name     string
+		list     string
+		expected processor.ProcessOptions
+	}{
+		{
+			name: "ExcludePrivate",
+			list: "private",
+			expected: processor.ProcessOptions{
+				IncludeComments:       true,
+				IncludeImports:        true,
+				IncludeImplementation: true,
+				IncludePrivate:        true,
+				RemovePrivateOnly:     true,
+			},
+		},
+		{
+			name: "ExcludeCommentsAndImplementation",
+			list: "comments,implementation",
+			expected: processor.ProcessOptions{
+				IncludeComments:       false,
+				IncludeImports:        true,
+				IncludeImplementation: false,
+				IncludePrivate:        true,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := processExcludeList(tt.list)
+			assert.Equal(t, tt.expected.IncludeComments, result.IncludeComments)
+			assert.Equal(t, tt.expected.IncludeImports, result.IncludeImports)
+			assert.Equal(t, tt.expected.IncludeImplementation, result.IncludeImplementation)
+			assert.Equal(t, tt.expected.RemovePrivateOnly, result.RemovePrivateOnly)
+		})
+	}
+}
+
+// Helper function to create bool pointer
+func boolPtr(b bool) *bool {
+	return &b
 }

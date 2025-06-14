@@ -89,18 +89,10 @@ func (p *Processor) ProcessFile(filename string, opts processor.ProcessOptions) 
 			file, err := processor.ProcessSource(ctx, source, filename)
 			if err == nil {
 				// Apply stripper if any options are set
-				stripperOpts := stripper.Options{
-					RemovePrivate:         !opts.IncludePrivate && !opts.RemovePrivateOnly && !opts.RemoveProtectedOnly,
-					RemovePrivateOnly:     opts.RemovePrivateOnly,
-					RemoveProtectedOnly:   opts.RemoveProtectedOnly,
-					RemoveImplementations: !opts.IncludeImplementation,
-					RemoveComments:        !opts.IncludeComments,
-					RemoveImports:         !opts.IncludeImports,
-				}
+				stripperOpts := opts.ToStripperOptions()
 				
 				// Only strip if there's something to strip
-				if stripperOpts.RemovePrivate || stripperOpts.RemovePrivateOnly || stripperOpts.RemoveProtectedOnly ||
-					stripperOpts.RemoveImplementations || stripperOpts.RemoveComments || stripperOpts.RemoveImports {
+				if stripperOpts.HasAnyOption() {
 					
 					s := stripper.New(stripperOpts)
 					stripped := file.Accept(s)
@@ -135,18 +127,10 @@ func (p *Processor) ProcessWithOptions(ctx context.Context, reader io.Reader, fi
 			file, err := processor.ProcessSource(ctx, source, filename)
 			if err == nil {
 				// Apply stripper if any options are set
-				stripperOpts := stripper.Options{
-					RemovePrivate:         !opts.IncludePrivate && !opts.RemovePrivateOnly && !opts.RemoveProtectedOnly,
-					RemovePrivateOnly:     opts.RemovePrivateOnly,
-					RemoveProtectedOnly:   opts.RemoveProtectedOnly,
-					RemoveImplementations: !opts.IncludeImplementation,
-					RemoveComments:        !opts.IncludeComments,
-					RemoveImports:         !opts.IncludeImports,
-				}
+				stripperOpts := opts.ToStripperOptions()
 				
 				// Only strip if there's something to strip
-				if stripperOpts.RemovePrivate || stripperOpts.RemovePrivateOnly || stripperOpts.RemoveProtectedOnly ||
-					stripperOpts.RemoveImplementations || stripperOpts.RemoveComments || stripperOpts.RemoveImports {
+				if stripperOpts.HasAnyOption() {
 					
 					s := stripper.New(stripperOpts)
 					stripped := file.Accept(s)
@@ -187,8 +171,15 @@ func (p *Processor) ProcessWithOptions(ctx context.Context, reader io.Reader, fi
 		return nil, fmt.Errorf("failed to convert to IR: %w", err)
 	}
 
-	// Apply options
-	file = p.applyOptions(file, opts)
+	// Apply stripper if any options are set
+	stripperOpts := opts.ToStripperOptions()
+	if stripperOpts.HasAnyOption() {
+		s := stripper.New(stripperOpts)
+		stripped := file.Accept(s)
+		if strippedFile, ok := stripped.(*ir.DistilledFile); ok {
+			file = strippedFile
+		}
+	}
 
 	file.Path = filename
 	return file, nil
@@ -253,57 +244,6 @@ func (p *Processor) mockParsePython(source []byte, opts processor.ProcessOptions
 	return nodes
 }
 
-// applyOptions filters the IR based on processing options
-func (p *Processor) applyOptions(file *ir.DistilledFile, opts processor.ProcessOptions) *ir.DistilledFile {
-	if !opts.IncludeComments || !opts.IncludeImports || !opts.IncludePrivate || !opts.IncludeImplementation {
-		// Create a visitor to filter nodes
-		filterVisitor := ir.NewFuncVisitor(func(node ir.DistilledNode) ir.DistilledNode {
-			switch n := node.(type) {
-			case *ir.DistilledComment:
-				if !opts.IncludeComments {
-					return nil
-				}
-			case *ir.DistilledImport:
-				if !opts.IncludeImports {
-					return nil
-				}
-			case *ir.DistilledFunction:
-				if !opts.IncludePrivate && isPrivate(n.Name) {
-					return nil
-				}
-				if !opts.IncludeImplementation {
-					// For --strip implementation, preserve only the docstring (if any)
-					if docstring := extractDocstringFromImplementation(n.Implementation); docstring != "" {
-						n.Implementation = docstring
-					} else {
-						n.Implementation = ""
-					}
-				}
-			case *ir.DistilledClass:
-				if !opts.IncludePrivate && isPrivate(n.Name) {
-					return nil
-				}
-			case *ir.DistilledField:
-				if !opts.IncludePrivate && isPrivate(n.Name) {
-					return nil
-				}
-				// For --strip implementation, also remove private fields as they are implementation details
-				if !opts.IncludeImplementation && isPrivate(n.Name) {
-					return nil
-				}
-			}
-			return node
-		})
-
-		// Apply filter
-		walker := ir.NewWalker(filterVisitor)
-		if filtered := walker.Walk(file); filtered != nil {
-			return filtered.(*ir.DistilledFile)
-		}
-	}
-
-	return file
-}
 
 // extractDocstringFromImplementation extracts docstring from function implementation
 func extractDocstringFromImplementation(implementation string) string {

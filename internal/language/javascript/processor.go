@@ -83,18 +83,10 @@ func (p *Processor) ProcessWithOptions(ctx context.Context, reader io.Reader, fi
 			result, err := tsProcessor.ProcessSource(ctx, source, filename)
 			if err == nil {
 				// Apply stripper if any options are set
-				stripperOpts := stripper.Options{
-					RemovePrivate:         !opts.IncludePrivate && !opts.RemovePrivateOnly && !opts.RemoveProtectedOnly,
-					RemovePrivateOnly:     opts.RemovePrivateOnly,
-					RemoveProtectedOnly:   opts.RemoveProtectedOnly,
-					RemoveImplementations: !opts.IncludeImplementation,
-					RemoveComments:        !opts.IncludeComments,
-					RemoveImports:         !opts.IncludeImports,
-				}
+				stripperOpts := opts.ToStripperOptions()
 				
 				// Only strip if there's something to strip
-				if stripperOpts.RemovePrivate || stripperOpts.RemovePrivateOnly || stripperOpts.RemoveProtectedOnly ||
-					stripperOpts.RemoveImplementations || stripperOpts.RemoveComments || stripperOpts.RemoveImports {
+				if stripperOpts.HasAnyOption() {
 					
 					s := stripper.New(stripperOpts)
 					stripped := result.Accept(s)
