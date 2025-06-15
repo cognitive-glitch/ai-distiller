@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	
@@ -23,18 +24,19 @@ var (
 	Version string
 
 	// Flags
-	outputFile     string
-	outputToStdout bool
-	outputFormat   string
-	stripOptions   []string // Deprecated, kept for backward compatibility
-	includeGlob    string
-	excludeGlob    string
-	recursive      bool
-	absolutePaths  bool
-	strict         bool
-	verbosity      int
-	useTreeSitter  bool
-	langOverride   string
+	outputFile       string
+	outputToStdout   bool
+	outputFormat     string
+	stripOptions     []string // Deprecated, kept for backward compatibility
+	includeGlob      string
+	excludeGlob      string
+	recursiveStr     string
+	filePathType     string
+	relativePathPrefix string
+	strict           bool
+	verbosity        int
+	useTreeSitter    bool
+	langOverride     string
 	
 	// New filtering flags
 	includePublic         *bool
@@ -50,43 +52,107 @@ var (
 	// Group flags
 	includeList           string
 	excludeList           string
+	
+	// Concurrency flags
+	workers               int
+	
+	// Raw mode flag
+	rawMode               bool
 )
 
 // rootCmd represents the base command
 var rootCmd = &cobra.Command{
 	Use:   "aid [path]",
-	Short: "AI Distiller - A smart source code summarizer for LLMs",
+	Short: "AI Distiller - Extract essential code structure for LLMs",
 	Long: `AI Distiller (aid) intelligently "distills" source code from any project 
 into a compact, structured format, optimized for the context window of 
 Large Language Models (LLMs).
 
-By extracting the essential structure, APIs, and relationships from source code,
-AI Distiller creates compact, semantic "blueprints" that enable LLMs to reason 
-effectively about complex software projects.
+═══════════════════════════════════════════════════════════════════════════════
 
-FILTERING OPTIONS:
-  Visibility filters (default: public=1, others=0):
-    --public=0/1      Include public members
-    --protected=0/1   Include protected members  
-    --internal=0/1    Include internal/package-private members
-    --private=0/1     Include private members
+BASIC OPTIONS:
+  -o, --output <file>          Output file (default: auto-generated)
+  --stdout                     Print to stdout instead of file
+  --format <type>              Output format: text|md|jsonl|json-structured|xml
+                              (default: text)
 
-  Content filters:
-    --comments=0/1       Include comments (default: 0)
-    --docstrings=0/1     Include documentation (default: 1)
-    --implementation=0/1 Include function bodies (default: 0)
-    --imports=0/1        Include imports (default: 1)
-    --annotations=0/1    Include decorators/annotations (default: 1)
+PATH & OUTPUT CONTROL:
+  --file-path-type <type>      How paths appear in output: relative|absolute
+                              (default: relative)
+  --relative-path-prefix <str> Custom prefix for relative paths (e.g., "src/")
+  -r, --recursive              Process directories recursively
+                              0/1 (default: 1)
 
-  Group filters (alternative syntax):
-    --include-only=public,protected  Include only specified categories
-    --exclude-items=private,comments Exclude specified categories
+───────────────────────────────────────────────────────────────────────────────
+
+VISIBILITY FILTERING:
+  Control which visibility levels are included in output
+  
+  --public                     Include public members
+                              0/1 (default: 1)
+  --protected                  Include protected members
+                              0/1 (default: 0)
+  --internal                   Include internal/package-private members
+                              0/1 (default: 0)
+  --private                    Include private members
+                              0/1 (default: 0)
+
+CONTENT FILTERING:
+  Control what code elements are included
+  
+  --comments                   Include comments
+                              0/1 (default: 0)
+  --docstrings                 Include documentation
+                              0/1 (default: 1)
+  --implementation             Include function/method bodies
+                              0/1 (default: 0)
+  --imports                    Include import statements
+                              0/1 (default: 1)
+  --annotations                Include decorators/annotations
+                              0/1 (default: 1)
+
+ALTERNATIVE FILTERING:
+  --include-only <items>       Include ONLY these categories (comma-separated)
+  --exclude-items <items>      Exclude these categories (comma-separated)
+                              Categories: public,protected,internal,private,
+                              comments,docstrings,implementation,imports,annotations
+
+───────────────────────────────────────────────────────────────────────────────
+
+FILE SELECTION:
+  --include <pattern>          Include file patterns (e.g., "*.py")
+  --exclude <pattern>          Exclude file patterns (e.g., "*test*")
+
+PROCESSING MODE:
+  --raw                        Process all text files without parsing
+  --lang <language>            Override language detection
+                              Languages: auto|python|typescript|javascript|go|ruby|
+                              swift|rust|java|csharp|kotlin|cpp|php
+                              (default: auto)
+  --tree-sitter                Use tree-sitter parser (experimental)
+
+───────────────────────────────────────────────────────────────────────────────
+
+PERFORMANCE:
+  -w, --workers <num>          Number of parallel workers
+                              0=auto (80% CPU), 1=serial, N=use N workers
+                              (default: 0)
+
+DIAGNOSTICS:
+  -v, --verbose                Verbose output (use -vv or -vvv for more)
+  --strict                     Fail on first syntax error
+  --version                    Show version information
+  --help                       Show this help message
+
+═══════════════════════════════════════════════════════════════════════════════
 
 EXAMPLES:
-  aid                           # Default: public APIs only
-  aid --private=1 --protected=1 # Include all visibility levels
-  aid --implementation=1        # Include function bodies
-  aid --include-only=public,protected,imports  # Only these items`,
+  aid                          # Process current dir, public APIs only
+  aid src/ --private=1         # Include private members
+  aid --file-path-type=absolute # Use absolute paths in output
+  aid docs/ --raw              # Process text files without parsing
+  aid -w 1                     # Force serial processing
+  aid --relative-path-prefix="module/" docs/  # Add custom prefix to paths`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: runDistiller,
 }
@@ -113,8 +179,9 @@ func initFlags() {
 	// File pattern flags
 	rootCmd.Flags().StringVar(&includeGlob, "include", "", "Include file patterns (default: all supported)")
 	rootCmd.Flags().StringVar(&excludeGlob, "exclude", "", "Exclude file patterns")
-	rootCmd.Flags().BoolVarP(&recursive, "recursive", "r", true, "Process directories recursively")
-	rootCmd.Flags().BoolVar(&absolutePaths, "absolute-paths", false, "Use absolute paths in output")
+	rootCmd.Flags().StringVarP(&recursiveStr, "recursive", "r", "1", "Process directories recursively (0/1, default: 1)")
+	rootCmd.Flags().StringVar(&filePathType, "file-path-type", "relative", "How paths appear in output: relative|absolute (default: relative)")
+	rootCmd.Flags().StringVar(&relativePathPrefix, "relative-path-prefix", "", "Custom prefix for relative paths (e.g., \"src/\")")
 	rootCmd.Flags().BoolVar(&strict, "strict", false, "Fail on first syntax error")
 
 	// General flags
@@ -144,6 +211,12 @@ func initFlags() {
 	// Group filtering flags
 	rootCmd.Flags().StringVar(&includeList, "include-only", "", "Include only these categories (comma-separated)")
 	rootCmd.Flags().StringVar(&excludeList, "exclude-items", "", "Exclude these categories (comma-separated)")
+	
+	// Concurrency flags
+	rootCmd.Flags().IntVarP(&workers, "workers", "w", 0, "Number of parallel workers (0=auto/80% CPU cores, 1=serial, default: 0)")
+	
+	// Raw mode flag
+	rootCmd.Flags().BoolVar(&rawMode, "raw", false, "Raw mode: process all text files without parsing (txt, md, json, yaml, etc.)")
 
 	// Handle version flag specially
 	rootCmd.PreRun = func(cmd *cobra.Command, args []string) {
@@ -242,10 +315,35 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	// Log workers configuration if verbose
+	if verbosity > 0 && workers != 1 {
+		actualWorkers := workers
+		if actualWorkers == 0 {
+			actualWorkers = int(float64(runtime.NumCPU()) * 0.8)
+			if actualWorkers < 1 {
+				actualWorkers = 1
+			}
+		}
+		fmt.Fprintf(os.Stderr, "Using %d parallel workers (%d CPU cores available)\n", actualWorkers, runtime.NumCPU())
+	}
+
+	// Set base path information
+	procOpts.BasePath = inputPath
+	procOpts.FilePathType = filePathType
+	procOpts.RelativePathPrefix = relativePathPrefix
+	
+	// If user provided absolute path and didn't specify file-path-type, default to absolute
+	if filepath.IsAbs(inputPath) && !cmd.Flags().Changed("file-path-type") {
+		procOpts.FilePathType = "absolute"
+	}
+	
 	// Process the input
 	result, err := proc.ProcessPath(absPath, procOpts)
 	if err != nil {
 		return fmt.Errorf("failed to process: %w", err)
+	}
+	if result == nil {
+		return fmt.Errorf("no result returned from processing")
 	}
 
 	// Create formatter based on format
@@ -476,15 +574,23 @@ func createProcessOptionsFromFlags() processor.ProcessOptions {
 		opts.IncludePrivate = !contains(stripOptions, "non-public")
 		opts.RemovePrivateOnly = contains(stripOptions, "private")
 		opts.RemoveProtectedOnly = contains(stripOptions, "protected")
+		opts.Workers = workers
+		opts.RawMode = rawMode
 		return opts
 	}
 	
 	// Process include/exclude lists if provided
 	if includeList != "" {
-		return processIncludeList(includeList)
+		opts = processIncludeList(includeList)
+		opts.Workers = workers
+		opts.RawMode = rawMode
+		return opts
 	}
 	if excludeList != "" {
-		return processExcludeList(excludeList)
+		opts = processExcludeList(excludeList)
+		opts.Workers = workers
+		opts.RawMode = rawMode
+		return opts
 	}
 	
 	// Use individual flags with defaults
@@ -513,6 +619,15 @@ func createProcessOptionsFromFlags() processor.ProcessOptions {
 	// Handle docstrings and annotations
 	opts.IncludeDocstrings = getBoolFlag(includeDocstrings, true)
 	opts.IncludeAnnotations = getBoolFlag(includeAnnotations, true)
+	
+	// Set workers value
+	opts.Workers = workers
+	
+	// Set raw mode
+	opts.RawMode = rawMode
+	
+	// Set recursive - parse from global recursiveStr
+	opts.Recursive = recursiveStr != "0"
 	
 	return opts
 }

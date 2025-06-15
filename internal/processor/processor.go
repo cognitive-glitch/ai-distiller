@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/janreges/ai-distiller/internal/ir"
 	"github.com/janreges/ai-distiller/internal/stripper"
@@ -44,9 +45,54 @@ func (p *Processor) ProcessPath(path string, opts ProcessOptions) (ir.DistilledN
 
 // ProcessFile processes a single file
 func (p *Processor) ProcessFile(filename string, opts ProcessOptions) (*ir.DistilledFile, error) {
-	// Get processor for file
-	proc, ok := GetByFilename(filename)
-	if !ok {
+	// Calculate display path based on options
+	displayPath := filename
+	if opts.FilePathType == "relative" && opts.BasePath != "" {
+		// Check if basePath is a file or directory
+		baseInfo, err := os.Stat(opts.BasePath)
+		var baseDir string
+		if err == nil && !baseInfo.IsDir() {
+			// If basePath is a file, use its directory
+			baseDir = filepath.Dir(opts.BasePath)
+		} else {
+			// Otherwise use basePath as is
+			baseDir = opts.BasePath
+		}
+		
+		// Try to make path relative to base directory
+		absBase, err := filepath.Abs(baseDir)
+		if err == nil {
+			relPath, err := filepath.Rel(absBase, filename)
+			if err == nil && !strings.HasPrefix(relPath, "..") {
+				displayPath = relPath
+				
+				// Apply prefix if specified
+				if opts.RelativePathPrefix != "" {
+					prefix := opts.RelativePathPrefix
+					// Ensure prefix ends with separator if not empty and doesn't already
+					if !strings.HasSuffix(prefix, "/") && !strings.HasSuffix(prefix, string(filepath.Separator)) {
+						prefix += "/"
+					}
+					displayPath = prefix + displayPath
+				}
+			}
+		}
+	}
+	var proc LanguageProcessor
+	var ok bool
+	
+	// In raw mode, use RawProcessor for all text files
+	if opts.RawMode {
+		rawProc := NewRawProcessor()
+		// In raw mode, always use the raw processor
+		proc = rawProc
+		ok = true
+	} else {
+		// Normal mode - get processor for file
+		proc, ok = GetByFilename(filename)
+	}
+	
+	if !ok && !opts.RawMode {
 		return nil, fmt.Errorf("no processor found for file: %s", filename)
 	}
 	
@@ -73,7 +119,7 @@ func (p *Processor) ProcessFile(filename string, opts ProcessOptions) (*ir.Disti
 	if procWithOpts, ok := proc.(interface {
 		ProcessWithOptions(context.Context, io.Reader, string, ProcessOptions) (*ir.DistilledFile, error)
 	}); ok {
-		result, err := procWithOpts.ProcessWithOptions(ctx, file, filename, opts)
+		result, err := procWithOpts.ProcessWithOptions(ctx, file, displayPath, opts)
 		if err != nil {
 			return nil, fmt.Errorf("failed to process file: %w", err)
 		}
@@ -81,29 +127,31 @@ func (p *Processor) ProcessFile(filename string, opts ProcessOptions) (*ir.Disti
 	}
 	
 	// Fallback to regular Process method
-	result, err := proc.Process(ctx, file, filename)
+	result, err := proc.Process(ctx, file, displayPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to process file: %w", err)
 	}
 
-	// Apply stripping options
-	stripOpts := stripper.Options{
-		RemovePrivate:         !opts.IncludePrivate,
-		RemovePrivateOnly:     opts.RemovePrivateOnly,
-		RemoveProtectedOnly:   opts.RemoveProtectedOnly,
-		RemoveImplementations: !opts.IncludeImplementation,
-		RemoveComments:        !opts.IncludeComments,
-		RemoveImports:         !opts.IncludeImports,
-	}
-
-	if stripOpts.RemovePrivate || stripOpts.RemovePrivateOnly || stripOpts.RemoveProtectedOnly || 
-	   stripOpts.RemoveImplementations || stripOpts.RemoveComments || stripOpts.RemoveImports {
-		s := stripper.New(stripOpts)
-		strippedNode := result.Accept(s)
-		if file, ok := strippedNode.(*ir.DistilledFile); ok {
-			return file, nil
+	// Apply stripping options (but not in raw mode)
+	if !opts.RawMode {
+		stripOpts := stripper.Options{
+			RemovePrivate:         !opts.IncludePrivate,
+			RemovePrivateOnly:     opts.RemovePrivateOnly,
+			RemoveProtectedOnly:   opts.RemoveProtectedOnly,
+			RemoveImplementations: !opts.IncludeImplementation,
+			RemoveComments:        !opts.IncludeComments,
+			RemoveImports:         !opts.IncludeImports,
 		}
-		return nil, fmt.Errorf("unexpected node type after stripping")
+
+		if stripOpts.RemovePrivate || stripOpts.RemovePrivateOnly || stripOpts.RemoveProtectedOnly || 
+		   stripOpts.RemoveImplementations || stripOpts.RemoveComments || stripOpts.RemoveImports {
+			s := stripper.New(stripOpts)
+			strippedNode := result.Accept(s)
+			if file, ok := strippedNode.(*ir.DistilledFile); ok {
+				return file, nil
+			}
+			return nil, fmt.Errorf("unexpected node type after stripping")
+		}
 	}
 
 	return result, nil
@@ -130,9 +178,38 @@ func (p *Processor) Process(ctx context.Context, reader io.Reader, filename stri
 }
 
 func (p *Processor) processDirectory(dir string, opts ProcessOptions) (*ir.DistilledDirectory, error) {
+	// Use concurrent processing if workers > 1
+	if opts.Workers == 0 || opts.Workers > 1 {
+		return p.processDirectoryConcurrent(dir, opts)
+	}
+
+	// Calculate display path for directory
+	displayPath := dir
+	if opts.FilePathType == "relative" && opts.BasePath != "" {
+		// Try to make path relative to base path
+		absBase, err := filepath.Abs(opts.BasePath)
+		if err == nil {
+			relPath, err := filepath.Rel(absBase, dir)
+			if err == nil && !strings.HasPrefix(relPath, "..") {
+				displayPath = relPath
+				
+				// Apply prefix if specified
+				if opts.RelativePathPrefix != "" {
+					prefix := opts.RelativePathPrefix
+					// Ensure prefix ends with separator if not empty and doesn't already
+					if !strings.HasSuffix(prefix, "/") && !strings.HasSuffix(prefix, string(filepath.Separator)) {
+						prefix += "/"
+					}
+					displayPath = prefix + displayPath
+				}
+			}
+		}
+	}
+
+	// Serial processing (workers == 1)
 	result := &ir.DistilledDirectory{
 		BaseNode: ir.BaseNode{},
-		Path:     dir,
+		Path:     displayPath,
 		Children: []ir.DistilledNode{},
 	}
 
@@ -144,12 +221,22 @@ func (p *Processor) processDirectory(dir string, opts ProcessOptions) (*ir.Disti
 
 		// Skip directories
 		if info.IsDir() {
+			// If not recursive and not the root directory, skip subdirectories
+			if !opts.Recursive && path != dir {
+				return filepath.SkipDir
+			}
 			return nil
 		}
 
-		// Check if we have a processor for this file
-		if _, ok := GetByFilename(path); !ok {
-			return nil
+		// Check if we can process this file
+		if opts.RawMode {
+			// In raw mode, process all files
+			// Skip directories which are already filtered out above
+		} else {
+			// Normal mode - check if we have a processor
+			if _, ok := GetByFilename(path); !ok {
+				return nil
+			}
 		}
 
 		// Process file
