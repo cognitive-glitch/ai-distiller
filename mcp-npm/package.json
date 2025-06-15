@@ -1,0 +1,55 @@
+{
+  "name": "@janreges/ai-distiller-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for AI Distiller - Extract essential code structure from large codebases for LLMs",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "ai-distiller",
+    "code-analysis",
+    "claude",
+    "llm",
+    "codebase-analysis"
+  ],
+  "author": "Jan Reges",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/janreges/ai-distiller.git"
+  },
+  "bugs": {
+    "url": "https://github.com/janreges/ai-distiller/issues"
+  },
+  "homepage": "https://github.com/janreges/ai-distiller#readme",
+  "main": "index.js",
+  "bin": {
+    "aid-mcp": "./bin/aid-mcp"
+  },
+  "scripts": {
+    "postinstall": "go-npm install",
+    "preuninstall": "go-npm uninstall",
+    "build": "cd .. && go build -o mcp-npm/bin/aid-mcp ./mcp-npm/cmd/aid-mcp",
+    "test": "echo \"No tests yet\"",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "go-npm": "^0.1.9"
+  },
+  "goBinary": {
+    "name": "aid-mcp",
+    "path": "./bin",
+    "url": "https://github.com/janreges/ai-distiller/releases/download/v{{version}}/aid-mcp_{{version}}_{{platform}}_{{arch}}.tar.gz"
+  },
+  "files": [
+    "bin/",
+    "index.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

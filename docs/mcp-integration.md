@@ -4,21 +4,26 @@
 
 AI Distiller integrates with AI assistants through the Model Context Protocol (MCP), enabling Claude Desktop and other AI tools to directly analyze your codebase without manual copy-pasting.
 
-## Architecture Decision
+> **🚀 NEW: MCP Server Now Available!** Install with: `claude mcp add ai-distiller -- npx -y @janreges/ai-distiller-mcp`
 
-Based on extensive analysis with multiple AI perspectives, we've chosen a **phased monorepo approach**:
+## Architecture
 
-1. **Phase 1 (v0.3.0)**: MCP server integrated into main `aid` binary with `--mcp-server` flag
-2. **Phase 2 (v1.0.0)**: Separate `aid-mcp` binary in `cmd/aid-mcp/` for advanced features
+The MCP server is implemented as a separate binary (`aid-mcp`) that wraps the core `aid` functionality:
 
-This approach ensures:
-- Immediate availability for users
-- Shared core logic without duplication
-- Clean separation of concerns as features mature
+- **Standalone MCP server**: Dedicated binary for MCP protocol handling
+- **NPM distribution**: Easy installation via `npm install -g @janreges/ai-distiller-mcp`
+- **Native binary wrapper**: Calls the main `aid` binary for actual processing
+- **Stateless design**: Simple, robust architecture optimized for AI agent workflows
+
+This approach provides:
+- Clean separation between CLI and MCP server
+- Easy distribution through NPM ecosystem
+- Flexibility to evolve independently
+- Optimal performance by reusing existing `aid` binary
 
 ## Installation
 
-### Quick Start with Claude Code (Coming in v0.3.0)
+### Quick Start with Claude Code
 
 ```bash
 # One-line installation for Claude Code users
@@ -74,16 +79,18 @@ Extracts structure from an entire directory or namespace - **the killer feature*
 **Parameters:**
 - `directory_path` (string, required): Directory path relative to root
 - `recursive` (boolean): Include subdirectories (default: true)
-- `strip_comments` (boolean): Remove comments and docstrings
-- `strip_implementation` (boolean): Keep only signatures
-- `strip_non_public` (boolean): Hide private/internal members
-- `output_format` (string): "text", "json", or "md"
-- `group_by` (string): "file" (default) or "type" (group all classes together)
+- `include_private` (boolean): Include private/internal members (default: false)
+- `include_implementation` (boolean): Include function/method bodies (default: false)
+- `include_comments` (boolean): Include comments and docstrings (default: false)
+- `include_imports` (boolean): Include import statements (default: true)
+- `output_format` (string): "text", "json", or "md" (default: "text")
+- `include_pattern` (string): Glob pattern for files to include (e.g., "*.py")
+- `exclude_pattern` (string): Glob pattern for files to exclude (e.g., "test_*")
 
 **Example:**
 ```
 Claude: Let me analyze the entire authentication module structure...
-[Calling distillDirectory with directory_path="src/auth/", strip_implementation=true]
+[Calling distillDirectory with directory_path="src/auth/", include_implementation=false]
 ```
 
 **Returns:** Consolidated view of all classes, interfaces, and functions in the directory, perfect for understanding module architecture.
@@ -94,15 +101,16 @@ Extracts structure from a single source file.
 
 **Parameters:**
 - `file_path` (string, required): Relative path from project root
-- `strip_comments` (boolean): Remove comments and docstrings
-- `strip_implementation` (boolean): Keep only signatures
-- `strip_non_public` (boolean): Hide private/internal members
-- `output_format` (string): "text", "json", or "md"
+- `include_private` (boolean): Include private/internal members (default: false)
+- `include_implementation` (boolean): Include function/method bodies (default: false)
+- `include_comments` (boolean): Include comments and docstrings (default: false)
+- `include_imports` (boolean): Include import statements (default: true)
+- `output_format` (string): "text", "json", or "md" (default: "text")
 
 **Example:**
 ```
 Claude: Let me analyze the user service structure...
-[Calling distillFile with file_path="services/user_service.py", strip_implementation=true]
+[Calling distillFile with file_path="services/user_service.py", include_implementation=false]
 ```
 
 ### 3. `listFiles`
@@ -120,30 +128,32 @@ Claude: I'll check what test files you have...
 [Calling listFiles with path="tests/", pattern="test_*.py"]
 ```
 
-### 3. `getFileContent`
+### 4. `getFileContent`
 
 Reads raw file content (complements distillFile for full implementation).
 
 **Parameters:**
 - `file_path` (string, required): Relative path from project root
-- `start_line` (number): Starting line number
-- `end_line` (number): Ending line number
+- `start_line` (number): Starting line number (1-based)
+- `end_line` (number): Ending line number (inclusive)
 
-### 4. `search`
+### 5. `search`
 
 Searches codebase using ripgrep-style patterns.
 
 **Parameters:**
 - `query` (string, required): Search pattern
-- `is_regex` (boolean): Enable regex mode
-- `is_case_sensitive` (boolean): Case-sensitive search
-- `path_includes` (array): Include only these paths
-- `path_excludes` (array): Exclude these paths
+- `mode` (string): "literal" or "regex" (default: "literal")
+- `case_sensitive` (boolean): Case-sensitive search (default: false)
+- `path` (string): Limit search to this path
+- `include_pattern` (string): Include only files matching this pattern
+- `exclude_pattern` (string): Exclude files matching this pattern
+- `max_results` (number): Maximum number of results (default: 100)
 
 **Example:**
 ```
 Claude: Let me find all SQL queries...
-[Calling search with query="SELECT.*FROM", is_regex=true]
+[Calling search with query="SELECT.*FROM", mode="regex"]
 ```
 
 ## Security Features
@@ -173,9 +183,9 @@ Claude: Let me find all SQL queries...
 
 *Claude's MCP calls:*
 1. `listFiles("/", recursive=true)` - Get project layout
-2. `distillDirectory("src/", strip_implementation=true, group_by="type")` - Complete src overview
-3. `distillFile("main.py", strip_implementation=true)` - Entry point details
-4. `distillDirectory("src/models/", strip_implementation=true)` - Data layer structure
+2. `distillDirectory("src/", include_implementation=false)` - Complete src overview
+3. `distillFile("main.py", include_implementation=false)` - Entry point details
+4. `distillDirectory("src/models/", include_implementation=false)` - Data layer structure
 
 > **Claude**: Here's the architecture overview based on the complete namespace analysis:
 > 
@@ -210,7 +220,7 @@ Claude: Let me find all SQL queries...
 
 > **Claude**: I'll analyze your payment module for security concerns.
 
-*Claude uses search to find sensitive patterns, distillFile to understand flow*
+*Claude uses search to find sensitive patterns, distillFile or distillDirectory to understand flow*
 
 ## Performance Optimization
 
@@ -261,7 +271,7 @@ aid --mcp-server --cache disk --cache-size 500
 
 ### Phase 1 (v0.3.0) - Current
 - ✅ Basic MCP server in main binary
-- ✅ Core tools: distillFile, listFiles, search, getFileContent
+- ✅ Core tools: distillFile, distillDirectory, listFiles, search, getFileContent
 - ✅ Memory caching
 - ✅ Security hardening
 
