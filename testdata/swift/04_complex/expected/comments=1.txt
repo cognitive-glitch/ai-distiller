@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/swift/04_complex/source.swift">
+<file path="source.swift">
 // //
 // //  04_complex.swift
 // //  DistillerSample

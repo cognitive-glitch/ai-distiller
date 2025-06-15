@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/ruby/03_medium/source.rb">
+<file path="source.rb">
 
 module MetaProgrammingUtils
     def self.included(base)

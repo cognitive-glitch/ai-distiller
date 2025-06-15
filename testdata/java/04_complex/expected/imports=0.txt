@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/java/04_complex/source.java">
+<file path="source.java">
 package com.aidi.test.advanced;
 
 class Advanced<T extends Number> {

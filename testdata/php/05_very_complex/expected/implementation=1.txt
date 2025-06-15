@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/php/05_very_complex/source.php">
+<file path="source.php">
 class ProxyTarget {
     readonly array $interceptMethods;
     readonly string $proxyClass;

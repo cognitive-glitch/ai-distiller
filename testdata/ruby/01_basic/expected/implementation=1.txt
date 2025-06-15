@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/ruby/01_basic/source.rb">
+<file path="source.rb">
 
 module UserUtils
     MIN_PASSWORD_LENGTH

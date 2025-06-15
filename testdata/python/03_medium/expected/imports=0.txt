@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/python/03_medium/source.py">
+<file path="source.py">
 
 class BaseNotifier(ABC):
     @abstractmethod

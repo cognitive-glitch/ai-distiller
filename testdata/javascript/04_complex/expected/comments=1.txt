@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/javascript/04_complex/source.js">
+<file path="source.js">
 const RAW_OBJECT_SYMBOL: symbol = Symbol('rawObject')
 const objectListeners: WeakMap<object, = new WeakMap()
 const mutationLog: Array<{type: = []

@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/php/01_basic/source.php">
+<file path="source.php">
 class User {
     int $id;
     string $name;

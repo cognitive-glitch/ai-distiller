@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/python/01_basic/source.py">
+<file path="source.py">
 import re
 PUBLIC_MIN_PASSWORD_LENGTH = 8
 -_EMAIL_REGEX = re.compile(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")

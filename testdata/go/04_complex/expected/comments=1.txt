@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/go/04_complex/source.go">
+<file path="source.go">
 //  worker.go
 package worker
 

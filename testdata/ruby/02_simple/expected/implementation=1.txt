@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/ruby/02_simple/source.rb">
+<file path="source.rb">
 
 module Loggable
     def log(message, level:)

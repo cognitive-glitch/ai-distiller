@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/java/02_simple/source.java">
+<file path="source.java">
 package com.aidi.test.oop;
 import java.util.Objects;
 

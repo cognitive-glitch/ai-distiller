@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/python/02_simple/source.py">
+<file path="source.py">
 """Represents a user account in the system."""
 from datetime import datetime
 

@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/javascript/05_very_complex/source.js">
+<file path="source.js">
 const TASK_METADATA: symbol = Symbol('taskMetadata')
 const TaskPrototype: object = { init(id, generatorFunc, props), getMetadata(key) -> any, _updateMetadata(key, value) }
 

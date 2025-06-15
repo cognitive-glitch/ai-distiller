@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/php/03_medium/source.php">
+<file path="source.php">
 interface ContainerInterface {
     register(string $id, callable|object $service): void
     resolve(string $id): mixed

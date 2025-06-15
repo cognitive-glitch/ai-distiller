@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/php/02_simple/source.php">
+<file path="source.php">
 interface PersistableInterface {
     getId(): ?int
     setId(int $id): void

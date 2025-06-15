@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/python/05_very_complex/source.py">
+<file path="source.py">
 import asyncio
 from typing import Type, TypeVar, Generic
 T = TypeVar('T')

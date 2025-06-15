@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/python/02_simple/source.py">
+<file path="source.py">
 
 class User:
     __init__(self, user_id: int, username: str, email: str)

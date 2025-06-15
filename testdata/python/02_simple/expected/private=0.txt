@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/python/02_simple/source.py">
+<file path="source.py">
 from datetime import datetime
 
 class User:

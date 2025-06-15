@@ -1,5 +1,12 @@
-<file path="/home/janreges/ai-distiller/testdata/swift/01_basic/source.swift">
+<file path="source.swift">
 import Foundation
+
+~enum TemperatureScale:
+    case celsius = "°C"
+    case fahrenheit = "°F"
+
+~enum TemperatureError:
+    case negativeAbsolute
 ~func convert(_: Double, from: TemperatureScale, to: TemperatureScale) -> Double?
 -func demo()
 -func validateTemperature(_: Double, scale: TemperatureScale) -> Bool

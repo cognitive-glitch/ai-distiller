@@ -1,7 +1,6 @@
-<file path="/home/janreges/ai-distiller/testdata/javascript/01_basic/source.js">
+<file path="source.js">
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const MIN_PASSWORD_LENGTH = 8
-const _VALIDATION_CACHE = new Map()
 function isValidEmail(email: string) -> boolean
 function isValidPassword(password: string) -> boolean
 function formatUserDisplay(id: number, name: string) -> string

@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/go/02_simple/source.go">
+<file path="source.go">
 package storage
 
 type Storer interface

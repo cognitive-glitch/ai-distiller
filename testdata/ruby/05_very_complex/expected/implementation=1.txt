@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/ruby/05_very_complex/source.rb">
+<file path="source.rb">
 
 module AdvancedMetaprogramming
     def self.included(base)

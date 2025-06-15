@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/go/01_basic/source.go">
+<file path="source.go">
 //  user.go
 package user
 

@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/java/01_basic/source.java">
+<file path="source.java">
 package com.aidi.test.basic;
 
 class Basic {

@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/python/04_complex/source.py">
+<file path="source.py">
 from typing import Protocol, List, Dict, Callable, Any
 
 class Plugin(Protocol):

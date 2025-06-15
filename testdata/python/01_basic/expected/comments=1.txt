@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/python/01_basic/source.py">
+<file path="source.py">
 """A collection of simple, reusable validation functions for common data types
 in a web application context."""
 import re

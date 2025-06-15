@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/go/05_very_complex/source.go">
+<file path="source.go">
 package cache
 
 import (

@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/go/02_simple/source.go">
+<file path="source.go">
 //  storage.go
 package storage
 // Storer defines a generic interface for key-value storage.

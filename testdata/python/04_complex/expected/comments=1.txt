@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/python/04_complex/source.py">
+<file path="source.py">
 """A plugin manager that discovers, registers, and executes plugins.
 This demonstrates composition, custom decorators, and advanced typing."""
 from typing import Protocol, List, Dict, Callable, Any

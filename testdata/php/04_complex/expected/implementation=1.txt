@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/php/04_complex/source.php">
+<file path="source.php">
 class Route {
     readonly string $path;
     readonly string $method;

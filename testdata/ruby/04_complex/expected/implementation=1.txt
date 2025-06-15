@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/ruby/04_complex/source.rb">
+<file path="source.rb">
 
 module DSLBuilder
     def self.included(base)
