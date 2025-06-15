@@ -1,22 +1,26 @@
-<file path="/home/janreges/ai-distiller/testdata/rust/04_complex/source.rs">
+<file path="source.rs">
 
-struct struct Config;
+struct Config;
 
-struct struct AnalysisService;
+struct AnalysisService;
 
-struct impl AnalysisService;
+impl AnalysisService {
 
-impl impl AnalysisService {
-    pub fn new() -> Self
+    fn new() -> Self
+
+    async fn validate_code(&self, code: &str) -> Result<bool, &'static str>
 }
 
-struct trait AsyncProcessor;
+trait AsyncProcessor {
+}
 
-struct impl AsyncProcessor for AnalysisService;
+impl AsyncProcessor for AnalysisService {
+}
 
-struct impl FFIData;
+impl FFIData {
 
-impl impl FFIData {
-    pub fn new_integer(value: i64) -> Self
+    fn new_integer(value: i64) -> Self
+
+    fn get_integer(&self) -> i64
 }
 </file>

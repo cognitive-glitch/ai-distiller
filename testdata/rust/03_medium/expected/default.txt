@@ -1,30 +1,40 @@
-<file path="/home/janreges/ai-distiller/testdata/rust/03_medium/source.rs">
+<file path="source.rs">
 use std::fmt::{Debug, Display};
 
-mod AnalysisError {
-    let IoError: (std::io::Error);
-    let EmptyContent;
-    let InvalidFormat: (String);
+enum AnalysisError {
+    IoError(std::io::Error),
+    EmptyContent,
+    InvalidFormat(String),
 }
 
-mod DataSource;
+trait DataSource {
+    type Content: AsRef<[u8]>;
 
-struct AnalysisResult;
+    get_content(&self) -> Result<Self::Content, AnalysisError>
 
-mod impl AnalysisResult<T> {
-
-    fn new(source_id: String, result: T) -> Self
+    content_slice<'a>() -> Option<&'a [u8]> where Self::Content: 'a
 }
 
-fn analyze(source: &'a S) -> Result<AnalysisResult<String>, AnalysisError>
+struct AnalysisResult<T: Display>;
 
-mod impl DataSource for InMemorySource;
+impl AnalysisResult<T> {
 
-mod impl Debug for InMemorySource;
+    new(source_id: String, result: T) -> Self
+}
 
-mod Processor;
+analyze<'a, S>(source: &'a S) -> Result<AnalysisResult<String>, AnalysisError> where S: DataSource + ?Sized, // `?Sized` is an interesting bound to parse.
+
+impl DataSource for InMemorySource {
+}
+
+impl Debug for InMemorySource {
+}
+
+trait Processor<'a, T> {
+}
 
 struct StringProcessor;
 
-mod impl Processor<;
+impl Processor<'a, String> for StringProcessor {
+}
 </file>

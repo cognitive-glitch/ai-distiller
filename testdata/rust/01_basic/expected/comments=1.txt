@@ -1,21 +1,22 @@
-<file path="/home/janreges/ai-distiller/testdata/rust/01_basic/source.rs">
+<file path="source.rs">
 // 01_basic.rs
 // A test case for basic Rust constructs.
 // The main entry point of the application.
 // A module to handle application settings.
 // This tests the parser's ability to handle inline module definitions.
 
-struct mod settings;
-// The public name of the application.
+mod settings {
+    // The public name of the application.
 
-const CONST APP_NAME: &str = "AI Distiller";
-// A private constant, not visible outside this module.
-// Returns the full version string.
-// This function is public and can be called from outside `settings`.
-// This function demonstrates internal logic and calls a private function.
-// A private function, only callable within the `settings` module.
-// The parser should correctly identify its scope and visibility.
-// A simple check. In a real app, this might be a compile-time flag.
-// Internal utility for debug builds
-// Private helper for version validation
+    const APP_NAME: &str = "AI Distiller";
+    // A private constant, not visible outside this module.
+    // Returns the full version string.
+    // This function is public and can be called from outside `settings`.
+
+    fn get_version() -> String
+    // A private function, only callable within the `settings` module.
+    // The parser should correctly identify its scope and visibility.
+    // Internal utility for debug builds
+    // Private helper for version validation
+}
 </file>

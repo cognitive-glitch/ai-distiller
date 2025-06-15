@@ -1,27 +1,40 @@
-<file path="/home/janreges/ai-distiller/testdata/rust/02_simple/source.rs">
+<file path="source.rs">
 
 struct SourceFile {
-    pub path: String,
+    path: String,
 }
 
-mod Summarizable;
+trait Summarizable {
 
-mod impl SourceFile {
+    summary(&self) -> String
 
-    fn new(path: String, content: String) -> Self
-
-    fn line_count(&self: ) -> u32
+    short_summary(&self) -> String
 }
 
-mod impl Summarizable for SourceFile;
+impl SourceFile {
 
-mod FileOperations;
+    new(path: String, content: String) -> Self
 
-mod FileError {
-    let NotFound;
-    let PermissionDenied;
-    let InvalidContent;
+    line_count(&self) -> u32
 }
 
-mod impl FileOperations for SourceFile;
+impl Summarizable for SourceFile {
+}
+
+trait FileOperations {
+    type Error;
+
+    read_content(&self) -> Result<&str, Self::Error>
+
+    write_content(&mut self, content: String) -> Result<(), Self::Error>
+}
+
+enum FileError {
+    NotFound,
+    PermissionDenied,
+    InvalidContent,
+}
+
+impl FileOperations for SourceFile {
+}
 </file>

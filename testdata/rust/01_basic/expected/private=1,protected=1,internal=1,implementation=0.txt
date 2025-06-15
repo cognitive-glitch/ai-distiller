@@ -1,12 +1,21 @@
-<file path="/home/janreges/ai-distiller/testdata/rust/01_basic/source.rs">
+<file path="source.rs">
 
 -fn main()
 
-struct mod settings;
+mod settings {
 
-const CONST APP_NAME: &str = "AI Distiller";
+    const APP_NAME: &str = "AI Distiller";
 
--const CONST MAJOR_VERSION: u8 = 1;
+    -const MAJOR_VERSION: u8 = 1;
 
--const CONST MINOR_VERSION: u8 = 0;
+    -const MINOR_VERSION: u8 = 0;
+
+    fn get_version() -> String
+
+    -fn is_stable() -> bool
+
+    ~fn debug_info() -> String
+
+    -fn validate_version() -> bool
+}
 </file>

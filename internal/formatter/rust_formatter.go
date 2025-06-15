@@ -9,6 +9,12 @@ import (
 )
 
 // RustFormatter implements language-specific formatting for Rust
+// 
+// Visibility symbols in text format:
+//   - (no prefix) = public visibility (pub)
+//   - "-" = private visibility (module-private, no modifier)
+//   - "*" = protected visibility (pub(super) or pub(in path))
+//   - "~" = internal visibility (pub(crate))
 type RustFormatter struct {
 	BaseLanguageFormatter
 }
@@ -87,20 +93,62 @@ func (f *RustFormatter) formatStruct(w io.Writer, class *ir.DistilledClass, inde
 	// Get visibility prefix
 	visPrefix := f.getVisibilityPrefix(class.Visibility)
 	
-	// Check if this is actually a module (classes without ModifierStruct are modules in Rust)
-	isModule := true
+	// Determine the type of declaration based on modifiers and name
+	declarationType := "mod" // default
+	isStruct := false
+	isEnum := false
+	isTrait := false
+	isImpl := false
+	
+	// Check modifiers
 	for _, mod := range class.Modifiers {
 		if mod == ir.ModifierStruct {
-			isModule = false
+			declarationType = "struct"
+			isStruct = true
+			break
+		} else if mod == ir.ModifierAbstract {
+			declarationType = "trait"
+			isTrait = true
+			break
+		} else if mod == ir.ModifierEnum {
+			declarationType = "enum"
+			isEnum = true
 			break
 		}
 	}
 	
+	// Check if it's an enum based on children (all fields without types)
+	// This is a fallback for when ModifierEnum is not set
+	if !isStruct && !isTrait && !isEnum && len(class.Children) > 0 {
+		allFieldsNoType := true
+		for _, child := range class.Children {
+			if field, ok := child.(*ir.DistilledField); ok {
+				// Enum variants might have tuple types like "(String)"
+				if field.Type != nil && field.Type.Name != "" && 
+				   !strings.HasPrefix(field.Type.Name, "(") && 
+				   field.Type.Name != "struct" {
+					allFieldsNoType = false
+					break
+				}
+			}
+		}
+		if allFieldsNoType {
+			declarationType = "enum"
+			isEnum = true
+		}
+	}
+	
+	// Check if it's an impl block
+	if strings.HasPrefix(class.Name, "impl ") {
+		declarationType = ""
+		isImpl = true
+	}
+	
 	// Format declaration
-	if isModule {
-		fmt.Fprintf(w, "%s%smod %s", indentStr, visPrefix, class.Name)
-	} else {
-		fmt.Fprintf(w, "%s%sstruct %s", indentStr, visPrefix, class.Name)
+	if isImpl {
+		fmt.Fprintf(w, "%s%s", indentStr, class.Name) // impl blocks already have "impl" in name
+	} else if declarationType != "" {
+		fmt.Fprintf(w, "%s%s%s %s", indentStr, visPrefix, declarationType, class.Name)
 	}
 	
 	// Add generic type parameters
@@ -115,8 +163,54 @@ func (f *RustFormatter) formatStruct(w io.Writer, class *ir.DistilledClass, inde
 		fmt.Fprintf(w, "<%s>", strings.Join(typeParams, ", "))
 	}
 	
-	// Handle modules vs structs differently
-	if isModule {
+	// Handle different declaration types
+	if isImpl || isTrait {
+		// Impl blocks and traits always have a body
+		fmt.Fprintln(w, " {")
+		for _, child := range class.Children {
+			switch n := child.(type) {
+			case *ir.DistilledField:
+				if isTrait {
+					// Associated types in traits
+					fmt.Fprintf(w, "%s    type %s", indentStr, n.Name)
+					if n.Type != nil && n.Type.Name != "" && n.Type.Name != "type" {
+						fmt.Fprintf(w, ": %s", n.Type.Name)
+					}
+					fmt.Fprintln(w, ";")
+				} else {
+					f.formatField(w, n, indentStr+"    ")
+				}
+			case *ir.DistilledFunction:
+				f.formatFunction(w, n, indentStr+"    ")
+			case *ir.DistilledComment:
+				f.formatComment(w, n, indentStr+"    ")
+			}
+		}
+		fmt.Fprintf(w, "%s}\n", indentStr)
+	} else if isEnum {
+		// Format enum variants
+		if len(class.Children) > 0 {
+			fmt.Fprintln(w, " {")
+			for _, child := range class.Children {
+				if field, ok := child.(*ir.DistilledField); ok {
+					fmt.Fprintf(w, "%s    %s", indentStr, field.Name)
+					if field.Type != nil && field.Type.Name != "" {
+						if strings.HasPrefix(field.Type.Name, "(") {
+							// Tuple variant
+							fmt.Fprintf(w, field.Type.Name)
+						} else if field.Type.Name == "struct" {
+							// Struct variant
+							fmt.Fprintf(w, " { /* fields */ }")
+						}
+					}
+					fmt.Fprintln(w, ",")
+				}
+			}
+			fmt.Fprintf(w, "%s}\n", indentStr)
+		} else {
+			fmt.Fprintln(w, ";")
+		}
+	} else if declarationType == "mod" {
 		// Modules have a body with various items
 		if len(class.Children) > 0 {
 			fmt.Fprintln(w, " {")
@@ -135,7 +229,7 @@ func (f *RustFormatter) formatStruct(w io.Writer, class *ir.DistilledClass, inde
 		} else {
 			fmt.Fprintln(w, ";")
 		}
-	} else {
+	} else if isStruct {
 		// Regular struct handling
 		// Check if there are fields
 		hasFields := false
@@ -195,17 +289,14 @@ func (f *RustFormatter) formatStruct(w io.Writer, class *ir.DistilledClass, inde
 func (f *RustFormatter) formatStructField(w io.Writer, field *ir.DistilledField, indent int) error {
 	indentStr := strings.Repeat("    ", indent)
 	
-	// Get visibility
-	vis := ""
-	if field.Visibility == ir.VisibilityPublic {
-		vis = "pub "
-	}
+	// Get visibility prefix
+	visPrefix := f.getVisibilityPrefix(field.Visibility)
 	
 	typeName := ""
 	if field.Type != nil {
 		typeName = field.Type.Name
 	}
-	fmt.Fprintf(w, "%s%s%s: %s,\n", indentStr, vis, field.Name, typeName)
+	fmt.Fprintf(w, "%s%s%s: %s,\n", indentStr, visPrefix, field.Name, typeName)
 	return nil
 }
 
@@ -271,9 +362,9 @@ func (f *RustFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, in
 	
 	// Format function signature
 	if isAsync {
-		fmt.Fprintf(w, "\n%s%sasync fn %s", indent, visPrefix, fn.Name)
+		fmt.Fprintf(w, "\n%s%sasync %s", indent, visPrefix, fn.Name)
 	} else {
-		fmt.Fprintf(w, "\n%s%sfn %s", indent, visPrefix, fn.Name)
+		fmt.Fprintf(w, "\n%s%s%s", indent, visPrefix, fn.Name)
 	}
 	
 	// Add generic type parameters
@@ -293,9 +384,14 @@ func (f *RustFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, in
 	f.formatParameters(w, fn.Parameters)
 	fmt.Fprintf(w, ")")
 	
-	// Return type
+	// Return type and/or where clause
 	if fn.Returns != nil && fn.Returns.Name != "" && fn.Returns.Name != "()" {
-		fmt.Fprintf(w, " -> %s", fn.Returns.Name)
+		// Check if it's just a where clause (starts with "where")
+		if strings.HasPrefix(strings.TrimSpace(fn.Returns.Name), "where ") {
+			fmt.Fprintf(w, " %s", fn.Returns.Name)
+		} else {
+			fmt.Fprintf(w, " -> %s", fn.Returns.Name)
+		}
 	}
 	
 	// Implementation
@@ -316,11 +412,8 @@ func (f *RustFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, in
 func (f *RustFormatter) formatImplMethod(w io.Writer, fn *ir.DistilledFunction, indent int) error {
 	indentStr := strings.Repeat("    ", indent)
 	
-	// Check for visibility
-	vis := ""
-	if fn.Visibility == ir.VisibilityPublic {
-		vis = "pub "
-	}
+	// Get visibility prefix
+	visPrefix := f.getVisibilityPrefix(fn.Visibility)
 	
 	// Check for async
 	isAsync := false
@@ -333,9 +426,9 @@ func (f *RustFormatter) formatImplMethod(w io.Writer, fn *ir.DistilledFunction, 
 	
 	// Format method signature
 	if isAsync {
-		fmt.Fprintf(w, "%s%sasync fn %s", indentStr, vis, fn.Name)
+		fmt.Fprintf(w, "%s%sasync %s", indentStr, visPrefix, fn.Name)
 	} else {
-		fmt.Fprintf(w, "%s%sfn %s", indentStr, vis, fn.Name)
+		fmt.Fprintf(w, "%s%s%s", indentStr, visPrefix, fn.Name)
 	}
 	
 	// Add generic type parameters
@@ -355,9 +448,14 @@ func (f *RustFormatter) formatImplMethod(w io.Writer, fn *ir.DistilledFunction, 
 	f.formatParameters(w, fn.Parameters)
 	fmt.Fprintf(w, ")")
 	
-	// Return type
+	// Return type and/or where clause
 	if fn.Returns != nil && fn.Returns.Name != "" && fn.Returns.Name != "()" {
-		fmt.Fprintf(w, " -> %s", fn.Returns.Name)
+		// Check if it's just a where clause (starts with "where")
+		if strings.HasPrefix(strings.TrimSpace(fn.Returns.Name), "where ") {
+			fmt.Fprintf(w, " %s", fn.Returns.Name)
+		} else {
+			fmt.Fprintf(w, " -> %s", fn.Returns.Name)
+		}
 	}
 	
 	// Implementation
@@ -389,9 +487,9 @@ func (f *RustFormatter) formatTraitMethod(w io.Writer, fn *ir.DistilledFunction,
 	
 	// Format method signature
 	if isAsync {
-		fmt.Fprintf(w, "%sasync fn %s", indentStr, fn.Name)
+		fmt.Fprintf(w, "%sasync %s", indentStr, fn.Name)
 	} else {
-		fmt.Fprintf(w, "%sfn %s", indentStr, fn.Name)
+		fmt.Fprintf(w, "%s%s", indentStr, fn.Name)
 	}
 	
 	// Add generic type parameters
@@ -411,9 +509,14 @@ func (f *RustFormatter) formatTraitMethod(w io.Writer, fn *ir.DistilledFunction,
 	f.formatParameters(w, fn.Parameters)
 	fmt.Fprintf(w, ")")
 	
-	// Return type
+	// Return type and/or where clause
 	if fn.Returns != nil && fn.Returns.Name != "" && fn.Returns.Name != "()" {
-		fmt.Fprintf(w, " -> %s", fn.Returns.Name)
+		// Check if it's just a where clause (starts with "where")
+		if strings.HasPrefix(strings.TrimSpace(fn.Returns.Name), "where ") {
+			fmt.Fprintf(w, " %s", fn.Returns.Name)
+		} else {
+			fmt.Fprintf(w, " -> %s", fn.Returns.Name)
+		}
 	}
 	
 	// Default implementation or just signature
@@ -435,15 +538,19 @@ func (f *RustFormatter) formatField(w io.Writer, field *ir.DistilledField, inden
 	// Get visibility prefix
 	visPrefix := f.getVisibilityPrefix(field.Visibility)
 	
-	// Check if it's a constant
+	// Check if it's a constant, static, or type alias
 	isConst := false
 	isStatic := false
+	isTypeAlias := false
 	for _, mod := range field.Modifiers {
 		if mod == ir.ModifierFinal {
 			isConst = true
 		}
 		if mod == ir.ModifierStatic {
 			isStatic = true
+		}
+		if mod == ir.ModifierTypeAlias {
+			isTypeAlias = true
 		}
 	}
 	
@@ -452,7 +559,12 @@ func (f *RustFormatter) formatField(w io.Writer, field *ir.DistilledField, inden
 	if field.Type != nil {
 		typeName = field.Type.Name
 	}
-	if isConst {
+	if isTypeAlias {
+		fmt.Fprintf(w, "\n%s%stype %s", indent, visPrefix, field.Name)
+		if field.Type != nil && field.Type.Name != "" {
+			fmt.Fprintf(w, " = %s", field.Type.Name)
+		}
+	} else if isConst {
 		fmt.Fprintf(w, "\n%s%sconst %s: %s", indent, visPrefix, strings.ToUpper(field.Name), typeName)
 	} else if isStatic {
 		fmt.Fprintf(w, "\n%s%sstatic %s: %s", indent, visPrefix, field.Name, typeName)
@@ -502,17 +614,18 @@ func (f *RustFormatter) formatParameters(w io.Writer, params []ir.Parameter) {
 			fmt.Fprintf(w, ", ")
 		}
 		
-		// Check for self parameter
-		if param.Name == "self" {
-			// Check for &self, &mut self, etc.
-			if strings.Contains(param.Type.Name, "&") {
-				fmt.Fprintf(w, "%s", param.Type.Name)
-			} else {
-				fmt.Fprintf(w, "self")
-			}
+		// Check for self parameter - must be exact match or with reference
+		if param.Name == "self" || param.Name == "&self" || param.Name == "&mut self" {
+			// self, &self, &mut self are stored in Name
+			fmt.Fprintf(w, "%s", param.Name)
 		} else {
 			// Regular parameter
-			fmt.Fprintf(w, "%s: %s", param.Name, param.Type.Name)
+			if param.Type.Name != "" {
+				fmt.Fprintf(w, "%s: %s", param.Name, param.Type.Name)
+			} else {
+				// Edge case: parameter without type (shouldn't happen in valid Rust)
+				fmt.Fprintf(w, "%s", param.Name)
+			}
 		}
 	}
 }

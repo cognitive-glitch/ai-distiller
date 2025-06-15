@@ -1,41 +1,52 @@
-<file path="/home/janreges/ai-distiller/testdata/rust/04_complex/source.rs">
+<file path="source.rs">
 use std::sync::{Arc, Mutex};
 use std::ffi::{c_char, CStr};
 use std::future::Future;
 use std::pin::Pin;
 
-struct struct Config {
+struct Config {
     name: String,
     version: u32,
     is_validated: bool,
 }
 
-struct struct AnalysisService {
+struct AnalysisService {
     cache: Arc<Mutex<Vec<String>>>,
     async_processor: Option<Pin<Box<dyn Future<Output = String> + Send>>>,
 }
 
-struct impl AnalysisService;
+impl AnalysisService {
 
-impl impl AnalysisService {
-    pub fn new() -> Self
+    fn new() -> Self
+
+    async fn validate_code(&self, code: &str) -> Result<bool, &'static str>
+
+    -fn name_from_code(&self, code: &str) -> String
+
+    ~fn direct_memory_access(&self, ptr: *mut u8, len: usize) -> Option<String>
+
+    -async fn process_cache(&self) -> usize
 }
 
-struct trait AsyncProcessor;
-
-struct impl AsyncProcessor for AnalysisService {
-    type Item: String,
-    type Error: &'static str,
+trait AsyncProcessor {
 }
 
-impl impl AsyncProcessor for AnalysisService {
-    async fn process_async(&self: , item: Self::Item) -> Result<String, Self::Error>
+impl AsyncProcessor for AnalysisService {
+
+    -type Item = String;
+
+    -type Error = &'static str;
+
+    -async fn process_async(&self, item: Self::Item) -> Result<String, Self::Error>
 }
 
-struct impl FFIData;
+impl FFIData {
 
-impl impl FFIData {
-    pub fn new_integer(value: i64) -> Self
+    fn new_integer(value: i64) -> Self
+
+    fn get_integer(&self) -> i64
+
+    -fn get_bytes(&self) -> &[u8; 8]
 }
 
 -fn main()

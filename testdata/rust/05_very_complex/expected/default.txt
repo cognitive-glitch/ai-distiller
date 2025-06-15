@@ -1,28 +1,56 @@
-<file path="/home/janreges/ai-distiller/testdata/rust/05_very_complex/source.rs">
+<file path="source.rs">
 
-mod Configurable;
+trait Configurable {
 
-mod DataSource;
+    from_source<S: DataSource>(source: &S) -> Self
+}
+
+trait DataSource {
+    type Reader<'a>: std::io::Read where Self: 'a;
+    type Config<T: Clone>: Clone;
+
+    get_reader<'a>() -> Self::Reader<'a>
+
+    get_config<T: Clone>(&self) -> Self::Config<T>
+
+    process_with_bounds<'a, T, U>(input: T) -> U
+}
 
 struct ServerConfig {
-    pub host: String,
-    pub port: u16,
+    host: String,
+    port: u16,
 }
 
-mod impl Configurable for ServerConfig;
-
-fn process_all_sources(sources: Vec<&dyn DataSource>, mut processor: F)
-
-mod AdvancedContainer;
-
-struct FixedArray;
-
-mod impl FixedArray<T, N> {
-
-    fn new() -> Self
+impl Configurable for ServerConfig {
 }
 
-mod impl AdvancedContainer<N> for FixedArray<T, N>;
+process_all_sources<F>(sources: Vec<&dyn DataSource>, mut processor: F) where F: for<'a> FnMut(Box<dyn std::io::Read + 'a>),
 
-mod AsyncDataProcessor;
+trait AdvancedContainer<const N: usize> {
+    type Item<'a>: Clone where Self: 'a;
+    type Iterator<'a>: Iterator<Item = Self::Item<'a>> where Self: 'a;
+
+    get_items<'a>() -> Self::Iterator<'a>
+
+    process_batch<'a, F>(f: F) -> [Option<Self::Item<'a>>
+}
+
+struct FixedArray<T: Clone, const N: usize>;
+
+impl FixedArray<T, N> {
+
+    new() -> Self
+}
+
+impl AdvancedContainer<N> for FixedArray<T, N> {
+}
+
+trait AsyncDataProcessor {
+    type Output<'a>: Send where Self: 'a;
+    type Error: std::error::Error + Send + Sync;
+
+    async process_async<'a>(data: &'a [u8]) -> Result<Self::Output<'a>, Self::Error>
+
+    async batch_process<'a, I>(inputs: I) -> Vec<Result<Self::Output<'a>, Self::Error>>
+}
 </file>

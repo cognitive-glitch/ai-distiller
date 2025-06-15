@@ -1,56 +1,73 @@
-<file path="/home/janreges/ai-distiller/testdata/rust/05_very_complex/source.rs">
+<file path="source.rs">
 
-struct trait Configurable;
+trait Configurable {
 
-struct trait DataSource;
-
-struct struct ServerConfig {
-    pub host: String,
-    pub port: u16,
-    internal_key: Option<String>,
+    from_source<S: DataSource>(source: &S) -> Self
 }
 
-struct impl Configurable for ServerConfig;
+trait DataSource {
+    type Reader<'a>: std::io::Read where Self: 'a;
+    type Config<T: Clone>: Clone;
 
-impl impl Configurable for ServerConfig {
-    fn from_source(source: &S) -> Self
+    get_reader<'a>() -> Self::Reader<'a>
+
+    get_config<T: Clone>(&self) -> Self::Config<T>
+
+    process_with_bounds<'a, T, U>(input: T) -> U
 }
 
-fn process_all_sources(sources: Vec<&dyn DataSource>, mut processor: F)
-
-struct trait AdvancedContainer;
-
-struct struct FixedArray {
-    data: [Option<T>; N],
+struct ServerConfig {
+    host: String,
+    port: u16,
+    -internal_key: Option<String>,
 }
 
-struct impl FixedArray<T, N>;
+impl Configurable for ServerConfig {
 
-impl impl FixedArray<T, N> {
-    pub fn new() -> Self
+    -from_source<S: DataSource>(source: &S) -> Self
 }
 
-struct impl AdvancedContainer<N> for FixedArray<T, N> {
-    type Item: &'a T where T: 'a,
+process_all_sources<F>(sources: Vec<&dyn DataSource>, mut processor: F) where F: for<'a> FnMut(Box<dyn std::io::Read + 'a>),
+
+trait AdvancedContainer<const N: usize> {
+    type Item<'a>: Clone where Self: 'a;
+    type Iterator<'a>: Iterator<Item = Self::Item<'a>> where Self: 'a;
+
+    get_items<'a>() -> Self::Iterator<'a>
+
+    process_batch<'a, F>(f: F) -> [Option<Self::Item<'a>>
 }
 
-impl impl AdvancedContainer<N> for FixedArray<T, N> {
-    fn get_items() -> Self::Iterator<'a>
+struct FixedArray<T: Clone, const N: usize> {
+    -data: [Option<T>; N],
 }
 
-struct trait AsyncDataProcessor;
+impl FixedArray<T, N> {
 
--fn main()
+    new() -> Self
 
--struct struct FileSource;
+    -is_valid_index(&self, index: usize) -> bool
 
-struct impl DataSource for FileSource {
-    type Reader: std::io::Cursor<&'a [u8]>,
-    type Config: T,
+    ~get_unchecked(&self, index: usize) -> Option<&T>
 }
 
-impl impl DataSource for FileSource {
-    fn get_reader() -> Self::Reader<'a>
+impl AdvancedContainer<N> for FixedArray<T, N> {
+
+    -type Item = &'a T where T: 'a;
+
+    -get_items<'a>() -> Self::Iterator<'a>
+
+    -process_batch<'a, F>(f: F) -> [Option<Self::Item<'a>>; N] where F: Fn(usize) -> Option<Self::Item<'a>>
 }
-use std::io::Read;
+
+trait AsyncDataProcessor {
+    type Output<'a>: Send where Self: 'a;
+    type Error: std::error::Error + Send + Sync;
+
+    async process_async<'a>(data: &'a [u8]) -> Result<Self::Output<'a>, Self::Error>
+
+    async batch_process<'a, I>(inputs: I) -> Vec<Result<Self::Output<'a>, Self::Error>>
+}
+
+-main()
 </file>

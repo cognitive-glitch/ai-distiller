@@ -1,56 +1,58 @@
-<file path="/home/janreges/ai-distiller/testdata/rust/03_medium/source.rs">
+<file path="source.rs">
 use std::fmt::{Debug, Display};
 
-struct enum AnalysisError {
-    pub IoError: (std::io::Error),
-    pub EmptyContent: ,
-    pub InvalidFormat: (String),
+enum AnalysisError {
+    IoError(std::io::Error),
+    EmptyContent,
+    InvalidFormat(String),
 }
 
-struct trait DataSource;
+trait DataSource {
+}
 
-struct struct AnalysisResult {
+struct AnalysisResult<T: Display> {
     source_id: String,
     result: T,
     metadata: Option<String>,
 }
 
-struct impl AnalysisResult<T>;
+impl AnalysisResult<T> {
 
-impl impl AnalysisResult<T> {
-    pub fn new(source_id: String, result: T) -> Self
+    fn new(source_id: String, result: T) -> Self
+
+    -fn is_valid(&self) -> bool
+
+    ~fn set_metadata(&mut self, metadata: String)
 }
 
 fn analyze(source: &'a S) -> Result<AnalysisResult<String>, AnalysisError>
 
--struct struct InMemorySource {
+-struct InMemorySource {
     data: Vec<u8>,
 }
 
-struct impl DataSource for InMemorySource {
-    type Content: Vec<u8>,
+impl DataSource for InMemorySource {
+
+    -type Content = Vec<u8>;
+
+    -fn get_content(&self) -> Result<Self::Content, AnalysisError>
 }
 
-impl impl DataSource for InMemorySource {
-    fn get_content(&self: ) -> Result<Self::Content, AnalysisError>
+impl Debug for InMemorySource {
+
+    -fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result
 }
 
-struct impl Debug for InMemorySource;
-
-impl impl Debug for InMemorySource {
-    fn fmt(&self: , f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result
+trait Processor<'a, T> {
 }
 
-struct trait Processor;
+struct StringProcessor;
 
-struct struct StringProcessor;
+impl Processor<'a, String> for StringProcessor {
 
-struct impl Processor< {
-    type Output: &'a str,
-}
+    -type Output = &'a str;
 
-impl impl Processor< {
-    fn process(&self: , input: &'a String) -> Self::Output
+    -fn process(&self, input: &'a String) -> Self::Output
 }
 
 -fn main()
