@@ -1,37 +1,43 @@
 <file path="source.cs">
+#nullable enable
+
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-namespace Constructs.Medium03
-public interface IRepository
-    public Task AddAsync(entity TEntity, ct CancellationToken)
-    public Task GetAsync(id TKey, ct CancellationToken)
-    public Task RemoveAsync(id TKey, ct CancellationToken)
-    public IAsyncEnumerable QueryAsync(Func predicate, ct CancellationToken)
-public interface IEntity
-public abstract class EntityBase : IEntity
-    public readonly Id T;
-public class InMemoryRepository : IRepository
-    public Task AddAsync(entity TEntity, ct CancellationToken)
-    public Task GetAsync(id TKey, ct CancellationToken)
-    public Task RemoveAsync(id TKey, ct CancellationToken)
-    public async IAsyncEnumerable QueryAsync(Func predicate, ct CancellationToken)
-public class CachedRepository : IRepository
-    public void CachedRepository(IRepository innerRepository, cacheExpiry TimeSpan)
-    public async Task AddAsync(entity TEntity, ct CancellationToken)
-    public async Task GetAsync(id TKey, ct CancellationToken)
-    public async Task RemoveAsync(id TKey, ct CancellationToken)
-    public IAsyncEnumerable QueryAsync(Func predicate, ct CancellationToken)
-public class User : EntityBase<Guid>(Id)
-    public readonly Id Guid;
-    public readonly string Name;
-    public readonly string Email;
-    public readonly bool IsValid = => !string.IsNullOrEmpty(Name) && Email.Contains("@");
-public class UserService
-    public void UserService(IRepository userRepository)
-    public async Task CreateUserAsync(string name, string email)
-    public Task GetUserAsync(id Guid)
+namespace Constructs.Medium03;
+public interface IRepository<TEntity, TKey> where TEntity : IEntity where TKey : notnull {
+    public Task AddAsync(entity TEntity, ct CancellationToken);
+    public Task<TEntity?> GetAsync(id TKey, ct CancellationToken);
+    public Task<bool> RemoveAsync(id TKey, ct CancellationToken);
+    public IAsyncEnumerable<TEntity> QueryAsync(Func<TEntity, bool> predicate, ct CancellationToken);
+}
+public interface IEntity<TKey> {
+}
+public abstract record EntityBase(Id T) : IEntity {
+public class InMemoryRepository<TEntity, TKey> : IRepository where TEntity : EntityBase where TKey : notnull {
+    public Task AddAsync(entity TEntity, ct CancellationToken);
+    public Task<TEntity?> GetAsync(id TKey, ct CancellationToken);
+    public Task<bool> RemoveAsync(id TKey, ct CancellationToken);
+    public async IAsyncEnumerable<TEntity> QueryAsync(Func<TEntity, bool> predicate, ct CancellationToken);
+}
+public class CachedRepository<TEntity, TKey> : IRepository where TEntity : EntityBase where TKey : notnull {
+    public CachedRepository(IRepository<TEntity, TKey> innerRepository, cacheExpiry TimeSpan);
+    public async Task AddAsync(entity TEntity, ct CancellationToken);
+    public async Task<TEntity?> GetAsync(id TKey, ct CancellationToken);
+    public async Task<bool> RemoveAsync(id TKey, ct CancellationToken);
+    public IAsyncEnumerable<TEntity> QueryAsync(Func<TEntity, bool> predicate, ct CancellationToken);
+}
+public record User(
+    Id Guid,
+    string Name,
+    string Email,
+    bool IsValid) : EntityBase<Guid>(Id) {
+public class UserService {
+    public UserService(IRepository<User, Guid> userRepository);
+    public async Task<User?> CreateUserAsync(string name, string email);
+    public Task<User?> GetUserAsync(id Guid);
+}
 </file>

@@ -257,6 +257,12 @@ func (s *Stripper) visitField(n *ir.DistilledField) ir.DistilledNode {
 		Type:         n.Type,
 		DefaultValue: n.DefaultValue,
 		Decorators:   n.Decorators,
+		// Property-specific fields
+		IsProperty:       n.IsProperty,
+		HasGetter:        n.HasGetter,
+		HasSetter:        n.HasSetter,
+		GetterVisibility: n.GetterVisibility,
+		SetterVisibility: n.SetterVisibility,
 	}
 }
 

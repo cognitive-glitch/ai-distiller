@@ -1,5 +1,8 @@
 <file path="source.cs">
-namespace Constructs.Basic01
-public class StringExtensions
-    public static string ToTitleCase(string input)
+#nullable enable
+
+namespace Constructs.Basic01;
+public static class StringExtensions {
+    public static string ToTitleCase(string input);
+}
 </file>

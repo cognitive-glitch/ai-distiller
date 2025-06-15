@@ -224,6 +224,12 @@ type DistilledField struct {
 	Type         *TypeRef   `json:"type,omitempty"`
 	DefaultValue string     `json:"default_value,omitempty"`
 	Decorators   []string   `json:"decorators,omitempty"`
+	// Property-specific fields (mainly for C#)
+	IsProperty   bool       `json:"is_property,omitempty"`
+	HasGetter    bool       `json:"has_getter,omitempty"`
+	HasSetter    bool       `json:"has_setter,omitempty"`
+	GetterVisibility *Visibility `json:"getter_visibility,omitempty"`
+	SetterVisibility *Visibility `json:"setter_visibility,omitempty"`
 }
 
 // GetNodeKind implements DistilledNode

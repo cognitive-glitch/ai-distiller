@@ -93,7 +93,32 @@ func (p *TreeSitterProcessor) processNode(node *sitter.Node, source []byte, file
 		p.processFieldDeclaration(node, source, file, parent)
 	case "event_declaration", "event_field_declaration":
 		p.processEventDeclaration(node, source, file, parent)
+	case "nullable_directive", "pragma_directive", "region_directive", "endregion_directive", "define_directive", "undef_directive", "if_directive", "elif_directive", "else_directive", "endif_directive", "line_directive", "error_directive", "warning_directive", "preprocessor_call":
+		// Handle preprocessor directives as raw content
+		rawContent := &ir.DistilledRawContent{
+			BaseNode: ir.BaseNode{
+				Location: p.nodeLocation(node),
+			},
+			Content: string(source[node.StartByte():node.EndByte()]) + "\n",
+		}
+		file.Children = append(file.Children, rawContent)
 	default:
+		// Check if this could be a preprocessor directive
+		if strings.HasPrefix(node.Type(), "preproc_") || node.Type() == "ERROR" {
+			// Sometimes directives are parsed as ERROR nodes
+			nodeText := string(source[node.StartByte():node.EndByte()])
+			if strings.HasPrefix(nodeText, "#") {
+				rawContent := &ir.DistilledRawContent{
+					BaseNode: ir.BaseNode{
+						Location: p.nodeLocation(node),
+					},
+					Content: nodeText + "\n",
+				}
+				file.Children = append(file.Children, rawContent)
+				return
+			}
+		}
+		
 		// Recursively process children
 		for i := 0; i < int(node.ChildCount()); i++ {
 			child := node.Child(i)
@@ -203,6 +228,16 @@ func (p *TreeSitterProcessor) processClassDeclaration(node *sitter.Node, source 
 			class.Name = string(source[child.StartByte():child.EndByte()])
 		case "type_parameter_list":
 			p.extractTypeParameters(child, source, class)
+		case "type_parameter_constraints_clauses": // Handle the plural wrapper node
+			for j := 0; j < int(child.ChildCount()); j++ {
+				constraintClause := child.Child(j)
+				if constraintClause.Type() == "type_parameter_constraints_clause" {
+					p.extractTypeParameterConstraints(constraintClause, source, class.TypeParams)
+				}
+			}
+		case "type_parameter_constraints_clause":
+			// Extract where constraints
+			p.extractTypeParameterConstraints(child, source, class.TypeParams)
 		case "base_list":
 			p.extractBaseList(child, source, class)
 		case "declaration_list":
@@ -239,6 +274,16 @@ func (p *TreeSitterProcessor) processInterfaceDeclaration(node *sitter.Node, sou
 			iface.Name = string(source[child.StartByte():child.EndByte()])
 		case "type_parameter_list":
 			p.extractInterfaceTypeParameters(child, source, iface)
+		case "type_parameter_constraints_clauses": // Handle the plural wrapper node
+			for j := 0; j < int(child.ChildCount()); j++ {
+				constraintClause := child.Child(j)
+				if constraintClause.Type() == "type_parameter_constraints_clause" {
+					p.extractTypeParameterConstraints(constraintClause, source, iface.TypeParams)
+				}
+			}
+		case "type_parameter_constraints_clause":
+			// Extract where constraints
+			p.extractTypeParameterConstraints(child, source, iface.TypeParams)
 		case "base_list":
 			p.extractInterfaceBaseList(child, source, iface)
 		case "declaration_list":
@@ -275,6 +320,16 @@ func (p *TreeSitterProcessor) processStructDeclaration(node *sitter.Node, source
 			strct.Name = string(source[child.StartByte():child.EndByte()])
 		case "type_parameter_list":
 			p.extractStructTypeParameters(child, source, strct)
+		case "type_parameter_constraints_clauses": // Handle the plural wrapper node
+			for j := 0; j < int(child.ChildCount()); j++ {
+				constraintClause := child.Child(j)
+				if constraintClause.Type() == "type_parameter_constraints_clause" {
+					p.extractTypeParameterConstraints(constraintClause, source, strct.TypeParams)
+				}
+			}
+		case "type_parameter_constraints_clause":
+			// Extract where constraints
+			p.extractTypeParameterConstraints(child, source, strct.TypeParams)
 		case "base_list":
 			// Structs can only implement interfaces
 			p.extractStructInterfaces(child, source, strct)
@@ -512,7 +567,18 @@ func (p *TreeSitterProcessor) processMethodDeclaration(node *sitter.Node, source
 				method.Name = string(source[child.StartByte():child.EndByte()])
 			}
 		case "type_parameter_list":
-			// TODO: Handle generic methods
+			// Handle generic methods
+			p.extractMethodTypeParameters(child, source, method)
+		case "type_parameter_constraints_clauses": // Handle the plural wrapper node
+			for j := 0; j < int(child.ChildCount()); j++ {
+				constraintClause := child.Child(j)
+				if constraintClause.Type() == "type_parameter_constraints_clause" {
+					p.extractTypeParameterConstraints(constraintClause, source, method.TypeParams)
+				}
+			}
+		case "type_parameter_constraints_clause":
+			// Extract where constraints
+			p.extractTypeParameterConstraints(child, source, method.TypeParams)
 		case "parameter_list":
 			p.extractParameters(child, source, method)
 		case "block", "arrow_expression_clause":
@@ -593,6 +659,7 @@ func (p *TreeSitterProcessor) processPropertyDeclaration(node *sitter.Node, sour
 			Location: p.nodeLocation(node),
 		},
 		Modifiers: []ir.Modifier{},
+		IsProperty: true, // Mark this as a property, not a field
 	}
 	
 
@@ -660,15 +727,13 @@ func (p *TreeSitterProcessor) processPropertyDeclaration(node *sitter.Node, sour
 		}
 	}
 
-	// Add modifiers to indicate property accessors
-	if hasGetter {
+	// Set property accessor information
+	property.HasGetter = hasGetter
+	property.HasSetter = hasSetter || hasInit
+	
+	// Add readonly modifier for init-only or getter-only properties
+	if hasGetter && !hasSetter && !hasInit {
 		property.Modifiers = append(property.Modifiers, ir.ModifierReadonly)
-	}
-	if hasInit && !hasSetter {
-		// Init-only property - mark as readonly since it can only be set during initialization
-		if !hasGetter {
-			property.Modifiers = append(property.Modifiers, ir.ModifierReadonly)
-		}
 	}
 
 	// Set default visibility if not specified
@@ -990,17 +1055,94 @@ func (p *TreeSitterProcessor) extractAttributes(node *sitter.Node, source []byte
 
 // extractTypeParameters extracts generic type parameters
 func (p *TreeSitterProcessor) extractTypeParameters(node *sitter.Node, source []byte, class *ir.DistilledClass) {
-	// TODO: Extract and store type parameters
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		if child.Type() == "type_parameter" {
+			typeParam := ir.TypeParam{
+				Name: "",
+				Constraints: []ir.TypeRef{},
+			}
+			
+			// Extract parameter name and constraints
+			for j := 0; j < int(child.ChildCount()); j++ {
+				paramChild := child.Child(j)
+				if paramChild.Type() == "identifier" {
+					typeParam.Name = string(source[paramChild.StartByte():paramChild.EndByte()])
+				}
+			}
+			
+			class.TypeParams = append(class.TypeParams, typeParam)
+		}
+	}
 }
 
 // extractInterfaceTypeParameters extracts generic type parameters for interfaces
 func (p *TreeSitterProcessor) extractInterfaceTypeParameters(node *sitter.Node, source []byte, iface *ir.DistilledInterface) {
-	// TODO: Extract and store type parameters
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		if child.Type() == "type_parameter" {
+			typeParam := ir.TypeParam{
+				Name: "",
+				Constraints: []ir.TypeRef{},
+			}
+			
+			// Extract parameter name
+			for j := 0; j < int(child.ChildCount()); j++ {
+				paramChild := child.Child(j)
+				if paramChild.Type() == "identifier" {
+					typeParam.Name = string(source[paramChild.StartByte():paramChild.EndByte()])
+				}
+			}
+			
+			iface.TypeParams = append(iface.TypeParams, typeParam)
+		}
+	}
 }
 
 // extractStructTypeParameters extracts generic type parameters for structs
 func (p *TreeSitterProcessor) extractStructTypeParameters(node *sitter.Node, source []byte, strct *ir.DistilledStruct) {
-	// TODO: Extract and store type parameters
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		if child.Type() == "type_parameter" {
+			typeParam := ir.TypeParam{
+				Name: "",
+				Constraints: []ir.TypeRef{},
+			}
+			
+			// Extract parameter name
+			for j := 0; j < int(child.ChildCount()); j++ {
+				paramChild := child.Child(j)
+				if paramChild.Type() == "identifier" {
+					typeParam.Name = string(source[paramChild.StartByte():paramChild.EndByte()])
+				}
+			}
+			
+			strct.TypeParams = append(strct.TypeParams, typeParam)
+		}
+	}
+}
+
+// extractMethodTypeParameters extracts generic type parameters for methods
+func (p *TreeSitterProcessor) extractMethodTypeParameters(node *sitter.Node, source []byte, method *ir.DistilledFunction) {
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		if child.Type() == "type_parameter" {
+			typeParam := ir.TypeParam{
+				Name: "",
+				Constraints: []ir.TypeRef{},
+			}
+			
+			// Extract parameter name
+			for j := 0; j < int(child.ChildCount()); j++ {
+				paramChild := child.Child(j)
+				if paramChild.Type() == "identifier" {
+					typeParam.Name = string(source[paramChild.StartByte():paramChild.EndByte()])
+				}
+			}
+			
+			method.TypeParams = append(method.TypeParams, typeParam)
+		}
+	}
 }
 
 // extractBaseList extracts base class and interfaces
@@ -1056,12 +1198,20 @@ func (p *TreeSitterProcessor) extractRecordParameters(node *sitter.Node, source 
 				},
 				Visibility: ir.VisibilityPublic, // Record properties are public by default
 				Modifiers:  []ir.Modifier{ir.ModifierReadonly}, // Record properties are readonly
+				IsProperty: true, // Record parameters are properties
+				HasGetter: true,  // Record properties have getters
+				HasSetter: false, // Record properties are init-only
 			}
 
-			// Extract parameter type and name
+			// Extract parameter attributes, type and name
 			for j := 0; j < int(child.ChildCount()); j++ {
 				paramChild := child.Child(j)
 				switch paramChild.Type() {
+				case "attribute_list":
+					// Handle property attributes like [property: StringRange(3, 12)]
+					// For record parameters, preserve the full attribute text including target
+					attrText := string(source[paramChild.StartByte():paramChild.EndByte()])
+					property.Decorators = append(property.Decorators, attrText)
 				case "predefined_type", "array_type", "generic_name", "qualified_name":
 					if property.Type == nil {
 						property.Type = p.extractType(paramChild, source)
@@ -1352,4 +1502,71 @@ func (p *TreeSitterProcessor) addToParent(file *ir.DistilledFile, parent ir.Dist
 	} else {
 		file.Children = append(file.Children, child)
 	}
+}
+
+// extractTypeParameterConstraints extracts where constraints for generic type parameters
+func (p *TreeSitterProcessor) extractTypeParameterConstraints(node *sitter.Node, source []byte, typeParams []ir.TypeParam) {
+	// Parse: where TUser : class, IUser
+	// Structure: type_parameter_constraints_clause
+	//   -> identifier (TUser)
+	//   -> type_constraint+ (class, IUser)
+	
+	var paramName string
+	var constraints []ir.TypeRef
+	
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		switch child.Type() {
+		case "identifier":
+			// This is the type parameter name (e.g., TUser)
+			paramName = string(source[child.StartByte():child.EndByte()])
+		case "type_parameter_constraint":
+			// Extract the constraint type
+			constraint := p.extractTypeConstraint(child, source)
+			if constraint != nil {
+				constraints = append(constraints, *constraint)
+			}
+		}
+	}
+	
+	// Find the matching type parameter and update its constraints
+	for i := range typeParams {
+		if typeParams[i].Name == paramName {
+			typeParams[i].Constraints = append(typeParams[i].Constraints, constraints...)
+			break
+		}
+	}
+}
+
+// extractTypeConstraint extracts a single type constraint
+func (p *TreeSitterProcessor) extractTypeConstraint(node *sitter.Node, source []byte) *ir.TypeRef {
+	// Type constraint can be: class, struct, new(), or a type name
+	
+	// If the node itself is the constraint text (e.g., "class", "IUser")
+	nodeText := string(source[node.StartByte():node.EndByte()])
+	if nodeText == "class" || nodeText == "struct" {
+		return &ir.TypeRef{Name: nodeText}
+	}
+	
+	// Otherwise check child nodes
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		switch child.Type() {
+		case "class_constraint":
+			return &ir.TypeRef{Name: "class"}
+		case "struct_constraint":
+			return &ir.TypeRef{Name: "struct"}
+		case "constructor_constraint":
+			return &ir.TypeRef{Name: "new()"}
+		case "identifier", "generic_name", "qualified_name":
+			return p.extractType(child, source)
+		}
+	}
+	
+	// If no specific constraint type found, use the node text directly
+	if nodeText != "" {
+		return &ir.TypeRef{Name: nodeText}
+	}
+	
+	return nil
 }

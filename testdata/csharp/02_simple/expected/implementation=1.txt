@@ -1,23 +1,28 @@
 <file path="source.cs">
+#nullable enable
+
 using System;
-namespace Constructs.Simple02
-public class BankAccount
+namespace Constructs.Simple02;
+public class BankAccount {
     public dynamic BalanceChanged;
-    public readonly string AccountNumber;
-    public readonly decimal Balance;
-    public void BankAccount(string accountNumber, decimal openingBalance)
-    public void Deposit(decimal amount)
-    public void Withdraw(decimal amount)
-    public override string ToString()
-public struct Money
-    public void Money(decimal amount, string currency)
-    public readonly decimal Amount;
-    public readonly string Currency;
-    public bool Equals(other Money)
-    public override int GetHashCode()
-    public override string ToString()
-public class SavingsAccount : BankAccount
-    public readonly decimal InterestRate;
-    public void SavingsAccount(string accountNumber, decimal interestRate, decimal openingBalance)
-    public void AddMonthlyInterest()
+    public string AccountNumber { get; }
+    public decimal Balance { get; set; }
+    public BankAccount(string accountNumber, decimal openingBalance) { }
+    public void Deposit(decimal amount) { }
+    public void Withdraw(decimal amount) { }
+    public override string ToString() { }
+}
+public struct Money {
+    public Money(decimal amount, string currency) { }
+    public decimal Amount { get; }
+    public string Currency { get; }
+    public bool Equals(other Money) { }
+    public override int GetHashCode() { }
+    public override string ToString() { }
+}
+public class SavingsAccount : BankAccount {
+    public decimal InterestRate { get; set; }
+    public SavingsAccount(string accountNumber, decimal interestRate, decimal openingBalance) { }
+    public void AddMonthlyInterest() { }
+}
 </file>

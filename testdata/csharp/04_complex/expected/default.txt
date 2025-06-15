@@ -1,26 +1,34 @@
 <file path="source.cs">
-using System
-using System.Collections.Generic
-using System.ComponentModel.DataAnnotations
-using System.Linq
-using System.Linq.Expressions
-using System.Reflection
-using System.Threading.Tasks
-namespace Constructs.Complex04
-sealed class StringRangeAttribute : ValidationAttribute:
-    readonly int Min
-    readonly int Max
-    void StringRangeAttribute(int min, int max)
-    override bool IsValid(object value)
-class ModelValidatorBuilder:
-    static Func Build()
-class SignupRequest:
-    readonly string Username
-    readonly string Password
-    bool IsPasswordStrong()
-class Demo:
-    static async Task ConsumeAsync(IAsyncEnumerable inputs)
-class ServiceLocator:
-    void Register(instance T)
-    T Resolve()
+#nullable enable
+
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Reflection;
+using System.Threading.Tasks;
+namespace Constructs.Complex04;
+[AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
+public sealed class StringRangeAttribute : ValidationAttribute {
+    public int Min { get; }
+    public int Max { get; }
+    public StringRangeAttribute(int min, int max);
+    public override bool IsValid(object? value);
+}
+public static class ModelValidatorBuilder {
+    public static Func<TModel, bool> Build<TModel>();
+}
+public record SignupRequest(
+    [property: StringRange(3,12)] string Username,
+    [property: StringRange(8,64)] string Password) {
+    public bool IsPasswordStrong();
+}
+public static class Demo {
+    public static async Task ConsumeAsync(IAsyncEnumerable<SignupRequest> inputs);
+}
+public class ServiceLocator {
+    public void Register<T>(instance T) where T : class;
+    public T Resolve<T>() where T : class;
+}
 </file>

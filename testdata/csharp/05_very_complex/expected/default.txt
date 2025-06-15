@@ -1,34 +1,43 @@
 <file path="source.cs">
-using System
-using System.Collections.Generic
-using System.Numerics
-using Microsoft.Extensions.DependencyInjection
-namespace Constructs.VeryComplex05
-class VectorN:
-    readonly T[] Components
-    readonly int Dim = => Components.Length
-    T Dot(VectorN other)
-    override string ToString()
-interface IAlgebraService:
-    VectorN Add(VectorN a, VectorN b)
-    T Dot(VectorN a, VectorN b)
-    VectorN Normalize(VectorN vector)
-sealed class AlgebraService : IAlgebraService:
-    VectorN Add(VectorN a, VectorN b)
-abstract class CalcCommand:
-    sealed class AddCommand : CalcCommand:
-        readonly VectorN A
-        readonly VectorN B
-    sealed class DotCommand : CalcCommand:
-        readonly VectorN A
-        readonly VectorN B
-    sealed class NormalizeCommand : CalcCommand:
-        readonly VectorN Vector
-    sealed class UnknownCommand : CalcCommand:
-class CalcDispatcher:
-    static double Execute(cmd CalcCommand, svc IAlgebraService)
-class MathProcessor:
-    T ProcessValue(input T)
-class Program:
-    static void Main()
+#nullable enable
+
+using System;
+using System.Collections.Generic;
+using System.Numerics;
+using Microsoft.Extensions.DependencyInjection;
+namespace Constructs.VeryComplex05;
+public record VectorN(
+    T[] Components,
+    int Dim) {
+    public T Dot(VectorN<T> other);
+    public override string ToString();
+}
+public interface IAlgebraService {
+    public VectorN<T> Add<T>(VectorN<T> a, VectorN<T> b) where T : INumber;
+    public T Dot<T>(VectorN<T> a, VectorN<T> b) where T : INumber;
+    public VectorN<T> Normalize<T>(VectorN<T> vector) where T : IFloatingPointIeee754;
+}
+public sealed class AlgebraService : IAlgebraService {
+    public VectorN<T> Add<T>(VectorN<T> a, VectorN<T> b) where T : INumber;
+}
+public abstract record CalcCommand {
+    public sealed record AddCommand(
+        VectorN<double> A,
+        VectorN<double> B) : CalcCommand {
+    public sealed record DotCommand(
+        VectorN<double> A,
+        VectorN<double> B) : CalcCommand {
+    public sealed record NormalizeCommand(VectorN<double> Vector) : CalcCommand {
+    public sealed record UnknownCommand : CalcCommand {
+    }
+}
+public static class CalcDispatcher {
+    public static double Execute(cmd CalcCommand, svc IAlgebraService);
+}
+public class MathProcessor<T> where T : INumber, IMinMaxValue {
+    public T ProcessValue(input T);
+}
+public static class Program {
+    public static void Main();
+}
 </file>
