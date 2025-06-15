@@ -7,6 +7,7 @@ import (
 
 	sitter "github.com/smacker/go-tree-sitter"
 	tree_sitter_python "github.com/tree-sitter/tree-sitter-python/bindings/go"
+	"github.com/janreges/ai-distiller/internal/debug"
 	"github.com/janreges/ai-distiller/internal/ir"
 )
 
@@ -29,8 +30,13 @@ func NewNativeTreeSitterProcessor() (*NativeTreeSitterProcessor, error) {
 
 // ProcessSource processes Python source code using tree-sitter
 func (p *NativeTreeSitterProcessor) ProcessSource(ctx context.Context, source []byte, filename string) (*ir.DistilledFile, error) {
+	dbg := debug.FromContext(ctx).WithSubsystem("python:tree-sitter")
+	defer dbg.Timing(debug.LevelDetailed, "tree-sitter parsing")()
+	
 	p.source = source
 	p.filename = filename
+	
+	dbg.Logf(debug.LevelDetailed, "Parsing %d bytes with tree-sitter", len(source))
 	
 	// Parse with tree-sitter
 	tree, err := p.parser.ParseCtx(ctx, nil, source)
@@ -38,6 +44,11 @@ func (p *NativeTreeSitterProcessor) ProcessSource(ctx context.Context, source []
 		return nil, fmt.Errorf("failed to parse: %w", err)
 	}
 	defer tree.Close()
+	
+	// Dump raw AST at trace level
+	debug.Lazy(ctx, debug.LevelTrace, func(d debug.Debugger) {
+		d.Dump(debug.LevelTrace, "Raw tree-sitter AST", p.dumpTree(tree.RootNode(), 0))
+	})
 	
 	// Create IR file
 	file := &ir.DistilledFile{
@@ -57,8 +68,15 @@ func (p *NativeTreeSitterProcessor) ProcessSource(ctx context.Context, source []
 	// Process root node
 	p.processNode(tree.RootNode(), file, nil)
 	
+	dbg.Logf(debug.LevelDetailed, "Processed %d top-level nodes", len(file.Children))
+	
 	// Analyze protocol satisfaction
 	p.analyzeProtocolSatisfaction(file)
+	
+	// Dump final IR structure at trace level
+	debug.Lazy(ctx, debug.LevelTrace, func(d debug.Debugger) {
+		d.Dump(debug.LevelTrace, "Final Python IR structure", file)
+	})
 	
 	return file, nil
 }
@@ -804,4 +822,42 @@ func (p *NativeTreeSitterProcessor) getNonSelfParameters(params []ir.Parameter) 
 func (p *NativeTreeSitterProcessor) typesCompatible(type1, type2 ir.TypeRef) bool {
 	// Simple string comparison for now
 	return strings.TrimSpace(type1.Name) == strings.TrimSpace(type2.Name)
+}
+
+// dumpTree creates a structured representation of the AST for debugging
+func (p *NativeTreeSitterProcessor) dumpTree(node *sitter.Node, depth int) map[string]interface{} {
+	if node == nil {
+		return nil
+	}
+	
+	result := map[string]interface{}{
+		"type":      node.Type(),
+		"named":     node.IsNamed(),
+		"startLine": node.StartPoint().Row + 1,
+		"endLine":   node.EndPoint().Row + 1,
+		"startCol":  node.StartPoint().Column,
+		"endCol":    node.EndPoint().Column,
+	}
+	
+	// Add node text for leaf nodes or small nodes
+	if node.ChildCount() == 0 || (node.EndByte()-node.StartByte() < 100) {
+		text := p.getNodeText(node)
+		if text != "" && len(text) < 100 {
+			result["text"] = text
+		}
+	}
+	
+	// Add children
+	if node.ChildCount() > 0 {
+		children := make([]map[string]interface{}, 0, node.ChildCount())
+		for i := 0; i < int(node.ChildCount()); i++ {
+			child := node.Child(i)
+			if child != nil {
+				children = append(children, p.dumpTree(child, depth+1))
+			}
+		}
+		result["children"] = children
+	}
+	
+	return result
 }

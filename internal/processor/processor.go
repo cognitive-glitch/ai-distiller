@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/janreges/ai-distiller/internal/debug"
 	"github.com/janreges/ai-distiller/internal/ir"
 	"github.com/janreges/ai-distiller/internal/stripper"
 )
@@ -16,12 +17,22 @@ import (
 // Processor processes files and directories
 type Processor struct {
 	useTreeSitter bool
+	ctx          context.Context
 }
 
 // New creates a new processor
 func New() *Processor {
 	return &Processor{
 		useTreeSitter: false,
+		ctx:          context.Background(),
+	}
+}
+
+// NewWithContext creates a new processor with a context
+func NewWithContext(ctx context.Context) *Processor {
+	return &Processor{
+		useTreeSitter: false,
+		ctx:          ctx,
 	}
 }
 
@@ -45,6 +56,11 @@ func (p *Processor) ProcessPath(path string, opts ProcessOptions) (ir.DistilledN
 
 // ProcessFile processes a single file
 func (p *Processor) ProcessFile(filename string, opts ProcessOptions) (*ir.DistilledFile, error) {
+	dbg := debug.FromContext(p.ctx).WithSubsystem("processor")
+	defer dbg.Timing(debug.LevelDetailed, fmt.Sprintf("ProcessFile %s", filepath.Base(filename)))()
+	
+	dbg.Logf(debug.LevelDetailed, "Processing file: %s", filename)
+	
 	// Calculate display path based on options
 	displayPath := filename
 	if opts.FilePathType == "relative" && opts.BasePath != "" {
@@ -96,12 +112,15 @@ func (p *Processor) ProcessFile(filename string, opts ProcessOptions) (*ir.Disti
 		return nil, fmt.Errorf("no processor found for file: %s", filename)
 	}
 	
+	dbg.Logf(debug.LevelDetailed, "Using %s processor for %s", proc.Language(), filename)
+	
 	// Enable tree-sitter if requested and supported
 	if p.useTreeSitter && proc.Language() == "python" {
 		// Use reflection to call EnableTreeSitter if it exists
 		if enabler, ok := proc.(interface{ EnableTreeSitter() }); ok {
 			enableTSFunc := enabler.EnableTreeSitter
 			enableTSFunc()
+			dbg.Logf(debug.LevelDetailed, "Enabled tree-sitter for Python")
 		}
 	}
 
@@ -112,25 +131,34 @@ func (p *Processor) ProcessFile(filename string, opts ProcessOptions) (*ir.Disti
 	}
 	defer file.Close()
 
-	// Process file
-	ctx := context.Background()
-	
+	// Process file using our debug-enabled context
 	// Check if processor supports ProcessWithOptions
 	if procWithOpts, ok := proc.(interface {
 		ProcessWithOptions(context.Context, io.Reader, string, ProcessOptions) (*ir.DistilledFile, error)
 	}); ok {
-		result, err := procWithOpts.ProcessWithOptions(ctx, file, displayPath, opts)
+		result, err := procWithOpts.ProcessWithOptions(p.ctx, file, displayPath, opts)
 		if err != nil {
 			return nil, fmt.Errorf("failed to process file: %w", err)
 		}
+		
+		// Dump the IR structure at trace level
+		debug.Lazy(p.ctx, debug.LevelTrace, func(d debug.Debugger) {
+			d.Dump(debug.LevelTrace, fmt.Sprintf("IR for %s", filepath.Base(filename)), result)
+		})
+		
 		return result, nil
 	}
 	
 	// Fallback to regular Process method
-	result, err := proc.Process(ctx, file, displayPath)
+	result, err := proc.Process(p.ctx, file, displayPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to process file: %w", err)
 	}
+	
+	// Dump the IR structure at trace level
+	debug.Lazy(p.ctx, debug.LevelTrace, func(d debug.Debugger) {
+		d.Dump(debug.LevelTrace, fmt.Sprintf("IR for %s", filepath.Base(filename)), result)
+	})
 
 	// Apply stripping options (but not in raw mode)
 	if !opts.RawMode {
@@ -145,9 +173,15 @@ func (p *Processor) ProcessFile(filename string, opts ProcessOptions) (*ir.Disti
 
 		if stripOpts.RemovePrivate || stripOpts.RemovePrivateOnly || stripOpts.RemoveProtectedOnly || 
 		   stripOpts.RemoveImplementations || stripOpts.RemoveComments || stripOpts.RemoveImports {
+			dbg.Logf(debug.LevelDetailed, "Applying stripper with options: %+v", stripOpts)
+			
 			s := stripper.New(stripOpts)
 			strippedNode := result.Accept(s)
 			if file, ok := strippedNode.(*ir.DistilledFile); ok {
+				// Dump stripped result at trace level
+				debug.Lazy(p.ctx, debug.LevelTrace, func(d debug.Debugger) {
+					d.Dump(debug.LevelTrace, fmt.Sprintf("Stripped IR for %s", filepath.Base(filename)), file)
+				})
 				return file, nil
 			}
 			return nil, fmt.Errorf("unexpected node type after stripping")

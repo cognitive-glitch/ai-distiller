@@ -8,6 +8,7 @@ import (
 	"go/token"
 	"strings"
 
+	"github.com/janreges/ai-distiller/internal/debug"
 	"github.com/janreges/ai-distiller/internal/ir"
 )
 
@@ -27,14 +28,25 @@ func NewASTParser() *ASTParser {
 
 // ProcessSource processes Go source code using go/parser
 func (p *ASTParser) ProcessSource(ctx context.Context, source []byte, filename string) (*ir.DistilledFile, error) {
+	dbg := debug.FromContext(ctx).WithSubsystem("golang:ast")
+	defer dbg.Timing(debug.LevelDetailed, "AST parsing")()
+	
 	p.source = source
 	p.filename = filename
+
+	dbg.Logf(debug.LevelDetailed, "Parsing %d bytes with go/parser", len(source))
 
 	// Parse the source code
 	file, err := parser.ParseFile(p.fset, filename, source, parser.ParseComments)
 	if err != nil {
 		return nil, err
 	}
+
+	// Dump raw AST at trace level
+	debug.Lazy(ctx, debug.LevelTrace, func(d debug.Debugger) {
+		astDump := p.dumpAST(file)
+		d.Dump(debug.LevelTrace, "Raw Go AST", astDump)
+	})
 
 	// Create distilled file
 	distilledFile := &ir.DistilledFile{
@@ -190,6 +202,15 @@ func (p *ASTParser) ProcessSource(ctx context.Context, source []byte, filename s
 	
 	// Fourth pass: process remaining comments
 	p.processComments(file, distilledFile)
+
+	// Log summary at detailed level
+	dbg.Logf(debug.LevelDetailed, "Processed Go file: %d children, %d types in typeMap", 
+		len(distilledFile.Children), len(typeMap))
+	
+	// Dump final structure at trace level
+	debug.Lazy(ctx, debug.LevelTrace, func(d debug.Debugger) {
+		d.Dump(debug.LevelTrace, "Final Go IR structure", distilledFile)
+	})
 
 	return distilledFile, nil
 }
@@ -1164,4 +1185,112 @@ func (p *ASTParser) exprToString(expr ast.Expr) string {
 		}
 		return ""
 	}
+}
+
+// dumpAST creates a structured representation of the Go AST for debugging
+func (p *ASTParser) dumpAST(node ast.Node) map[string]interface{} {
+	if node == nil {
+		return nil
+	}
+	
+	result := map[string]interface{}{
+		"type": fmt.Sprintf("%T", node),
+	}
+	
+	// Add position info
+	if node.Pos().IsValid() {
+		pos := p.fset.Position(node.Pos())
+		result["startLine"] = pos.Line
+		result["startCol"] = pos.Column
+	}
+	if node.End().IsValid() {
+		pos := p.fset.Position(node.End())
+		result["endLine"] = pos.Line
+		result["endCol"] = pos.Column
+	}
+	
+	// Add node-specific information
+	switch n := node.(type) {
+	case *ast.File:
+		result["package"] = n.Name.Name
+		result["imports"] = len(n.Imports)
+		result["declarations"] = len(n.Decls)
+		
+		// Add summary of declarations
+		var funcs, types, vars, consts int
+		for _, decl := range n.Decls {
+			switch decl.(type) {
+			case *ast.FuncDecl:
+				funcs++
+			case *ast.GenDecl:
+				gd := decl.(*ast.GenDecl)
+				switch gd.Tok {
+				case token.TYPE:
+					types++
+				case token.VAR:
+					vars++
+				case token.CONST:
+					consts++
+				}
+			}
+		}
+		result["summary"] = map[string]int{
+			"functions": funcs,
+			"types":     types,
+			"variables": vars,
+			"constants": consts,
+		}
+		
+	case *ast.FuncDecl:
+		result["name"] = n.Name.Name
+		if n.Recv != nil && len(n.Recv.List) > 0 {
+			result["receiver"] = p.formatFieldList(n.Recv)
+		}
+		result["params"] = p.formatFieldList(n.Type.Params)
+		result["results"] = p.formatFieldList(n.Type.Results)
+		
+	case *ast.GenDecl:
+		result["token"] = n.Tok.String()
+		result["specs"] = len(n.Specs)
+		
+	case *ast.TypeSpec:
+		result["name"] = n.Name.Name
+		result["typeKind"] = fmt.Sprintf("%T", n.Type)
+		
+	case *ast.StructType:
+		result["fields"] = n.Fields.NumFields()
+		
+	case *ast.InterfaceType:
+		result["methods"] = len(n.Methods.List)
+		
+	case *ast.ImportSpec:
+		if n.Name != nil {
+			result["alias"] = n.Name.Name
+		}
+		result["path"] = n.Path.Value
+	}
+	
+	return result
+}
+
+// formatFieldList formats a field list for debugging output
+func (p *ASTParser) formatFieldList(fields *ast.FieldList) []string {
+	if fields == nil || fields.List == nil {
+		return nil
+	}
+	
+	var result []string
+	for _, field := range fields.List {
+		fieldStr := ""
+		if len(field.Names) > 0 {
+			names := make([]string, len(field.Names))
+			for i, name := range field.Names {
+				names[i] = name.Name
+			}
+			fieldStr = strings.Join(names, ", ") + " "
+		}
+		fieldStr += p.typeToString(field.Type)
+		result = append(result, fieldStr)
+	}
+	return result
 }

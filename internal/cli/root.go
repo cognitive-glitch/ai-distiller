@@ -12,6 +12,7 @@ import (
 	"strings"
 	
 	"github.com/spf13/cobra"
+	"github.com/janreges/ai-distiller/internal/debug"
 	"github.com/janreges/ai-distiller/internal/formatter"
 	"github.com/janreges/ai-distiller/internal/ir"
 	"github.com/janreges/ai-distiller/internal/processor"
@@ -245,6 +246,13 @@ func initFlags() {
 }
 
 func runDistiller(cmd *cobra.Command, args []string) error {
+	// Create debugger based on verbosity level
+	dbg := debug.New(os.Stderr, verbosity)
+	ctx := debug.NewContext(context.Background(), dbg)
+	
+	// Log startup info
+	dbg.Logf(debug.LevelBasic, "AI Distiller %s starting", Version)
+	
 	// Check if stdin is available (not a TTY) or explicitly requested with "-"
 	stdinAvailable := false
 	if len(args) > 0 && args[0] == "-" {
@@ -259,7 +267,7 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 	
 	// Handle stdin input
 	if stdinAvailable {
-		return processStdin()
+		return processStdinWithContext(ctx)
 	}
 	
 	// Handle file/directory input
@@ -290,41 +298,50 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("invalid output format: %s (valid: %s)", outputFormat, strings.Join(validFormats, ", "))
 	}
 
-	// Log configuration if verbose
-	if verbosity > 0 {
-		fmt.Fprintf(os.Stderr, "AI Distiller %s\n", Version)
-		fmt.Fprintf(os.Stderr, "Input: %s\n", absPath)
-		fmt.Fprintf(os.Stderr, "Output: %s\n", outputFile)
-		fmt.Fprintf(os.Stderr, "Format: %s\n", outputFormat)
-		if len(stripOptions) > 0 {
-			fmt.Fprintf(os.Stderr, "Strip: %s\n", strings.Join(stripOptions, ", "))
-		}
+	// Log configuration using debugger
+	dbg.Logf(debug.LevelBasic, "Input: %s", absPath)
+	dbg.Logf(debug.LevelBasic, "Output: %s", outputFile)
+	dbg.Logf(debug.LevelBasic, "Format: %s", outputFormat)
+	
+	if len(stripOptions) > 0 {
+		dbg.Logf(debug.LevelBasic, "Strip (deprecated): %s", strings.Join(stripOptions, ", "))
 	}
+	
+	// Log detailed configuration at level 2
+	dbg.Logf(debug.LevelDetailed, "Visibility: public=%v, protected=%v, internal=%v, private=%v",
+		getBoolFlag(includePublic, true),
+		getBoolFlag(includeProtected, false),
+		getBoolFlag(includeInternal, false),
+		getBoolFlag(includePrivate, false))
+	dbg.Logf(debug.LevelDetailed, "Content: comments=%v, docstrings=%v, implementation=%v, imports=%v, annotations=%v",
+		getBoolFlag(includeComments, false),
+		getBoolFlag(includeDocstrings, true),
+		getBoolFlag(includeImplementation, false),
+		getBoolFlag(includeImports, true),
+		getBoolFlag(includeAnnotations, true))
 
 	// Create processor options from flags
 	procOpts := createProcessOptionsFromFlags()
 
-	// Create the processor
-	proc := processor.New()
+	// Create the processor with context
+	proc := processor.NewWithContext(ctx)
 	
 	// Enable tree-sitter if requested
 	if useTreeSitter {
 		proc.EnableTreeSitter()
-		if verbosity > 0 {
-			fmt.Fprintf(os.Stderr, "Using tree-sitter parser (experimental)\n")
-		}
+		dbg.Logf(debug.LevelBasic, "Using tree-sitter parser (experimental)")
 	}
 
-	// Log workers configuration if verbose
-	if verbosity > 0 && workers != 1 {
-		actualWorkers := workers
-		if actualWorkers == 0 {
-			actualWorkers = int(float64(runtime.NumCPU()) * 0.8)
-			if actualWorkers < 1 {
-				actualWorkers = 1
-			}
+	// Log workers configuration
+	actualWorkers := workers
+	if actualWorkers == 0 {
+		actualWorkers = int(float64(runtime.NumCPU()) * 0.8)
+		if actualWorkers < 1 {
+			actualWorkers = 1
 		}
-		fmt.Fprintf(os.Stderr, "Using %d parallel workers (%d CPU cores available)\n", actualWorkers, runtime.NumCPU())
+	}
+	if workers != 1 {
+		dbg.Logf(debug.LevelBasic, "Using %d parallel workers (%d CPU cores available)", actualWorkers, runtime.NumCPU())
 	}
 
 	// Set base path information
@@ -356,9 +373,20 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 	// Write output
 	var output strings.Builder
 	
+	// Log formatting phase
+	dbg.Logf(debug.LevelDetailed, "Starting formatting phase with %s formatter", outputFormat)
+	defer dbg.Timing(debug.LevelDetailed, fmt.Sprintf("formatting to %s", outputFormat))()
+	
 	// Handle different result types
 	switch r := result.(type) {
 	case *ir.DistilledFile:
+		dbg.Logf(debug.LevelDetailed, "Formatting single file: %s", r.Path)
+		
+		// Dump IR being formatted at trace level
+		debug.Lazy(ctx, debug.LevelTrace, func(d debug.Debugger) {
+			d.Dump(debug.LevelTrace, "IR being formatted", r)
+		})
+		
 		if err := formatter.Format(&output, r); err != nil {
 			return fmt.Errorf("failed to format output: %w", err)
 		}
@@ -370,21 +398,24 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 				files = append(files, file)
 			}
 		}
+		
+		dbg.Logf(debug.LevelDetailed, "Formatting %d files from directory", len(files))
+		
 		if err := formatter.FormatMultiple(&output, files); err != nil {
 			return fmt.Errorf("failed to format output: %w", err)
 		}
 	default:
 		return fmt.Errorf("unexpected result type: %T", result)
 	}
+	
+	dbg.Logf(debug.LevelDetailed, "Formatted output size: %d bytes", output.Len())
 
 	// Write to file if not stdout-only
 	if outputFile != "" && !outputToStdout {
 		if err := os.WriteFile(outputFile, []byte(output.String()), 0644); err != nil {
 			return fmt.Errorf("failed to write output file: %w", err)
 		}
-		if verbosity > 0 {
-			fmt.Fprintf(os.Stderr, "Wrote output to %s\n", outputFile)
-		}
+		dbg.Logf(debug.LevelBasic, "Wrote output to %s", outputFile)
 	}
 
 	// Write to stdout if requested
@@ -472,10 +503,14 @@ func contains(slice []string, item string) bool {
 	return false
 }
 
-// processStdin handles input from stdin
-func processStdin() error {
+// processStdinWithContext handles input from stdin with debugging context
+func processStdinWithContext(ctx context.Context) error {
+	dbg := debug.FromContext(ctx).WithSubsystem("stdin")
+	
 	// Force stdout output when reading from stdin
 	outputToStdout = true
+	
+	dbg.Logf(debug.LevelBasic, "Processing input from stdin")
 	
 	// Read stdin into buffer for language detection
 	var buffer bytes.Buffer
@@ -486,6 +521,8 @@ func processStdin() error {
 	n, _ := tee.Read(detectBuf)
 	detectBuf = detectBuf[:n]
 	
+	dbg.Logf(debug.LevelDetailed, "Read %d bytes for language detection", n)
+	
 	// Determine language
 	lang := langOverride
 	if lang == "auto" {
@@ -495,9 +532,9 @@ func processStdin() error {
 			return fmt.Errorf("could not auto-detect language from stdin. Please specify with --lang flag")
 		}
 		lang = detectedLang
-		if verbosity > 0 {
-			fmt.Fprintf(os.Stderr, "Detected language: %s\n", lang)
-		}
+		dbg.Logf(debug.LevelBasic, "Detected language: %s", lang)
+	} else {
+		dbg.Logf(debug.LevelBasic, "Using specified language: %s", lang)
 	}
 	
 	// Read the rest of stdin
@@ -513,8 +550,7 @@ func processStdin() error {
 	// Create processor options from flags
 	procOpts := createProcessOptionsFromFlags()
 	
-	// Process the input
-	ctx := context.Background()
+	// Process the input with our debug-enabled context
 	result, err := langProc.ProcessWithOptions(ctx, bytes.NewReader(fullContent), "stdin", procOpts)
 	if err != nil {
 		return fmt.Errorf("failed to process stdin: %w", err)

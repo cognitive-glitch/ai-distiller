@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/janreges/ai-distiller/internal/debug"
 	"github.com/janreges/ai-distiller/internal/ir"
 	"github.com/janreges/ai-distiller/internal/parser"
 	"github.com/janreges/ai-distiller/internal/processor"
@@ -113,19 +114,26 @@ func (p *Processor) ProcessFile(filename string, opts processor.ProcessOptions) 
 
 // ProcessWithOptions parses with specific options
 func (p *Processor) ProcessWithOptions(ctx context.Context, reader io.Reader, filename string, opts processor.ProcessOptions) (*ir.DistilledFile, error) {
+	dbg := debug.FromContext(ctx).WithSubsystem("python")
+	defer dbg.Timing(debug.LevelDetailed, "ProcessWithOptions")()
+	
 	// Read source code
 	source, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read source: %w", err)
 	}
+	
+	dbg.Logf(debug.LevelDetailed, "Processing %s (%d bytes)", filename, len(source))
 
 	// Try tree-sitter first if enabled
 	if p.useTreeSitter {
+		dbg.Logf(debug.LevelDetailed, "Using tree-sitter parser")
 		processor, err := NewNativeTreeSitterProcessor()
 		if err == nil {
 			defer processor.parser.Close()
 			file, err := processor.ProcessSource(ctx, source, filename)
 			if err == nil {
+				dbg.Logf(debug.LevelDetailed, "Tree-sitter parsing successful")
 				// Apply stripper if any options are set
 				stripperOpts := opts.ToStripperOptions()
 				

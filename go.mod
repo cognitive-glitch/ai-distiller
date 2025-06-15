@@ -16,12 +16,15 @@ require (
 	github.com/tree-sitter/tree-sitter-php v0.23.12
 	github.com/tree-sitter/tree-sitter-python v0.23.2
 	github.com/tree-sitter/tree-sitter-ruby v0.23.1
-	tree-sitter-swift v0.0.0
+	tree-sitter-rust v0.0.0
 	tree-sitter-typescript v0.0.0
 )
 
 replace tree-sitter-swift => ./internal/parser/grammars/tree-sitter-swift
+
 replace tree-sitter-typescript => ./internal/parser/grammars/tree-sitter-typescript
+
+replace tree-sitter-rust => ./internal/parser/grammars/tree-sitter-rust
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -29,4 +32,5 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+	tree-sitter-swift v0.0.0-00010101000000-000000000000 // indirect
 )

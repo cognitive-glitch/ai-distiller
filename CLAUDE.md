@@ -23,9 +23,9 @@ aid [path] [flags]
 aid                                    # Process current directory
 aid src/                              # Process src directory
 aid main.py                           # Process single file
-aid --strip comments,implementation   # Remove comments and implementations
+aid --comments=0,implementation   # Remove comments and implementations
 aid --format json --output api.json   # JSON output to file
-aid --strip non-public --stdout       # Print only public members to stdout
+aid --private=0 --protected=0 --internal=0 --stdout       # Print only public members to stdout
 ```
 
 ### Important Flags
@@ -72,7 +72,7 @@ aid src/ --include-only=public,protected,imports
 **Legacy Flag (Deprecated):**
 - `--strip <items>` - Still works but deprecated
   - Values: `comments`, `imports`, `implementation`, `non-public`, `private`, `protected`
-  - Comma-separated: `--strip comments,implementation`
+  - Comma-separated: `--comments=0,implementation`
   
 **Output Format:**
 - `--format <fmt>` - Output format
@@ -101,7 +101,7 @@ echo 'class UserService:
 cat snippet.ts | aid
 
 # Force specific language if needed
-echo 'const x = 10' | aid --lang javascript --strip implementation
+echo 'const x = 10' | aid --lang javascript --implementation=0
 ```
 
 **Benefits for AI assistants:**
@@ -150,7 +150,7 @@ class User:
 </file>
 ```
 
-With `--strip implementation,non-public`:
+With `--implementation=0,non-public`:
 
 ```
 <file path="src/user_service.py">
@@ -188,7 +188,7 @@ class User:
   🔧 **Function** `_validate_email` _private_(`self`, `email`: `str`) → `bool` <sub>L20-25</sub>
 ```
 
-### With `--strip implementation`:
+### With `--implementation=0`:
 
 ```markdown
 # src/user_service.py
@@ -204,7 +204,7 @@ class User:
   🔧 **Function** `_validate_email` _private_(`self`, `email`: `str`) → `bool` <sub>L20-25</sub>
 ```
 
-### With `--strip non-public`:
+### With `--private=0 --protected=0 --internal=0`:
 
 ```markdown
 # src/user_service.py
@@ -267,10 +267,10 @@ type LanguageProcessor interface {
 
 ```go
 type Options struct {
-    RemovePrivate         bool  // --strip non-public
-    RemoveImplementations bool  // --strip implementation
-    RemoveComments        bool  // --strip comments
-    RemoveImports         bool  // --strip imports
+    RemovePrivate         bool  // --private=0 --protected=0 --internal=0
+    RemoveImplementations bool  // --implementation=0
+    RemoveComments        bool  // --comments=0
+    RemoveImports         bool  // --imports=0
 }
 ```
 
@@ -406,12 +406,13 @@ make test-quick    # Quick smoke tests
 
 ### Test Scenarios
 
-1. **full_output** - Everything included
-2. **no_private** - Strip private members
-3. **no_implementation** - Strip function bodies
-4. **minimal** - Structure only
-5. **complex_imports** - Import handling
-6. **edge_cases** - Unicode, async, etc.
+Expected files use new naming convention based on CLI parameters:
+1. **default.txt** - Default output (public only, no implementation)
+2. **implementation=1.txt** - With implementation bodies
+3. **private=1,protected=1,internal=1,implementation=0.txt** - All visibility levels
+4. **imports=0.txt** - Without imports
+5. **comments=1.txt** - With comments
+6. File names reflect non-default parameters (e.g., `private=1.txt` when private is enabled)
 
 ## Performance Guidelines
 
@@ -422,8 +423,8 @@ make test-quick    # Quick smoke tests
 
 ## Common Pitfalls & Solutions
 
-### Issue: Tests expect `--no-private` flag
-**Solution**: Use `--strip non-public` or default behavior (no flag = no private)
+### Issue: Tests expect old flag system
+**Solution**: Use new individual flags: `--private=1`, `--protected=1`, etc. Default shows only public members.
 
 ### Issue: Parser doesn't find all constructs
 **Solution**: Check if line-based parser limitations; full AST via tree-sitter coming
@@ -470,6 +471,93 @@ class UserService:
 - Use 'pro' model for Gemini for deep analysis
 - Use 'o3' model (not 'o3-mini') for o3 conversations
 - Request deep thinking modes when appropriate
+
+## Debugging System
+
+AI Distiller now has a comprehensive 3-level debugging system accessible via CLI flags:
+
+### Debug Levels
+
+- **Level 1 (-v)**: Basic info
+  - File counts and processing summary
+  - Phase transitions (parsing, formatting)
+  - Configuration details
+  - Worker configuration
+
+- **Level 2 (-vv)**: Detailed info  
+  - Individual file processing steps
+  - Parser selection and language detection
+  - Timing information for operations
+  - Stripper configuration details
+  - AST node counts
+
+- **Level 3 (-vvv)**: Full trace with data dumps
+  - Complete IR data structures (like PHP's print_r)
+  - Raw and stripped IR comparison
+  - Detailed parsing steps
+  - Full configuration dumps
+
+### How to Use Debugging
+
+```bash
+# Basic debugging
+aid src/ -v
+
+# Detailed debugging with timing
+aid src/ -vv
+
+# Full trace with data structures
+aid src/ -vvv
+
+# Debug specific file with full trace
+aid main.py -vvv --implementation=1
+```
+
+### Implementation Details
+
+The debugging system uses:
+- **context.Context** for propagation through the pipeline
+- **Debugger interface** with Logf(), Dump(), IsEnabledFor(), WithSubsystem()
+- **Subsystem scoping** for different phases (parser, formatter, stripper)
+- **go-spew** for human-readable data structure dumps
+- **Performance optimization** with IsEnabledFor() checks to avoid expensive operations
+
+### Adding Debug Output to Code
+
+```go
+// Get debugger from context
+dbg := debug.FromContext(ctx).WithSubsystem("mymodule")
+
+// Basic logging
+dbg.Logf(debug.LevelBasic, "Processing %d files", count)
+
+// Detailed logging with timing
+defer dbg.Timing(debug.LevelDetailed, "parsing phase")()
+
+// Trace-level data dumps
+debug.Lazy(ctx, debug.LevelTrace, func(d debug.Debugger) {
+    d.Dump(debug.LevelTrace, "Complete IR", irStructure)
+})
+
+// Performance-safe logging
+if dbg.IsEnabledFor(debug.LevelDetailed) {
+    dbg.Logf(debug.LevelDetailed, "Expensive info: %s", expensiveOperation())
+}
+```
+
+### Debug Output Format
+
+Debug output goes to stderr with format:
+```
+[HH:MM:SS.mmm] [subsystem] LEVEL: message
+```
+
+For data dumps at level 3:
+```
+[HH:MM:SS.mmm] [subsystem] DUMP: === Label ===
+  (structured data using go-spew)
+[HH:MM:SS.mmm] [subsystem] === End Label ===
+```
 
 ## Git Commit Guidelines
 
@@ -618,7 +706,7 @@ func (p *Parser) processNode(node *sitter.Node, file *ir.DistilledFile, parent i
 
 For each language:
 1. Create complex examples with inheritance, generics, privacy
-2. Test all stripping modes: full, `--strip implementation`, `--strip non-public`
+2. Test all stripping modes: full, `--implementation=0`, `--private=0 --protected=0 --internal=0`
 3. Validate method association and interface detection
 4. Compare outputs with AI assistant for accuracy review
 
@@ -667,10 +755,13 @@ The user requested systematic comprehensive testing of AI Distiller across all 1
 
 2. **Implementation Phase**
    - Create source files (.py, .ts, .go, etc.) for each construct
-   - Generate expected output files for 3 distillation options:
-     - `expected_full.txt` - Full distillation (all content)
-     - `expected_no_private.txt` - `--strip non-public` (hide private/internal members)
-     - `expected_no_impl.txt` - `--strip implementation` (preserve signatures only)
+   - Generate expected output files with new naming convention based on CLI parameters:
+     - `default.txt` - Default aid output (public only, no implementation)
+     - `implementation=1.txt` - With implementation bodies
+     - `private=1,protected=1,internal=1,implementation=0.txt` - All visibility, no implementation
+     - `imports=0.txt` - Without import statements
+     - `comments=1.txt` - With comments included
+     - File names reflect the non-default CLI parameters used (without '--' prefix)
 
 3. **Testing Phase** 
    - Implement comprehensive unit tests (5 constructs × 3 options = 15 test cases per language)

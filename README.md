@@ -561,6 +561,57 @@ exclude:
 - [Performance Tuning](docs/performance.md)
 - [Security Guide](docs/security.md)
 
+## 🐛 Debugging
+
+AI Distiller includes a comprehensive 3-level debugging system for troubleshooting and understanding the parsing process:
+
+### Debug Levels
+
+```bash
+# Level 1 (-v): Basic information
+aid main.go -v
+# Shows: file counts, phase transitions, configuration
+
+# Level 2 (-vv): Detailed processing info  
+aid main.go -vv
+# Shows: individual file processing, parser selection, timing
+
+# Level 3 (-vvv): Full data structure dumps
+aid main.go -vvv
+# Shows: complete AST/IR structures, before/after stripping
+```
+
+### Debug Output Features
+
+- **Subsystem prefixes**: `[processor]`, `[python:tree-sitter]`, `[golang:ast]`
+- **Automatic timing**: Operation durations for performance analysis
+- **Data structure dumps**: Full AST and IR representations (like PHP's `print_r`)
+- **Before/after comparisons**: See how stripping transforms the IR
+
+### Example Debug Session
+
+```bash
+# Debug Python parsing with full traces
+echo 'class Example: pass' | aid -vvv --lang python
+
+# Output includes:
+# - Raw tree-sitter AST structure
+# - Initial IR before stripping  
+# - Final IR after stripping
+# - Formatting phase details
+```
+
+### Performance Profiling
+
+Debug output includes timing for each phase:
+- Parser initialization
+- AST parsing
+- IR generation
+- Stripping application
+- Output formatting
+
+This helps identify bottlenecks in processing large codebases.
+
 ## ❓ FAQ
 
 <details>
