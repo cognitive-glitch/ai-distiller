@@ -1,15 +1,13 @@
 <file path="source.java">
-package com.aidi.test.inheritance;
-import java.util.List;
-import java.util.Optional;
+package com.aidi.test.inheritance
+import java.util.List
+import java.util.Optional
 
-interface DataStore<T> {
-}
+interface DataStore<T>:
 
-class UserStore extends BaseStore {
+class UserStore extends BaseStore:
     @Override
-    Optional<User> findById(String id);
+    Optional<User> findById(String id)
     @Override
-    List<User> findAll();
-}
+    List<User> findAll()
 </file>

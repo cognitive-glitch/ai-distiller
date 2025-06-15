@@ -50,13 +50,13 @@ func (f *JavaFormatter) FormatNode(w io.Writer, node ir.DistilledNode, indent in
 func (f *JavaFormatter) formatImport(w io.Writer, imp *ir.DistilledImport, indent string) error {
 	// Java imports are simpler than Python
 	if imp.Module != "" {
-		fmt.Fprintf(w, "%simport %s;\n", indent, imp.Module)
+		fmt.Fprintf(w, "%simport %s\n", indent, imp.Module)
 	}
 	return nil
 }
 
 func (f *JavaFormatter) formatPackage(w io.Writer, pkg *ir.DistilledPackage, indent string) error {
-	fmt.Fprintf(w, "%spackage %s;\n", indent, pkg.Name)
+	fmt.Fprintf(w, "%spackage %s\n", indent, pkg.Name)
 	return nil
 }
 
@@ -70,7 +70,7 @@ func (f *JavaFormatter) formatClass(w io.Writer, class *ir.DistilledClass, inden
 	visPrefix := getVisibilityPrefix(class.Visibility)
 	fmt.Fprintf(w, "%s", visPrefix)
 	
-	// Add modifiers
+	// Add modifiers (but not visibility keywords)
 	for _, mod := range class.Modifiers {
 		switch mod {
 		case ir.ModifierStatic:
@@ -79,8 +79,6 @@ func (f *JavaFormatter) formatClass(w io.Writer, class *ir.DistilledClass, inden
 			fmt.Fprintf(w, "final ")
 		case ir.ModifierAbstract:
 			fmt.Fprintf(w, "abstract ")
-		case ir.ModifierData:
-			fmt.Fprintf(w, "record ") // Special handling for records
 		}
 	}
 	
@@ -94,8 +92,7 @@ func (f *JavaFormatter) formatClass(w io.Writer, class *ir.DistilledClass, inden
 	}
 	
 	if isRecord {
-		fmt.Fprintf(w, "%s", class.Name)
-		// TODO: Add record components
+		fmt.Fprintf(w, "record %s", class.Name)
 	} else {
 		fmt.Fprintf(w, "class %s", class.Name)
 	}
@@ -126,7 +123,7 @@ func (f *JavaFormatter) formatClass(w io.Writer, class *ir.DistilledClass, inden
 		fmt.Fprintf(w, " implements %s", strings.Join(implements, ", "))
 	}
 	
-	fmt.Fprintln(w, " {")
+	fmt.Fprintln(w, ":")
 	
 	// Format class body
 	for _, child := range class.Children {
@@ -134,8 +131,6 @@ func (f *JavaFormatter) formatClass(w io.Writer, class *ir.DistilledClass, inden
 			return err
 		}
 	}
-	
-	fmt.Fprintf(w, "%s}\n", indentStr)
 	
 	return nil
 }
@@ -170,7 +165,7 @@ func (f *JavaFormatter) formatInterface(w io.Writer, intf *ir.DistilledInterface
 		fmt.Fprintf(w, " extends %s", strings.Join(extends, ", "))
 	}
 	
-	fmt.Fprintln(w, " {")
+	fmt.Fprintln(w, ":")
 	
 	// Format interface body
 	for _, child := range intf.Children {
@@ -178,8 +173,6 @@ func (f *JavaFormatter) formatInterface(w io.Writer, intf *ir.DistilledInterface
 			return err
 		}
 	}
-	
-	fmt.Fprintf(w, "%s}\n", indentStr)
 	
 	return nil
 }
@@ -199,7 +192,7 @@ func (f *JavaFormatter) formatEnum(w io.Writer, enum *ir.DistilledEnum, indent i
 	// Enums in IR don't have Implements field
 	// TODO: Add support if needed
 	
-	fmt.Fprintln(w, " {")
+	fmt.Fprintln(w, ":")
 	
 	// Format enum values and body
 	for _, child := range enum.Children {
@@ -207,8 +200,6 @@ func (f *JavaFormatter) formatEnum(w io.Writer, enum *ir.DistilledEnum, indent i
 			return err
 		}
 	}
-	
-	fmt.Fprintf(w, "%s}\n", indentStr)
 	
 	return nil
 }
@@ -228,7 +219,7 @@ func (f *JavaFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, in
 	visPrefix := getVisibilityPrefix(fn.Visibility)
 	fmt.Fprintf(w, "%s", visPrefix)
 	
-	// Add modifiers
+	// Add modifiers (but not visibility keywords)
 	for _, mod := range fn.Modifiers {
 		switch mod {
 		case ir.ModifierStatic:
@@ -237,8 +228,7 @@ func (f *JavaFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, in
 			fmt.Fprintf(w, "final ")
 		case ir.ModifierAbstract:
 			fmt.Fprintf(w, "abstract ")
-		// case ir.ModifierSynchronized:
-		//	fmt.Fprintf(w, "synchronized ")
+		// Synchronize and native are not in IR yet
 		}
 	}
 	
@@ -291,29 +281,16 @@ func (f *JavaFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, in
 	
 	// Format implementation
 	if fn.Implementation != "" {
-		// Check if implementation already includes braces
-		impl := strings.TrimSpace(fn.Implementation)
-		if strings.HasPrefix(impl, "{") && strings.HasSuffix(impl, "}") {
-			// Implementation already has braces, just print it with proper indentation
-			fmt.Fprintln(w, " ")
-			lines := strings.Split(fn.Implementation, "\n")
-			for _, line := range lines {
-				fmt.Fprintf(w, "%s%s\n", indentStr, line)
+		fmt.Fprintln(w, ":")
+		lines := strings.Split(strings.TrimSpace(fn.Implementation), "\n")
+		for _, line := range lines {
+			if line != "" {
+				fmt.Fprintf(w, "%s    %s\n", indentStr, line)
 			}
-		} else {
-			// Add braces
-			fmt.Fprintln(w, " {")
-			lines := strings.Split(fn.Implementation, "\n")
-			for _, line := range lines {
-				if line != "" {
-					fmt.Fprintf(w, "%s    %s\n", indentStr, line)
-				}
-			}
-			fmt.Fprintf(w, "%s}\n", indentStr)
 		}
 	} else {
 		// No implementation - abstract method or interface method
-		fmt.Fprintln(w, ";")
+		fmt.Fprintln(w)
 	}
 	
 	return nil
@@ -327,7 +304,7 @@ func (f *JavaFormatter) formatField(w io.Writer, field *ir.DistilledField, inden
 	visPrefix := getVisibilityPrefix(field.Visibility)
 	fmt.Fprintf(w, "%s", visPrefix)
 	
-	// Add modifiers
+	// Add modifiers (but not visibility keywords)
 	for _, mod := range field.Modifiers {
 		switch mod {
 		case ir.ModifierStatic:

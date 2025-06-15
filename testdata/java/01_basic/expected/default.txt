@@ -1,7 +1,6 @@
 <file path="source.java">
-package com.aidi.test.basic;
+package com.aidi.test.basic
 
-class Basic {
-    static void main(String[] args);
-}
+class Basic:
+    static void main(String[] args)
 </file>

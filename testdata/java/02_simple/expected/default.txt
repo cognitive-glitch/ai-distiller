@@ -1,14 +1,13 @@
 <file path="source.java">
-package com.aidi.test.oop;
-import java.util.Objects;
+package com.aidi.test.oop
+import java.util.Objects
 
-class SimpleOOP {
+class SimpleOOP:
     final String id;
-    SimpleOOP(String id, String name);
-    SimpleOOP(String id);
-    String getName();
-    void setName(String name);
+    SimpleOOP(String id, String name)
+    SimpleOOP(String id)
+    String getName()
+    void setName(String name)
     @Override
-    String toString();
-}
+    String toString()
 </file>
