@@ -1,3 +1,4 @@
+benchmark/
 test_repos/
 differential_testing_results.json
 coverage.txt
@@ -5,3 +6,7 @@ aid
 .*.aid.txt
 *.tmp
 *.log
+
+# Binary files
+aid
+aid-*
