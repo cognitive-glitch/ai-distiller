@@ -9,15 +9,15 @@ class Clamped:
 class ValidationResult:
 
 class ConfigurationBuilder:
-    func buildBlock(_: ValidationResult) -> [ValidationResult]
-    func buildExpression(_: String) -> ValidationResult
-    func buildEither(first: [ValidationResult]) -> [ValidationResult]
-    func buildEither(second: [ValidationResult]) -> [ValidationResult]
+    buildBlock(_: ValidationResult) -> [ValidationResult]
+    buildExpression(_: String) -> ValidationResult
+    buildEither(first: [ValidationResult]) -> [ValidationResult]
+    buildEither(second: [ValidationResult]) -> [ValidationResult]
 
 protocol Describable:
 
 class SettingsProxy:
 
 class UserSettings:
-    func asProxy() -> SettingsProxy
+    asProxy() -> SettingsProxy
 </file>

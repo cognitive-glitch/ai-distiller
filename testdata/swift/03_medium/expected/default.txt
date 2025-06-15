@@ -2,9 +2,9 @@
 import Foundation
 
 class Stack:
-    func push(_: Element)
-    func peek() -> Element?
-    func pop() -> Element?
+    push(_: Element)
+    peek() -> Element?
+    pop() -> Element?
 
 class :
 
@@ -13,7 +13,7 @@ class MathError:
 protocol Cacheable:
 
 class ExpiringCache:
-    func insert(_: Value, for: Key)
-    func value(for: Key) -> Value?
-    func contains(key: Key) -> Bool
+    insert(_: Value, for: Key)
+    value(for: Key) -> Value?
+    contains(key: Key) -> Bool
 </file>

@@ -196,7 +196,7 @@ func (f *SwiftFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, i
 	if fn.Name == "init" {
 		fmt.Fprintf(w, "%s%s%sinit", indent, visPrefix, modifiers)
 	} else {
-		fmt.Fprintf(w, "%s%s%sfunc %s", indent, visPrefix, modifiers, fn.Name)
+		fmt.Fprintf(w, "%s%s%s%s", indent, visPrefix, modifiers, fn.Name)
 	}
 	
 	// Add generic type parameters

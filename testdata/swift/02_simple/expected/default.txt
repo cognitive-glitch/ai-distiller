@@ -17,6 +17,6 @@ class Rectangle:
 
 class UIRectangle:
     var description: String
-    func show()
-    func hide()
+    show()
+    hide()
 </file>

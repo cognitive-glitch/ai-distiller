@@ -6,14 +6,14 @@ protocol Event:
 protocol EventHandler:
 
 class EventBus:
-    func subscribe(_: H)
-    func post(_: E)
-func (handler: H, bus: EventBus)
-func (lhs: T, rhs: U) -> (T, U)
-func detailedDebugLog(_: T) -> String
+    subscribe(_: H)
+    post(_: E)
+(handler: H, bus: EventBus)
+(lhs: T, rhs: U) -> (T, U)
+detailedDebugLog(_: T) -> String
 
 class ReflectionAnalyzer:
-    func analyze(_: T) -> StructureInfo
+    analyze(_: T) -> StructureInfo
 
 class StructureInfo:
     var typeName: String
@@ -25,24 +25,24 @@ class PropertyInfo:
     var type: String
 
 class ThreadSafeQueue:
-    func enqueue(_: T)
-    func dequeue() -> T?
-    func makeIterator() -> IndexingIterator<[T]>
+    enqueue(_: T)
+    dequeue() -> T?
+    makeIterator() -> IndexingIterator<[T]>
 
 class CircularBuffer:
     var startIndex: Int
     var endIndex: Int
-    func index(after: Int) -> Int
+    index(after: Int) -> Int
     var count: Int
 
 class ConcurrentEventLogger:
     var monitor: ActivityMonitor
     var delegate: EventLoggerDelegate?
-    func logEvent(_: E)
+    logEvent(_: E)
 
 protocol EventLoggerDelegate:
 
 class ActivityMonitor:
-    func record(_: String)
-    func analyze(_: T) -> StructureInfo
+    record(_: String)
+    analyze(_: T) -> StructureInfo
 </file>
