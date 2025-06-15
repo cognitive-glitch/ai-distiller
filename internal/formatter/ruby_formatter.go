@@ -75,15 +75,14 @@ func (f *RubyFormatter) formatClass(w io.Writer, class *ir.DistilledClass, inden
 		fmt.Fprintf(w, " < %s", class.Extends[0].Name)
 	}
 	
-	fmt.Fprintln(w)
+	fmt.Fprintln(w, ":")
 	
 	// Format class members
 	for _, child := range class.Children {
 		f.FormatNode(w, child, indent+1)
 	}
 	
-	// Close class
-	fmt.Fprintf(w, "%send\n", indentStr)
+	// No 'end' in text format
 	
 	return nil
 }
@@ -95,15 +94,14 @@ func (f *RubyFormatter) formatModule(w io.Writer, mod *ir.DistilledInterface, in
 	fmt.Fprintln(w)
 	
 	// Format module declaration
-	fmt.Fprintf(w, "%smodule %s\n", indentStr, mod.Name)
+	fmt.Fprintf(w, "%smodule %s:\n", indentStr, mod.Name)
 	
 	// Format module members
 	for _, child := range mod.Children {
 		f.FormatNode(w, child, indent+1)
 	}
 	
-	// Close module
-	fmt.Fprintf(w, "%send\n", indentStr)
+	// No 'end' in text format
 	
 	return nil
 }
@@ -123,9 +121,9 @@ func (f *RubyFormatter) formatMethod(w io.Writer, fn *ir.DistilledFunction, inde
 	
 	// Format method declaration
 	if isClassMethod {
-		fmt.Fprintf(w, "%s%sdef self.%s", indent, visPrefix, fn.Name)
+		fmt.Fprintf(w, "%s%sself.%s", indent, visPrefix, fn.Name)
 	} else {
-		fmt.Fprintf(w, "%s%sdef %s", indent, visPrefix, fn.Name)
+		fmt.Fprintf(w, "%s%s%s", indent, visPrefix, fn.Name)
 	}
 	
 	// Parameters
@@ -142,10 +140,10 @@ func (f *RubyFormatter) formatMethod(w io.Writer, fn *ir.DistilledFunction, inde
 		for _, line := range strings.Split(impl, "\n") {
 			fmt.Fprintf(w, "%s    %s\n", indent, line)
 		}
-		fmt.Fprintf(w, "%send\n", indent)
+		// No 'end' in text format
 	} else {
 		fmt.Fprintln(w)
-		fmt.Fprintf(w, "%send\n", indent)
+		// No 'end' in text format
 	}
 	
 	return nil

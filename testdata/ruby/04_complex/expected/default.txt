@@ -1,79 +1,45 @@
 <file path="source.rb">
 
-module DSLBuilder
-    def self.included(base)
-    end
+module DSLBuilder:
+    self.included(base)
 
-    module ClassMethods
-        def dsl_method(name, &default_block)
-        end
-        def chainable_attr(*names*)
-        end
-    end
+    module ClassMethods:
+        dsl_method(name, &default_block)
+        chainable_attr(*names*)
 
-    class DSLContext
-        def initialize(target)
-        end
-        def method_missing(method_name, *args*, &block)
-        end
-        def respond_to_missing?(method_name, include_private = ...)
-        end
-    end
-end
+    class DSLContext:
+        initialize(target)
+        method_missing(method_name, *args*, &block)
+        respond_to_missing?(method_name, include_private = ...)
 
-module FluentInterface
-    def self.included(base)
-    end
+module FluentInterface:
+    self.included(base)
 
-    module ClassMethods
-        def fluent_builder(*method_names*)
-        end
-    end
-end
+    module ClassMethods:
+        fluent_builder(*method_names*)
 
-module ReflectionUtils
-    def self.create_class(class_name, parent_class = ..., &block)
-    end
-    def self.analyze_class(klass)
-    end
-end
+module ReflectionUtils:
+    self.create_class(class_name, parent_class = ..., &block)
+    self.analyze_class(klass)
 
-class ConfigurationBuilder
-    def initialize
-    end
-    def add_middleware(middleware_class, *options*)
-    end
-    def add_plugin(plugin_name, &configuration_block)
-    end
-    def method_missing(method_name, *args*, &block)
-    end
-    def respond_to_missing?(method_name, include_private = ...)
-    end
-    def to_hash
-    end
-    def validate_configuration
-    end
-end
+class ConfigurationBuilder:
+    initialize
+    add_middleware(middleware_class, *options*)
+    add_plugin(plugin_name, &configuration_block)
+    method_missing(method_name, *args*, &block)
+    respond_to_missing?(method_name, include_private = ...)
+    to_hash
+    validate_configuration
 
-class PluginConfiguration
-    def initialize
-    end
-    def option(key, value)
-    end
-    def timeout(seconds)
-    end
-    def retries(count)
-    end
-    def method_missing(method_name, *args*)
-    end
-    def respond_to_missing?(method_name, include_private = ...)
-    end
-    def to_hash
-    end
-end
+class PluginConfiguration:
+    initialize
+    option(key, value)
+    timeout(seconds)
+    retries(count)
+    method_missing(method_name, *args*)
+    respond_to_missing?(method_name, include_private = ...)
+    to_hash
 
-class DynamicClassFactory
-    def self.create_model(name, &definition)
-    end
-end
+class DynamicClassFactory:
+    self.create_model(name, &definition)
 </file>

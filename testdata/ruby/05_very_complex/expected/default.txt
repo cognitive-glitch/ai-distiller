@@ -1,83 +1,47 @@
 <file path="source.rb">
 
-module AdvancedMetaprogramming
-    def self.included(base)
-    end
+module AdvancedMetaprogramming:
+    self.included(base)
 
-    module ClassMethods
-        def intercept_method_chain(*method_names*, &interceptor)
-        end
-        def method_chain(name, &definition)
-        end
-    end
+    module ClassMethods:
+        intercept_method_chain(*method_names*, &interceptor)
+        method_chain(name, &definition)
 
-    class MethodChainContext
-        def initialize(target, chain_name)
-        end
-        def step(name, &block)
-        end
-        def execute(&final_block)
-        end
-    end
-end
+    class MethodChainContext:
+        initialize(target, chain_name)
+        step(name, &block)
+        execute(&final_block)
 
-module CodeGenerator
-    def self.generate_crud_methods(class_name, table_name)
-    end
-    def self.generate_validators(target_class, validations)
-    end
-    def self.build_validation_code(field, rules)
-    end
-end
+module CodeGenerator:
+    self.generate_crud_methods(class_name, table_name)
+    self.generate_validators(target_class, validations)
+    self.build_validation_code(field, rules)
 
-class RuntimeCodeModifier
-    def initialize
-    end
-    def modify_method(target, method_name, &new_implementation)
-    end
-    def restore_method(target, method_name)
-    end
-    def create_method_proxy(target)
-    end
-    def should_intercept?(method_name)
-    end
-    def intercept_call(target, method_name, args, block)
-    end
-end
+class RuntimeCodeModifier:
+    initialize
+    modify_method(target, method_name, &new_implementation)
+    restore_method(target, method_name)
+    create_method_proxy(target)
+    should_intercept?(method_name)
+    intercept_call(target, method_name, args, block)
 
-class QueryDSL
-    def initialize
-    end
-    def where(condition)
-    end
-    def join(table, on:)
-    end
-    def order(field, direction:)
-    end
-    def limit(count)
-    end
-    def compile_to_ruby
-    end
-    def execute
-    end
-end
+class QueryDSL:
+    initialize
+    where(condition)
+    join(table, on:)
+    order(field, direction:)
+    limit(count)
+    compile_to_ruby
+    execute
 
-class SelfModifyingClass
+class SelfModifyingClass:
     @modifications
-    def self.add_modification(&block)
-    end
-    def self.apply_modifications
-    end
-    def self.evolve(&evolution_block)
-    end
-    def modify_self_class(&block)
-    end
-    def inspect_modifications
-    end
-end
+    self.add_modification(&block)
+    self.apply_modifications
+    self.evolve(&evolution_block)
+    modify_self_class(&block)
+    inspect_modifications
 
-class CustomDispatchFactory
-    def self.create_class_with_dispatch(class_name, &dispatch_logic)
-    end
-end
+class CustomDispatchFactory:
+    self.create_class_with_dispatch(class_name, &dispatch_logic)
 </file>
