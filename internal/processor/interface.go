@@ -72,6 +72,25 @@ type ProcessOptions struct {
 
 	// IncludeLineNumbers adds line number information
 	IncludeLineNumbers bool
+	
+	// Workers specifies the number of parallel workers for processing
+	// 0 = auto (80% of CPU cores), 1 = serial processing
+	Workers int
+	
+	// RawMode processes all text files without parsing
+	RawMode bool
+	
+	// Recursive controls whether to process directories recursively
+	Recursive bool
+	
+	// BasePath is the original path provided by the user (for relative path calculation)
+	BasePath string
+	
+	// FilePathType controls how paths appear in output: "relative" or "absolute"
+	FilePathType string
+	
+	// RelativePathPrefix is a custom prefix for relative paths (e.g., "src/")
+	RelativePathPrefix string
 }
 
 // DefaultProcessOptions returns default processing options
@@ -90,6 +109,11 @@ func DefaultProcessOptions() ProcessOptions {
 		Strict:                false,
 		SymbolResolution:      true,
 		IncludeLineNumbers:    true,
+		Workers:               0, // 0 = auto (80% of CPU cores)
+		Recursive:             true,
+		FilePathType:          "relative",
+		RelativePathPrefix:    "",
+		BasePath:              "",
 	}
 }
 
