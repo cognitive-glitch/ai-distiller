@@ -110,25 +110,19 @@ func (f *CSharpFormatter) FormatNode(w io.Writer, node ir.DistilledNode, indent 
 func (f *CSharpFormatter) formatImport(imp *ir.DistilledImport) string {
 	// Check if this is an aliased import via symbols
 	if len(imp.Symbols) == 1 && imp.Symbols[0].Alias != "" {
-		return fmt.Sprintf("using %s = %s.%s;", imp.Symbols[0].Alias, imp.Module, imp.Symbols[0].Name)
+		return fmt.Sprintf("using %s = %s.%s", imp.Symbols[0].Alias, imp.Module, imp.Symbols[0].Name)
 	}
-	return fmt.Sprintf("using %s;", imp.Module)
+	return fmt.Sprintf("using %s", imp.Module)
 }
 
 func (f *CSharpFormatter) formatClass(class *ir.DistilledClass, indent int) string {
 	indentStr := strings.Repeat("    ", indent)
 
-	// Access modifier
+	// Get visibility prefix
+	visPrefix := getVisibilityPrefix(class.Visibility)
+	
+	// Collect non-visibility modifiers
 	modifiers := []string{}
-	if class.Visibility == ir.VisibilityPublic {
-		modifiers = append(modifiers, "public")
-	} else if class.Visibility == ir.VisibilityProtected {
-		modifiers = append(modifiers, "protected")
-	} else if class.Visibility == ir.VisibilityPrivate {
-		modifiers = append(modifiers, "private")
-	} else {
-		modifiers = append(modifiers, "internal")
-	}
 
 	// Check modifiers
 	for _, mod := range class.Modifiers {
@@ -142,9 +136,9 @@ func (f *CSharpFormatter) formatClass(class *ir.DistilledClass, indent int) stri
 	}
 
 	// Class declaration
-	classDecl := strings.Join(modifiers, " ")
-	if classDecl != "" {
-		classDecl += " "
+	classDecl := fmt.Sprintf("%s%s", indentStr, visPrefix)
+	if len(modifiers) > 0 {
+		classDecl += strings.Join(modifiers, " ") + " "
 	}
 	classDecl += "class " + class.Name
 
@@ -169,26 +163,18 @@ func (f *CSharpFormatter) formatClass(class *ir.DistilledClass, indent int) stri
 		classDecl += " : " + strings.Join(bases, ", ")
 	}
 
-	return indentStr + f.addVisibilityPrefix(class.Visibility) + classDecl
+	// Add colon for Python-like syntax
+	return classDecl + ":"
 }
 
 func (f *CSharpFormatter) formatInterface(intf *ir.DistilledInterface, indent int) string {
 	indentStr := strings.Repeat("    ", indent)
 
-	// Access modifier
-	modifiers := []string{}
-	if intf.Visibility == ir.VisibilityPublic {
-		modifiers = append(modifiers, "public")
-	} else if intf.Visibility == ir.VisibilityInternal {
-		modifiers = append(modifiers, "internal")
-	}
-
+	// Get visibility prefix
+	visPrefix := getVisibilityPrefix(intf.Visibility)
+	
 	// Interface declaration
-	intfDecl := strings.Join(modifiers, " ")
-	if intfDecl != "" {
-		intfDecl += " "
-	}
-	intfDecl += "interface " + intf.Name
+	intfDecl := fmt.Sprintf("%s%sinterface %s", indentStr, visPrefix, intf.Name)
 
 	// Generics
 	if len(intf.TypeParams) > 0 {
@@ -208,26 +194,17 @@ func (f *CSharpFormatter) formatInterface(intf *ir.DistilledInterface, indent in
 		intfDecl += " : " + strings.Join(extends, ", ")
 	}
 
-	return indentStr + f.addVisibilityPrefix(intf.Visibility) + intfDecl
+	return intfDecl + ":"
 }
 
 func (f *CSharpFormatter) formatStruct(strct *ir.DistilledStruct, indent int) string {
 	indentStr := strings.Repeat("    ", indent)
 
-	// Access modifier
-	modifiers := []string{}
-	if strct.Visibility == ir.VisibilityPublic {
-		modifiers = append(modifiers, "public")
-	} else if strct.Visibility == ir.VisibilityInternal {
-		modifiers = append(modifiers, "internal")
-	}
-
+	// Get visibility prefix
+	visPrefix := f.addVisibilityPrefix(strct.Visibility)
+	
 	// Struct declaration
-	structDecl := strings.Join(modifiers, " ")
-	if structDecl != "" {
-		structDecl += " "
-	}
-	structDecl += "struct " + strct.Name
+	structDecl := fmt.Sprintf("%s%sstruct %s", indentStr, visPrefix, strct.Name)
 
 	// Generics
 	if len(strct.TypeParams) > 0 {
@@ -238,49 +215,34 @@ func (f *CSharpFormatter) formatStruct(strct *ir.DistilledStruct, indent int) st
 		structDecl += "<" + strings.Join(genericParams, ", ") + ">"
 	}
 
-	return indentStr + f.addVisibilityPrefix(strct.Visibility) + structDecl
+	return structDecl + ":"
 }
 
 func (f *CSharpFormatter) formatEnum(enum *ir.DistilledEnum, indent int) string {
 	indentStr := strings.Repeat("    ", indent)
 
-	// Access modifier
-	modifiers := []string{}
-	if enum.Visibility == ir.VisibilityPublic {
-		modifiers = append(modifiers, "public")
-	} else if enum.Visibility == ir.VisibilityInternal {
-		modifiers = append(modifiers, "internal")
-	}
-
+	// Get visibility prefix
+	visPrefix := f.addVisibilityPrefix(enum.Visibility)
+	
 	// Enum declaration
-	enumDecl := strings.Join(modifiers, " ")
-	if enumDecl != "" {
-		enumDecl += " "
-	}
-	enumDecl += "enum " + enum.Name
+	enumDecl := fmt.Sprintf("%s%senum %s", indentStr, visPrefix, enum.Name)
 
 	// Base type
 	if enum.Type != nil {
 		enumDecl += " : " + enum.Type.Name
 	}
 
-	return indentStr + f.addVisibilityPrefix(enum.Visibility) + enumDecl
+	return enumDecl + ":"
 }
 
 func (f *CSharpFormatter) formatFunction(fn *ir.DistilledFunction, indent int) string {
 	indentStr := strings.Repeat("    ", indent)
 
-	// Access modifiers
+	// Get visibility prefix
+	visPrefix := f.addVisibilityPrefix(fn.Visibility)
+	
+	// Collect non-visibility modifiers
 	modifiers := []string{}
-	if fn.Visibility == ir.VisibilityPublic {
-		modifiers = append(modifiers, "public")
-	} else if fn.Visibility == ir.VisibilityProtected {
-		modifiers = append(modifiers, "protected")
-	} else if fn.Visibility == ir.VisibilityPrivate {
-		modifiers = append(modifiers, "private")
-	} else {
-		modifiers = append(modifiers, "internal")
-	}
 
 	// Check modifiers
 	for _, mod := range fn.Modifiers {
@@ -306,9 +268,9 @@ func (f *CSharpFormatter) formatFunction(fn *ir.DistilledFunction, indent int) s
 	}
 
 	// Function signature
-	signature := strings.Join(modifiers, " ")
-	if signature != "" {
-		signature += " "
+	signature := fmt.Sprintf("%s%s", indentStr, visPrefix)
+	if len(modifiers) > 0 {
+		signature += strings.Join(modifiers, " ") + " "
 	}
 	signature += returnType + " " + fn.Name
 
@@ -337,23 +299,17 @@ func (f *CSharpFormatter) formatFunction(fn *ir.DistilledFunction, indent int) s
 	}
 	signature += "(" + strings.Join(params, ", ") + ")"
 
-	return indentStr + f.addVisibilityPrefix(fn.Visibility) + signature
+	return signature
 }
 
 func (f *CSharpFormatter) formatField(field *ir.DistilledField, indent int) string {
 	indentStr := strings.Repeat("    ", indent)
 
-	// Access modifiers
+	// Get visibility prefix
+	visPrefix := f.addVisibilityPrefix(field.Visibility)
+	
+	// Collect non-visibility modifiers
 	modifiers := []string{}
-	if field.Visibility == ir.VisibilityPublic {
-		modifiers = append(modifiers, "public")
-	} else if field.Visibility == ir.VisibilityProtected {
-		modifiers = append(modifiers, "protected")
-	} else if field.Visibility == ir.VisibilityPrivate {
-		modifiers = append(modifiers, "private")
-	} else {
-		modifiers = append(modifiers, "internal")
-	}
 
 	// Check modifiers
 	for _, mod := range field.Modifiers {
@@ -367,9 +323,9 @@ func (f *CSharpFormatter) formatField(field *ir.DistilledField, indent int) stri
 	}
 
 	// Field declaration
-	fieldDecl := strings.Join(modifiers, " ")
-	if fieldDecl != "" {
-		fieldDecl += " "
+	fieldDecl := fmt.Sprintf("%s%s", indentStr, visPrefix)
+	if len(modifiers) > 0 {
+		fieldDecl += strings.Join(modifiers, " ") + " "
 	}
 
 	// Type
@@ -386,9 +342,10 @@ func (f *CSharpFormatter) formatField(field *ir.DistilledField, indent int) stri
 		fieldDecl += " = " + field.DefaultValue
 	}
 
-	fieldDecl += ";"
+	// Remove semicolon for Python-like syntax
+	// fieldDecl += ";"
 
-	return indentStr + f.addVisibilityPrefix(field.Visibility) + fieldDecl
+	return fieldDecl
 }
 
 func (f *CSharpFormatter) addVisibilityPrefix(visibility ir.Visibility) string {

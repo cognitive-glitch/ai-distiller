@@ -1,23 +1,23 @@
 <file path="source.cs">
-using System;
+using System
 namespace Constructs.Simple02
-public class BankAccount
-    public dynamic BalanceChanged;
-    public readonly string AccountNumber;
-    public readonly decimal Balance;
-    public void BankAccount(string accountNumber, decimal openingBalance)
-    public void Deposit(decimal amount)
-    public void Withdraw(decimal amount)
-    public override string ToString()
-public struct Money
-    public void Money(decimal amount, string currency)
-    public readonly decimal Amount;
-    public readonly string Currency;
-    public bool Equals(other Money)
-    public override int GetHashCode()
-    public override string ToString()
-public class SavingsAccount : BankAccount
-    public readonly decimal InterestRate;
-    public void SavingsAccount(string accountNumber, decimal interestRate, decimal openingBalance)
-    public void AddMonthlyInterest()
+class BankAccount:
+    dynamic BalanceChanged
+    readonly string AccountNumber
+    readonly decimal Balance
+    void BankAccount(string accountNumber, decimal openingBalance)
+    void Deposit(decimal amount)
+    void Withdraw(decimal amount)
+    override string ToString()
+struct Money:
+    void Money(decimal amount, string currency)
+    readonly decimal Amount
+    readonly string Currency
+    bool Equals(other Money)
+    override int GetHashCode()
+    override string ToString()
+class SavingsAccount : BankAccount:
+    readonly decimal InterestRate
+    void SavingsAccount(string accountNumber, decimal interestRate, decimal openingBalance)
+    void AddMonthlyInterest()
 </file>
