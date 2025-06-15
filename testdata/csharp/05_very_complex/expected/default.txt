@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/csharp/05_very_complex/source.cs">
+<file path="source.cs">
 using System;
 using System.Collections.Generic;
 using System.Numerics;

@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/csharp/01_basic/source.cs">
+<file path="source.cs">
 namespace Constructs.Basic01
 public class StringExtensions
     public static string ToTitleCase(string input)

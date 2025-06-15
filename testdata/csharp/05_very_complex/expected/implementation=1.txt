@@ -1,13 +1,34 @@
-<file path="/home/janreges/ai-distiller/testdata/csharp/05_very_complex/source.cs">
+<file path="source.cs">
 using System;
 using System.Collections.Generic;
 using System.Numerics;
 using Microsoft.Extensions.DependencyInjection;
+namespace Constructs.VeryComplex05
 public class VectorN
+    public readonly T[] Components;
+    public readonly int Dim = => Components.Length;
+    public T Dot(VectorN other)
+    public override string ToString()
 public interface IAlgebraService
+    public VectorN Add(VectorN a, VectorN b)
+    public T Dot(VectorN a, VectorN b)
+    public VectorN Normalize(VectorN vector)
 public sealed class AlgebraService : IAlgebraService
+    public VectorN Add(VectorN a, VectorN b)
 public abstract class CalcCommand
+    public sealed class AddCommand : CalcCommand
+        public readonly VectorN A;
+        public readonly VectorN B;
+    public sealed class DotCommand : CalcCommand
+        public readonly VectorN A;
+        public readonly VectorN B;
+    public sealed class NormalizeCommand : CalcCommand
+        public readonly VectorN Vector;
+    public sealed class UnknownCommand : CalcCommand
 public class CalcDispatcher
+    public static double Execute(cmd CalcCommand, svc IAlgebraService)
 public class MathProcessor
+    public T ProcessValue(input T)
 public class Program
+    public static void Main()
 </file>

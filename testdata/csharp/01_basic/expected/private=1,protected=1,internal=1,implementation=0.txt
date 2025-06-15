@@ -1,5 +1,16 @@
-<file path="/home/janreges/ai-distiller/testdata/csharp/01_basic/source.cs">
+<file path="source.cs">
+namespace Constructs.Basic01
 ~internal class MathHelpers
+    public const double Pi = 3.1415926535897931;
+    public static (double C, double A) Circle(double radius)
+    public static double[] Areas(double[] radii)
+    -private static double _calculateAdvanced(double input)
+    ~internal static double GetVolume(double radius)
 ~internal class Greeting
+    -private const string DefaultName = "world";
+    public static string Hello(string name)
+    -private static bool IsValidName(string name)
+    ~internal static string FormatName(string name)
 public class StringExtensions
+    public static string ToTitleCase(string input)
 </file>

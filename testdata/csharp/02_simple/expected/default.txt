@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/csharp/02_simple/source.cs">
+<file path="source.cs">
 using System;
 namespace Constructs.Simple02
 public class BankAccount

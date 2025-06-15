@@ -1,15 +1,50 @@
-<file path="/home/janreges/ai-distiller/testdata/csharp/03_medium/source.cs">
+<file path="source.cs">
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+namespace Constructs.Medium03
 public interface IRepository
+    public Task AddAsync(entity TEntity, ct CancellationToken)
+    public Task GetAsync(id TKey, ct CancellationToken)
+    public Task RemoveAsync(id TKey, ct CancellationToken)
+    public IAsyncEnumerable QueryAsync(Func predicate, ct CancellationToken)
 public interface IEntity
+    -private readonly TKey Id;
 public abstract class EntityBase : IEntity
+    public readonly Id T;
 public class InMemoryRepository : IRepository
+    -private readonly ConcurrentDictionary _store = new();
+    public Task AddAsync(entity TEntity, ct CancellationToken)
+    public Task GetAsync(id TKey, ct CancellationToken)
+    public Task RemoveAsync(id TKey, ct CancellationToken)
+    public async IAsyncEnumerable QueryAsync(Func predicate, ct CancellationToken)
+    -private void CleanupExpiredEntities()
+    *protected virtual bool ValidateEntity(entity TEntity)
+    ~internal int GetEntityCount()
 public class CachedRepository : IRepository
+    -private readonly IRepository _innerRepository;
+    -private readonly ConcurrentDictionary _cache = new();
+    -private readonly TimeSpan _cacheExpiry;
+    public void CachedRepository(IRepository innerRepository, cacheExpiry TimeSpan)
+    public async Task AddAsync(entity TEntity, ct CancellationToken)
+    public async Task GetAsync(id TKey, ct CancellationToken)
+    public async Task RemoveAsync(id TKey, ct CancellationToken)
+    public IAsyncEnumerable QueryAsync(Func predicate, ct CancellationToken)
+    -private void InvalidateCache()
+    ~internal (int CacheSize, int RepositorySize) GetStats()
 public class User : EntityBase<Guid>(Id)
+    public readonly Id Guid;
+    public readonly string Name;
+    public readonly string Email;
+    public readonly bool IsValid = => !string.IsNullOrEmpty(Name) && Email.Contains("@");
+    -private bool ValidateEmail()
 public class UserService
+    -private readonly IRepository _userRepository;
+    public void UserService(IRepository userRepository)
+    public async Task CreateUserAsync(string name, string email)
+    public Task GetUserAsync(id Guid)
+    -private static bool IsValidUserData(string name, string email)
 </file>

@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/csharp/04_complex/source.cs">
+<file path="source.cs">
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -6,9 +6,21 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading.Tasks;
+namespace Constructs.Complex04
 public sealed class StringRangeAttribute : ValidationAttribute
+    public readonly int Min;
+    public readonly int Max;
+    public void StringRangeAttribute(int min, int max)
+    public override bool IsValid(object value)
 public class ModelValidatorBuilder
+    public static Func Build()
 public class SignupRequest
+    public readonly string Username;
+    public readonly string Password;
+    public bool IsPasswordStrong()
 public class Demo
+    public static async Task ConsumeAsync(IAsyncEnumerable inputs)
 public class ServiceLocator
+    public void Register(instance T)
+    public T Resolve()
 </file>
