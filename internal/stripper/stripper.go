@@ -82,6 +82,10 @@ func (s *Stripper) Visit(node ir.DistilledNode) ir.DistilledNode {
 	case *ir.DistilledTypeAlias:
 		return s.visitTypeAlias(n)
 		
+	case *ir.DistilledRawContent:
+		// Raw content is always preserved
+		return n
+		
 	default:
 		// For other nodes, visit children
 		return s.visitChildren(node)

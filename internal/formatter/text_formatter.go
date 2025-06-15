@@ -84,6 +84,8 @@ func (f *TextFormatter) formatNode(w io.Writer, node ir.DistilledNode, indent in
 		return f.formatEnum(w, n, indent)
 	case *ir.DistilledPackage:
 		return f.formatPackage(w, n, indentStr)
+	case *ir.DistilledRawContent:
+		return f.formatRawContent(w, n, indentStr)
 	default:
 		// Skip unknown nodes
 		return nil
@@ -328,6 +330,16 @@ func (f *TextFormatter) formatPackage(w io.Writer, pkg *ir.DistilledPackage, ind
 		}
 	}
 	
+	return nil
+}
+
+func (f *TextFormatter) formatRawContent(w io.Writer, n *ir.DistilledRawContent, indent string) error {
+	// Output raw content as-is without any processing
+	fmt.Fprint(w, n.Content)
+	// Ensure there's a newline at the end if content doesn't have one
+	if len(n.Content) > 0 && n.Content[len(n.Content)-1] != '\n' {
+		fmt.Fprintln(w)
+	}
 	return nil
 }
 

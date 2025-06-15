@@ -43,6 +43,7 @@ const (
 	KindTypeAlias NodeKind = "type_alias"
 	KindComment   NodeKind = "comment"
 	KindError     NodeKind = "error"
+	KindRawContent NodeKind = "raw_content"
 )
 
 // Visibility represents access control

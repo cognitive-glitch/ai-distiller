@@ -357,6 +357,12 @@ func (f *LanguageAwareTextFormatter) formatNodeGeneric(w io.Writer, node ir.Dist
 				f.formatNodeGeneric(w, child, indent+1)
 			}
 		}
+	case *ir.DistilledRawContent:
+		// Output raw content as-is
+		fmt.Fprint(w, n.Content)
+		if len(n.Content) > 0 && n.Content[len(n.Content)-1] != '\n' {
+			fmt.Fprintln(w)
+		}
 	default:
 		// Skip unknown nodes
 	}

@@ -265,6 +265,27 @@ func (n *DistilledComment) Accept(visitor Visitor) DistilledNode {
 	return visitor.Visit(n)
 }
 
+// DistilledRawContent represents raw text content without parsing
+type DistilledRawContent struct {
+	BaseNode
+	Content string `json:"content"`
+}
+
+// GetNodeKind implements DistilledNode
+func (n *DistilledRawContent) GetNodeKind() NodeKind {
+	return KindRawContent
+}
+
+// GetChildren implements DistilledNode
+func (n *DistilledRawContent) GetChildren() []DistilledNode {
+	return nil
+}
+
+// Accept implements DistilledNode
+func (n *DistilledRawContent) Accept(visitor Visitor) DistilledNode {
+	return visitor.Visit(n)
+}
+
 // Type system helpers
 
 // TypeRef represents a type reference
