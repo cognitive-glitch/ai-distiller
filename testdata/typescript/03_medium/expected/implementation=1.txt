@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/typescript/03_medium/source.ts">
+<file path="source.ts">
 
 interface INotifiable<P>:
     method handleNotification(payload: P): void

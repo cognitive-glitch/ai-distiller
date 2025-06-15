@@ -17,9 +17,11 @@ require (
 	github.com/tree-sitter/tree-sitter-python v0.23.2
 	github.com/tree-sitter/tree-sitter-ruby v0.23.1
 	tree-sitter-swift v0.0.0
+	tree-sitter-typescript v0.0.0
 )
 
 replace tree-sitter-swift => ./internal/parser/grammars/tree-sitter-swift
+replace tree-sitter-typescript => ./internal/parser/grammars/tree-sitter-typescript
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect

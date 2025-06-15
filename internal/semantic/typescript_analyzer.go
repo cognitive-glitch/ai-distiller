@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	sitter "github.com/smacker/go-tree-sitter"
-	"github.com/smacker/go-tree-sitter/typescript/typescript"
+	typescript "tree-sitter-typescript"
 )
 
 // TypeScriptAnalyzer performs semantic analysis on TypeScript/JavaScript code using tree-sitter
@@ -27,7 +27,7 @@ type TypeScriptQueries struct {
 // NewTypeScriptAnalyzer creates a new TypeScript semantic analyzer
 func NewTypeScriptAnalyzer() (*TypeScriptAnalyzer, error) {
 	parser := sitter.NewParser()
-	parser.SetLanguage(typescript.GetLanguage())
+	parser.SetLanguage(sitter.NewLanguage(typescript.Language()))
 
 	queries, err := compileTypeScriptQueries()
 	if err != nil {
@@ -133,17 +133,17 @@ func compileTypeScriptQueries() (*TypeScriptQueries, error) {
 (export_statement) @export.statement
 `
 
-	declarations, err := sitter.NewQuery([]byte(declarationsQuery), typescript.GetLanguage())
+	declarations, err := sitter.NewQuery([]byte(declarationsQuery), sitter.NewLanguage(typescript.Language()))
 	if err != nil {
 		return nil, fmt.Errorf("failed to compile declarations query: %w", err)
 	}
 
-	calls, err := sitter.NewQuery([]byte(callsQuery), typescript.GetLanguage())
+	calls, err := sitter.NewQuery([]byte(callsQuery), sitter.NewLanguage(typescript.Language()))
 	if err != nil {
 		return nil, fmt.Errorf("failed to compile calls query: %w", err)
 	}
 
-	imports, err := sitter.NewQuery([]byte(importsQuery), typescript.GetLanguage())
+	imports, err := sitter.NewQuery([]byte(importsQuery), sitter.NewLanguage(typescript.Language()))
 	if err != nil {
 		return nil, fmt.Errorf("failed to compile imports query: %w", err)
 	}

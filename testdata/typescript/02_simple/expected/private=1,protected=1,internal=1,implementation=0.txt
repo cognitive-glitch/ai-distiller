@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/typescript/02_simple/source.ts">
+<file path="source.ts">
 
 class UserModel:
     field public readonly id: number

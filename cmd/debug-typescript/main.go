@@ -5,12 +5,12 @@ import (
 	"strings"
 
 	sitter "github.com/smacker/go-tree-sitter"
-	"github.com/smacker/go-tree-sitter/typescript/typescript"
+	typescript "tree-sitter-typescript"
 )
 
 func main() {
 	parser := sitter.NewParser()
-	parser.SetLanguage(typescript.GetLanguage())
+	parser.SetLanguage(sitter.NewLanguage(typescript.Language()))
 
 	// Test namespace declaration
 	code := `

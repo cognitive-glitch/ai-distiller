@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	sitter "github.com/smacker/go-tree-sitter"
-	"github.com/smacker/go-tree-sitter/typescript/typescript"
+	typescript "tree-sitter-typescript"
 	"github.com/janreges/ai-distiller/internal/ir"
 )
 
@@ -21,7 +21,7 @@ type ASTParser struct {
 // NewASTParser creates a new tree-sitter TypeScript parser
 func NewASTParser() *ASTParser {
 	parser := sitter.NewParser()
-	parser.SetLanguage(typescript.GetLanguage())
+	// Language will be set in ProcessSource based on file type
 	
 	return &ASTParser{
 		parser: parser,
@@ -33,6 +33,13 @@ func (p *ASTParser) ProcessSource(ctx context.Context, source []byte, filename s
 	p.source = source
 	p.filename = filename
 	p.isTSX = isTSX
+	
+	// Set the appropriate language based on file type
+	if isTSX {
+		p.parser.SetLanguage(sitter.NewLanguage(typescript.LanguageTSX()))
+	} else {
+		p.parser.SetLanguage(sitter.NewLanguage(typescript.Language()))
+	}
 	
 	// Parse the source code
 	tree, err := p.parser.ParseCtx(ctx, nil, source)

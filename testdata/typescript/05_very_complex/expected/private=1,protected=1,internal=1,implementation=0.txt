@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/typescript/05_very_complex/source.ts">
+<file path="source.ts">
 type ChangeEvent<T extends string> = `${T}Changed`
 type Payload<T> = T extends (payload: infer P) => void ? P : never
 type ListenerMap<TEventMap extends object> = {
