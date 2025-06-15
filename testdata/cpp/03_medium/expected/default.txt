@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/cpp/03_medium/source.cpp">
+<file path="source.cpp">
 #include "iostream"
 #include "string"
 #include "vector"
@@ -11,7 +11,7 @@
 #include "chrono"
 #include "exception"
 #include "utility"
-bool has_process_method_v;
+bool has_process_method_v
 void safeProcess(T& obj, & data)
 void safeProcess(T& obj, & data)
 void makeUnique()

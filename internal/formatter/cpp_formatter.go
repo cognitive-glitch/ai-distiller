@@ -86,8 +86,11 @@ func (f *CppFormatter) formatClass(class *ir.DistilledClass, indent int) string 
 		parts = append(parts, indentStr+"template<"+strings.Join(templateParams, ", ")+">")
 	}
 
+	// Get visibility prefix
+	visPrefix := getVisibilityPrefix(class.Visibility)
+	
 	// Class declaration
-	classDecl := classType + " " + class.Name
+	classDecl := visPrefix + classType + " " + class.Name
 
 	// Inheritance
 	if len(class.Extends) > 0 || len(class.Implements) > 0 {
@@ -104,7 +107,7 @@ func (f *CppFormatter) formatClass(class *ir.DistilledClass, indent int) string 
 		classDecl += " : " + strings.Join(bases, ", ")
 	}
 
-	parts = append(parts, indentStr+classDecl+" {")
+	parts = append(parts, indentStr+classDecl+":")
 
 	// Format children (methods, fields, etc.)
 	for _, child := range class.Children {
@@ -136,10 +139,13 @@ func (f *CppFormatter) formatStruct(strct *ir.DistilledStruct, indent int) strin
 		parts = append(parts, indentStr+"template<"+strings.Join(templateParams, ", ")+">")
 	}
 
+	// Get visibility prefix
+	visPrefix := getVisibilityPrefix(strct.Visibility)
+	
 	// Struct declaration
-	structDecl := "struct " + strct.Name
+	structDecl := visPrefix + "struct " + strct.Name
 
-	parts = append(parts, indentStr+structDecl+" {")
+	parts = append(parts, indentStr+structDecl+":")
 
 	// Format children (methods, fields, etc.)
 	for _, child := range strct.Children {
@@ -157,8 +163,11 @@ func (f *CppFormatter) formatStruct(strct *ir.DistilledStruct, indent int) strin
 func (f *CppFormatter) formatEnum(enum *ir.DistilledEnum, indent int) string {
 	indentStr := strings.Repeat("    ", indent)
 
+	// Get visibility prefix
+	visPrefix := getVisibilityPrefix(enum.Visibility)
+	
 	// Enum declaration
-	enumDecl := "enum class " + enum.Name
+	enumDecl := visPrefix + "enum class " + enum.Name
 
 	// Base type
 	if enum.Type != nil {
@@ -166,7 +175,7 @@ func (f *CppFormatter) formatEnum(enum *ir.DistilledEnum, indent int) string {
 	}
 
 	var parts []string
-	parts = append(parts, indentStr+enumDecl+" {")
+	parts = append(parts, indentStr+enumDecl+":")
 	
 	// Format enum values
 	for _, child := range enum.Children {
@@ -184,6 +193,9 @@ func (f *CppFormatter) formatEnum(enum *ir.DistilledEnum, indent int) string {
 
 func (f *CppFormatter) formatFunction(fn *ir.DistilledFunction, indent int) string {
 	indentStr := strings.Repeat("    ", indent)
+	
+	// Get visibility prefix
+	visPrefix := getVisibilityPrefix(fn.Visibility)
 
 	// Template parameters
 	var templateLine string
@@ -220,9 +232,9 @@ func (f *CppFormatter) formatFunction(fn *ir.DistilledFunction, indent int) stri
 	}
 
 	// Function signature
-	signature := ""
+	signature := indentStr + visPrefix
 	if len(modifiers) > 0 {
-		signature = strings.Join(modifiers, " ") + " "
+		signature += strings.Join(modifiers, " ") + " "
 	}
 	signature += returnType + " " + fn.Name
 
@@ -257,56 +269,19 @@ func (f *CppFormatter) formatFunction(fn *ir.DistilledFunction, indent int) stri
 
 	// Add implementation if present
 	if fn.Implementation != "" {
-		signature += " {\n"
-		// Strip leading and trailing braces from implementation if present
-		impl := fn.Implementation
-		lines := strings.Split(impl, "\n")
-		
-		// Find first and last non-empty lines
-		firstNonEmpty := -1
-		lastNonEmpty := -1
-		for i, line := range lines {
-			if strings.TrimSpace(line) != "" {
-				if firstNonEmpty == -1 {
-					firstNonEmpty = i
-				}
-				lastNonEmpty = i
+		signature += ":\n"
+		lines := strings.Split(strings.TrimSpace(fn.Implementation), "\n")
+		for _, line := range lines {
+			if line != "" {
+				signature += indentStr + "    " + line + "\n"
 			}
-		}
-		
-		// Check if first and last lines are braces
-		if firstNonEmpty >= 0 && lastNonEmpty >= 0 && firstNonEmpty < lastNonEmpty {
-			firstLine := strings.TrimSpace(lines[firstNonEmpty])
-			lastLine := strings.TrimSpace(lines[lastNonEmpty])
-			if firstLine == "{" && lastLine == "}" {
-				// Remove brace lines
-				lines = lines[firstNonEmpty+1:lastNonEmpty]
-			}
-		}
-		
-		// Join back and add
-		impl = strings.Join(lines, "\n")
-		impl = strings.TrimSpace(impl)
-		
-		// If implementation is empty after stripping braces, don't add anything
-		if impl == "" {
-			// Don't add implementation block
-		} else {
-			signature += impl
-			if !strings.HasSuffix(impl, "\n") {
-				signature += "\n"
-			}
-			signature += indentStr + "}"
 		}
 	}
 
-	// Top-level functions (indent == 0) don't have visibility prefix
-	if indent == 0 {
-		result := templateLine + signature
-		return result
+	if templateLine != "" {
+		return templateLine + signature
 	}
-	result := templateLine + indentStr + f.addVisibilityPrefix(fn.Visibility) + signature
-	return result
+	return signature
 }
 
 func (f *CppFormatter) formatField(field *ir.DistilledField, indent int) string {
@@ -346,7 +321,8 @@ func (f *CppFormatter) formatField(field *ir.DistilledField, indent int) string 
 		fieldDecl += " = " + field.DefaultValue
 	}
 
-	fieldDecl += ";"
+	// Remove semicolon for Python-like syntax
+	// fieldDecl += ";"
 
 	return indentStr + f.addVisibilityPrefix(field.Visibility) + fieldDecl
 }
