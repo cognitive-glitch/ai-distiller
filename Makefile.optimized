@@ -1,0 +1,73 @@
+# AI Distiller Makefile
+
+# Binary name
+BINARY_NAME=aid
+
+# Go parameters
+GOCMD=go
+GOBUILD=$(GOCMD) build
+GOCLEAN=$(GOCMD) clean
+GOTEST=$(GOCMD) test
+GOGET=$(GOCMD) get
+GOMOD=$(GOCMD) mod
+
+# Build flags
+LDFLAGS=-ldflags "-s -w"
+TRIMPATH=-trimpath
+
+# Build targets
+all: build
+
+build:
+	$(GOBUILD) $(LDFLAGS) $(TRIMPATH) -o $(BINARY_NAME) cmd/aid/main.go
+
+build-debug:
+	$(GOBUILD) -o $(BINARY_NAME)-debug cmd/aid/main.go
+
+# Cross compilation
+build-linux:
+	GOOS=linux GOARCH=amd64 $(GOBUILD) $(LDFLAGS) $(TRIMPATH) -o $(BINARY_NAME)-linux-amd64 cmd/aid/main.go
+
+build-darwin:
+	GOOS=darwin GOARCH=amd64 $(GOBUILD) $(LDFLAGS) $(TRIMPATH) -o $(BINARY_NAME)-darwin-amd64 cmd/aid/main.go
+	GOOS=darwin GOARCH=arm64 $(GOBUILD) $(LDFLAGS) $(TRIMPATH) -o $(BINARY_NAME)-darwin-arm64 cmd/aid/main.go
+
+build-windows:
+	GOOS=windows GOARCH=amd64 $(GOBUILD) $(LDFLAGS) $(TRIMPATH) -o $(BINARY_NAME)-windows-amd64.exe cmd/aid/main.go
+
+# Build all platforms
+build-all: build-linux build-darwin build-windows
+
+# Clean
+clean:
+	$(GOCLEAN)
+	rm -f $(BINARY_NAME)
+	rm -f $(BINARY_NAME)-*
+
+# Test
+test:
+	$(GOTEST) -v ./...
+
+# Dependencies
+deps:
+	$(GOMOD) download
+	$(GOMOD) tidy
+
+# Install
+install: build
+	mv $(BINARY_NAME) $(GOPATH)/bin/
+
+# Run
+run: build
+	./$(BINARY_NAME)
+
+# Size analysis
+size-analysis: build
+	@echo "Binary size:"
+	@ls -lh $(BINARY_NAME)
+	@echo "\nSection sizes:"
+	@size -A $(BINARY_NAME) | head -20
+	@echo "\nLargest sections:"
+	@size -A $(BINARY_NAME) | sort -k2 -n | tail -10
+
+.PHONY: all build build-debug build-linux build-darwin build-windows build-all clean test deps install run size-analysis
