@@ -222,7 +222,7 @@ func (p *TreeSitterProcessor) processInterfaceDeclaration(node *sitter.Node, sou
 
 	// Set default visibility if not specified
 	if iface.Visibility == "" {
-		iface.Visibility = ir.VisibilityPublic // Interfaces are public by default
+		iface.Visibility = ir.VisibilityPackage // Interfaces are package-private by default
 	}
 
 	p.addToParent(file, parent, iface)
@@ -284,7 +284,7 @@ func (p *TreeSitterProcessor) processAnnotationTypeDeclaration(node *sitter.Node
 
 	// Set default visibility if not specified
 	if annotation.Visibility == "" {
-		annotation.Visibility = ir.VisibilityPublic // Annotations are public by default
+		annotation.Visibility = ir.VisibilityPackage // Annotations are package-private by default
 	}
 
 	p.addToParent(file, parent, annotation)
@@ -305,6 +305,8 @@ func (p *TreeSitterProcessor) processAnnotationTypeBody(node *sitter.Node, sourc
 // processAnnotationElement processes annotation element declarations
 func (p *TreeSitterProcessor) processAnnotationElement(node *sitter.Node, source []byte, file *ir.DistilledFile, parent ir.DistilledNode) {
 	// Annotation elements are like abstract methods with optional default values
+	// Note: In Java, annotation elements are implicitly public and abstract,
+	// so we don't set these modifiers explicitly to avoid redundant display
 	element := &ir.DistilledFunction{
 		BaseNode: ir.BaseNode{
 			Location: p.nodeLocation(node),
@@ -315,8 +317,8 @@ func (p *TreeSitterProcessor) processAnnotationElement(node *sitter.Node, source
 			},
 		},
 		Parameters: []ir.Parameter{},
-		Modifiers:  []ir.Modifier{ir.ModifierAbstract},
-		Visibility: ir.VisibilityPublic,
+		Modifiers:  []ir.Modifier{}, // No explicit modifiers for annotation elements
+		Visibility: ir.VisibilityPublic, // Annotation elements are implicitly public
 	}
 
 	// Extract type, name, and default value

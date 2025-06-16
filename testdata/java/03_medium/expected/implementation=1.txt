@@ -10,25 +10,21 @@ public interface DataStore<T> {
 }
 
 public @interface Auditable {
-    public abstract String value();
+    public abstract String value() default "DEFAULT";
 }
 
 public class UserStore extends BaseStore {
     @Override
     public Optional<User> findById(String id) {
-        {
-                // Mock implementation
+        // Mock implementation
                 if ("1".equals(id)) {
                     return Optional.of(new User("Admin"));
                 }
                 return Optional.empty();
-            }
     }
     @Override
     public List<User> findAll() {
-        {
-                return List.of(new User("Admin"), new User("Guest"));
-            }
+        return List.of(new User("Admin"), new User("Guest"));
     }
 }
 </file>

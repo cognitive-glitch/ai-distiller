@@ -291,25 +291,34 @@ func (f *JavaFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, in
 		fmt.Fprintf(w, "%s@%s\n", indentStr, decStr)
 	}
 	
+	// Check if this is an annotation element (special formatting)
+	isAnnotationElement := false
+	if fn.Extensions != nil && fn.Extensions.Java != nil {
+		isAnnotationElement = fn.Extensions.Java.IsAnnotationElement
+	}
+	
 	// Format method signature
 	fmt.Fprintf(w, "%s", indentStr)
 	
-	// Add visibility keyword
-	visKeyword := f.getJavaVisibilityKeyword(fn.Visibility)
-	if visKeyword != "" {
-		fmt.Fprintf(w, "%s ", visKeyword)
-	}
-	
-	// Add modifiers
-	for _, mod := range fn.Modifiers {
-		switch mod {
-		case ir.ModifierStatic:
-			fmt.Fprintf(w, "static ")
-		case ir.ModifierFinal:
-			fmt.Fprintf(w, "final ")
-		case ir.ModifierAbstract:
-			fmt.Fprintf(w, "abstract ")
-		// Synchronize and native are not in IR yet
+	// Add visibility keyword and modifiers (skip for annotation elements as they're implicitly public abstract)
+	if !isAnnotationElement {
+		// Add visibility keyword
+		visKeyword := f.getJavaVisibilityKeyword(fn.Visibility)
+		if visKeyword != "" {
+			fmt.Fprintf(w, "%s ", visKeyword)
+		}
+		
+		// Add modifiers
+		for _, mod := range fn.Modifiers {
+			switch mod {
+			case ir.ModifierStatic:
+				fmt.Fprintf(w, "static ")
+			case ir.ModifierFinal:
+				fmt.Fprintf(w, "final ")
+			case ir.ModifierAbstract:
+				fmt.Fprintf(w, "abstract ")
+			// Synchronize and native are not in IR yet
+			}
 		}
 	}
 	
@@ -362,11 +371,9 @@ func (f *JavaFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, in
 		fmt.Fprintf(w, " throws %s", strings.Join(throws, ", "))
 	}
 	
-	// Check if this is an annotation element with default value
-	isAnnotationElement := false
+	// Check for default value
 	var defaultValue string
 	if fn.Extensions != nil && fn.Extensions.Java != nil {
-		isAnnotationElement = fn.Extensions.Java.IsAnnotationElement
 		defaultValue = fn.Extensions.Java.DefaultValue
 	}
 	

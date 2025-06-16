@@ -15,14 +15,11 @@ public @interface NotNull {
 
 public class Advanced<T extends Number & Runnable & Serializable> {
     public <U extends T> U process(@NotNull U input) {
-        {
-                input.run(); // Call method from Runnable interface
+        input.run(); // Call method from Runnable interface
                 return input;
-            }
     }
     public Runnable createRunner(int value) {
-        {
-                // 5. Local class inside a method
+        // 5. Local class inside a method
                 class LocalRunner implements Runnable {
                     @Override
                     public void run() {
@@ -40,17 +37,14 @@ public class Advanced<T extends Number & Runnable & Serializable> {
                         }
                     }
                 };
-            }
     }
     public void readFile(String filePath) {
-        {
-                try (var reader = Files.newBufferedReader(Path.of(filePath))) {
+        try (var reader = Files.newBufferedReader(Path.of(filePath))) {
                     // ...
                 } catch (java.io.IOException | SecurityException e) {
                     // Multi-catch block
                     throw new RuntimeException("Failed to read file", e);
                 }
-            }
     }
 }
 </file>
