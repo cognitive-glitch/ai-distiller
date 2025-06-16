@@ -25,9 +25,9 @@ AI Distiller models Java code as a semantic graph, representing not just the syn
 | **Packages** | ✅ Full | Package declarations and structure |
 | **Imports** | ✅ Full | Standard and static imports |
 | **Classes** | ✅ Full | Including abstract, final, nested classes |
-| **Interfaces** | ⚠️ Partial | Declaration captured but methods not extracted |
+| **Interfaces** | ✅ Full | Full interface support including sealed interfaces with permits clause |
 | **Enums** | ✅ Full | Enum declarations and constants |
-| **Records** | ⚠️ Partial | Basic structure, components limited |
+| **Records** | ✅ Full | Record syntax, parameters, and implementations |
 
 ### Object-Oriented Constructs
 
@@ -47,23 +47,23 @@ AI Distiller models Java code as a semantic graph, representing not just the syn
 | **Basic Types** | ✅ Full | Primitives and wrapper classes |
 | **Generics** | ⚠️ Partial | Type parameters captured, multiple bounds supported, inheritance generics dropped |
 | **Arrays** | ✅ Full | Array type declarations |
-| **Annotations** | ⚠️ Partial | Type/method annotations work, parameter annotations supported, @interface definitions basic |
+| **Annotations** | ✅ Full | Type/method/parameter annotations, @interface definitions with default values |
 | **Lambda Expressions** | ❌ Not supported | Not parsed correctly |
 | **Method References** | ❌ Not supported | Not parsed correctly |
 
 ### Visibility Rules
 
-Java visibility in AI Distiller follows UML-style prefixes:
-- **Public**: `+` prefix (accessible everywhere)
-- **Private**: `-` prefix (class-only access)
-- **Protected**: `#` prefix (package + subclass access)
-- **Package-private**: `~` prefix (package-only access, Java default)
+Java visibility in AI Distiller follows standard Java keywords in text format:
+- **Public**: `public` keyword (accessible everywhere)
+- **Private**: `private` keyword (class-only access)  
+- **Protected**: `protected` keyword (package + subclass access)
+- **Package-private**: no keyword (package-only access, Java default)
 
 ## Key Features
 
-### 1. **UML-Style Visibility Prefixes**
+### 1. **Standard Java Visibility Keywords**
 
-AI Distiller uses compact visibility notation for better AI consumption:
+AI Distiller uses standard Java visibility keywords for clear representation:
 
 ```java
 // Input
@@ -75,11 +75,9 @@ public class User {
 ```
 
 ```
-// Output (default compact version)
-+class User {
-    -String name;
-    #int id;
-    +String getName();
+// Output (default version - public only)
+public class User {
+    public String getName();
 }
 ```
 
@@ -96,7 +94,7 @@ public Optional<User> findUserById(String id, boolean includeDeleted) {
 
 ```
 // Output (no implementation)
-+Optional<User> findUserById(String id, boolean includeDeleted);
+public Optional<User> findUserById(String id, boolean includeDeleted);
 ```
 
 ### 3. **Inheritance Relationships**
@@ -112,7 +110,7 @@ public class UserService extends BaseService implements Cacheable, Auditable {
 
 ```
 // Output
-+class UserService extends BaseService implements Cacheable, Auditable {
+public class UserService extends BaseService implements Cacheable, Auditable {
     // members
 }
 ```
@@ -144,10 +142,10 @@ public class UserService extends BaseService implements Cacheable, Auditable {
   <details open><summary>Compact AI-friendly version (`default output (public only, no implementation)`)</summary><blockquote>
     ```
     <file path="Basic.java">
-    package com.aidi.test.basic;
+    package com.aidi.test.basic
 
-    +class Basic {
-        +static void main(String[] args);
+    public class Basic {
+        public static void main(String[] args);
     }
     </file>
     ```
@@ -155,19 +153,22 @@ public class UserService extends BaseService implements Cacheable, Auditable {
   <details><summary>Full version (`--public=1 --protected=1 --internal=1 --private=1 --implementation=1`)</summary><blockquote>
     ```
     <file path="Basic.java">
-    package com.aidi.test.basic;
+    package com.aidi.test.basic
+    import java.util.Objects
 
-    +class Basic {
-        -static final String GREETING_PREFIX = "Hello, ";
-        +static void main(String[] args) 
-        {
-                String world = "World";
-                System.out.println(createGreeting(world));
+    public class Basic {
+        private static final String GREETING_PREFIX = "Hello, ";
+        public static void main(String[] args) {
+            String world = "World";
+            int repetitions = 3;
+            for (int i = 0; i < repetitions; i++) {
+                String message = createGreeting(world, i + 1);
+                System.out.println(message);
             }
-        -static String createGreeting(String name) 
-        {
-                return GREETING_PREFIX + name;
-            }
+        }
+        private static String createGreeting(String name, int number) {
+            return String.format("%s%s #%d", GREETING_PREFIX, name, number);
+        }
     }
     </file>
     ```
@@ -206,15 +207,17 @@ public class UserService extends BaseService implements Cacheable, Auditable {
   <details open><summary>Compact AI-friendly version (`default output (public only, no implementation)`)</summary><blockquote>
     ```
     <file path="SimpleOOP.java">
-    package com.aidi.test.oop;
-    import java.util.Objects;
+    package com.aidi.test.oop
+    import java.util.Objects
 
-    +class SimpleOOP {
-        +final String id;
-        +SimpleOOP(String id, String name);
-        +String getName();
+    public class SimpleOOP {
+        public final String id;
+        public SimpleOOP(String id, String name);
+        public SimpleOOP(String id);
+        public String getName();
+        public void setName(String name);
         @Override
-        +String toString();
+        public String toString();
     }
     </file>
     ```
@@ -222,17 +225,20 @@ public class UserService extends BaseService implements Cacheable, Auditable {
   <details><summary>Full version with all visibility (`--strip 'comments,implementation'`)</summary><blockquote>
     ```
     <file path="SimpleOOP.java">
-    package com.aidi.test.oop;
-    import java.util.Objects;
+    package com.aidi.test.oop
+    import java.util.Objects
 
-    +class SimpleOOP {
-        +final String id;
-        #String name;
-        -int version;
-        +SimpleOOP(String id, String name);
-        +String getName();
+    public class SimpleOOP {
+        public final String id;
+        protected String name;
+        private int version;
+        private boolean dirty;
+        public SimpleOOP(String id, String name);
+        public SimpleOOP(String id);
+        public String getName();
+        public void setName(String name);
         @Override
-        +String toString();
+        public String toString();
     }
     </file>
     ```
@@ -241,26 +247,25 @@ public class UserService extends BaseService implements Cacheable, Auditable {
 
 ## Recent Improvements (2025-01)
 
-- **Enhanced Generic Bounds**: Now shows all bounds in generic type constraints (e.g., `T extends Number & Runnable & Serializable`)
+- **Fixed Visibility Detection**: Package-private types no longer incorrectly promoted to public (critical bug fix)
+- **Enhanced Annotation Support**: @interface definitions with default values now properly displayed without redundant modifiers
+- **Improved Java Modern Features**: Records, sealed interfaces with permits clause, annotation default values
 - **Parameter Annotations**: Method parameter annotations are now extracted (e.g., `@NotNull U input`)
-- **Annotation Type Support**: Basic support for `@interface` declarations (represented as classes with @interface decorator)
+- **Generic Bounds**: Shows all bounds in generic type constraints (e.g., `T extends Number & Runnable & Serializable`)
 
 ## Known Issues
 
 ### 🔴 Critical Limitations
 
-**Throws Clauses**
-- Method `throws` declarations are not being extracted despite parser support
-- This affects API completeness and exception handling documentation
+**Dependency Resolution**
+- When public classes use package-private types (sealed interfaces, records), those dependencies are excluded from default output
+- Example: `ModernJava` uses `Shape`, `Circle`, `Rectangle` but only `ModernJava` appears in public-only output
+- Results in incomplete/non-compilable code representations
 
-**Multiple Type Definitions**
-- Parser may miss additional classes/interfaces/annotations in the same file
-- Nested types and inner classes have limited support
-
-**Custom Annotation Definitions**
-- Annotation definitions (`@interface`) are now parsed but represented as classes
-- Annotation element methods with default values need improvement
-- Meta-annotations on annotation types are captured
+**Inheritance Resolution**  
+- Inherited public methods from parent classes are not displayed in child classes
+- Example: `UserStore extends BaseStore` - missing `save()` method from parent
+- Public API surface appears incomplete for inherited classes
 
 **Advanced Type Features**
 - Wildcard generics `? extends T` and `? super T` are not yet supported
@@ -268,27 +273,25 @@ public class UserService extends BaseService implements Cacheable, Auditable {
 
 ### 🟡 Major Limitations
 
-**Interface Method Extraction**
-- Interface methods are not being extracted, showing empty bodies
-- Abstract class abstract methods may also be affected
+**Throws Clauses**
+- Method `throws` declarations are not being extracted despite parser support
+- This affects API completeness and exception handling documentation
 
-**Generic Type Arguments in Inheritance**
+**Generic Type Arguments in Inheritance**  
 - Generic arguments in `extends` clauses are dropped (e.g., `extends BaseStore<User>` becomes `extends BaseStore`)
 
-**Modern Java Features**
-- Records are parsed as classes but component extraction is limited
-- Sealed classes `permits` clause is not captured
-- Pattern matching syntax is not recognized
-- Switch expressions are not properly handled
+**Multiple Type Definitions**
+- Parser may miss additional classes/interfaces/annotations in the same file
+- Nested types and inner classes have limited support
 
 **Lambda Expressions and Method References**
 - Lambda syntax `() -> {}` is not parsed
 - Method references `String::length` are not recognized
 - Functional interfaces lose their context
 
-**Generic Edge Cases**
-- Wildcard generics `? extends T` and `? super T` need dedicated handling
-- Some complex nested generic expressions may lose precision
+**Modern Java Pattern Matching**
+- Pattern matching syntax is not recognized
+- Switch expressions are not properly handled
 
 ### 🟢 Minor Issues
 
