@@ -2,10 +2,10 @@
 class Employee {
 };
 class LibraryItem {
-    void LibraryItem(const & id, const & title) {
+    LibraryItem(const & id, const & title) {
         {}
     }
-    virtual void ~LibraryItem() {
+    virtual ~LibraryItem() {
         = default
     }
     const & getId() const {
@@ -31,7 +31,7 @@ class LibraryItem {
                 isAvailable_ = true;
             }
     }
-    virtual void getDetails() const = 0
+    virtual getDetails() const = 0
     void setAvailability(bool status) {
         { isAvailable_ = status; }
     }
@@ -40,7 +40,7 @@ class LibraryItem {
     bool isAvailable_;
 };
 class Book : public LibraryItem {
-    void Book(const & id, const & title, const & author, const & isbn) {
+    Book(const & id, const & title, const & author, const & isbn) {
         {}
     }
     const & getAuthor() const {
@@ -49,7 +49,7 @@ class Book : public LibraryItem {
     const & getISBN() const {
         { return isbn_; }
     }
-    void getDetails() const {
+    getDetails() const {
         {
                 return "Book: " + getTitle() + " by " + author_ + " (ISBN: " + isbn_ + ")";
             }
@@ -58,7 +58,7 @@ class Book : public LibraryItem {
     auto isbn_;
 };
 class Magazine : public LibraryItem {
-    void Magazine(const & id, const & title, int issueNumber, const & publisher) {
+    Magazine(const & id, const & title, int issueNumber, const & publisher) {
         {}
     }
     int getIssueNumber() const {
@@ -67,7 +67,7 @@ class Magazine : public LibraryItem {
     const & getPublisher() const {
         { return publisher_; }
     }
-    void getDetails() const {
+    getDetails() const {
         {
                 return "Magazine: " + getTitle() + " Issue #" + 
                        std::to_string(issueNumber_) + " (" + publisher_ + ")";
@@ -88,7 +88,7 @@ class LibraryCatalog {
                 return (it != items_.end()) ? it->second.get() : nullptr;
             }
     }
-    void getAvailableItems() const {
+    getAvailableItems() const {
         {
                 std::vector<LibraryItem*> available;
                 for (const auto& pair : items_) {
@@ -99,7 +99,7 @@ class LibraryCatalog {
                 return available;
             }
     }
-    void searchByTitle(const & searchTerm) const {
+    searchByTitle(const & searchTerm) const {
         {
                 std::vector<LibraryItem*> results;
                 
@@ -140,7 +140,7 @@ class LibraryUtils {
             }
     }
     template<typename Predicate>
-    static void filterItems(const & items, Predicate pred) {
+    static filterItems(const & items, Predicate pred) {
         {
                 std::vector<LibraryItem*> filtered;
                 std::copy_if(items.begin(), items.end(), 
@@ -157,14 +157,14 @@ class LibraryUtils {
                                    });
             }
     }
-    void LibraryUtils() {
+    LibraryUtils() {
         = delete
     }
 };
 class FileManager {
-    void FileManager(const & filename)
-    void ~FileManager()
-    void FileManager(const FileManager )
+    FileManager(const & filename)
+    ~FileManager()
+    FileManager(const FileManager )
     FileManager& operator=(const FileManager )
     bool open()
     void close()

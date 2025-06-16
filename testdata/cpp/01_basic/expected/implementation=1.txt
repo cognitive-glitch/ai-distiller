@@ -3,16 +3,16 @@
 #include "string"
 #include "vector"
 class Point {
-    void Point() {
+    Point() {
         {}
     }
-    void Point(double x, double y) {
+    Point(double x, double y) {
         {}
     }
-    void Point(const Point& other) {
+    Point(const Point& other) {
         {}
     }
-    virtual void ~Point() {
+    virtual ~Point() {
         = default
     }
     double getX() const {
@@ -34,7 +34,7 @@ class Point {
     }
 };
 class Point3D : public Point {
-    void Point3D(double x, double y, double z) {
+    Point3D(double x, double y, double z) {
         {}
     }
     double getZ() const {
@@ -51,7 +51,7 @@ class Point3D : public Point {
 };
 template<typename T>
 class Container {
-    void Container(const T& value) {
+    Container(const T& value) {
         {}
     }
     const T& getValue() const {

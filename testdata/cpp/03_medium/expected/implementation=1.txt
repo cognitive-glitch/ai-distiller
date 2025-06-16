@@ -14,10 +14,10 @@
 bool has_process_method_v;
 template<typename Resource>
 class ResourceManager {
-    void ResourceManager(Resource* resource, Deleter deleter) {
+    ResourceManager(Resource* resource, Deleter deleter) {
         {}
     }
-    void ResourceManager(ResourceManager& other) {
+    ResourceManager(ResourceManager& other) {
         {}
     }
     ResourceManager& operator=(ResourceManager& other) {
@@ -30,12 +30,12 @@ class ResourceManager {
                 return *this;
             }
     }
-    void ~ResourceManager() {
+    ~ResourceManager() {
         {
                 reset();
             }
     }
-    void ResourceManager(const ResourceManager ) {
+    ResourceManager(const ResourceManager ) {
         = delete
     }
     ResourceManager& operator=(const ResourceManager ) {
@@ -57,7 +57,7 @@ class ResourceManager {
                 resource_ = resource;
             }
     }
-    void () {
+    () {
         {
                 return resource_ != nullptr;
             }
@@ -74,22 +74,22 @@ class ResourceManager {
     }
 };
 class IProcessor {
-    virtual void ~IProcessor() {
+    virtual ~IProcessor() {
         = default
     }
-    virtual void process(const & data) = 0
-    virtual void getName() const = 0
+    virtual process(const & data) = 0
+    virtual getName() const = 0
 };
 class TextProcessor : public IProcessor {
-    void TextProcessor(const & name) {
+    TextProcessor(const & name) {
         {}
     }
-    void process(const & data) {
+    process(const & data) {
         {
                 return "[" + name_ + "] " + data;
             }
     }
-    void getName() const {
+    getName() const {
         {
                 return name_;
             }
@@ -107,7 +107,7 @@ class Calculator {
                 return a * b;
             }
     }
-    static void getTypeName() {
+    static getTypeName() {
         {
                 return "generic";
             }
@@ -132,7 +132,7 @@ class  {
                 return a / b;
             }
     }
-    static void getTypeName() {
+    static getTypeName() {
         {
                 return "double";
             }
@@ -145,14 +145,14 @@ class  {
                 return ptr + offset;
             }
     }
-    static void getTypeName() {
+    static getTypeName() {
         {
                 return "pointer";
             }
     }
 };
 class ProcessingPipeline {
-    void ProcessingPipeline() {
+    ProcessingPipeline() {
         = default
     }
     void addProcessor(auto processor) {
@@ -160,7 +160,7 @@ class ProcessingPipeline {
                 processors_.push_back(std::move(processor));
             }
     }
-    void process(const & input) const {
+    process(const & input) const {
         {
                 std::string result = input;
                 for (const auto& processor : processors_) {
@@ -169,14 +169,14 @@ class ProcessingPipeline {
                 return result;
             }
     }
-    void processAsync(const & input) const {
+    processAsync(const & input) const {
         {
                 return std::async(std::launch::async, [this, input]() {
                     return this->process(input);
                 });
             }
     }
-    void processMultiple(const & inputs) const {
+    processMultiple(const & inputs) const {
         {
                 std::vector<std::future<std::string>> futures;
                 futures.reserve(inputs.size());
@@ -195,25 +195,25 @@ class ProcessingPipeline {
     }
 };
 template<typename T>
-void safeProcess(T& obj, const & data) {
+safeProcess(T& obj, const & data) {
     {
         return obj.process(data);
     }
 }
 template<typename T>
-void safeProcess(T& obj, const & data) {
+safeProcess(T& obj, const & data) {
     {
         return "";
     }
 }
 template<typename T>
-void makeUnique() {
+makeUnique() {
     {
         return std::make_unique<T>(std::forward<Args>(args)...);
     }
 }
 class ProcessingException : public std::exception {
-    void ProcessingException(const & message) {
+    ProcessingException(const & message) {
         {}
     }
     const char* what() const {

@@ -228,9 +228,17 @@ func (f *CppFormatter) formatFunction(fn *ir.DistilledFunction, indent int) stri
 		}
 	}
 
-	// Return type
-	returnType := "void"
-	if fn.Returns != nil {
+	// Return type - constructors and destructors don't have return types
+	var returnType string
+	hasReturnType := true
+	
+	// Check if this is a constructor or destructor by examining the parent context
+	// In C++, constructors have the same name as the class and no return type
+	// Destructors start with ~ and have no return type
+	// Since we don't have parent context here, we check if Returns is nil
+	if fn.Returns == nil {
+		hasReturnType = false
+	} else {
 		returnType = fn.Returns.Name
 	}
 
@@ -239,7 +247,10 @@ func (f *CppFormatter) formatFunction(fn *ir.DistilledFunction, indent int) stri
 	if len(modifiers) > 0 {
 		signature += strings.Join(modifiers, " ") + " "
 	}
-	signature += returnType + " " + fn.Name
+	if hasReturnType {
+		signature += returnType + " "
+	}
+	signature += fn.Name
 
 	// Parameters
 	params := []string{}

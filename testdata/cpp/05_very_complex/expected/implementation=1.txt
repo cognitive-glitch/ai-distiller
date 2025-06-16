@@ -19,17 +19,17 @@
 #include "ranges"
 #include "span"
 struct SimpleTask {
-    void SimpleTask(auto h) {
+    SimpleTask(auto h) {
         {}
     }
-    void ~SimpleTask() {
+    ~SimpleTask() {
         {
                 if (handle_) {
                     handle_.destroy();
                 }
             }
     }
-    void SimpleTask(SimpleTask& other) {
+    SimpleTask(SimpleTask& other) {
         {}
     }
     SimpleTask& operator=(SimpleTask& other) {
@@ -43,17 +43,17 @@ struct SimpleTask {
                 return *this;
             }
     }
-    void SimpleTask(const SimpleTask )
+    SimpleTask(const SimpleTask )
     SimpleTask& operator=(const SimpleTask )
 };
 template<typename T>
 class HasAdvancedMethods {
-    void test_serialize(int )
-    void test_serialize()
-    void test_deserialize(int )
-    void test_deserialize()
-    void test_validate(int )
-    void test_validate()
+    test_serialize(int )
+    test_serialize()
+    test_deserialize(int )
+    test_deserialize()
+    test_validate(int )
+    test_validate()
     static bool has_serialize;
     static bool has_deserialize;
     static bool has_validate;
@@ -61,7 +61,7 @@ class HasAdvancedMethods {
 };
 template<typename AdvancedNumeric>
 class AdvancedProcessor {
-    void AdvancedProcessor(const & name) {
+    AdvancedProcessor(const & name) {
         {}
     }
     T process(const T& data) {
@@ -72,7 +72,7 @@ class AdvancedProcessor {
             }
     }
     template<typename Container>
-    void processContainer(const Container& container) {
+    processContainer(const Container& container) {
         {
                 
                 std::vector<T> results;
@@ -85,7 +85,7 @@ class AdvancedProcessor {
                 return results;
             }
     }
-    void generateSequence(T start, size_t count) {
+    generateSequence(T start, size_t count) {
         {
                 for (size_t i = 0; i < count; ++i) {
                     co_yield start + static_cast<T>(i);
@@ -119,7 +119,7 @@ class TypeErasedContainer {
             }
     }
     template<typename T>
-    void get() const {
+    get() const {
         {
                 for (const auto& wrapper : data_) {
                     if (auto* typed = dynamic_cast<const Wrapper<T>*>(wrapper.get())) {
@@ -152,7 +152,7 @@ T complexCalculation(T value) const {
             return result;
         }
 }
-void processRange(Range& range) {
+processRange(Range& range) {
     {
             namespace views = std::views;
             

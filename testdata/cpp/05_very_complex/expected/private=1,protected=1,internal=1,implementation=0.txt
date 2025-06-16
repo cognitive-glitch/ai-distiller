@@ -19,22 +19,22 @@
 #include "ranges"
 #include "span"
 struct SimpleTask {
-    void SimpleTask(auto h)
-    void ~SimpleTask()
-    void SimpleTask(SimpleTask& other)
+    SimpleTask(auto h)
+    ~SimpleTask()
+    SimpleTask(SimpleTask& other)
     SimpleTask& operator=(SimpleTask& other)
-    void SimpleTask(const SimpleTask )
+    SimpleTask(const SimpleTask )
     SimpleTask& operator=(const SimpleTask )
     auto handle_;
 };
 template<typename T>
 class HasAdvancedMethods {
-    void test_serialize(int )
-    void test_serialize()
-    void test_deserialize(int )
-    void test_deserialize()
-    void test_validate(int )
-    void test_validate()
+    test_serialize(int )
+    test_serialize()
+    test_deserialize(int )
+    test_deserialize()
+    test_validate(int )
+    test_validate()
     static bool has_serialize;
     static bool has_deserialize;
     static bool has_validate;
@@ -42,11 +42,11 @@ class HasAdvancedMethods {
 };
 template<typename AdvancedNumeric>
 class AdvancedProcessor {
-    void AdvancedProcessor(const & name)
+    AdvancedProcessor(const & name)
     T process(const T& data)
     template<typename Container>
-    void processContainer(const Container& container)
-    void generateSequence(T start, size_t count)
+    processContainer(const Container& container)
+    generateSequence(T start, size_t count)
     SimpleTask processAsync(const T& data)
     bool validateInput(const T& value) const
     auto name_;
@@ -57,7 +57,7 @@ class TypeErasedContainer {
     void store(T& value)
     void processAll(F& f) const
     template<typename T>
-    void get() const
+    get() const
     size_t size() const
     auto data_;
 };
@@ -80,7 +80,7 @@ T complexCalculation(T value) const {
             return result;
         }
 }
-void processRange(Range& range) {
+processRange(Range& range) {
     {
             namespace views = std::views;
             
