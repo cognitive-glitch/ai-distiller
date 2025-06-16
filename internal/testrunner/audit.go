@@ -181,7 +181,7 @@ func normalizeScenarioName(name string) string {
 
 // PrintAuditResult prints a human-readable audit report
 func (r *AuditResult) PrintAuditResult() {
-	fmt.Println("=== AI Distiller Test Structure Audit ===\n")
+	fmt.Println("=== AI Distiller Test Structure Audit ===")
 	
 	totalIssues := len(r.Issues) + len(r.MissingExpectedDirs) + len(r.EmptyExpectedDirs) + 
 		len(r.UnparsableFiles) + len(r.DuplicateScenarios) + len(r.InconsistentNaming)
