@@ -57,12 +57,12 @@ func (f *CSharpFormatter) FormatNode(w io.Writer, node ir.DistilledNode, indent 
 		
 		if isRecord && onlyProperties && len(n.Children) > 0 {
 			// Record with only parameters - don't print body
-			fmt.Fprintln(w, classDecl)
+			fmt.Fprintln(w, classDecl + ";")
 			return nil
 		}
 		
 		// Regular class or record with body
-		_, err := fmt.Fprintln(w, classDecl)
+		_, err := fmt.Fprintln(w, classDecl + " {")
 		if err != nil {
 			return err
 		}
@@ -83,7 +83,7 @@ func (f *CSharpFormatter) FormatNode(w io.Writer, node ir.DistilledNode, indent 
 		return nil
 	case *ir.DistilledInterface:
 		// Format interface declaration
-		_, err := fmt.Fprintln(w, f.formatInterface(n, indent))
+		_, err := fmt.Fprintln(w, f.formatInterface(n, indent) + " {")
 		if err != nil {
 			return err
 		}
@@ -99,7 +99,7 @@ func (f *CSharpFormatter) FormatNode(w io.Writer, node ir.DistilledNode, indent 
 		return nil
 	case *ir.DistilledStruct:
 		// Format struct declaration
-		_, err := fmt.Fprintln(w, f.formatStruct(n, indent))
+		_, err := fmt.Fprintln(w, f.formatStruct(n, indent) + " {")
 		if err != nil {
 			return err
 		}
@@ -115,7 +115,7 @@ func (f *CSharpFormatter) FormatNode(w io.Writer, node ir.DistilledNode, indent 
 		return nil
 	case *ir.DistilledEnum:
 		// Format enum declaration
-		_, err := fmt.Fprintln(w, f.formatEnum(n, indent))
+		_, err := fmt.Fprintln(w, f.formatEnum(n, indent) + " {")
 		if err != nil {
 			return err
 		}
@@ -293,15 +293,15 @@ func (f *CSharpFormatter) formatClass(class *ir.DistilledClass, indent int) stri
 			if len(typeParam.Constraints) > 0 {
 				constraints := []string{}
 				for _, constraint := range typeParam.Constraints {
-					constraints = append(constraints, constraint.Name)
+					constraints = append(constraints, f.formatTypeRef(&constraint))
 				}
 				classDecl += " where " + typeParam.Name + " : " + strings.Join(constraints, ", ")
 			}
 		}
 	}
 
-	// Opening brace
-	return classDecl + " {"
+	// Don't add opening brace here - let caller decide based on body content
+	return classDecl
 }
 
 func (f *CSharpFormatter) formatInterface(intf *ir.DistilledInterface, indent int) string {
@@ -341,14 +341,14 @@ func (f *CSharpFormatter) formatInterface(intf *ir.DistilledInterface, indent in
 			if len(typeParam.Constraints) > 0 {
 				constraints := []string{}
 				for _, constraint := range typeParam.Constraints {
-					constraints = append(constraints, constraint.Name)
+					constraints = append(constraints, f.formatTypeRef(&constraint))
 				}
 				intfDecl += " where " + typeParam.Name + " : " + strings.Join(constraints, ", ")
 			}
 		}
 	}
 
-	return intfDecl + " {"
+	return intfDecl
 }
 
 func (f *CSharpFormatter) formatStruct(strct *ir.DistilledStruct, indent int) string {
@@ -379,14 +379,14 @@ func (f *CSharpFormatter) formatStruct(strct *ir.DistilledStruct, indent int) st
 			if len(typeParam.Constraints) > 0 {
 				constraints := []string{}
 				for _, constraint := range typeParam.Constraints {
-					constraints = append(constraints, constraint.Name)
+					constraints = append(constraints, f.formatTypeRef(&constraint))
 				}
 				structDecl += " where " + typeParam.Name + " : " + strings.Join(constraints, ", ")
 			}
 		}
 	}
 
-	return structDecl + " {"
+	return structDecl
 }
 
 func (f *CSharpFormatter) formatEnum(enum *ir.DistilledEnum, indent int) string {
@@ -407,7 +407,7 @@ func (f *CSharpFormatter) formatEnum(enum *ir.DistilledEnum, indent int) string 
 		enumDecl += " : " + enum.Type.Name
 	}
 
-	return enumDecl + " {"
+	return enumDecl
 }
 
 func (f *CSharpFormatter) formatFunction(fn *ir.DistilledFunction, indent int) string {
@@ -491,7 +491,7 @@ func (f *CSharpFormatter) formatFunction(fn *ir.DistilledFunction, indent int) s
 			if len(typeParam.Constraints) > 0 {
 				constraints := []string{}
 				for _, constraint := range typeParam.Constraints {
-					constraints = append(constraints, constraint.Name)
+					constraints = append(constraints, f.formatTypeRef(&constraint))
 				}
 				signature += " where " + typeParam.Name + " : " + strings.Join(constraints, ", ")
 			}

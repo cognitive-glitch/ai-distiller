@@ -1352,11 +1352,23 @@ func (p *TreeSitterProcessor) extractParameter(node *sitter.Node, source []byte)
 				param.Type = *p.extractType(child, source)
 			}
 		case "identifier":
-			if param.Name == "" {
+			// In C#, type comes before name, so if we already have a type,
+			// this identifier is the parameter name
+			if param.Type.Name != "" {
 				param.Name = string(source[child.StartByte():child.EndByte()])
-			} else if param.Type.Name == "" {
-				// This might be the parameter type
-				param.Type = *p.extractType(child, source)
+			} else {
+				// This might be a simple type name (like T in generics)
+				// We'll treat it as type for now, but it might get overwritten
+				// if we find a proper type node
+				tempType := string(source[child.StartByte():child.EndByte()])
+				if param.Name == "" {
+					// First identifier - could be type or name
+					param.Type = ir.TypeRef{Name: tempType}
+				} else {
+					// We already have something in name, swap them
+					param.Type = ir.TypeRef{Name: param.Name}
+					param.Name = tempType
+				}
 			}
 		case "equals_value_clause":
 			// Extract default value

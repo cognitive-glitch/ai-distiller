@@ -6,31 +6,37 @@ AI Distiller provides comprehensive support for C# codebases using the [tree-sit
 
 C# support in AI Distiller is designed to extract the complete structure of .NET code while preserving all type information, generic constraints, and modern language features. The distilled output maintains C#'s strong typing and object-oriented design while optimizing for AI consumption.
 
+## Recent Improvements (2025-01)
+
+- **Method Parameter Fix**: Fixed parameter name/type order for methods (was showing `instance T` instead of `T instance`)
+- **Generic Constraints**: Fixed method generic constraints to show full type arguments (e.g., `INumber<T>` instead of just `INumber`)
+- **Nested Records**: Improved formatting of nested record types and brace handling
+
 ## Supported C# Constructs
 
 ### Core Language Features
 
 | Construct | Support Level | Notes |
 |-----------|--------------|-------|
-| **Classes** | ✅ Full | Including sealed, abstract, partial, nested |
-| **Interfaces** | ✅ Full | With default implementations (C# 8+) |
-| **Structs** | ✅ Full | Including readonly structs, record structs |
-| **Records** | ✅ Full | With primary constructors, property attributes |
-| **Properties** | ✅ Full | Auto-properties, init-only, required |
-| **Methods** | ✅ Full | Including async, operators, extension methods |
-| **Generic Constraints** | ✅ Full | `where T : class, IInterface, new()` |
+| **Classes** | ⚠️ Partial | Basic support, generic parameters on type definitions may be missing |
+| **Interfaces** | ⚠️ Partial | Declaration works, but properties may be omitted |
+| **Structs** | ⚠️ Partial | Basic support, `readonly` modifier not preserved |
+| **Records** | ⚠️ Partial | Parameter order bug in primary constructors, calculated properties misidentified |
+| **Properties** | ⚠️ Partial | Basic support, accessor visibility not preserved |
+| **Methods** | ✅ Full | Including async, extension methods |
+| **Generic Constraints** | ⚠️ Partial | Method constraints work, type definition constraints may be missing |
 | **Nullable Reference Types** | ✅ Full | `#nullable enable/disable` directives |
 | **Attributes** | ✅ Full | Method, class, property, parameter attributes |
-| **Pattern Matching** | ✅ Full | Switch expressions, patterns |
-| **Global Usings** | ✅ Full | `global using` statements |
+| **Pattern Matching** | ❌ Not tested | Parser support unknown |
+| **Global Usings** | ❌ Not supported | Not recognized |
 | **File-scoped Namespaces** | ✅ Full | `namespace Foo;` syntax |
-| **Enums** | ✅ Full | Including flags, explicit values |
-| **Delegates** | ✅ Full | Including generic delegates |
-| **Events** | ✅ Full | Field-like and custom events |
-| **Operators** | ✅ Full | Including implicit/explicit conversions |
-| **Indexers** | ✅ Full | Including multi-dimensional |
+| **Enums** | ✅ Full | Including explicit base types |
+| **Delegates** | ⚠️ Partial | Type may show as `dynamic` |
+| **Events** | ❌ Not supported | Shows as `dynamic` fields |
+| **Operators** | ❌ Not supported | User-defined operators not extracted |
+| **Indexers** | ❌ Not tested | Support unknown |
 | **Tuple Types** | ✅ Full | Named and unnamed tuples |
-| **Local Functions** | ⚠️ Partial | Parsed but not in output |
+| **Local Functions** | ❌ Not supported | Not extracted |
 | **Init-only Properties** | ✅ Full | `{ get; init; }` |
 
 ### Visibility Rules
@@ -42,6 +48,43 @@ C# visibility in AI Distiller uses the full keyword representation:
 - **internal**: Accessible within the same assembly
 - **protected internal**: Accessible within assembly or derived types
 - **private protected**: Accessible within the containing class or derived types in the same assembly
+
+## Known Issues
+
+### 🔴 Critical Limitations
+
+**Record Parameter Order Bug**
+- Record primary constructors show parameters in wrong order (e.g., `Id T` instead of `T Id`)
+- This creates syntactically invalid C# code
+
+**Generic Type Parameters Missing**
+- Generic parameters are often missing from type definitions (e.g., `EntityBase` instead of `EntityBase<T>`)
+- Generic arguments in base class lists are dropped (e.g., `IEntity` instead of `IEntity<T>`)
+
+**Record Property Misidentification**
+- Calculated properties are incorrectly included as primary constructor parameters
+- Properties with bodies should not be in the parameter list
+
+**Events and Operators**
+- Events are shown as `dynamic` fields instead of proper event declarations
+- User-defined operators (including conversion operators) are not extracted
+
+### 🟡 Major Limitations
+
+**Property Accessor Visibility**
+- Different visibility on getters/setters is not preserved (e.g., `{ get; protected set; }`)
+
+**Struct Modifiers**
+- `readonly` modifier on structs is not preserved
+
+**Interface Members**
+- Interface properties are sometimes omitted from output
+
+**Optional Parameters**
+- Default parameter values are not shown in method signatures
+
+**Generic Variance**
+- Variance modifiers (`in`, `out`) on generic parameters are not preserved
 
 ## Key Features
 
