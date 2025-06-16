@@ -7,7 +7,6 @@ import (
 
 	sitter "github.com/smacker/go-tree-sitter"
 	"github.com/janreges/ai-distiller/internal/ir"
-	rust "tree-sitter-rust"
 )
 
 // ASTParser handles Rust source code parsing using tree-sitter
@@ -18,11 +17,10 @@ type ASTParser struct {
 
 // NewASTParser creates a new tree-sitter based parser for Rust
 func NewASTParser() *ASTParser {
-	parser := sitter.NewParser()
-	parser.SetLanguage(sitter.NewLanguage(rust.Language()))
-	
+	// TODO: Add tree-sitter-rust grammar when available
+	// For now, return a parser that will return an error
 	return &ASTParser{
-		parser: parser,
+		parser: nil,
 	}
 }
 
@@ -31,7 +29,7 @@ func (p *ASTParser) ProcessSource(ctx context.Context, source []byte, filename s
 	p.source = source
 	
 	if p.parser == nil {
-		return nil, fmt.Errorf("parser is nil")
+		return nil, fmt.Errorf("tree-sitter-rust grammar not available yet")
 	}
 
 	tree, err := p.parser.ParseCtx(ctx, nil, source)
