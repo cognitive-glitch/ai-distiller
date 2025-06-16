@@ -8,8 +8,8 @@ public protocol Event {
 }
 // A protocol for a type that can handle a specific kind of event.
 
-public protocol EventHandler: AnyObject { {
-    public handle(event: HandledEvent)
+public protocol EventHandler: AnyObject {
+    public func handle(event: HandledEvent)
 }
 //  - Type Erasure for Heterogeneous Storage
 // A weak reference wrapper to prevent retain cycles in the subscriber list.
@@ -43,15 +43,15 @@ public class PropertyInfo {
 // A basic thread-safe queue implementing Sequence.
 
 public final class ThreadSafeQueue {
-    public enqueue(element: T)
-    public dequeue() -> T? {
-    public makeIterator() -> IndexingIterator<[T]> {
+    public func enqueue(element: T)
+    public func dequeue() -> T? {
+    public func makeIterator() -> IndexingIterator<[T]> {
 }
 
 public class CircularBuffer {
     public var startIndex: Int { 0 }
     public var endIndex: Int { count }
-    public index(i: Int) -> Int {
+    public func index(i: Int) -> Int {
     public var count: Int {
 }
 //  - Advanced Memory Management and Concurrent Types
@@ -62,12 +62,12 @@ public final class ConcurrentEventLogger {
 }
 // Protocol for event logger delegation
 
-public protocol EventLoggerDelegate: AnyObject { {
-    public didLogEvent(entry: String)
+public protocol EventLoggerDelegate: AnyObject {
+    public func didLogEvent(entry: String)
 }
 
 public class ActivityMonitor {
-    public record(entry: String)
+    public func record(entry: String)
 }
 //  - Example Usage
 //  - Demo

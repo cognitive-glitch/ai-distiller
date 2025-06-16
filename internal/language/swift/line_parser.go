@@ -57,17 +57,17 @@ func NewLineParser(source []byte, filename string) *LineParser {
 		
 		// Compile regular expressions
 		importRe:           regexp.MustCompile(`^\s*import\s+(\S+)`),
-		classRe:            regexp.MustCompile(`^\s*(open\s+|public\s+|internal\s+|fileprivate\s+|private\s+)?(final\s+)?class\s+(\w+)(\s*:\s*(.+))?`),
-		structRe:           regexp.MustCompile(`^\s*(public\s+|internal\s+|fileprivate\s+|private\s+)?struct\s+(\w+)(\s*:\s*(.+))?`),
-		protocolRe:         regexp.MustCompile(`^\s*(public\s+|internal\s+|fileprivate\s+|private\s+)?protocol\s+(\w+)(\s*:\s*(.+))?`),
-		extensionRe:        regexp.MustCompile(`^\s*(public\s+|internal\s+|fileprivate\s+|private\s+)?extension\s+(\w+)(\s*:\s*(.+))?`),
-		enumRe:             regexp.MustCompile(`^\s*(public\s+|internal\s+|fileprivate\s+|private\s+)?enum\s+(\w+)(\s*:\s*(.+))?`),
+		classRe:            regexp.MustCompile(`^\s*(open\s+|public\s+|internal\s+|fileprivate\s+|private\s+)?(final\s+)?class\s+(\w+)(\s*:\s*([^{]+))?`),
+		structRe:           regexp.MustCompile(`^\s*(public\s+|internal\s+|fileprivate\s+|private\s+)?struct\s+(\w+)(\s*:\s*([^{]+))?`),
+		protocolRe:         regexp.MustCompile(`^\s*(public\s+|internal\s+|fileprivate\s+|private\s+)?protocol\s+(\w+)(\s*:\s*([^{]+))?`),
+		extensionRe:        regexp.MustCompile(`^\s*(public\s+|internal\s+|fileprivate\s+|private\s+)?extension\s+(\w+)(\s*:\s*([^{]+))?`),
+		enumRe:             regexp.MustCompile(`^\s*(public\s+|internal\s+|fileprivate\s+|private\s+)?enum\s+(\w+)(\s*:\s*([^{]+))?`),
 		functionRe:         regexp.MustCompile(`^\s*(public\s+|internal\s+|fileprivate\s+|private\s+|open\s+)?(static\s+|class\s+|final\s+|override\s+|mutating\s+)*func\s+(\w+)\s*\((.*?)\)(\s*(async\s+)?(throws\s+)?->\s*(.+))?`),
 		propertyRe:         regexp.MustCompile(`^\s*(@\w+\s+)*(public\s+|internal\s+|fileprivate\s+|private\s+)?(static\s+|class\s+)?(let|var)\s+(\w+)\s*:\s*(.+?)(\s*=.*)?$`),
 		typeAliasRe:        regexp.MustCompile(`^\s*(public\s+|internal\s+|fileprivate\s+|private\s+)?typealias\s+(\w+)\s*=\s*(.+)`),
 		enumCaseRe:         regexp.MustCompile(`^\s*case\s+(\w+)(\((.*?)\))?`),
 		protocolMethodRe:   regexp.MustCompile(`^\s*func\s+(\w+)\s*\((.*?)\)(\s*(async\s+)?(throws\s+)?->\s*(.+))?`),
-		protocolPropertyRe: regexp.MustCompile(`^\s*var\s+(\w+)\s*:\s*(.+?)\s*\{\s*(get|set|get\s+set).*\}`),
+		protocolPropertyRe: regexp.MustCompile(`^\s*var\s+(\w+)\s*:\s*(.+?)(?:\s*\{\s*(get|set|get\s+set).*\})?$`),
 		actorRe:            regexp.MustCompile(`^\s*(public\s+|internal\s+|fileprivate\s+|private\s+)?actor\s+(\w+)`),
 	}
 }

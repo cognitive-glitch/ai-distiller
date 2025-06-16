@@ -24,10 +24,10 @@ internal enum TemperatureError {
 // Entry-point for quick playground testing.
 //
 // Not marked `public` to keep visibility minimal for a basic example.
-private demo()
+private func demo()
 internal let celsius: Double = = 22
 // Private helper for validation
-private validateTemperature(value: Double, scale: TemperatureScale) -> Bool {
+private func validateTemperature(value: Double, scale: TemperatureScale) -> Bool {
 // Internal constant for configuration
 internal let defaultScale: TemperatureScale = = .celsius
 </file>

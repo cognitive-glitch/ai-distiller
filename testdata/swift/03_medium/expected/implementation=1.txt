@@ -4,11 +4,11 @@ import Foundation
 
 public class Stack {
     // Pushes a new element.
-    public push(element: Element)
+    public func push(element: Element)
     // Returns the top element without removing it.
-    public peek() -> Element? { storage.last }
+    public func peek() -> Element? { storage.last }
     // Removes and returns the top element.
-    public pop() -> Element? { storage.popLast() }
+    public func pop() -> Element? { storage.popLast() }
 }
 
 public class extension Stack {
@@ -24,8 +24,8 @@ public enum MathError {
 // Describes a cache that stores key/value pairs.
 
 public protocol Cacheable {
-    public value(key: Key) -> Value?
-    public contains(key: Key) -> Bool
+    public func value(key: Key) -> Value?
+    public func contains(key: Key) -> Bool
 }
 // Dictionary already satisfies `Cacheable` when paired properly.
 // Generic cache with expiration

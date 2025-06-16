@@ -7,42 +7,42 @@ public protocol Describable {
 }
 // Two-dimensional, integer-backed positioning.
 
-public class Point: Describable, Equatable, Hashable { {
+public class Point: Describable, Equatable, Hashable {
     public var x: Int
     public var y: Int
     // Euclidean distance from origin (0,0).
     public var magnitude: Double {
     public var description: String {
     // Private helper for coordinate validation
-    private isValid() -> Bool {
+    private func isValid() -> Bool {
     // Internal method for coordinate transformation
-    internal transform(offset: Point)
+    internal func transform(offset: Point)
 }
 // Models an axis-aligned rectangle.
 
-public class Rectangle: Describable { {
+public class Rectangle: Describable {
     public var size: (width: Int, height: Int) {
     private var areaCache: Int?
     // Designated initializer.
     // Area is recomputed only when cache invalidated.
     public var area: Int {
     // Private method for bounds checking
-    private contains(point: Point) -> Bool {
+    private func contains(point: Point) -> Bool {
     // Protected method for subclasses
-    internal updateOrigin(newOrigin: Point)
+    internal func updateOrigin(newOrigin: Point)
 }
 // Specialized rectangle for UI elements
 
-public class UIRectangle: Rectangle { {
+public class UIRectangle: Rectangle {
     private var isVisible: Bool = = true
     // Override with additional behavior
     // Public method specific to UI rectangles
-    public show()
+    public func show()
     // Public method to hide rectangle
-    public hide()
+    public func hide()
     // Private UI-specific validation
-    private validateForDisplay() -> Bool {
+    private func validateForDisplay() -> Bool {
 }
-internal descriptorDemo()
+internal func descriptorDemo()
 internal let describables: [Describable] = = [p, r]
 </file>

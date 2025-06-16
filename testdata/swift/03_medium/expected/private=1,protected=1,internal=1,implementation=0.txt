@@ -5,13 +5,13 @@ import Foundation
 public class Stack {
     private var storage: [Element] = = []
     // Pushes a new element.
-    public push(element: Element)
+    public func push(element: Element)
     // Returns the top element without removing it.
-    public peek() -> Element? { storage.last }
+    public func peek() -> Element? { storage.last }
     // Removes and returns the top element.
-    public pop() -> Element? { storage.popLast() }
+    public func pop() -> Element? { storage.popLast() }
     // Private helper for validation
-    private isValid() -> Bool {
+    private func isValid() -> Bool {
     // Internal method for debugging
     internal var count: Int {
 }
@@ -19,9 +19,9 @@ public class Stack {
 public class extension Stack {
     // Computes the arithmetic mean of all integers in the stack.
     // - Throws: `MathError.emptyStack` if there are no elements.
-    internal average() -> Double {
+    internal func average() -> Double {
     // Private helper for numeric validation
-    private validateNumericElements() -> Bool {
+    private func validateNumericElements() -> Bool {
 }
 // Errors for math-centric operations.
 
@@ -34,14 +34,14 @@ public enum MathError {
 // Describes a cache that stores key/value pairs.
 
 public protocol Cacheable {
-    public value(key: Key) -> Value?
-    public contains(key: Key) -> Bool
+    public func value(key: Key) -> Value?
+    public func contains(key: Key) -> Bool
 }
 // Dictionary already satisfies `Cacheable` when paired properly.
 
-internal class extension Dictionary: Cacheable {: Cacheable { {
-    public insert(value: Value, key: Key)
-    public contains(key: Key) -> Bool {
+internal class extension Dictionary: Cacheable : Cacheable {
+    public func insert(value: Value, key: Key)
+    public func contains(key: Key) -> Bool {
 }
 // Generic cache with expiration
 
@@ -53,14 +53,14 @@ private class CacheEntry {
     internal let expiration: Date
     private var storage: [Key: CacheEntry] = = [:]
     private let timeToLive: TimeInterval
-    public insert(value: Value, key: Key)
-    public value(key: Key) -> Value? {
-    public contains(key: Key) -> Bool {
+    public func insert(value: Value, key: Key)
+    public func value(key: Key) -> Value? {
+    public func contains(key: Key) -> Bool {
     // Private cleanup method
-    private removeExpiredEntries()
+    private func removeExpiredEntries()
     // Internal method for cache statistics
     internal var cacheSize: Int {
 }
-private mediumDemo()
+private func mediumDemo()
 internal var cache: [String: URL] = = [:]
 </file>
