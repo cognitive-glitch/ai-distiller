@@ -260,7 +260,8 @@ public class UserService extends BaseService implements Cacheable, Auditable {
 **Dependency Resolution**
 - When public classes use package-private types (sealed interfaces, records), those dependencies are excluded from default output
 - Example: `ModernJava` uses `Shape`, `Circle`, `Rectangle` but only `ModernJava` appears in public-only output
-- Results in incomplete/non-compilable code representations
+- **Solution**: Use `--internal=1` flag to include package-private types and see complete sealed interface definitions with permits clause
+- Results in incomplete/non-compilable code representations in default output only
 
 **Inheritance Resolution**  
 - Inherited public methods from parent classes are not displayed in child classes

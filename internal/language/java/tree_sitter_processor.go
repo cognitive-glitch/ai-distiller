@@ -34,6 +34,7 @@ func (p *TreeSitterProcessor) ProcessSource(ctx context.Context, source []byte, 
 	}
 	defer tree.Close()
 
+
 	// Create distilled file
 	file := &ir.DistilledFile{
 		BaseNode: ir.BaseNode{
@@ -80,6 +81,22 @@ func (p *TreeSitterProcessor) processNode(node *sitter.Node, source []byte, file
 		p.processFieldDeclaration(node, source, file, parent)
 	case "constructor_declaration":
 		p.processConstructorDeclaration(node, source, file, parent)
+	case "program":
+		// Process all children of the program node (top-level declarations)
+		for i := 0; i < int(node.ChildCount()); i++ {
+			child := node.Child(i)
+			p.processNode(child, source, file, parent)
+		}
+	case "ERROR":
+		file.Errors = append(file.Errors, ir.DistilledError{
+			BaseNode: ir.BaseNode{
+				Location: p.nodeLocation(node),
+			},
+			Message:  fmt.Sprintf("Tree-sitter parsing error at line %d. The parser could not understand the syntax here.", node.StartPoint().Row+1),
+			Severity: "error",
+		})
+		// Do not recurse into ERROR nodes, as their children are unstructured tokens.
+		return // Use return to stop processing this branch
 	case "block_comment":
 		p.processJavaDocComment(node, source, file, parent)
 	default:
