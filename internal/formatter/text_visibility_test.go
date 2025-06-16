@@ -26,7 +26,7 @@ func TestTextFormatter_VisibilityPrefixes(t *testing.T) {
 					},
 				},
 			},
-			expected: "+public_func()",
+			expected: "public_func()",
 		},
 		{
 			name: "private function with prefix",
@@ -52,7 +52,7 @@ func TestTextFormatter_VisibilityPrefixes(t *testing.T) {
 					},
 				},
 			},
-			expected: "#protected_func()",
+			expected: "*protected_func()",
 		},
 		{
 			name: "mixed visibility in class",
@@ -95,11 +95,11 @@ func TestTextFormatter_VisibilityPrefixes(t *testing.T) {
 				},
 			},
 			expected: `class TestClass:
-    +publicField: string
-    #protectedField: int
+    publicField: string
+    *protectedField: int
     -privateField: bool
-    +publicMethod()
-    #protectedMethod()
+    publicMethod()
+    *protectedMethod()
     -privateMethod()`,
 		},
 		{
@@ -143,15 +143,15 @@ func TestGetVisibilityPrefix(t *testing.T) {
 		visibility ir.Visibility
 		expected   string
 	}{
-		{ir.VisibilityPublic, "+"},      // UML public
-		{ir.VisibilityPrivate, "-"},     // UML private
-		{ir.VisibilityProtected, "#"},   // UML protected
-		{ir.VisibilityInternal, "~"},    // UML package/internal (distinct from private)
-		{ir.VisibilityFilePrivate, "_"}, // Swift fileprivate -> file-scoped private
-		{ir.VisibilityOpen, "+"},        // Swift open -> treat as public
-		{ir.VisibilityProtectedInternal, "#_"}, // C# protected internal
-		{ir.VisibilityPrivateProtected, "-#"},  // C# private protected
-		{"", "+"}, // default/empty visibility
+		{ir.VisibilityPublic, ""},       // No prefix for public
+		{ir.VisibilityPrivate, "-"},     // Private
+		{ir.VisibilityProtected, "*"},   // Protected
+		{ir.VisibilityInternal, "~"},    // UML package/internal
+		{ir.VisibilityFilePrivate, "-"}, // Swift fileprivate -> similar to private
+		{ir.VisibilityOpen, ""},         // Swift open -> treat as public
+		{ir.VisibilityProtectedInternal, "*~"}, // C# protected internal -> combination
+		{ir.VisibilityPrivateProtected, "-*"},  // C# private protected -> combination
+		{"", ""},                        // Default to public (no prefix)
 	}
 
 	for _, tt := range tests {
