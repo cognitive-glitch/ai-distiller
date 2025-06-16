@@ -391,7 +391,7 @@ func (p *TreeSitterProcessor) processFunctionDeclaration(node *sitter.Node, sour
 		case "modifiers":
 			p.extractFunctionModifiers(child, source, function)
 		case "type_parameters":
-			// TODO: Handle generic functions
+			p.extractTypeParams(child, source, function)
 		case "function_value_parameters":
 			p.extractParameters(child, source, function)
 		case "simple_identifier":
@@ -797,6 +797,41 @@ func (p *TreeSitterProcessor) extractTypeParameters(node *sitter.Node, source []
 	class.Decorators = append(class.Decorators, "@TypeParams"+typeParams)
 }
 
+// extractTypeParams extracts generic type parameters for functions
+func (p *TreeSitterProcessor) extractTypeParams(node *sitter.Node, source []byte, function *ir.DistilledFunction) {
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		if child.Type() == "type_parameter" {
+			param := ir.TypeParam{
+				Name: "",
+			}
+			
+			// Extract parameter name and constraints
+			for j := 0; j < int(child.ChildCount()); j++ {
+				grandchild := child.Child(j)
+				if grandchild.Type() == "type_identifier" || grandchild.Type() == "simple_identifier" {
+					param.Name = string(source[grandchild.StartByte():grandchild.EndByte()])
+				} else if grandchild.Type() == "type_constraint" {
+					// Extract constraint
+					for k := 0; k < int(grandchild.ChildCount()); k++ {
+						constraintChild := grandchild.Child(k)
+						if constraintChild.Type() == "user_type" || constraintChild.Type() == "nullable_type" {
+							typeRef := p.extractType(constraintChild, source)
+							if typeRef != nil {
+								param.Constraints = append(param.Constraints, *typeRef)
+							}
+						}
+					}
+				}
+			}
+			
+			if param.Name != "" {
+				function.TypeParams = append(function.TypeParams, param)
+			}
+		}
+	}
+}
+
 // extractInterfaceTypeParameters extracts generic type parameters for interfaces
 func (p *TreeSitterProcessor) extractInterfaceTypeParameters(node *sitter.Node, source []byte, iface *ir.DistilledInterface) {
 	// TODO: Extract and store type parameters
@@ -1024,6 +1059,15 @@ func (p *TreeSitterProcessor) createPropertyFromParameter(node *sitter.Node, sou
 		child := node.Child(i)
 		if child.Type() == "val" {
 			property.Modifiers = append(property.Modifiers, ir.ModifierFinal)
+		}
+		// Check binding_pattern_kind for val/var
+		if child.Type() == "binding_pattern_kind" {
+			for j := 0; j < int(child.ChildCount()); j++ {
+				grandchild := child.Child(j)
+				if grandchild.Type() == "val" {
+					property.Modifiers = append(property.Modifiers, ir.ModifierFinal)
+				}
+			}
 		}
 		// Extract visibility modifiers
 		if child.Type() == "modifiers" {

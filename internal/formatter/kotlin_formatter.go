@@ -88,6 +88,7 @@ func (f *KotlinFormatter) formatClass(class *ir.DistilledClass, indent int) stri
 		} else if mod == ir.ModifierSealed {
 			modifiers = append(modifiers, "sealed")
 		}
+		// Skip static modifier as it's used internally to mark objects
 	}
 
 	// Check if it's a data class
@@ -98,13 +99,28 @@ func (f *KotlinFormatter) formatClass(class *ir.DistilledClass, indent int) stri
 			break
 		}
 	}
+	
+	// Check if it's an object declaration (static modifier in Kotlin indicates object)
+	isObject := false
+	for _, mod := range class.Modifiers {
+		if mod == ir.ModifierStatic {
+			isObject = true
+			break
+		}
+	}
 
 	// Class declaration
 	classDecl := strings.Join(modifiers, " ")
 	if classDecl != "" {
 		classDecl += " "
 	}
-	classDecl += "class " + class.Name
+	
+	// Use 'object' keyword for Kotlin objects, otherwise 'class'
+	if isObject {
+		classDecl += "object " + class.Name
+	} else {
+		classDecl += "class " + class.Name
+	}
 
 	// Generics
 	if len(class.TypeParams) > 0 {
@@ -125,22 +141,22 @@ func (f *KotlinFormatter) formatClass(class *ir.DistilledClass, indent int) stri
 		for _, child := range class.Children {
 			if fieldNode, ok := child.(*ir.DistilledField); ok {
 				param := ""
-				// Check if field has readonly modifier
-				hasReadonly := false
+				// Check if field has final modifier (val) or not (var)
+				isFinal := false
 				for _, mod := range fieldNode.Modifiers {
-					if mod == ir.ModifierReadonly {
-						hasReadonly = true
+					if mod == ir.ModifierFinal || mod == ir.ModifierReadonly {
+						isFinal = true
 						break
 					}
 				}
-				if hasReadonly {
+				if isFinal {
 					param = "val "
 				} else {
 					param = "var "
 				}
 				param += fieldNode.Name
 				if fieldNode.Type != nil && fieldNode.Type.Name != "" {
-					param += ": " + fieldNode.Type.Name
+					param += ": " + f.formatTypeRef(fieldNode.Type)
 				}
 				params = append(params, param)
 			}
@@ -169,16 +185,34 @@ func (f *KotlinFormatter) formatClass(class *ir.DistilledClass, indent int) stri
 
 	parts = append(parts, indentStr+classDecl+" {")
 
-	// Format children (methods, properties, etc.) if not a data class
-	// Data classes have their properties in constructor
-	if !isDataClass {
-		for _, child := range class.Children {
-			switch n := child.(type) {
-			case *ir.DistilledFunction:
-				parts = append(parts, f.formatFunction(n, indent+1))
-			case *ir.DistilledField:
+	// Format children
+	for _, child := range class.Children {
+		switch n := child.(type) {
+		case *ir.DistilledFunction:
+			// Skip primary constructors for data classes as they're shown in class declaration
+			if isDataClass && n.Name == "constructor" {
+				// Check if it has @Primary decorator
+				isPrimary := false
+				for _, dec := range n.Decorators {
+					if dec == "@Primary" {
+						isPrimary = true
+						break
+					}
+				}
+				if isPrimary {
+					continue
+				}
+			}
+			// Show all other functions
+			parts = append(parts, f.formatFunction(n, indent+1))
+		case *ir.DistilledField:
+			// For data classes, fields are already in constructor params, skip them
+			if !isDataClass {
 				parts = append(parts, f.formatField(n, indent+1))
 			}
+		case *ir.DistilledClass:
+			// Handle nested classes (e.g., sealed class variants, companion objects)
+			parts = append(parts, f.formatClass(n, indent+1))
 		}
 	}
 	
@@ -264,7 +298,7 @@ func (f *KotlinFormatter) formatEnum(enum *ir.DistilledEnum, indent int) string 
 	enumDecl += "enum class " + enum.Name
 
 	var parts []string
-	parts = append(parts, f.addVisibilityPrefix(enum.Visibility)+indentStr+enumDecl+" {")
+	parts = append(parts, indentStr+enumDecl+" {")
 	
 	// Format enum values and methods
 	for _, child := range enum.Children {
@@ -275,7 +309,7 @@ func (f *KotlinFormatter) formatEnum(enum *ir.DistilledEnum, indent int) string 
 			// Enum values
 			valueStr := indentStr + "    " + n.Name
 			if n.DefaultValue != "" {
-				valueStr += "(" + n.DefaultValue + ")"
+				valueStr += n.DefaultValue
 			}
 			parts = append(parts, valueStr)
 		}
@@ -321,6 +355,9 @@ func (f *KotlinFormatter) formatFunction(fn *ir.DistilledFunction, indent int) s
 	if signature != "" {
 		signature += " "
 	}
+	
+	// Add 'fun' keyword
+	signature += "fun "
 
 	// Generics
 	if len(fn.TypeParams) > 0 {
@@ -342,7 +379,7 @@ func (f *KotlinFormatter) formatFunction(fn *ir.DistilledFunction, indent int) s
 	for _, p := range fn.Parameters {
 		param := p.Name
 		if p.Type.Name != "" {
-			param += ": " + p.Type.Name
+			param += ": " + f.formatTypeRef(&p.Type)
 		}
 		if p.DefaultValue != "" {
 			param += " = " + p.DefaultValue
@@ -353,7 +390,7 @@ func (f *KotlinFormatter) formatFunction(fn *ir.DistilledFunction, indent int) s
 
 	// Return type
 	if fn.Returns != nil && fn.Returns.Name != "Unit" {
-		signature += ": " + fn.Returns.Name
+		signature += ": " + f.formatTypeRef(fn.Returns)
 	}
 
 	// Add implementation if present
@@ -405,7 +442,7 @@ func (f *KotlinFormatter) formatFunction(fn *ir.DistilledFunction, indent int) s
 	if indent == 0 {
 		return signature
 	}
-	return indentStr + f.addVisibilityPrefix(fn.Visibility) + signature
+	return indentStr + signature
 }
 
 func (f *KotlinFormatter) formatField(field *ir.DistilledField, indent int) string {
@@ -422,14 +459,19 @@ func (f *KotlinFormatter) formatField(field *ir.DistilledField, indent int) stri
 	}
 
 	// Property keyword
-	hasReadonly := false
+	isFinal := false
 	for _, mod := range field.Modifiers {
-		if mod == ir.ModifierReadonly || mod == ir.ModifierFinal {
-			hasReadonly = true
+		if mod == ir.ModifierFinal || mod == ir.ModifierReadonly {
+			isFinal = true
 			break
 		}
+		if mod == ir.ModifierConst {
+			// const implies val in Kotlin
+			isFinal = true
+			modifiers = append(modifiers, "const")
+		}
 	}
-	if hasReadonly {
+	if isFinal {
 		modifiers = append(modifiers, "val")
 	} else {
 		modifiers = append(modifiers, "var")
@@ -440,7 +482,7 @@ func (f *KotlinFormatter) formatField(field *ir.DistilledField, indent int) stri
 
 	// Type
 	if field.Type != nil {
-		fieldDecl += ": " + field.Type.Name
+		fieldDecl += ": " + f.formatTypeRef(field.Type)
 	}
 
 	// Initializer
@@ -448,20 +490,31 @@ func (f *KotlinFormatter) formatField(field *ir.DistilledField, indent int) stri
 		fieldDecl += " = " + field.DefaultValue
 	}
 
-	return indentStr + f.addVisibilityPrefix(field.Visibility) + fieldDecl
+	return indentStr + fieldDecl
 }
 
-func (f *KotlinFormatter) addVisibilityPrefix(visibility ir.Visibility) string {
-	switch visibility {
-	case ir.VisibilityPublic:
-		return "" // No prefix for public
-	case ir.VisibilityPrivate:
-		return "-"
-	case ir.VisibilityProtected:
-		return "*"
-	case ir.VisibilityInternal:
-		return "~"
-	default:
-		return "" // Default is public in Kotlin
+// formatTypeRef formats a type reference including nullability and generics
+func (f *KotlinFormatter) formatTypeRef(typeRef *ir.TypeRef) string {
+	if typeRef == nil {
+		return ""
 	}
+	
+	result := typeRef.Name
+	
+	// Add generic type arguments if present
+	if len(typeRef.TypeArgs) > 0 {
+		typeArgs := []string{}
+		for _, arg := range typeRef.TypeArgs {
+			typeArgs = append(typeArgs, f.formatTypeRef(&arg))
+		}
+		result += "<" + strings.Join(typeArgs, ", ") + ">"
+	}
+	
+	// Add nullable indicator if present
+	if typeRef.IsNullable {
+		result += "?"
+	}
+	
+	return result
 }
+

@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/kotlin/04_complex/source.kt">
+<file path="source.kt">
 import kotlinx.coroutines
 import kotlinx.coroutines.channels
 import kotlinx.coroutines.flow
@@ -12,22 +12,36 @@ import kotlin.time.Duration.Companion.seconds
 class DatabaseDsl {
 }
 class QueryBuilder {
-    constructor(entityClass: KClass)
-    where(condition: ConditionBuilder<T>.() -> Unit)
-    orderBy(column: KProperty, direction: SortDirection)
-    limit(count: Int)
-    offset(count: Int)
+    fun constructor(entityClass: KClass)
+    fun where(condition: ConditionBuilder<T>.() -> Unit)
+    fun orderBy(column: KProperty, direction: SortDirection)
+    fun limit(count: Int)
+    fun offset(count: Int)
 }
 class ConditionBuilder {
-    KProperty<V>.eq(value: V)
-    KProperty<V>.ne(value: V)
-    KProperty<V>.gt(value: V)
-    KProperty<V>.lt(value: V)
-    KProperty<V>.isIn(values: Collection)
-    ConditionBuilder<T>.and(other: ConditionBuilder<T>.() -> Unit)
-    ConditionBuilder<T>.or(other: ConditionBuilder<T>.() -> Unit)
+    fun KProperty<V>.eq(value: V)
+    fun KProperty<V>.ne(value: V)
+    fun KProperty<V>.gt(value: V)
+    fun KProperty<V>.lt(value: V)
+    fun KProperty<V>.isIn(values: Collection)
+    fun ConditionBuilder<T>.and(other: ConditionBuilder<T>.() -> Unit)
+    fun ConditionBuilder<T>.or(other: ConditionBuilder<T>.() -> Unit)
 }
 sealed class Condition {
+    data class Equals(var column: String, var value: Any) {
+    }
+    data class NotEquals(var column: String, var value: Any) {
+    }
+    data class GreaterThan(var column: String, var value: Comparable) {
+    }
+    data class LessThan(var column: String, var value: Comparable) {
+    }
+    data class In(var column: String, var values: Collection) {
+    }
+    data class And(var left: List, var right: List) {
+    }
+    data class Or(var left: List, var right: List) {
+    }
 }
 data class OrderBy(var column: String, var direction: SortDirection) {
 }
@@ -38,37 +52,51 @@ enum class SortDirection {
 data class Query(var entityClass: KClass, var conditions: List, var orderBy: List, var limit: Int, var offset: Int) {
 }
 class AdvancedRepository {
-    suspend findByQuery(query: Query): Flow<T>
-    suspend executeQuery(builder: QueryBuilder<T>.() -> Unit): Flow<T>
+    suspend fun findByQuery(query: Query): Flow<T>
+    suspend fun executeQuery(builder: QueryBuilder<T>.() -> Unit): Flow<T>
 }
 data class Product(var id: String, var name: String, var price: Double, var category: String, var inStock: Boolean, var rating: Double) {
 }
 class ProductRepository {
     var productUpdates: SharedFlow
-    override suspend findByQuery(query: Query): Flow<Product>
-    override suspend executeQuery(builder: QueryBuilder<Product>.() -> Unit): Flow<Product>
-    suspend addProduct(product: Product)
-    suspend updateProduct(id: String, updater: (Product) -> Product): Product?
+    override suspend fun findByQuery(query: Query): Flow<Product>
+    override suspend fun executeQuery(builder: QueryBuilder<Product>.() -> Unit): Flow<Product>
+    suspend fun addProduct(product: Product)
+    suspend fun updateProduct(id: String, updater: (Product) -> Product): Product?
 }
 sealed class ProductUpdate {
+    data class Added(var product: Product) {
+    }
+    data class Modified(var oldProduct: Product, var newProduct: Product) {
+    }
+    data class Removed(var product: Product) {
+    }
 }
 class ProductNotificationService {
-    constructor(repository: ProductRepository)
-    start(): Job
-    suspend subscribe(subscriberId: String): ReceiveChannel<Notification>
-    suspend unsubscribe(subscriberId: String)
-    suspend sendNotification(notification: Notification)
+    fun constructor(repository: ProductRepository)
+    fun start(): Job
+    suspend fun subscribe(subscriberId: String): ReceiveChannel<Notification>
+    suspend fun unsubscribe(subscriberId: String)
+    suspend fun sendNotification(notification: Notification)
 }
 sealed class Notification {
+    data class ProductAdded(var productName: String) {
+    }
+    data class ProductUpdated(var productName: String, var oldPrice: Double, var newPrice: Double) {
+    }
+    data class ProductRemoved(var productName: String) {
+    }
+    data class CustomMessage(var message: String) {
+    }
 }
 class CachedProperty {
-    constructor(initialValue: T, validator, ttl: Duration)
-    override getValue(thisRef: Any, property: KProperty): T
-    override setValue(thisRef: Any, property: KProperty, value: T)
+    fun constructor(initialValue: T, validator, ttl: Duration)
+    override fun getValue(thisRef: Any, property: KProperty): T
+    override fun setValue(thisRef: Any, property: KProperty, value: T)
 }
 class AsyncLazy {
-    constructor(initializer)
-    override getValue(thisRef: Any, property: KProperty): Deferred<T>
+    fun constructor(initializer)
+    override fun getValue(thisRef: Any, property: KProperty): Deferred<T>
 }
 class ServiceConfiguration {
     var maxConcurrentRequests: Int
@@ -76,10 +104,16 @@ class ServiceConfiguration {
     var isEnabled: Boolean
 }
 class DataProcessingOrchestrator {
-    startProcessing(workerCount: Int): Job
-    suspend addItem(item: DataItem)
+    fun startProcessing(workerCount: Int): Job
+    suspend fun addItem(item: DataItem)
+    data class DataItem(var id: String, var data: String) {
+    }
+    data class ProcessingResult(var workerId: Int, var result: String) {
+    }
+    data class ProcessingError(var workerId: Int, var message: String) {
+    }
 }
-main()
+fun main()
 var notificationService
 var serviceJob
 var subscription
