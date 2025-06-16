@@ -308,6 +308,11 @@ func (p *TreeSitterProcessor) processAnnotationElement(node *sitter.Node, source
 	element := &ir.DistilledFunction{
 		BaseNode: ir.BaseNode{
 			Location: p.nodeLocation(node),
+			Extensions: &ir.NodeExtensions{
+				Java: &ir.JavaExtensions{
+					IsAnnotationElement: true,
+				},
+			},
 		},
 		Parameters: []ir.Parameter{},
 		Modifiers:  []ir.Modifier{ir.ModifierAbstract},
@@ -315,6 +320,7 @@ func (p *TreeSitterProcessor) processAnnotationElement(node *sitter.Node, source
 	}
 
 	// Extract type, name, and default value
+	foundDefault := false
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		switch child.Type() {
@@ -324,8 +330,15 @@ func (p *TreeSitterProcessor) processAnnotationElement(node *sitter.Node, source
 			element.Returns = p.extractType(child, source)
 		case "identifier":
 			element.Name = string(source[child.StartByte():child.EndByte()])
-		case "default_value":
-			// TODO: Extract default value if needed
+		case "default":
+			foundDefault = true
+		case "string_literal", "decimal_integer_literal", "boolean":
+			if foundDefault {
+				// This is the default value
+				defaultValueText := string(source[child.StartByte():child.EndByte()])
+				element.Extensions.Java.DefaultValue = defaultValueText
+				foundDefault = false
+			}
 		}
 	}
 

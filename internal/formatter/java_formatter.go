@@ -362,8 +362,17 @@ func (f *JavaFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, in
 		fmt.Fprintf(w, " throws %s", strings.Join(throws, ", "))
 	}
 	
-	// Format implementation
+	// Check if this is an annotation element with default value
+	isAnnotationElement := false
+	var defaultValue string
+	if fn.Extensions != nil && fn.Extensions.Java != nil {
+		isAnnotationElement = fn.Extensions.Java.IsAnnotationElement
+		defaultValue = fn.Extensions.Java.DefaultValue
+	}
+	
+	// Format implementation or default value
 	if fn.Implementation != "" {
+		// Regular method implementation
 		fmt.Fprintln(w, " {")
 		lines := strings.Split(strings.TrimSpace(fn.Implementation), "\n")
 		for _, line := range lines {
@@ -372,6 +381,9 @@ func (f *JavaFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, in
 			}
 		}
 		fmt.Fprintf(w, "%s}\n", indentStr)
+	} else if isAnnotationElement && defaultValue != "" {
+		// Annotation element with default value
+		fmt.Fprintf(w, " default %s;\n", defaultValue)
 	} else {
 		// No implementation - abstract method or interface method
 		fmt.Fprintln(w, ";")

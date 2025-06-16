@@ -174,9 +174,11 @@ type TypeScriptExtensions struct {
 }
 
 type JavaExtensions struct {
-	IsRecord         bool        `json:"is_record,omitempty"`
-	IsSealed         bool        `json:"is_sealed,omitempty"`
-	RecordParameters []Parameter `json:"record_parameters,omitempty"`
+	IsRecord            bool        `json:"is_record,omitempty"`
+	IsSealed            bool        `json:"is_sealed,omitempty"`
+	RecordParameters    []Parameter `json:"record_parameters,omitempty"`
+	IsAnnotationElement bool        `json:"is_annotation_element,omitempty"`
+	DefaultValue        string      `json:"default_value,omitempty"`
 }
 
 type CSharpExtensions struct {
