@@ -16,7 +16,7 @@ pub enum AnalysisError {
 pub trait DataSource {
     type Content: AsRef<[u8]>;
 
-    fn get_content(&self) -> Result<Self::Content, AnalysisError>
+    fn get_content(&self) -> Result<Self::Content, AnalysisError>;
 
     pub fn content_slice<'a>(&'a self) -> Option<&'a [u8]> where Self::Content: 'a
 }

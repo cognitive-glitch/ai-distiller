@@ -33,7 +33,7 @@ var (
 	// This captures the full impl line up to the opening brace
 	implRe       = regexp.MustCompile(`^\s*impl(?:<[^>]+>)?\s+(?:(.+?)\s+for\s+)?([^{]+)`)
 	// Function regex that captures: visibility, modifiers, name, generics (in name), params, return type (including where clause)
-	fnRe         = regexp.MustCompile(`^\s*((?:pub(?:\([^)]+\))?\s+)?)((?:async\s+)?(?:unsafe\s+)?(?:const\s+)?(?:extern\s+)?)?fn\s+(\w+(?:<[^>]+>)?)\s*\(([^)]*)\)(?:\s*->\s*([^{]+))?`)
+	fnRe         = regexp.MustCompile(`^\s*((?:pub(?:\([^)]+\))?\s+)?)((?:async\s+)?(?:unsafe\s+)?(?:const\s+)?(?:extern\s+)?)?fn\s+(\w+(?:<[^>]+>)?)\s*\(([^)]*)\)(?:\s*->\s*([^{]+))?(?:\s*where\s+([^{]+?))?`)
 	constRe      = regexp.MustCompile(`^\s*((?:pub(?:\([^)]+\))?\s+)?)const\s+(\w+):\s*([^=]+)(?:\s*=\s*(.+))?;`)
 	staticRe     = regexp.MustCompile(`^\s*((?:pub(?:\([^)]+\))?\s+)?)static\s+(?:(mut)\s+)?(\w+):\s*([^=]+)(?:\s*=\s*(.+))?;`)
 	typeRe       = regexp.MustCompile(`^\s*((?:pub(?:\([^)]+\))?\s+)?)type\s+(\w+)(?:<[^>]+>)?\s*=\s*(.+);`)
@@ -386,6 +386,10 @@ func (p *LineParser) parseFunction(file *ir.DistilledFile, parent ir.DistilledNo
 	name := matches[3]
 	params := matches[4]
 	returnType := strings.TrimSpace(matches[5])
+	whereClause := ""
+	if len(matches) > 6 && matches[6] != "" {
+		whereClause = strings.TrimSpace(matches[6])
+	}
 
 	fn := &ir.DistilledFunction{
 		BaseNode: ir.BaseNode{
@@ -403,8 +407,11 @@ func (p *LineParser) parseFunction(file *ir.DistilledFile, parent ir.DistilledNo
 		// Clean up return type - remove trailing brace and whitespace
 		returnType = strings.TrimSpace(strings.TrimSuffix(returnType, "{"))
 		
-		// The return type might include a where clause, which is fine
-		// We'll store the complete return type including where clause
+		// Add where clause if present
+		if whereClause != "" {
+			returnType += " where " + whereClause
+		}
+		
 		fn.Returns = &ir.TypeRef{Name: returnType}
 	}
 	
@@ -1042,7 +1049,7 @@ func (p *LineParser) parseTraitBlock(file *ir.DistilledFile, parent ir.Distilled
 	// Regular expressions for trait items
 	// Handle GATs like: type Reader<'a>: std::io::Read where Self: 'a;
 	assocTypeRe := regexp.MustCompile(`^\s*type\s+(\w+)(?:<([^>]+)>)?(?:\s*:\s*([^;]+?))?(?:\s*where\s+([^;]+))?;`)
-	traitFnRe := regexp.MustCompile(`^\s*fn\s+(\w+)(?:<([^>]+)>)?\s*\(([^)]*)\)(?:\s*->\s*([^{;]+))?(?:\s*where\s+([^{;]+))?`)
+	traitFnRe := regexp.MustCompile(`^\s*fn\s+(\w+)(?:<([^>]+)>)?\s*\(([^)]*)\)(?:\s*->\s*([^{]+))?(?:\s*where\s+([^{]+?))?`)
 	
 	for p.currentLine < len(p.lines) && braceCount > 0 {
 		line := p.lines[p.currentLine]

@@ -2,7 +2,7 @@
 
 pub trait Configurable {
 
-    fn from_source<S: DataSource>(source: &S) -> Self
+    fn from_source<S: DataSource>(source: &S) -> Self;
 }
 // A trait with a Generic Associated Type (GAT).
 // `Reader` has its own lifetime `'a`, which is tied to `&'a self`.
@@ -11,9 +11,9 @@ pub trait DataSource {
     type Reader<'a>: std::io::Read where Self: 'a;
     type Config<T: Clone>: Clone;
 
-    fn get_reader<'a>(&'a self) -> Self::Reader<'a>
+    fn get_reader<'a>(&'a self) -> Self::Reader<'a>;
 
-    fn get_config<T: Clone>(&self) -> Self::Config<T>
+    fn get_config<T: Clone>(&self) -> Self::Config<T>;
 
     fn process_with_bounds<'a, T, U>(&'a self, input: T) -> U
 }
@@ -46,9 +46,9 @@ pub trait AdvancedContainer<const N: usize> {
     type Item<'a>: Clone where Self: 'a;
     type Iterator<'a>: Iterator<Item = Self::Item<'a>> where Self: 'a;
 
-    fn get_items<'a>(&'a self) -> Self::Iterator<'a>
+    fn get_items<'a>(&'a self) -> Self::Iterator<'a>;
 
-    fn process_batch<'a, F>(&'a self, f: F) -> [Option<Self::Item<'a>>
+    fn process_batch<'a, F>(&'a self, f: F) -> [Option<Self::Item<'a>>; N]
 }
 // Implementation with const generics
 
