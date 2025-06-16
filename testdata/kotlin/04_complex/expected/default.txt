@@ -19,43 +19,43 @@ class QueryBuilder {
     fun offset(count: Int)
 }
 class ConditionBuilder {
-    fun KProperty<V>.eq(value: V)
-    fun KProperty<V>.ne(value: V)
-    fun KProperty<V>.gt(value: V)
-    fun KProperty<V>.lt(value: V)
-    fun KProperty<V>.isIn(values: Collection)
+    fun <V> KProperty<V>.eq(value: V)
+    fun <V> KProperty<V>.ne(value: V)
+    fun <V> KProperty<V>.gt(value: V)
+    fun <V> KProperty<V>.lt(value: V)
+    fun <V> KProperty<V>.isIn(values: Collection)
     fun ConditionBuilder<T>.and(other: ConditionBuilder<T>.() -> Unit)
     fun ConditionBuilder<T>.or(other: ConditionBuilder<T>.() -> Unit)
 }
 sealed class Condition {
-    data class Equals(var column: String, var value: Any) {
+    data class Equals(val column: String, val value: Any?) {
     }
-    data class NotEquals(var column: String, var value: Any) {
+    data class NotEquals(val column: String, val value: Any?) {
     }
-    data class GreaterThan(var column: String, var value: Comparable) {
+    data class GreaterThan(val column: String, val value: Comparable) {
     }
-    data class LessThan(var column: String, var value: Comparable) {
+    data class LessThan(val column: String, val value: Comparable) {
     }
-    data class In(var column: String, var values: Collection) {
+    data class In(val column: String, val values: Collection) {
     }
-    data class And(var left: List, var right: List) {
+    data class And(val left: List, val right: List) {
     }
-    data class Or(var left: List, var right: List) {
+    data class Or(val left: List, val right: List) {
     }
 }
-data class OrderBy(var column: String, var direction: SortDirection) {
+data class OrderBy(val column: String, val direction: SortDirection) {
 }
 enum class SortDirection {
     ASC
     DESC
 }
-data class Query(var entityClass: KClass, var conditions: List, var orderBy: List, var limit: Int, var offset: Int) {
+data class Query(val entityClass: KClass, val conditions: List, val orderBy: List, val limit: Int?, val offset: Int?) {
 }
 class AdvancedRepository {
     suspend fun findByQuery(query: Query): Flow<T>
     suspend fun executeQuery(builder: QueryBuilder<T>.() -> Unit): Flow<T>
 }
-data class Product(var id: String, var name: String, var price: Double, var category: String, var inStock: Boolean, var rating: Double) {
+data class Product(val id: String, val name: String, val price: Double, val category: String, val inStock: Boolean, val rating: Double) {
 }
 class ProductRepository {
     var productUpdates: SharedFlow
@@ -65,11 +65,11 @@ class ProductRepository {
     suspend fun updateProduct(id: String, updater: (Product) -> Product): Product?
 }
 sealed class ProductUpdate {
-    data class Added(var product: Product) {
+    data class Added(val product: Product) {
     }
-    data class Modified(var oldProduct: Product, var newProduct: Product) {
+    data class Modified(val oldProduct: Product, val newProduct: Product) {
     }
-    data class Removed(var product: Product) {
+    data class Removed(val product: Product) {
     }
 }
 class ProductNotificationService {
@@ -80,23 +80,23 @@ class ProductNotificationService {
     suspend fun sendNotification(notification: Notification)
 }
 sealed class Notification {
-    data class ProductAdded(var productName: String) {
+    data class ProductAdded(val productName: String) {
     }
-    data class ProductUpdated(var productName: String, var oldPrice: Double, var newPrice: Double) {
+    data class ProductUpdated(val productName: String, val oldPrice: Double, val newPrice: Double) {
     }
-    data class ProductRemoved(var productName: String) {
+    data class ProductRemoved(val productName: String) {
     }
-    data class CustomMessage(var message: String) {
+    data class CustomMessage(val message: String) {
     }
 }
 class CachedProperty {
     fun constructor(initialValue: T, validator, ttl: Duration)
-    override fun getValue(thisRef: Any, property: KProperty): T
-    override fun setValue(thisRef: Any, property: KProperty, value: T)
+    override fun getValue(thisRef: Any?, property: KProperty): T
+    override fun setValue(thisRef: Any?, property: KProperty, value: T)
 }
 class AsyncLazy {
     fun constructor(initializer)
-    override fun getValue(thisRef: Any, property: KProperty): Deferred<T>
+    override fun getValue(thisRef: Any?, property: KProperty): Deferred<T>
 }
 class ServiceConfiguration {
     var maxConcurrentRequests: Int
@@ -106,11 +106,11 @@ class ServiceConfiguration {
 class DataProcessingOrchestrator {
     fun startProcessing(workerCount: Int): Job
     suspend fun addItem(item: DataItem)
-    data class DataItem(var id: String, var data: String) {
+    data class DataItem(val id: String, val data: String) {
     }
-    data class ProcessingResult(var workerId: Int, var result: String) {
+    data class ProcessingResult(val workerId: Int, val result: String) {
     }
-    data class ProcessingError(var workerId: Int, var message: String) {
+    data class ProcessingError(val workerId: Int, val message: String) {
     }
 }
 fun main()

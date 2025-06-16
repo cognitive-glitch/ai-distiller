@@ -9,15 +9,15 @@ class ObservableFactory:
     static subscribe(observable: object, callback: Function)
     static unsubscribe(observable: object, callback: Function)
     static * getMutationHistory() -> Generator<string,
-    - static _clearHistory()
-    - static _getListenerCount(observable: object) -> number
+    static _clearHistory()
+    static _getListenerCount(observable: object) -> number
 
 class ConfigManager:
     constructor(config: object = {})
     get(key: string) -> any
     set(key: string, value: any)
     getChangeHistory() -> Array
-    - _validateChange(key: string, value: any) -> boolean
+    _validateChange(key: string, value: any) -> boolean
 const appConfig = ObservableFactory.create({
     apiEndpoint: 'https://api.example.com/v1',
     timeout: 5000,

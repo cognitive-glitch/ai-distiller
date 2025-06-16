@@ -1,35 +1,43 @@
 <file path="source.rs">
+// Represents a source file to be processed.
 
-struct SourceFile {
-    path: String,
+pub struct SourceFile {
+    pub path: String,
 }
+// A trait for items that can be summarized.
 
-trait Summarizable {
+pub trait Summarizable {
 
-    summary(&self) -> String
+    pub fn summary(&self) -> String
 
-    short_summary(&self) -> String
+    pub fn short_summary(&self) -> String
 }
 
 impl SourceFile {
+    // Creates a new SourceFile, demonstrating ownership (takes ownership of path and content).
 
-    new(path: String, content: String) -> Self
+    pub fn new(path: String, content: String) -> Self
+    // A public method to access a derived property.
 
-    line_count(&self) -> u32
+    pub fn line_count(&self) -> u32
+    // Internal method for processing
+    // Private validation method
 }
 
 impl Summarizable for SourceFile {
 }
+// Additional trait for file operations
 
-trait FileOperations {
+pub trait FileOperations {
     type Error;
 
-    read_content(&self) -> Result<&str, Self::Error>
+    pub fn read_content(&self) -> Result<&str, Self::Error>
 
-    write_content(&mut self, content: String) -> Result<(), Self::Error>
+    pub fn write_content(&mut self, content: String) -> Result<(), Self::Error>
 }
+// Error type for file operations
 
-enum FileError {
+pub enum FileError {
     NotFound,
     PermissionDenied,
     InvalidContent,

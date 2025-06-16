@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/kotlin/03_medium/source.kt">
+<file path="source.kt">
 import kotlinx.coroutines
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -8,37 +8,40 @@ import kotlin.reflect.KClass
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 class Repository {
-    suspend findById(id: String): T?
-    suspend findAll(): List<T>
-    suspend count(): Long
+    suspend fun findById(id: String): T?
+    suspend fun findAll(): List<T>
+    suspend fun count(): Long
 }
 class MutableRepository {
-    suspend save(entity: T): T
-    suspend update(entity: T): T
-    suspend delete(id: String): Boolean
-    suspend saveAll(entities: List): List<T>
+    suspend fun save(entity: T): T
+    suspend fun update(entity: T): T
+    suspend fun delete(id: String): Boolean
+    suspend fun saveAll(entities: List): List<T>
 }
 abstract class BaseService {
-    constructor(repository: R)
-    inline findByType(): Flow<U> {
+    fun constructor(repository: R)
+    inline fun <U> findByType(): Flow<U> {
 = flow {
         repository.findAll()
             .filterIsInstance<U>()
             .forEach { emit(it) }
     }
     }
-    suspend processEntities(transformer: (T) -> K, filter: (K) -> Boolean): List<K>
-    suspend findAndMap(id: String, mapper: (T) -> U): U?
-    abstract suspend validateEntity(entity: T): ValidationResult
+    suspend fun <K> processEntities(transformer: (T) -> K, filter: (K) -> Boolean): List<K>
+    suspend fun <U> findAndMap(id: String, mapper: (T) -> U): U?
+    abstract suspend fun validateEntity(entity: T): ValidationResult
 }
 class Entity {
     var id: String
     var version: Long
-    override compareTo(other: Entity): Int {
+    override fun compareTo(other: Entity): Int {
 = id.compareTo(other.id)
     }
 }
-data class User(var id: String, var version: Long, var name: String, var email: String, var role: UserRole) {
+data class User(val id: String, val version: Long, val name: String, val email: String, val role: UserRole) {
+    fun compareByName(other: User): Int {
+= name.compareTo(other.name)
+    }
 }
 enum class UserRole {
     ADMIN
@@ -47,10 +50,14 @@ enum class UserRole {
     GUEST
 }
 sealed class ValidationResult {
-    isValid(): Boolean {
+    object Valid {
+    }
+    data class Invalid(val errors: List) {
+    }
+    fun isValid(): Boolean {
 = this is Valid
     }
-    getErrors(): List<String> {
+    fun getErrors(): List<String> {
 = when (this) {
         is Valid -> emptyList()
         is Invalid -> errors
@@ -58,24 +65,24 @@ sealed class ValidationResult {
     }
 }
 class UserRepository {
-    override suspend findById(id: String): User? {
+    override suspend fun findById(id: String): User? {
 = withContext(Dispatchers.IO) {
         delay(10) // Simulate database delay
         mutex.withLock { users[id] }
     }
     }
-    override suspend findAll(): List<User> {
+    override suspend fun findAll(): List<User> {
 = withContext(Dispatchers.IO) {
         delay(20)
         mutex.withLock { users.values.toList() }
     }
     }
-    override suspend count(): Long {
+    override suspend fun count(): Long {
 = withContext(Dispatchers.IO) {
         mutex.withLock { users.size.toLong() }
     }
     }
-    override suspend save(entity: User): User {
+    override suspend fun save(entity: User): User {
 = withContext(Dispatchers.IO) {
         delay(15)
         mutex.withLock {
@@ -84,7 +91,7 @@ class UserRepository {
         }
     }
     }
-    override suspend update(entity: User): User {
+    override suspend fun update(entity: User): User {
 = withContext(Dispatchers.IO) {
         delay(15)
         mutex.withLock {
@@ -93,13 +100,13 @@ class UserRepository {
         }
     }
     }
-    override suspend delete(id: String): Boolean {
+    override suspend fun delete(id: String): Boolean {
 = withContext(Dispatchers.IO) {
         delay(10)
         mutex.withLock { users.remove(id) != null }
     }
     }
-    override suspend saveAll(entities: List): List<User> {
+    override suspend fun saveAll(entities: List): List<User> {
 = withContext(Dispatchers.IO) {
         delay(entities.size * 5L)
         mutex.withLock {
@@ -108,7 +115,7 @@ class UserRepository {
         }
     }
     }
-    findByRoleFlow(role: UserRole): Flow<User> {
+    fun findByRoleFlow(role: UserRole): Flow<User> {
 = flow {
         findAll()
             .filter { it.role == role }
@@ -117,17 +124,17 @@ class UserRepository {
     }
 }
 class UserService {
-    constructor(repository: UserRepository)
-    override suspend validateEntity(entity: User): ValidationResult
-    inline getEventsOfType(): Flow<T> {
+    fun constructor(repository: UserRepository)
+    override suspend fun validateEntity(entity: User): ValidationResult
+    inline fun <T> getEventsOfType(): Flow<T> {
 = flow {
         for (event in eventChannel) {
             if (event is T) emit(event)
         }
     }
     }
-    suspend processUsersInBatches(batchSize: Int, processor: (List<User>) -> Unit)
-    suspend createUsersAsync(userDtos: List): List<User> {
+    suspend fun processUsersInBatches(batchSize: Int, processor: (List<User>) -> Unit)
+    suspend fun createUsersAsync(userDtos: List): List<User> {
 = coroutineScope {
         userDtos.map { dto ->
             async(Dispatchers.IO) {
@@ -155,24 +162,30 @@ class UserService {
     }
 }
 sealed class UserEvent {
+    data class Created(val userId: String) {
+    }
+    data class Updated(val userId: String) {
+    }
+    data class Deleted(val userId: String) {
+    }
 }
-data class UserDto(var name: String, var email: String, var role: UserRole) {
+data class UserDto(val name: String, val email: String, val role: UserRole) {
 }
 class Cache {
-    constructor(maxSize: Int)
-    get(key: K): V?
-    put(key: K, value: V, ttlMillis: Long)
-    clearExpired()
+    fun constructor(maxSize: Int)
+    fun get(key: K): V?
+    fun put(key: K, value: V, ttlMillis: Long)
+    fun clearExpired()
 }
-inline T?.requireNotNull(message: () -> String): T
-inline combineAndTransform(first: T, second: R, transformer: (T, R) -> S): S
-inline Any.safeCast(): T?
-suspend List<T>.forEachAsync(dispatcher: CoroutineDispatcher, action: (T) -> Unit) {
+inline fun <T> T?.requireNotNull(message: () -> String): T
+inline fun <T, R, S> combineAndTransform(first: T, second: R, transformer: (T, R) -> S): S
+inline fun <T> Any.safeCast(): T?
+suspend fun <T> List<T>.forEachAsync(dispatcher: CoroutineDispatcher, action: (T) -> Unit) {
 = coroutineScope {
     map { async(dispatcher) { action(it) } }.awaitAll()
 }
 }
-main() {
+fun main() {
 = runBlocking {
     val userRepository = UserRepository()
     val userService = UserService(userRepository)

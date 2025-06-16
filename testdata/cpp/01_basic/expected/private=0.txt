@@ -1,12 +1,41 @@
-<file path="/home/janreges/ai-distiller/testdata/cpp/01_basic/source.cpp">
+<file path="source.cpp">
 #include "iostream"
 #include "string"
 #include "vector"
+class Point {
+    void Point()
+    void Point(double x, double y)
+    void Point(Point& other)
+    virtual void ~Point()
+    double getX()
+    double getY()
+    void setX(double x)
+    void setY(double y)
+    virtual double distanceFromOrigin()
+};
+class Point3D : public Point {
+    void Point3D(double x, double y, double z)
+    double getZ()
+    void setZ(double z)
+    double distanceFromOrigin()
+};
+template<typename T>
+class Container {
+    void Container(T& value)
+    T () const
+    void setValue(T& value)
+};
+template<typename T>
 T max(T& a, T& b) {
-return (a > b) ? a : b;
+    {
+            return (a > b) ? a : b;
+        }
 }
+template<typename T>
 T min(T& a, T& b) {
-return (a < b) ? a : b;
+    {
+            return (a < b) ? a : b;
+        }
 }
-int main()
+int main();
 </file>

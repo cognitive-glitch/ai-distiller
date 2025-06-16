@@ -1,16 +1,22 @@
+DEBUG processMethodDeclaration: Found throws at child 5
 <file path="source.java">
-package com.aidi.test.advanced;
-import java.io.Serializable;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import java.nio.file.Files;
-import java.nio.file.Path;
+package com.aidi.test.advanced
+import java.io.Serializable
+import java.lang.annotation.ElementType
+import java.lang.annotation.Retention
+import java.lang.annotation.RetentionPolicy
+import java.lang.annotation.Target
+import java.nio.file.Files
+import java.nio.file.Path
+@Target(ElementType.PARAMETER)
+@Retention(RetentionPolicy.RUNTIME)
 
-class Advanced<T extends Number> {
-    <U extends T> U process(U input);
-    Runnable createRunner(int value);
-    void readFile(String filePath);
+public @interface NotNull {
+}
+
+public class Advanced<T extends Number & Runnable & Serializable> {
+    public <U extends T> U process(@NotNull U input);
+    public Runnable createRunner(int value);
+    public void readFile(String filePath);
 }
 </file>

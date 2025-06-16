@@ -1,67 +1,52 @@
 <file path="source.rb">
 
-module Loggable
-    def log(message, level:)
+module Loggable:
+    log(message, level:)
         timestamp = Time.now.iso8601
             puts "[#{timestamp}] #{level.upcase}: #{message}"
-    end
-    def self.included(base)
+    self.included(base)
         base.extend(ClassMethods)
             base.class_eval do
               attr_accessor :logger_enabled
             end
-    end
 
-    module ClassMethods
-        def enable_logging
+    module ClassMethods:
+        enable_logging
             define_method(:log_enabled?) { @logger_enabled || false }
-        end
-    end
-end
 
-module Serializable
-    def to_json(*args*)
+module Serializable:
+    to_json(*args*)
         JSON.generate(serializable_hash, *args)
-    end
-    def from_json(json_string)
+    from_json(json_string)
         data = JSON.parse(json_string)
             load_from_hash(data)
-    end
-    def serializable_hash
+    serializable_hash
         raise NotImplementedError, "Must implement serializable_hash"
-    end
-    def load_from_hash(hash)
+    load_from_hash(hash)
         raise NotImplementedError, "Must implement load_from_hash"
-    end
-end
 
-module RoleManager
+module RoleManager:
     VALID_ROLES
-    def self.each_role
+    self.each_role
         return enum_for(:each_role) unless block_given?
             
             VALID_ROLES.each do |role|
               yield role, role.upcase
             end
-    end
-    def self.find_role(pattern)
+    self.find_role(pattern)
         VALID_ROLES.find { |role| role.match?(pattern) }
-    end
-    def self.role_stats
+    self.role_stats
         roles_with_lengths = VALID_ROLES.map { |role| [role, role.length] }
             roles_with_lengths.select { |_, length| length > 4 }
-    end
-end
 
-class Document
-    def initialize(title, content, author)
+class Document:
+    initialize(title, content, author)
         @title = title
             @content = content
             @author = author
             @created_at = Time.now
             @logger_enabled = true
-    end
-    def process_content
+    process_content
         return enum_for(:process_content) unless block_given?
             
             log("Processing content for: #{@title}")
@@ -73,8 +58,7 @@ class Document
             end
             
             @content = lines.join("\n")
-    end
-    def find_sections(pattern = ...)
+    find_sections(pattern = ...)
         sections = []
             @content.each_line.with_index do |line, index|
               sections << { line: index + 1, content: line.strip } if line.match?(pattern)
@@ -85,8 +69,7 @@ class Document
             else
               sections
             end
-    end
-    def method_missing(method_name, *args*, &block)
+    method_missing(method_name, *args*, &block)
         if method_name.to_s.start_with?('find_by_')
               attribute = method_name.to_s.sub('find_by_', '')
               search_value = args.first
@@ -102,47 +85,35 @@ class Document
             else
               super
             end
-    end
-    def respond_to_missing?(method_name, include_private = ...)
+    respond_to_missing?(method_name, include_private = ...)
         method_name.to_s.start_with?('find_by_') || super
-    end
-    def serializable_hash
+    serializable_hash
         {
               title: @title,
               content: @content,
               author: @author,
               created_at: @created_at.iso8601
             }
-    end
-    def load_from_hash(hash)
+    load_from_hash(hash)
         @title = hash['title']
             @content = hash['content']
             @author = hash['author']
             @created_at = Time.parse(hash['created_at']) if hash['created_at']
-    end
-end
 
-class DocumentRepository
-    def initialize
+class DocumentRepository:
+    initialize
         @documents = []
-    end
-    def add_document(document)
+    add_document(document)
         @documents << document
             log_action("Added document: #{document.title}")
-    end
-    def filter_documents(&block)
+    filter_documents(&block)
         return @documents.dup unless block_given?
             @documents.select(&block)
-    end
-    def sort_documents(sort_proc = ...)
+    sort_documents(sort_proc = ...)
         sort_logic = sort_proc || lambda { |a, b| a.created_at <=> b.created_at }
             @documents.sort(&sort_logic)
-    end
-    def log_action(message)
+    log_action(message)
         puts "[DocumentRepository] #{message}"
-    end
-    def validate_document(document)
+    validate_document(document)
         document.is_a?(Document) && !document.title.empty?
-    end
-end
 </file>

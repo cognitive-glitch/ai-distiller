@@ -1,9 +1,15 @@
+DEBUG processMethodDeclaration: Found throws at child 5
 <file path="source.java">
-package com.aidi.test.advanced;
+package com.aidi.test.advanced
+@Target(ElementType.PARAMETER)
+@Retention(RetentionPolicy.RUNTIME)
 
-class Advanced<T extends Number> {
-    <U extends T> U process(U input);
-    Runnable createRunner(int value);
-    void readFile(String filePath);
+public @interface NotNull {
+}
+
+public class Advanced<T extends Number & Runnable & Serializable> {
+    public <U extends T> U process(@NotNull U input);
+    public Runnable createRunner(int value);
+    public void readFile(String filePath);
 }
 </file>

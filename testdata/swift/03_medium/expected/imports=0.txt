@@ -2,24 +2,22 @@
 // /// A simple LIFO stack.
 
 public class Stack {
+    public init()
     // /// Pushes a new element.
-    public push(_: Element)
+    public mutating push()
     // /// Returns the top element without removing it.
     public peek() -> Element?
     // /// Removes and returns the top element.
-    public pop() -> Element?
+    public mutating pop() -> Element?
     // /// Private helper for validation
     // /// Internal method for debugging
 }
-
-public class  {
-    // /// Computes the arithmetic mean of all integers in the stack.
-    // /// - Throws: `MathError.emptyStack` if there are no elements.
-    // /// Private helper for numeric validation
-}
 // /// Errors for math-centric operations.
 
-public class MathError {
+public enum MathError {
+    case emptyStack
+    case divideByZero
+    case negativeValue
 }
 // /// Describes a cache that stores key/value pairs.
 
@@ -29,9 +27,10 @@ public protocol Cacheable {
 // /// Generic cache with expiration
 
 public class ExpiringCache {
-    public insert(_: Value, for: Key)
-    public value(for: Key) -> Value?
-    public contains(key: Key) -> Bool
+    public init()
+    public mutating insert()
+    public value() -> Value?
+    public contains() -> Bool
     // /// Private cleanup method
     // /// Internal method for cache statistics
 }

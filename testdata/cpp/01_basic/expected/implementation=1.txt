@@ -1,32 +1,99 @@
-<file path="/home/janreges/ai-distiller/testdata/cpp/01_basic/source.cpp">
+<file path="source.cpp">
 #include "iostream"
 #include "string"
 #include "vector"
+class Point {
+    void Point() {
+        {}
+    }
+    void Point(double x, double y) {
+        {}
+    }
+    void Point(Point& other) {
+        {}
+    }
+    virtual void ~Point() {
+        = default
+    }
+    double getX() {
+        { return x_; }
+    }
+    double getY() {
+        { return y_; }
+    }
+    void setX(double x) {
+        { x_ = x; }
+    }
+    void setY(double y) {
+        { y_ = y; }
+    }
+    virtual double distanceFromOrigin() {
+        {
+                return std::sqrt(x_ * x_ + y_ * y_);
+            }
+    }
+};
+class Point3D : public Point {
+    void Point3D(double x, double y, double z) {
+        {}
+    }
+    double getZ() {
+        { return z_; }
+    }
+    void setZ(double z) {
+        { z_ = z; }
+    }
+    double distanceFromOrigin() {
+        {
+                return std::sqrt(getX() * getX() + getY() * getY() + z_ * z_);
+            }
+    }
+};
+template<typename T>
+class Container {
+    void Container(T& value) {
+        {}
+    }
+    T () const {
+        { return value_; }
+    }
+    void setValue(T& value) {
+        { value_ = value; }
+    }
+};
+template<typename T>
 T max(T& a, T& b) {
-return (a > b) ? a : b;
+    {
+            return (a > b) ? a : b;
+        }
 }
+template<typename T>
 T min(T& a, T& b) {
-return (a < b) ? a : b;
+    {
+            return (a < b) ? a : b;
+        }
 }
 int main() {
-// Create some points
-    Point p1(3.0, 4.0);
-    Point3D p2(1.0, 2.0, 3.0);
-    
-    // Use containers
-    Container<int> intContainer(42);
-    Container<std::string> stringContainer("Hello");
-    
-    // Use utility functions
-    int maxVal = MathUtils::max(10, 20);
-    double minVal = MathUtils::min(1.5, 2.5);
-    
-    // Output results
-    std::cout << "Point distance: " << p1.distanceFromOrigin() << std::endl;
-    std::cout << "3D Point distance: " << p2.distanceFromOrigin() << std::endl;
-    std::cout << "Container value: " << intContainer.getValue() << std::endl;
-    std::cout << "Max value: " << maxVal << std::endl;
-    
-    return 0;
+    {
+        // Create some points
+        Point p1(3.0, 4.0);
+        Point3D p2(1.0, 2.0, 3.0);
+        
+        // Use containers
+        Container<int> intContainer(42);
+        Container<std::string> stringContainer("Hello");
+        
+        // Use utility functions
+        int maxVal = MathUtils::max(10, 20);
+        double minVal = MathUtils::min(1.5, 2.5);
+        
+        // Output results
+        std::cout << "Point distance: " << p1.distanceFromOrigin() << std::endl;
+        std::cout << "3D Point distance: " << p2.distanceFromOrigin() << std::endl;
+        std::cout << "Container value: " << intContainer.getValue() << std::endl;
+        std::cout << "Max value: " << maxVal << std::endl;
+        
+        return 0;
+    }
 }
 </file>

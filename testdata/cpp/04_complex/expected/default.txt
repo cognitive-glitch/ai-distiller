@@ -14,14 +14,71 @@
 #include "thread"
 #include "future"
 #include "chrono"
-void factorial(int n) const
-bool is_callable_v
-void insert_if_possible(Container& container, T& value)
-void insert_if_possible(Container& container, T& value)
-void CompileTimeString(char )
-struct DataVisitor:
+void factorial(int n) const;
+bool is_callable_v;
+template<typename Derived>
+class Comparable {
+    bool operator!=(Derived& other)
+    bool operator>(Derived& other)
+    bool operator<=(Derived& other)
+    bool operator>=(Derived& other)
+};
+class Point {
+    void Point(double x, double y)
+    bool operator==(Point& other)
+    bool operator<(Point& other)
+    double distance()
+};
+class VariadicProcessor {
+    void VariadicProcessor()
+    void get()
+    template<typename F>
+    void forEach(F& f)
+    static size_t size()
+    template<typename F>
+    void forEachImpl(F& f, auto )
+};
+template<typename Container, typename T>
+void insert_if_possible(Container& container, T& value);
+template<typename Container, typename T>
+void insert_if_possible(Container& container, T& value);
+void CompileTimeString(char );
+template<typename T>
+class Factory {
+    static void create()
+    template<typename Tuple>
+    static void createFromTuple(Tuple& tuple)
+    template<typename Tuple>
+    static void createFromTupleImpl(Tuple& tuple, auto )
+};
+struct DataVisitor {
     void operator()(int value)
     void operator()(double value)
     void operator()(& value)
-void demonstrateComplexFeatures()
+};
+template<typename T>
+class AdvancedContainer {
+    void AdvancedContainer(Compare& comp, Allocator& alloc)
+    void insert(T& value)
+    void emplace()
+    void find(T& value)
+    size_t size()
+    void begin()
+    void end()
+};
+template<typename T, typename Allocator, typename Compare>
+class  {
+    void AdvancedContainer()
+    void insert(T* ptr)
+    size_t size()
+};
+class AsyncProcessor {
+    template<typename T>
+    void processWithTimeout(T& data, int timeoutMs)
+    template<typename Container>
+    void processParallel(Container& items)
+    template<typename T>
+    static void processData(T& data)
+};
+void demonstrateComplexFeatures();
 </file>

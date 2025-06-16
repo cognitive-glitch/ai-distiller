@@ -1,9 +1,17 @@
 <file path="source.rs">
+// The main entry point of the application.
+// A module to handle application settings.
+// This tests the parser's ability to handle inline module definitions.
 
-mod settings {
+pub mod settings {
+    // The public name of the application.
 
-    const APP_NAME: &str = "AI Distiller";
+    pub const APP_NAME: &str = "AI Distiller";
+    // Returns the full version string.
+    // This function is public and can be called from outside `settings`.
 
-    get_version() -> String
+    pub fn get_version() -> String
+    // Internal utility for debug builds
+    // Private helper for version validation
 }
 </file>

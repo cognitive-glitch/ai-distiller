@@ -9,23 +9,23 @@ class Entity {
 }
 class Auditable {
     var lastModified: Long
-    var modifiedBy: String
+    var modifiedBy: String?
     fun markModified(by: String)
 }
 abstract class BaseEntity {
-    var id: String
-    var createdAt: Long
+    val id: String
+    val createdAt: Long
     fun constructor(id: String, createdAt: Long)
     fun setActive(active: Boolean)
     abstract fun validate(): Boolean
     fun getStatusMessage(): String
 }
 class Product {
-    var name: String
-    var category: String
+    val name: String
+    val category: String
     fun constructor(id: String, name: String, category: String, _price: Double)
     var lastModified: Long
-    var modifiedBy: String
+    var modifiedBy: String?
     var price: Double
     var description: String
     var stock: Int
@@ -36,17 +36,17 @@ class Product {
     fun applyDiscount(discountPercent: Double): Double
     object Companion {
         fun create(name: String, category: String, price: Double): Product
-        var MAX_NAME_LENGTH
-        var MIN_PRICE
+        const val MAX_NAME_LENGTH
+        const val MIN_PRICE
     }
 }
 class Category {
-    var name: String
+    val name: String
     fun constructor(id: String, name: String, auditDelegate: Auditable)
 }
 class AuditImpl {
     var lastModified: Long
-    var modifiedBy: String
+    var modifiedBy: String?
 }
 class ProductService {
     fun constructor(auditService: AuditService)
@@ -57,7 +57,7 @@ class ProductService {
 class AuditService {
     fun logAction(action: String, entityId: String)
     fun getAuditLog(): List<AuditEntry>
-    data class AuditEntry(var action: String, var entityId: String, var timestamp: Long) {
+    data class AuditEntry(val action: String, val entityId: String, val timestamp: Long) {
     }
 }
 object ConfigManager {
@@ -68,10 +68,10 @@ object ConfigManager {
 class ShoppingCart {
     fun constructor()
     fun constructor(customerId: String)
-    var customerId: String
+    var customerId: String?
     fun addItem(product: Product, quantity: Int)
     fun calculateTotal(): Double
-    data class CartItem(var product: Product, var quantity: Int) {
+    data class CartItem(val product: Product, var quantity: Int) {
     }
 }
 fun main()

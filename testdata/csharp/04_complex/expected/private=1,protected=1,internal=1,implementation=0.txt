@@ -20,7 +20,7 @@ public static class ModelValidatorBuilder {
     public static Func<TModel, bool> Build<TModel>();
     private static readonly Dictionary<Type, Delegate> _validatorCache = new();
     internal static void ClearCache();
-    private static Expression BuildComplexValidation<T>(param ParameterExpression, property PropertyInfo);
+    private static Expression BuildComplexValidation<T>(ParameterExpression param, PropertyInfo property);
 }
 public record SignupRequest(
     [property: StringRange(3,12)] string Username,
@@ -36,10 +36,10 @@ public static class Demo {
 }
 public class ServiceLocator {
     private readonly Dictionary<Type, object> _services = new();
-    public void Register<T>(instance T) where T : class;
+    public void Register<T>(T instance) where T : class;
     public T Resolve<T>() where T : class;
     private T CreateInstance<T>() where T : class;
     internal Type[] GetRegisteredTypes();
-    protected virtual bool ValidateService(serviceType Type);
+    protected virtual bool ValidateService(Type serviceType);
 }
 </file>

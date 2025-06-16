@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/cpp/02_simple/source.cpp">
+<file path="source.cpp">
 #include "iostream"
 #include "string"
 #include "vector"
@@ -8,160 +8,232 @@
 #include "functional"
 #include "map"
 #include "set"
+class Employee {
+};
 class LibraryItem {
-    void constructor(& id, & title) {
-{}
+    void LibraryItem(& id, & title) {
+        {}
     }
-    virtual void destructor() {
-= default
-    }
-    void () const {
-{ return id_; }
+    virtual void ~LibraryItem() {
+        = default
     }
     void () const {
-{ return title_; }
+        { return id_; }
+    }
+    void () const {
+        { return title_; }
     }
     bool isAvailable() {
-{ return isAvailable_; }
+        { return isAvailable_; }
     }
     virtual bool borrow() {
-if (isAvailable_) {
-            isAvailable_ = false;
-            return true;
-        }
-        return false;
+        {
+                if (isAvailable_) {
+                    isAvailable_ = false;
+                    return true;
+                }
+                return false;
+            }
     }
     virtual void returnItem() {
-isAvailable_ = true;
+        {
+                isAvailable_ = true;
+            }
     }
     virtual void getDetails() = 0
-    *void setAvailability(bool status) {
-{ isAvailable_ = status; }
+    void setAvailability(bool status) {
+        { isAvailable_ = status; }
     }
-    -auto id_;
-    -auto title_;
-    -bool isAvailable_;
+    auto id_;
+    auto title_;
+    bool isAvailable_;
+};
 class Book : public LibraryItem {
-    void constructor(& id, & title, & author, & isbn) {
-{}
+    void Book(& id, & title, & author, & isbn) {
+        {}
     }
     void () const {
-{ return author_; }
+        { return author_; }
     }
     void () const {
-{ return isbn_; }
+        { return isbn_; }
     }
     void getDetails() {
-return "Book: " + getTitle() + " by " + author_ + " (ISBN: " + isbn_ + ")";
+        {
+                return "Book: " + getTitle() + " by " + author_ + " (ISBN: " + isbn_ + ")";
+            }
     }
-    -auto author_;
-    -auto isbn_;
+    auto author_;
+    auto isbn_;
+};
 class Magazine : public LibraryItem {
-    void constructor(& id, & title, int issueNumber, & publisher) {
-{}
+    void Magazine(& id, & title, int issueNumber, & publisher) {
+        {}
     }
     int getIssueNumber() {
-{ return issueNumber_; }
+        { return issueNumber_; }
     }
     void () const {
-{ return publisher_; }
+        { return publisher_; }
     }
     void getDetails() {
-return "Magazine: " + getTitle() + " Issue #" + 
-               std::to_string(issueNumber_) + " (" + publisher_ + ")";
+        {
+                return "Magazine: " + getTitle() + " Issue #" + 
+                       std::to_string(issueNumber_) + " (" + publisher_ + ")";
+            }
     }
-    -int issueNumber_;
-    -auto publisher_;
+    int issueNumber_;
+    auto publisher_;
+};
 class LibraryCatalog {
     void addItem(auto item) {
-items_[item->getId()] = std::move(item);
+        {
+                items_[item->getId()] = std::move(item);
+            }
     }
     LibraryItem () {
-auto it = items_.find(id);
-        return (it != items_.end()) ? it->second.get() : nullptr;
+        {
+                auto it = items_.find(id);
+                return (it != items_.end()) ? it->second.get() : nullptr;
+            }
     }
     void getAvailableItems() {
-std::vector<LibraryItem*> available;
-        for (const auto& pair : items_) {
-            if (pair.second->isAvailable()) {
-                available.push_back(pair.second.get());
+        {
+                std::vector<LibraryItem*> available;
+                for (const auto& pair : items_) {
+                    if (pair.second->isAvailable()) {
+                        available.push_back(pair.second.get());
+                    }
+                }
+                return available;
             }
-        }
-        return available;
     }
     void searchByTitle(& searchTerm) {
-std::vector<LibraryItem*> results;
-        
-        // Convert search term to lowercase
-        std::string lowerSearchTerm = searchTerm;
-        std::transform(lowerSearchTerm.begin(), lowerSearchTerm.end(),
-                      lowerSearchTerm.begin(), ::tolower);
-        
-        for (const auto& pair : items_) {
-            std::string lowerTitle = pair.second->getTitle();
-            std::transform(lowerTitle.begin(), lowerTitle.end(),
-                          lowerTitle.begin(), ::tolower);
-            
-            if (lowerTitle.find(lowerSearchTerm) != std::string::npos) {
-                results.push_back(pair.second.get());
+        {
+                std::vector<LibraryItem*> results;
+                
+                // Convert search term to lowercase
+                std::string lowerSearchTerm = searchTerm;
+                std::transform(lowerSearchTerm.begin(), lowerSearchTerm.end(),
+                              lowerSearchTerm.begin(), ::tolower);
+                
+                for (const auto& pair : items_) {
+                    std::string lowerTitle = pair.second->getTitle();
+                    std::transform(lowerTitle.begin(), lowerTitle.end(),
+                                  lowerTitle.begin(), ::tolower);
+                    
+                    if (lowerTitle.find(lowerSearchTerm) != std::string::npos) {
+                        results.push_back(pair.second.get());
+                    }
+                }
+                
+                return results;
             }
-        }
-        
-        return results;
     }
     size_t getItemCount() {
-{ return items_.size(); }
+        { return items_.size(); }
     }
-    -auto items_;
+    auto items_;
+};
 struct TitleComparator {
     bool operator()(LibraryItem* a, LibraryItem* b) {
-return a->getTitle() < b->getTitle();
+        {
+                return a->getTitle() < b->getTitle();
+            }
     }
+};
 class LibraryUtils {
     static void sortByTitle(& items) {
-std::sort(items.begin(), items.end(), TitleComparator{});
+        {
+                std::sort(items.begin(), items.end(), TitleComparator{});
+            }
     }
+    template<typename Predicate>
     static void filterItems(& items, Predicate pred) {
-std::vector<LibraryItem*> filtered;
-        std::copy_if(items.begin(), items.end(), 
-                    std::back_inserter(filtered), pred);
-        return filtered;
+        {
+                std::vector<LibraryItem*> filtered;
+                std::copy_if(items.begin(), items.end(), 
+                            std::back_inserter(filtered), pred);
+                return filtered;
+            }
     }
+    template<typename ItemType>
     static size_t countItemsByType(& items) {
-return std::count_if(items.begin(), items.end(),
-                           [](const LibraryItem* item) {
-                               return dynamic_cast<const ItemType*>(item) != nullptr;
-                           });
+        {
+                return std::count_if(items.begin(), items.end(),
+                                   [](const LibraryItem* item) {
+                                       return dynamic_cast<const ItemType*>(item) != nullptr;
+                                   });
+            }
     }
-    -void constructor() {
-= delete
+    void LibraryUtils() {
+        = delete
     }
+};
+class FileManager {
+    void FileManager(& filename) {
+        {}
+    }
+    void ~FileManager() {
+        {
+                if (isOpen_) {
+                    close();
+                }
+            }
+    }
+    void FileManager(FileManager ) {
+        = delete
+    }
+    FileManager () {
+        = delete
+    }
+    bool open() {
+        {
+                // Simulate file opening
+                isOpen_ = true;
+                return true;
+            }
+    }
+    void close() {
+        {
+                if (isOpen_) {
+                    // Simulate file closing
+                    isOpen_ = false;
+                }
+            }
+    }
+    bool isOpen() {
+        { return isOpen_; }
+    }
+};
 void demonstrateLibrarySystem() {
-using namespace LibrarySystem;
-    
-    // Create catalog
-    LibraryCatalog catalog;
-    
-    // Add items
-    catalog.addItem(std::make_unique<Book>("B001", "The C++ Programming Language", 
-                                          "Bjarne Stroustrup", "978-0321563842"));
-    catalog.addItem(std::make_unique<Book>("B002", "Effective C++", 
-                                          "Scott Meyers", "978-0321334879"));
-    catalog.addItem(std::make_unique<Magazine>("M001", "C++ Today", 42, "Tech Publications"));
-    
-    // Search and demonstrate
-    auto cppItems = catalog.searchByTitle("C++");
-    LibraryUtils::sortByTitle(cppItems);
-    
-    // Filter available items
-    auto availableItems = LibraryUtils::filterItems(
-        cppItems, [](const LibraryItem* item) { return item->isAvailable(); });
-    
-    // Count books
-    size_t bookCount = LibraryUtils::countItemsByType<Book>(cppItems);
-    
-    std::cout << "Found " << cppItems.size() << " C++ related items" << std::endl;
-    std::cout << "Available: " << availableItems.size() << std::endl;
-    std::cout << "Books: " << bookCount << std::endl;
+    {
+        using namespace LibrarySystem;
+        
+        // Create catalog
+        LibraryCatalog catalog;
+        
+        // Add items
+        catalog.addItem(std::make_unique<Book>("B001", "The C++ Programming Language", 
+                                              "Bjarne Stroustrup", "978-0321563842"));
+        catalog.addItem(std::make_unique<Book>("B002", "Effective C++", 
+                                              "Scott Meyers", "978-0321334879"));
+        catalog.addItem(std::make_unique<Magazine>("M001", "C++ Today", 42, "Tech Publications"));
+        
+        // Search and demonstrate
+        auto cppItems = catalog.searchByTitle("C++");
+        LibraryUtils::sortByTitle(cppItems);
+        
+        // Filter available items
+        auto availableItems = LibraryUtils::filterItems(
+            cppItems, [](const LibraryItem* item) { return item->isAvailable(); });
+        
+        // Count books
+        size_t bookCount = LibraryUtils::countItemsByType<Book>(cppItems);
+        
+        std::cout << "Found " << cppItems.size() << " C++ related items" << std::endl;
+        std::cout << "Available: " << availableItems.size() << std::endl;
+        std::cout << "Books: " << bookCount << std::endl;
+    }
 }
 </file>

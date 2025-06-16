@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/kotlin/05_very_complex/source.kt">
+<file path="source.kt">
 import kotlinx.coroutines
 import kotlinx.coroutines.channels
 import kotlinx.coroutines.flow
@@ -10,10 +10,10 @@ import kotlin.properties.PropertyDelegateProvider
 import kotlin.properties.ReadOnlyProperty
 import kotlin.time.Duration.Companion.seconds
 class AutoGenerate {
-    var strategy: GenerationStrategy
-    var includeMethods: Array
-    var excludeMethods: Array
-    constructor(strategy: GenerationStrategy, includeMethods: Array, excludeMethods: Array)
+    val strategy: GenerationStrategy
+    val includeMethods: Array
+    val excludeMethods: Array
+    fun constructor(strategy: GenerationStrategy, includeMethods: Array, excludeMethods: Array)
 }
 enum class GenerationStrategy {
     DEFAULT
@@ -26,23 +26,23 @@ class ConfigurationDsl {
 }
 class DatabaseContext {
     var connectionPool: ConnectionPool
-    suspend withTransaction(block: TransactionScope.() -> T): T
+    suspend fun <T> withTransaction(block: TransactionScope.() -> T): T
 }
 class TransactionScope {
     var transactionId: String
-    suspend execute(query: String, params: Any): T
-    suspend rollback()
-    suspend commit()
+    suspend fun <T> execute(query: String, params: Any): T
+    suspend fun rollback()
+    suspend fun commit()
 }
 class ConnectionPool {
-    suspend borrowConnection(): DatabaseConnection
-    suspend returnConnection(connection: DatabaseConnection)
-    getStatistics(): PoolStatistics
+    suspend fun borrowConnection(): DatabaseConnection
+    suspend fun returnConnection(connection: DatabaseConnection)
+    fun getStatistics(): PoolStatistics
 }
 abstract class AdvancedGenericRepository {
-    abstract suspend findWithProjection(query: Q, projector: (E) -> T): Flow<T>
-    abstract suspend aggregateBy(query: Q, keySelector: (E) -> K, valueSelector: (E) -> V, aggregator: (K, List<V>) -> V): Map<K, V>
-    inline transformAndValidate(entities: List, transformer: (E) -> T, validator: (T) -> U): List<U>
+    abstract suspend fun <T> findWithProjection(query: Q, projector: (E) -> T): Flow<T>
+    abstract suspend fun <K, V> aggregateBy(query: Q, keySelector: (E) -> K, valueSelector: (E) -> V, aggregator: (K, List<V>) -> V): Map<K, V>
+    inline fun <T, U> transformAndValidate(entities: List, transformer: (E) -> T, validator: (T) -> U): List<U>
 }
 class Entity {
     var id: ID
@@ -51,36 +51,36 @@ class Entity {
 }
 class Auditable {
     var auditInfo: AuditInfo
-    updateAuditInfo(actor: String, action: String)
+    fun updateAuditInfo(actor: String, action: String)
 }
 class Validatable {
-    suspend validate(context: ValidationContext): ValidationResult
+    suspend fun validate(context: ValidationContext): ValidationResult
 }
-data class ValidationContext(var rules: List, var services: ServiceLocator, var currentUser: UserContext, var environment: Environment) {
+data class ValidationContext(val rules: List, val services: ServiceLocator, val currentUser: UserContext?, val environment: Environment) {
 }
 class ServiceLocator {
-    suspend resolve(type: KClass): T
-    suspend resolveOptional(type: KClass): T?
-    suspend resolveAll(type: KClass): List<T>
+    suspend fun <T> resolve(type: KClass): T
+    suspend fun <T> resolveOptional(type: KClass): T?
+    suspend fun <T> resolveAll(type: KClass): List<T>
 }
 class ManagedProperty {
-    constructor(factory, lifecycle: PropertyLifecycle)
-    override provideDelegate(thisRef: Any, property: KProperty): ReadOnlyProperty<Any?, T>
+    fun constructor(factory, lifecycle: PropertyLifecycle)
+    override fun provideDelegate(thisRef: Any?, property: KProperty): ReadOnlyProperty<Any?, T>
 }
 class PropertyLifecycle {
-    suspend onCreate(name: String, value: T): T
-    suspend onAccess(name: String, value: T): T
-    suspend onDestroy(name: String, value: T)
+    suspend fun onCreate(name: String, value: T): T
+    suspend fun onAccess(name: String, value: T): T
+    suspend fun onDestroy(name: String, value: T)
 }
 class DefaultPropertyLifecycle {
-    override suspend onCreate(name: String, value: T): T
-    override suspend onAccess(name: String, value: T): T
-    override suspend onDestroy(name: String, value: T)
+    override suspend fun onCreate(name: String, value: T): T
+    override suspend fun onAccess(name: String, value: T): T
+    override suspend fun onDestroy(name: String, value: T)
 }
 class PlatformSpecificRepository {
-    constructor()
-    suspend performNativeOperation(): String
-    getPlatformCapabilities(): PlatformCapabilities
+    fun constructor()
+    suspend fun performNativeOperation(): String
+    fun getPlatformCapabilities(): PlatformCapabilities
 }
 class PlatformCapabilities {
     var supportsAdvancedFeatures: Boolean
@@ -88,72 +88,116 @@ class PlatformCapabilities {
     var platformIdentifier: String
 }
 sealed class ProcessingState {
+    object Idle {
+    }
+    object Processing {
+    }
+    data class Success(val result: T, val metadata: ProcessingMetadata) {
+    }
+    data class Failure(val error: E, val retryable: Boolean) {
+    }
+    data class PartialSuccess(val partialResult: T, val errors: List, val completionPercentage: Float) {
+    }
+    sealed class ProcessingMetadata {
+        data class TimingInfo(val startTime: Long, val endTime: Long) {
+        }
+        data class ResourceUsage(val memoryUsed: Long, val cpuTime: Long) {
+        }
+        data class CustomMetadata(val properties: Map) {
+        }
+    }
 }
 class AdvancedCoroutineScope {
-    constructor(context: CoroutineContext)
+    fun constructor(context: CoroutineContext)
     var coroutineContext: CoroutineContext
-    asyncWithTimeout(timeout: kotlin.time.Duration, block: CoroutineScope.() -> T): Deferred<Result<T>>
+    fun <T> asyncWithTimeout(timeout: kotlin.time.Duration, block: CoroutineScope.() -> T): Deferred<Result<T>>
 }
 class ProcessingPipelineBuilder {
-    inline transform(transformer: (T) -> R): ProcessingPipelineBuilder<R>
-    filter(predicate: (T) -> Boolean): ProcessingPipelineBuilder<T>
-    validate(validator: (T) -> ValidationResult): ProcessingPipelineBuilder<T>
-    build(): ProcessingPipeline<T>
+    inline fun <R> transform(transformer: (T) -> R): ProcessingPipelineBuilder<R>
+    fun filter(predicate: (T) -> Boolean): ProcessingPipelineBuilder<T>
+    fun validate(validator: (T) -> ValidationResult): ProcessingPipelineBuilder<T>
+    fun build(): ProcessingPipeline<T>
 }
 sealed class ProcessingStage {
-    abstract suspend process(input: I): O
+    abstract suspend fun process(input: I): O
 }
 class TransformationStage {
-    constructor(transformer)
-    override suspend process(input: I): O
+    fun constructor(transformer)
+    override suspend fun process(input: I): O
 }
 class FilterStage {
-    constructor(predicate)
-    override suspend process(input: T): T?
+    fun constructor(predicate)
+    override suspend fun process(input: T): T?
 }
 class ValidationStage {
-    constructor(validator)
-    override suspend process(input: T): T
+    fun constructor(validator)
+    override suspend fun process(input: T): T
 }
 class ProcessingPipeline {
-    constructor(stages: List)
-    suspend execute(input: T): ProcessingState<T, Exception>
+    fun constructor(stages: List)
+    suspend fun execute(input: T): ProcessingState<T, Exception>
 }
 class MetaEntityProcessor {
-    suspend processEntity(entity: T): ProcessedEntity<T>
+    suspend fun <T> processEntity(entity: T): ProcessedEntity<T>
 }
-data class ProcessedEntity(var original: T, var properties: List, var generatedMethods: Map) {
+data class ProcessedEntity(val original: T, val properties: List, val generatedMethods: Map) {
 }
-data class ProcessedProperty(var name: String, var type: KType, var value: Any, var annotations: List) {
+data class ProcessedProperty(val name: String, val type: KType, val value: Any?, val annotations: List) {
 }
 sealed class DomainEvent {
     var eventId: String
     var timestamp: Long
     var source: String
+    sealed class UserEvent {
+        data class UserCreated(val eventId: String, val timestamp: Long, val source: String, val userId: String, val userData: Map) {
+        }
+        data class UserUpdated(val eventId: String, val timestamp: Long, val source: String, val userId: String, val changes: Map) {
+        }
+    }
+    sealed class SystemEvent {
+        data class ServiceStarted(val eventId: String, val timestamp: Long, val source: String, val serviceName: String, val configuration: Map) {
+        }
+        data class PerformanceAlert(val eventId: String, val timestamp: Long, val source: String, val metricName: String, val threshold: Double, val actualValue: Double) {
+        }
+    }
 }
 class EventStore {
-    suspend append(events: List): EventAppendResult
-    suspend getEvents(streamId: String, fromVersion: Long): Flow<DomainEvent>
-    suspend getEventsByType(eventType: KClass): Flow<DomainEvent>
-    suspend createSnapshot(aggregateId: String, snapshot: AggregateSnapshot): SnapshotResult
+    suspend fun append(events: List): EventAppendResult
+    suspend fun getEvents(streamId: String, fromVersion: Long): Flow<DomainEvent>
+    suspend fun getEventsByType(eventType: KClass): Flow<DomainEvent>
+    suspend fun createSnapshot(aggregateId: String, snapshot: AggregateSnapshot): SnapshotResult
 }
 sealed class EventAppendResult {
+    data class Success(val nextVersion: Long) {
+    }
+    data class Conflict(val expectedVersion: Long, val actualVersion: Long) {
+    }
+    data class Error(val message: String, val cause: Throwable?) {
+    }
 }
-data class AggregateSnapshot(var aggregateId: String, var version: Long, var data: Map, var timestamp: Long) {
+data class AggregateSnapshot(val aggregateId: String, val version: Long, val data: Map, val timestamp: Long) {
 }
 sealed class SnapshotResult {
+    object Success {
+    }
+    data class Error(val message: String) {
+    }
 }
-main()
-data class SampleEntity(var name: String, var value: Int) {
+fun main()
+data class SampleEntity(val name: String, val value: Int) {
 }
 class ConfigurationWithManagedProperties {
     var databaseUrl: String
     var serviceEndpoint: String
 }
 sealed class ValidationResult {
+    object Valid {
+    }
+    data class Invalid(val errors: List) {
+    }
 }
 class ValidationException {
-    constructor(message: String)
+    fun constructor(message: String)
 }
 class Query {
 }
@@ -165,13 +209,13 @@ class UserContext {
 }
 class Environment {
 }
-data class AuditInfo(var createdBy: String, var createdAt: Long) {
+data class AuditInfo(val createdBy: String, val createdAt: Long) {
 }
-data class EntityMetadata(var tags: Set) {
+data class EntityMetadata(val tags: Set) {
 }
-data class PoolStatistics(var activeConnections: Int, var idleConnections: Int) {
+data class PoolStatistics(val activeConnections: Int, val idleConnections: Int) {
 }
 class DatabaseConnection {
 }
-String.capitalize(): String
+fun String.capitalize(): String
 </file>

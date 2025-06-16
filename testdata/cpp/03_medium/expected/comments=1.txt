@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/cpp/03_medium/source.cpp">
+<file path="source.cpp">
 #include "iostream"
 #include "string"
 #include "vector"
@@ -12,8 +12,65 @@
 #include "exception"
 #include "utility"
 bool has_process_method_v;
-void safeProcess(T& obj, & data)
-void safeProcess(T& obj, & data)
-void makeUnique()
-void demonstrateAdvancedFeatures()
+template<typename Resource>
+class ResourceManager {
+    void ResourceManager(Resource* resource, Deleter deleter)
+    void ResourceManager(ResourceManager& other)
+    ResourceManager ()
+    void ~ResourceManager()
+    void ResourceManager(ResourceManager )
+    ResourceManager ()
+    Resource ()
+    Resource ()
+    void reset(Resource* resource)
+    void ()
+    Resource ()
+    Resource ()
+};
+class IProcessor {
+    virtual void ~IProcessor()
+    virtual void process(& data) = 0
+    virtual void getName() = 0
+};
+class TextProcessor : public IProcessor {
+    void TextProcessor(& name)
+    void process(& data)
+    void getName()
+};
+template<typename T>
+class Calculator {
+    static T add(T& a, T& b)
+    static T multiply(T& a, T& b)
+    static void getTypeName()
+};
+class  {
+    static double add(double& a, double& b)
+    static double multiply(double& a, double& b)
+    static double divide(double& a, double& b)
+    static void getTypeName()
+};
+template<typename T>
+class  {
+    static T ()
+    static void getTypeName()
+};
+class ProcessingPipeline {
+    void ProcessingPipeline()
+    void addProcessor(auto processor)
+    void process(& input)
+    void processAsync(& input)
+    void processMultiple(& inputs)
+    size_t getProcessorCount()
+};
+template<typename T>
+void safeProcess(T& obj, & data);
+template<typename T>
+void safeProcess(T& obj, & data);
+template<typename T>
+void makeUnique();
+class ProcessingException : public std::exception {
+    void ProcessingException(& message)
+    char () const
+};
+void demonstrateAdvancedFeatures();
 </file>

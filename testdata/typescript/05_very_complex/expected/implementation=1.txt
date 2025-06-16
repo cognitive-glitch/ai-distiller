@@ -5,8 +5,8 @@ type ListenerMap<TEventMap extends object> = {
 }
 
 class TypedEventEmitter<TEventMap extends object>:
-    function on<TEventName extends keyof ListenerMap<TEventMap>>(eventName: TEventName, listener: ListenerMap<TEventMap>[TEventName]) -> void
+    public on<TEventName extends keyof ListenerMap<TEventMap>>(eventName: TEventName, listener: ListenerMap<TEventMap>[TEventName]) -> void
         // implementation
-    function emit<TEventName extends keyof ListenerMap<TEventMap>>(eventName: TEventName, payload: Payload<ListenerMap<TEventMap>[TEventName]>) -> void
+    public emit<TEventName extends keyof ListenerMap<TEventMap>>(eventName: TEventName, payload: Payload<ListenerMap<TEventMap>[TEventName]>) -> void
         // implementation
 </file>

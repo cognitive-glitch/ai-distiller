@@ -1,15 +1,25 @@
 <file path="source.java">
-package com.aidi.test.basic;
+package com.aidi.test.basic
+/**
+ * A basic class to test fundamental parsing of methods, variables, and control flow.
+ */
 
-class Basic {
-    static void main(String[] args) 
-    {
-            String world = "World";
-            int repetitions = 3;
-            for (int i = 0; i < repetitions; i++) {
-                String message = createGreeting(world, i + 1);
-                System.out.println(message);
+public class Basic {
+    /**
+     * Standard Java entry point. @param args Command line arguments (unused).
+     */
+    public static void main(String[] args) {
+        {
+                String world = "World";
+                int repetitions = 3;
+                for (int i = 0; i < repetitions; i++) {
+                    String message = createGreeting(world, i + 1);
+                    System.out.println(message);
+                }
             }
-        }
+    }
+    /**
+     * A private helper method to test visibility and method invocation.
+     */
 }
 </file>

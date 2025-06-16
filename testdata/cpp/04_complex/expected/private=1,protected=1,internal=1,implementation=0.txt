@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/cpp/04_complex/source.cpp">
+<file path="source.cpp">
 #include "iostream"
 #include "string"
 #include "vector"
@@ -14,61 +14,82 @@
 #include "thread"
 #include "future"
 #include "chrono"
-void factorial(int n) const
+void factorial(int n) const;
 bool is_callable_v;
+template<typename Derived>
 class Comparable {
     bool operator!=(Derived& other)
     bool operator>(Derived& other)
     bool operator<=(Derived& other)
     bool operator>=(Derived& other)
-    *void destructor()
+    void ~Comparable()
+};
 class Point {
-    void constructor(double x, double y)
+    void Point(double x, double y)
     bool operator==(Point& other)
     bool operator<(Point& other)
     double distance()
-    -double x_;
-    -double y_;
+    double x_;
+    double y_;
+};
 class VariadicProcessor {
-    void constructor()
+    void VariadicProcessor()
     void get()
+    template<typename F>
     void forEach(F& f)
     static size_t size()
-    -auto data_;
+    auto data_;
+    template<typename F>
     void forEachImpl(F& f, auto )
-void insert_if_possible(Container& container, T& value)
-void insert_if_possible(Container& container, T& value)
-void CompileTimeString(char )
+};
+template<typename Container, typename T>
+void insert_if_possible(Container& container, T& value);
+template<typename Container, typename T>
+void insert_if_possible(Container& container, T& value);
+void CompileTimeString(char );
+template<typename T>
 class Factory {
     static void create()
+    template<typename Tuple>
     static void createFromTuple(Tuple& tuple)
+    template<typename Tuple>
     static void createFromTupleImpl(Tuple& tuple, auto )
+};
 struct DataVisitor {
     void operator()(int value)
     void operator()(double value)
     void operator()(& value)
+};
+template<typename T>
 class AdvancedContainer {
-    void constructor(Compare& comp, Allocator& alloc)
+    void AdvancedContainer(Compare& comp, Allocator& alloc)
     void insert(T& value)
     void emplace()
     void find(T& value)
     size_t size()
     void begin()
     void end()
-    *Compare () const
-    -auto data_;
-    -Compare compare_;
-    -Allocator allocator_;
-    -bool validateValue(T& value)
+    Compare () const
+    auto data_;
+    Compare compare_;
+    Allocator allocator_;
+    bool validateValue(T& value)
+};
+template<typename T, typename Allocator, typename Compare>
 class  {
     void AdvancedContainer()
     void insert(T* ptr)
     size_t size()
-    -auto pointers_;
+    auto pointers_;
+};
 class AsyncProcessor {
+    template<typename T>
     void processWithTimeout(T& data, int timeoutMs)
+    template<typename Container>
     void processParallel(Container& items)
+    template<typename T>
     static void processData(T& data)
-    -static void processData(& data)
-void demonstrateComplexFeatures()
+    static void processData(& data)
+};
+void demonstrateComplexFeatures();
 </file>

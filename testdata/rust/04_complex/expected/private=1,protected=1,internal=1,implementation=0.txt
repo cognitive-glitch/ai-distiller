@@ -3,51 +3,74 @@ use std::sync::{Arc, Mutex};
 use std::ffi::{c_char, CStr};
 use std::future::Future;
 use std::pin::Pin;
+// Additional FFI function for complex validation
+// A simple declarative macro for creating a new, validated config.
+// The parser must handle the unique syntax of `macro_rules!`.
+// Macro for generating validation functions
 
-struct Config {
+pub struct Config {
     name: String,
     version: u32,
     is_validated: bool,
 }
+// A service that uses a shared, mutable cache.
+// This tests `Arc<Mutex<T>>`, a very common concurrent pattern.
 
-struct AnalysisService {
+pub struct AnalysisService {
     cache: Arc<Mutex<Vec<String>>>,
     async_processor: Option<Pin<Box<dyn Future<Output = String> + Send>>>,
 }
 
 impl AnalysisService {
+    // Create new analysis service
 
-    fn new() -> Self
+    pub fn new() -> Self
+    // Asynchronously validates a piece of code using the native FFI function.
+    // This tests `async fn` syntax and `unsafe` blocks.
 
-    async fn validate_code(&self, code: &str) -> Result<bool, &'static str>
+    pub async fn validate_code(&self, code: &str) -> Result<bool, &'static str>
 
-    -fn name_from_code(&self, code: &str) -> String
+    fn name_from_code(&self, code: &str) -> String
+    // Internal unsafe method for advanced operations
 
-    ~fn direct_memory_access(&self, ptr: *mut u8, len: usize) -> Option<String>
+    pub(crate) fn direct_memory_access(&self, ptr: *mut u8, len: usize) -> Option<String>
+    // Private async method
 
-    -async fn process_cache(&self) -> usize
+    async fn process_cache(&self) -> usize
 }
+// Advanced trait with async methods
 
-trait AsyncProcessor {
+pub trait AsyncProcessor {
+    type Item;
+    type Error;
+
+    pub async fn process_async(&self, item: Self::Item) -> Result<String, Self::Error>
+
+    pub async fn batch_process(&self, items: Vec<Self::Item>) -> Vec<Result<String, Self::Error>>
 }
+// Implementation for the analysis service
 
 impl AsyncProcessor for AnalysisService {
 
-    -type Item = String;
+    type Item = String;
 
-    -type Error = &'static str;
+    type Error = &'static str;
 
-    -async fn process_async(&self, item: Self::Item) -> Result<String, Self::Error>
+    async fn process_async(&self, item: Self::Item) -> Result<String, Self::Error>
 }
+// Union type for advanced FFI
 
 impl FFIData {
+    // Safe constructor
 
-    fn new_integer(value: i64) -> Self
+    pub fn new_integer(value: i64) -> Self
+    // Unsafe getter
 
-    fn get_integer(&self) -> i64
+    pub fn get_integer(&self) -> i64
+    // Private unsafe method
 
-    -fn get_bytes(&self) -> &[u8; 8]
+    fn get_bytes(&self) -> &[u8; 8]
 }
 
--fn main()
+fn main()
 </file>

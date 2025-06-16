@@ -9,6 +9,6 @@ type NotificationPayload<T> = {
 }
 
 class EmailNotificationService extends BaseNotificationService:
-    function constructor()
-    async function send<T extends { id: string | number; email: string }>(payload: NotificationPayload<T>) -> Promise<boolean>
+    public constructor()
+    public async send<T extends { id: string | number; email: string }>(payload: NotificationPayload<T>) -> Promise<boolean>
 </file>

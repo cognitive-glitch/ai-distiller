@@ -1,17 +1,17 @@
 <file path="source.js">
 
 class UserModel:
-    - #id
-    - #email
-    - #createdAt
+    #id
+    #email
+    #createdAt
     constructor(id: number, email: string, name: string)
     get id() -> number
     get email() -> string
     set email(email: string)
     get createdAt() -> Date
-    - _validateEmail()
+    _validateEmail()
     toString() -> string
-    - _getAccountAge() -> number
+    _getAccountAge() -> number
     toJSON() -> Object
     static fromJSON(data: Object) -> UserModel
     static isValidUserData(data: Object) -> boolean

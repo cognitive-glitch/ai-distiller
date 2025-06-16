@@ -9,12 +9,12 @@ type NotificationPayload<T> = {
 }
 
 abstract class BaseNotificationService:
-    field protected transportName: string
-    function constructor(transportName: string)
-    abstract function send<T extends { id: string | number }>(payload: NotificationPayload<T>) -> Promise<boolean>
-    protected function log(message: string) -> void
+    protected transportName: string
+    public constructor(transportName: string)
+    public abstract send<T extends { id: string | number }>(payload: NotificationPayload<T>) -> Promise<boolean>
+    protected log(message: string) -> void
 
 class EmailNotificationService extends BaseNotificationService:
-    function constructor()
-    async function send<T extends { id: string | number; email: string }>(payload: NotificationPayload<T>) -> Promise<boolean>
+    public constructor()
+    public async send<T extends { id: string | number; email: string }>(payload: NotificationPayload<T>) -> Promise<boolean>
 </file>

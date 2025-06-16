@@ -23,26 +23,19 @@ public protocol EventHandler {
 // /// This allows storing handlers for different event types in the same collection.
 // // MARK: - The Core Concurrent Component: The Actor
 // /// An actor that manages event subscriptions and dispatches events concurrently.
-
-public class EventBus {
-    public subscribe(_: H)
-    public post(_: E)
-    // /// Private method for handler cleanup
-    // /// Internal method for bus statistics
-}
 // // MARK: - Custom Operators and Precedence
 // /// Custom operator for subscribing an EventHandler to an EventBus.
-public (handler: H, bus: EventBus)
+public <H>()
 // // Custom operator for event composition
-public (lhs: T, rhs: U) -> (T, U)
+public <T, U>() -> (T, U)
 // // MARK: - Metaprogramming with Mirror
 // /// Uses Mirror to generate a debug description of any event payload.
-public detailedDebugLog(_: T) -> String
+public detailedDebugLog<T>() -> String
 // /// Advanced reflection utility
 
 public class ReflectionAnalyzer {
     // /// Analyzes any object and returns its structure
-    public analyze(_: T) -> StructureInfo
+    public analyze<T>() -> StructureInfo
     // /// Private helper for type analysis
 }
 
@@ -62,7 +55,7 @@ public class PropertyInfo {
 // /// A basic thread-safe queue implementing Sequence.
 
 public class ThreadSafeQueue {
-    public enqueue(_: T)
+    public enqueue()
     public dequeue() -> T?
     public makeIterator() -> IndexingIterator<[T]>
     // /// Private helper for queue validation
@@ -71,10 +64,11 @@ public class ThreadSafeQueue {
 // // Advanced collection with custom indexing
 
 public class CircularBuffer {
-    public var startIndex: Int
-    public var endIndex: Int
-    public index(after: Int) -> Int
-    public var count: Int
+    public var startIndex: Int { get set }
+    public var endIndex: Int { get set }
+    public init()
+    public index() -> Int
+    public var count: Int { get set }
     // /// Private helper for buffer validation
     // /// Internal method for buffer manipulation
 }
@@ -87,19 +81,13 @@ public class ConcurrentEventLogger {
     // // Weak reference to prevent cycles
     public var delegate: EventLoggerDelegate?
     // // Unowned reference (careful usage required)
-    public logEvent(_: E)
+    public init()
+    public logEvent<E>()
     // /// Private cleanup method
 }
 // /// Protocol for event logger delegation
 
 public protocol EventLoggerDelegate {
-}
-
-public class ActivityMonitor {
-    public record(_: String)
-    public analyze(_: T) -> StructureInfo
-    // /// Private method for cache management
-    // /// Internal method for monitoring statistics
 }
 // // MARK: - Example Usage
 // // Define some concrete events

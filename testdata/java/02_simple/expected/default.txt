@@ -2,12 +2,13 @@
 package com.aidi.test.oop
 import java.util.Objects
 
-class SimpleOOP:
-    final String id;
-    SimpleOOP(String id, String name)
-    SimpleOOP(String id)
-    String getName()
-    void setName(String name)
+public class SimpleOOP {
+    public final String id;
+    public SimpleOOP(String id, String name);
+    public SimpleOOP(String id);
+    public String getName();
+    public void setName(String name);
     @Override
-    String toString()
+    public String toString();
+}
 </file>

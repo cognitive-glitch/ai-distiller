@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/cpp/03_medium/source.cpp">
+<file path="source.cpp">
 #include "iostream"
 #include "string"
 #include "vector"
@@ -12,12 +12,13 @@
 #include "exception"
 #include "utility"
 bool has_process_method_v;
+template<typename Resource>
 class ResourceManager {
-    void constructor(Resource* resource, Deleter deleter)
-    void constructor(ResourceManager& other)
+    void ResourceManager(Resource* resource, Deleter deleter)
+    void ResourceManager(ResourceManager& other)
     ResourceManager ()
-    void destructor()
-    void constructor(ResourceManager )
+    void ~ResourceManager()
+    void ResourceManager(ResourceManager )
     ResourceManager ()
     Resource ()
     Resource ()
@@ -25,44 +26,57 @@ class ResourceManager {
     void ()
     Resource ()
     Resource ()
-    -Deleter deleter_;
+    Deleter deleter_;
+};
 class IProcessor {
-    virtual void destructor()
+    virtual void ~IProcessor()
     virtual void process(& data) = 0
     virtual void getName() = 0
+};
 class TextProcessor : public IProcessor {
-    void constructor(& name)
+    void TextProcessor(& name)
     void process(& data)
     void getName()
-    -auto name_;
+    auto name_;
+};
+template<typename T>
 class Calculator {
     static T add(T& a, T& b)
     static T multiply(T& a, T& b)
     static void getTypeName()
+};
 class  {
     static double add(double& a, double& b)
     static double multiply(double& a, double& b)
     static double divide(double& a, double& b)
     static void getTypeName()
+};
+template<typename T>
 class  {
-    static T constructor()
+    static T ()
     static void getTypeName()
+};
 class ProcessingPipeline {
-    void constructor()
+    void ProcessingPipeline()
     void addProcessor(auto processor)
     void process(& input)
     void processAsync(& input)
     void processMultiple(& inputs)
     size_t getProcessorCount()
-    *IProcessor () const
-    -auto processors_;
-    -bool validateData(& data)
-void safeProcess(T& obj, & data)
-void safeProcess(T& obj, & data)
-void makeUnique()
+    IProcessor () const
+    auto processors_;
+    bool validateData(& data)
+};
+template<typename T>
+void safeProcess(T& obj, & data);
+template<typename T>
+void safeProcess(T& obj, & data);
+template<typename T>
+void makeUnique();
 class ProcessingException : public std::exception {
-    void constructor(& message)
+    void ProcessingException(& message)
     char () const
-    -auto message_;
-void demonstrateAdvancedFeatures()
+    auto message_;
+};
+void demonstrateAdvancedFeatures();
 </file>

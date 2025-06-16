@@ -18,14 +18,45 @@
 #include "coroutine"
 #include "ranges"
 #include "span"
-struct SimpleTask:
+struct SimpleTask {
     void SimpleTask(auto h)
     void ~SimpleTask()
     void SimpleTask(SimpleTask& other)
     SimpleTask ()
     void SimpleTask(SimpleTask )
     SimpleTask ()
-size_t processString(char* str):
+};
+template<typename T>
+class HasAdvancedMethods {
+    void test_serialize(int )
+    void test_serialize()
+    void test_deserialize(int )
+    void test_deserialize()
+    void test_validate(int )
+    void test_validate()
+    static bool has_serialize;
+    static bool has_deserialize;
+    static bool has_validate;
+    static bool is_serializable;
+};
+template<typename AdvancedNumeric>
+class AdvancedProcessor {
+    void AdvancedProcessor(& name)
+    T process(T& data)
+    template<typename Container>
+    void processContainer(Container& container)
+    void generateSequence(T start, size_t count)
+    SimpleTask processAsync(T& data)
+};
+class TypeErasedContainer {
+    template<typename T>
+    void store(T& value)
+    void processAll(F& f)
+    template<typename T>
+    void get()
+    size_t size()
+};
+size_t processString(char* str) {
     {
             size_t len = 0;
             while (str[len] != '\0') {
@@ -33,8 +64,9 @@ size_t processString(char* str):
             }
             return len;
         }
-
-T complexCalculation(T value) const:
+}
+template<typename AdvancedNumeric>
+T complexCalculation(T value) const {
     {
             T result = value;
             for (int i = 0; i < 5; ++i) {
@@ -42,8 +74,8 @@ T complexCalculation(T value) const:
             }
             return result;
         }
-
-void processRange(Range& range):
+}
+void processRange(Range& range) {
     {
             namespace views = std::views;
             
@@ -51,6 +83,6 @@ void processRange(Range& range):
                         | views::transform([](const auto& x) { return x * 2; })
                         | views::take(10);
         }
-
-void demonstrateVeryComplexFeatures()
+}
+void demonstrateVeryComplexFeatures();
 </file>

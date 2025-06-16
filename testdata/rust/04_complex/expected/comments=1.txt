@@ -15,29 +15,34 @@ use std::pin::Pin;
 // Macro for generating validation functions
 // Using the macro to generate functions
 
-struct Config;
+pub struct Config;
 // A service that uses a shared, mutable cache.
 // This tests `Arc<Mutex<T>>`, a very common concurrent pattern.
 
-struct AnalysisService;
+pub struct AnalysisService;
 
 impl AnalysisService {
     // Create new analysis service
 
-    fn new() -> Self
+    pub fn new() -> Self
     // Asynchronously validates a piece of code using the native FFI function.
     // This tests `async fn` syntax and `unsafe` blocks.
 
-    async fn validate_code(&self, code: &str) -> Result<bool, &'static str>
+    pub async fn validate_code(&self, code: &str) -> Result<bool, &'static str>
     // A private helper method.
     // Internal unsafe method for advanced operations
     // Private async method
 }
 // Advanced trait with async methods
 
-trait AsyncProcessor {
+pub trait AsyncProcessor {
+    type Item;
+    type Error;
+
+    pub async fn process_async(&self, item: Self::Item) -> Result<String, Self::Error>
+
+    pub async fn batch_process(&self, items: Vec<Self::Item>) -> Vec<Result<String, Self::Error>>
 }
-// Default async implementation
 // Implementation for the analysis service
 
 impl AsyncProcessor for AnalysisService {
@@ -47,10 +52,10 @@ impl AsyncProcessor for AnalysisService {
 impl FFIData {
     // Safe constructor
 
-    fn new_integer(value: i64) -> Self
+    pub fn new_integer(value: i64) -> Self
     // Unsafe getter
 
-    fn get_integer(&self) -> i64
+    pub fn get_integer(&self) -> i64
     // Private unsafe method
 }
 // Note: This requires a tokio runtime to execute.

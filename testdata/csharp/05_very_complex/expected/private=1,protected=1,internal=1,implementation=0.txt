@@ -16,41 +16,41 @@ public record VectorN(
     private T _calculateMagnitude();
 }
 public interface IAlgebraService {
-    public VectorN<T> Add<T>(VectorN<T> a, VectorN<T> b) where T : INumber;
-    public T Dot<T>(VectorN<T> a, VectorN<T> b) where T : INumber;
-    public VectorN<T> Normalize<T>(VectorN<T> vector) where T : IFloatingPointIeee754;
+    public VectorN<T> Add<T>(VectorN<T> a, VectorN<T> b) where T : INumber<T>;
+    public T Dot<T>(VectorN<T> a, VectorN<T> b) where T : INumber<T>;
+    public VectorN<T> Normalize<T>(VectorN<T> vector) where T : IFloatingPointIeee754<T>;
 }
 public sealed class AlgebraService : IAlgebraService {
-    public VectorN<T> Add<T>(VectorN<T> a, VectorN<T> b) where T : INumber;
+    public VectorN<T> Add<T>(VectorN<T> a, VectorN<T> b) where T : INumber<T>;
     private void _logOperation(string operation, object result);
-    internal void TrackPerformance(string operation, duration TimeSpan);
+    internal void TrackPerformance(string operation, TimeSpan duration);
 }
 public abstract record CalcCommand(bool IsValid) {
     public sealed record AddCommand(
         VectorN<double> A,
-        VectorN<double> B) : CalcCommand {
+        VectorN<double> B) : CalcCommand;
     public sealed record DotCommand(
         VectorN<double> A,
-        VectorN<double> B) : CalcCommand {
-    public sealed record NormalizeCommand(VectorN<double> Vector) : CalcCommand {
+        VectorN<double> B) : CalcCommand;
+    public sealed record NormalizeCommand(VectorN<double> Vector) : CalcCommand;
     public sealed record UnknownCommand : CalcCommand {
     }
     internal DateTime CreatedAt { get; set; }
 }
 public static class CalcDispatcher {
-    public static double Execute(cmd CalcCommand, svc IAlgebraService);
-    private static bool ValidateCommand(command CalcCommand);
+    public static double Execute(CalcCommand cmd, IAlgebraService svc);
+    private static bool ValidateCommand(CalcCommand command);
     internal static Dictionary<Type, int> GetCommandStats();
 }
-public class MathProcessor<T> where T : INumber, IMinMaxValue {
-    public T ProcessValue(input T);
-    private static bool _isInBounds(value T);
-    protected virtual T TransformValue(input T);
+public class MathProcessor<T> where T : INumber<T>, IMinMaxValue<T> {
+    public T ProcessValue(T input);
+    private static bool _isInBounds(T value);
+    protected virtual T TransformValue(T input);
     internal static MathProcessor<T> CreateProcessor();
 }
 public static class Program {
     public static void Main();
     private static IServiceCollection ConfigureServices();
-    internal static void ConfigureLogging(services IServiceCollection);
+    internal static void ConfigureLogging(IServiceCollection services);
 }
 </file>

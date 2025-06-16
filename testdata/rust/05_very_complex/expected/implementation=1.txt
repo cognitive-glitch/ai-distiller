@@ -1,40 +1,83 @@
 <file path="source.rs">
 
-trait Configurable {
-}
+pub trait Configurable {
 
-trait DataSource {
+    pub fn from_source<S: DataSource>(source: &S) -> Self
 }
+// A trait with a Generic Associated Type (GAT).
+// `Reader` has its own lifetime `'a`, which is tied to `&'a self`.
 
-struct ServerConfig {
+pub trait DataSource {
+    type Reader<'a>: std::io::Read where Self: 'a;
+    type Config<T: Clone>: Clone;
+
+    pub fn get_reader<'a>() -> Self::Reader<'a>
+
+    pub fn get_config<T: Clone>(&self) -> Self::Config<T>
+
+    pub fn process_with_bounds<'a, T, U>(input: T) -> U
+}
+// A struct that would use a procedural derive macro in a real project.
+// The parser must handle attributes on the struct and its fields.
+
+pub struct ServerConfig {
     pub host: String,
     pub port: u16,
 }
 
 impl Configurable for ServerConfig {
 }
+// A function with a Higher-Rank Trait Bound (HRTB).
+// The `F` closure must work for *any* lifetime `'a`.
 
-fn process_all_sources(sources: Vec<&dyn DataSource>, mut processor: F)
-
-trait AdvancedContainer<const N: usize> {
+pub fn process_all_sources<F>(sources: Vec<&dyn DataSource>, mut processor: F) where F: for<'a> FnMut(Box<dyn std::io::Read + 'a>), {
+    {
+        for source in sources {
+            let reader = source.get_reader();
+            // The type of `reader` is tied to the lifetime of `source` in this loop iteration.
+            // The closure `processor` must be able to handle this.
+            processor(Box::new(reader));
+        }
+    }
 }
+// Advanced trait with const generics and GATs
 
-struct FixedArray<T: Clone, const N: usize>;
+pub trait AdvancedContainer<const N: usize> {
+    type Item<'a>: Clone where Self: 'a;
+    type Iterator<'a>: Iterator<Item = Self::Item<'a>> where Self: 'a;
+
+    pub fn get_items<'a>() -> Self::Iterator<'a>
+
+    pub fn process_batch<'a, F>(f: F) -> [Option<Self::Item<'a>>
+}
+// Implementation with const generics
+
+pub struct FixedArray<T: Clone, const N: usize>;
 
 impl FixedArray<T, N> {
+    // Create new fixed array
 
-    fn new() -> Self {
+    pub fn new() -> Self {
         pub const fn new() -> Self {
                 Self {
                     data: [None; N],
                 }
             }
     }
+    // Private validation method
+    // Internal method for unsafe operations
 }
 
 impl AdvancedContainer<N> for FixedArray<T, N> {
 }
+// Advanced async trait with GATs
 
-trait AsyncDataProcessor {
+pub trait AsyncDataProcessor {
+    type Output<'a>: Send where Self: 'a;
+    type Error: std::error::Error + Send + Sync;
+
+    pub async fn process_async<'a>(data: &'a [u8]) -> Result<Self::Output<'a>, Self::Error>
+
+    pub async fn batch_process<'a, I>(inputs: I) -> Vec<Result<Self::Output<'a>, Self::Error>>
 }
 </file>

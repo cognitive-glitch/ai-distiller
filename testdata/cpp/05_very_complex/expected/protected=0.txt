@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/cpp/05_very_complex/source.cpp">
+<file path="source.cpp">
 #include "iostream"
 #include "string"
 #include "vector"
@@ -25,26 +25,64 @@ struct SimpleTask {
     SimpleTask ()
     void SimpleTask(SimpleTask )
     SimpleTask ()
+};
+template<typename T>
+class HasAdvancedMethods {
+    void test_serialize(int )
+    void test_serialize()
+    void test_deserialize(int )
+    void test_deserialize()
+    void test_validate(int )
+    void test_validate()
+    static bool has_serialize;
+    static bool has_deserialize;
+    static bool has_validate;
+    static bool is_serializable;
+};
+template<typename AdvancedNumeric>
+class AdvancedProcessor {
+    void AdvancedProcessor(& name)
+    T process(T& data)
+    template<typename Container>
+    void processContainer(Container& container)
+    void generateSequence(T start, size_t count)
+    SimpleTask processAsync(T& data)
+};
+class TypeErasedContainer {
+    template<typename T>
+    void store(T& value)
+    void processAll(F& f)
+    template<typename T>
+    void get()
+    size_t size()
+};
 size_t processString(char* str) {
-size_t len = 0;
-        while (str[len] != '\0') {
-            ++len;
+    {
+            size_t len = 0;
+            while (str[len] != '\0') {
+                ++len;
+            }
+            return len;
         }
-        return len;
 }
+template<typename AdvancedNumeric>
 T complexCalculation(T value) const {
-T result = value;
-        for (int i = 0; i < 5; ++i) {
-            result = result * static_cast<T>(2) + static_cast<T>(1);
+    {
+            T result = value;
+            for (int i = 0; i < 5; ++i) {
+                result = result * static_cast<T>(2) + static_cast<T>(1);
+            }
+            return result;
         }
-        return result;
 }
 void processRange(Range& range) {
-namespace views = std::views;
-        
-        return range | views::filter([](const auto& x) { return x > 0; })
-                    | views::transform([](const auto& x) { return x * 2; })
-                    | views::take(10);
+    {
+            namespace views = std::views;
+            
+            return range | views::filter([](const auto& x) { return x > 0; })
+                        | views::transform([](const auto& x) { return x * 2; })
+                        | views::take(10);
+        }
 }
-void demonstrateVeryComplexFeatures()
+void demonstrateVeryComplexFeatures();
 </file>

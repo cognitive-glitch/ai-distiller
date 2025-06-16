@@ -3,11 +3,17 @@ package com.aidi.test.inheritance
 import java.util.List
 import java.util.Optional
 
-interface DataStore<T>:
+public interface DataStore<T> {
+}
 
-class UserStore extends BaseStore:
+public @interface Auditable {
+    public abstract String value();
+}
+
+public class UserStore extends BaseStore {
     @Override
-    Optional<User> findById(String id)
+    public Optional<User> findById(String id);
     @Override
-    List<User> findAll()
+    public List<User> findAll();
+}
 </file>

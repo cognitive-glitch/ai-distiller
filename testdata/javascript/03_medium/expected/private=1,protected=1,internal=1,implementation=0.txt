@@ -8,23 +8,23 @@ class BaseNotificationService extends EventEmitter:
     get isActive() -> boolean
     async send(payload: Object) -> Promise<boolean>
     async processNotification(payload: Object) -> Promise<boolean>
-    * _validatePayload(payload: Object) -> boolean
+    _validatePayload(payload: Object) -> boolean
     deactivate()
     activate()
 
 class EmailNotificationService extends BaseNotificationService:
     constructor(config: Object = {})
     async send(payload: Object) -> Promise<boolean>
-    - async _getConnection() -> Promise<Object>
-    - async _sendEmail(connection: Object, emailData: Object) -> Promise<void>
-    - _releaseConnection(connection: Object)
-    - _logEmailSent(recipient: string)
-    - _logEmailError(recipient: string, error: Error)
+    async _getConnection() -> Promise<Object>
+    async _sendEmail(connection: Object, emailData: Object) -> Promise<void>
+    _releaseConnection(connection: Object)
+    _logEmailSent(recipient: string)
+    _logEmailError(recipient: string, error: Error)
     getActiveConnections() -> number
 
 class SMSNotificationService extends BaseNotificationService:
     constructor(provider: string = 'default')
     async send(payload: Object) -> Promise<boolean>
-    - _checkRateLimit() -> boolean
-    - async _sendSMS(recipient: string, message: string) -> Promise<void>
+    _checkRateLimit() -> boolean
+    async _sendSMS(recipient: string, message: string) -> Promise<void>
 </file>

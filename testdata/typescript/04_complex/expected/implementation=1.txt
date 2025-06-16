@@ -8,10 +8,10 @@ interface IPlugin:
     method execute(data: any): void
 
 class PluginManager:
-    function constructor(settings: PluginSettings)
+    public constructor(settings: PluginSettings)
         // implementation
-    function registerPlugin(plugin: IPlugin) -> void
+    public registerPlugin(plugin: IPlugin) -> void
         // implementation
-    function runAll(data: any) -> void
+    public runAll(data: any) -> void
         // implementation
 </file>

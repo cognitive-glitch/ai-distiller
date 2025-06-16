@@ -9,8 +9,8 @@ public class Point {
     public var x: Int
     public var y: Int
     // /// Euclidean distance from origin (0,0).
-    public var magnitude: Double
-    public var description: String
+    public var magnitude: Double { get set }
+    public var description: String { get set }
     // /// Private helper for coordinate validation
     // /// Internal method for coordinate transformation
 }
@@ -20,9 +20,10 @@ open class Rectangle {
     public var origin: Point
     public var size: (width: Int, height: Int)
     // /// Designated initializer.
+    public init()
     // /// Area is recomputed only when cache invalidated.
-    public var area: Int
-    open var description: String
+    public var area: Int { get set }
+    open var description: String { get set }
     // /// Private method for bounds checking
     // /// Protected method for subclasses
 }
@@ -30,7 +31,7 @@ open class Rectangle {
 
 public class UIRectangle {
     // /// Override with additional behavior
-    public var description: String
+    public var description: String { get set }
     // /// Public method specific to UI rectangles
     public show()
     // /// Public method to hide rectangle

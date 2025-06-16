@@ -1,80 +1,90 @@
-<file path="/home/janreges/ai-distiller/testdata/kotlin/02_simple/source.kt">
+<file path="source.kt">
 import kotlin.properties.Delegates
 import kotlin.random.Random
 class Entity {
     var id: String
     var createdAt: Long
-    getAge(): Long
-    getEntityType(): String
+    fun getAge(): Long
+    fun getEntityType(): String
 }
 class Auditable {
     var lastModified: Long
-    var modifiedBy: String
-    markModified(by: String)
+    var modifiedBy: String?
+    fun markModified(by: String)
 }
 abstract class BaseEntity {
-    var id: String
-    var createdAt: Long
-    constructor(id: String, createdAt: Long)
-    *protected var isActive: Boolean
-    setActive(active: Boolean)
-    abstract validate(): Boolean
-    getStatusMessage(): String
+    val id: String
+    val createdAt: Long
+    fun constructor(id: String, createdAt: Long)
+    protected var isActive: Boolean
+    fun setActive(active: Boolean)
+    abstract fun validate(): Boolean
+    fun getStatusMessage(): String
 }
 class Product {
-    var name: String
-    var category: String
-    -private var _price: Double
-    constructor(id: String, name: String, category: String, _price: Double)
+    val name: String
+    val category: String
+    private var _price: Double
+    fun constructor(id: String, name: String, category: String, _price: Double)
     var lastModified: Long
-    var modifiedBy: String
+    var modifiedBy: String?
     var price: Double
     var description: String
     var stock: Int
     var discount: Double
-    override getEntityType(): String
-    override validate(): Boolean
-    override getStatusMessage(): String
-    applyDiscount(discountPercent: Double): Double
+    override fun getEntityType(): String
+    override fun validate(): Boolean
+    override fun getStatusMessage(): String
+    fun applyDiscount(discountPercent: Double): Double
+    object Companion {
+        private var nextId
+        fun create(name: String, category: String, price: Double): Product
+        const val MAX_NAME_LENGTH
+        const val MIN_PRICE
+    }
 }
 class Category {
-    var name: String
-    -private var auditDelegate: Auditable
-    constructor(id: String, name: String, auditDelegate: Auditable)
+    val name: String
+    private val auditDelegate: Auditable
+    fun constructor(id: String, name: String, auditDelegate: Auditable)
 }
 class AuditImpl {
     var lastModified: Long
-    var modifiedBy: String
+    var modifiedBy: String?
 }
 class ProductService {
-    -private var auditService: AuditService
-    constructor(auditService: AuditService)
-    -private var products
-    -private var categories
-    addProduct(product: Product): Result<Unit>
-    findProduct(id: String): Product?
-    getProductsInCategory(categoryName: String): List<Product>
-    -private validateProductData(product: Product): Boolean
+    private val auditService: AuditService
+    fun constructor(auditService: AuditService)
+    private var products
+    private var categories
+    fun addProduct(product: Product): Result<Unit>
+    fun findProduct(id: String): Product?
+    fun getProductsInCategory(categoryName: String): List<Product>
+    private fun validateProductData(product: Product): Boolean
 }
 class AuditService {
-    -private var auditLog
-    logAction(action: String, entityId: String)
-    getAuditLog(): List<AuditEntry>
+    private var auditLog
+    fun logAction(action: String, entityId: String)
+    fun getAuditLog(): List<AuditEntry>
+    data class AuditEntry(val action: String, val entityId: String, val timestamp: Long) {
+    }
 }
-class ConfigManager {
-    -private var config
-    setConfig(key: String, value: String)
-    getConfig(key: String): String?
-    getConfigOrDefault(key: String, default: String): String
+object ConfigManager {
+    private var config
+    fun setConfig(key: String, value: String)
+    fun getConfig(key: String): String?
+    fun getConfigOrDefault(key: String, default: String): String
 }
 class ShoppingCart {
-    -private var items
-    -private var _customerId: String
-    constructor()
-    constructor(customerId: String)
-    var customerId: String
-    addItem(product: Product, quantity: Int)
-    calculateTotal(): Double
+    private var items
+    private var _customerId: String?
+    fun constructor()
+    fun constructor(customerId: String)
+    var customerId: String?
+    fun addItem(product: Product, quantity: Int)
+    fun calculateTotal(): Double
+    data class CartItem(val product: Product, var quantity: Int) {
+    }
 }
-main()
+fun main()
 </file>

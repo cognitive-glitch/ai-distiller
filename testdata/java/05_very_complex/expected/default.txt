@@ -2,8 +2,10 @@
 package com.aidi.test.modern
 import java.util.stream.Stream
 
-interface Shape:
+public interface Shape {
+}
 
-class ModernJava:
-    static void main(String[] args)
+public class ModernJava {
+    public static void main(String[] args);
+}
 </file>

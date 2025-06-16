@@ -6,10 +6,10 @@ class CooperativeScheduler:
     constructor()
     registerTask(generatorFunc: GeneratorFunction, options = {}) -> number
     start()
-    - async run()
+    async run()
     async shutdown(timeout = 5000) -> Promise<void>
     getMetrics() -> object
-    - _cleanup()
+    _cleanup()
     inspectTask(taskId: number) -> object
 
 class MemoryPool:

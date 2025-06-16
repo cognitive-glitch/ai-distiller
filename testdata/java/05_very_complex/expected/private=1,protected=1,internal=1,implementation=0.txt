@@ -1,26 +1,26 @@
 <file path="source.java">
-package com.aidi.test.modern;
-import java.util.stream.Stream;
+package com.aidi.test.modern
+import java.util.stream.Stream
 
-interface Shape {
+public interface Shape {
     double area();
 }
 
 record Circle implements Shape {
-    final double radius;
+    public final double radius;
     @Override
-    double area();
+    public double area();
 }
 
 final class Rectangle implements Shape {
-    -final double length;
-    -final double width;
-    Rectangle(double length, double width);
+    private final double length;
+    private final double width;
+    public Rectangle(double length, double width);
     @Override
-    double area();
+    public double area();
 }
 
-class ModernJava {
-    static void main(String[] args);
+public class ModernJava {
+    public static void main(String[] args);
 }
 </file>

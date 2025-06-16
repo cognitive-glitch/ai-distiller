@@ -28,7 +28,7 @@ public static class Demo {
     public static async Task ConsumeAsync(IAsyncEnumerable<SignupRequest> inputs);
 }
 public class ServiceLocator {
-    public void Register<T>(instance T) where T : class;
+    public void Register<T>(T instance) where T : class;
     public T Resolve<T>() where T : class;
 }
 </file>

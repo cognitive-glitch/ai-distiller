@@ -1,29 +1,41 @@
-<file path="/home/janreges/ai-distiller/testdata/kotlin/01_basic/source.kt">
+<file path="source.kt">
 import kotlin.collections.List
 import java.time.LocalDateTime
-data class User(var id: Long, var name: String, var email: String) {
+data class User(val id: Long, val name: String, val email: String?) {
+    fun getDisplayName(): String
+    object Companion {
+        fun createUser(name: String, email: String?): User
+    }
 }
 sealed class UserState {
+    data class Active(val lastLoginAt: LocalDateTime) {
+    }
+    data class Suspended(val reason: String, val until: LocalDateTime?) {
+    }
+    object Banned {
+    }
+    object PendingVerification {
+    }
 }
-String.isValidEmail(): Boolean
-var secondOrNull: T
+fun String.isValidEmail(): Boolean
+var secondOrNull: T?
 class UserService {
-    addUser(user: User): Boolean
-    findUserById(id: Long): User?
-    getUserState(userId: Long): String
+    fun addUser(user: User): Boolean
+    fun findUserById(id: Long): User?
+    fun getUserState(userId: Long): String
 }
 enum class UserRole {
-    ADMIN(("Administrator", setOf("read", "write", "delete", "manage")))
-    MODERATOR(("Moderator", setOf("read", "write", "moderate")))
-    USER(("User", setOf("read", "write_own")))
-    hasPermission(permission: String): Boolean
+    ADMIN("Administrator", setOf("read", "write", "delete", "manage"))
+    MODERATOR("Moderator", setOf("read", "write", "moderate"))
+    USER("User", setOf("read", "write_own"))
+    fun hasPermission(permission: String): Boolean
 }
-class UserConstants {
-    var MAX_USERNAME_LENGTH
-    var MIN_PASSWORD_LENGTH
+object UserConstants {
+    const val MAX_USERNAME_LENGTH
+    const val MIN_PASSWORD_LENGTH
     var ALLOWED_EMAIL_DOMAINS
-    isAllowedEmailDomain(email: String): Boolean
+    fun isAllowedEmailDomain(email: String): Boolean
 }
-inline T.applyIf(condition: Boolean, block: T.() -> T): T
-main()
+inline fun <T> T.applyIf(condition: Boolean, block: T.() -> T): T
+fun main()
 </file>

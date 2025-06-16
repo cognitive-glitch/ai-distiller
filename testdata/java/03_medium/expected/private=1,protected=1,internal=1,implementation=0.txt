@@ -1,35 +1,39 @@
 <file path="source.java">
-package com.aidi.test.inheritance;
-import java.util.List;
-import java.util.Optional;
+package com.aidi.test.inheritance
+import java.util.List
+import java.util.Optional
 
-interface DataStore<T> {
+public interface DataStore<T> {
     void save(T item);
     Optional<T> findById(String id);
     List<T> findAll();
 }
 
-abstract class BaseStore<T> implements DataStore {
-    @Override
-    void save(T item);
-    *abstract void log(T item);
+public @interface Auditable {
+    public abstract String value();
 }
 
-class UserStore extends BaseStore {
+abstract class BaseStore<T> implements DataStore {
     @Override
-    Optional<User> findById(String id);
+    public void save(T item);
+    protected abstract void log(T item);
+}
+
+public class UserStore extends BaseStore {
     @Override
-    List<User> findAll();
+    public Optional<User> findById(String id);
+    @Override
+    public List<User> findAll();
     @Override
     @Auditable("USER_LOG")
-    *void log(User item);
+    protected void log(User item);
 }
 
 class User {
-    -String name;
-    User(String name);
-    String getName();
+    private String name;
+    public User(String name);
+    public String getName();
     @Override
-    String toString();
+    public String toString();
 }
 </file>

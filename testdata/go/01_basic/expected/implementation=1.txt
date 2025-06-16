@@ -3,6 +3,8 @@ package user
 
 import (
     "fmt"
+// User represents a user in the system.
+// The distiller should identify this struct and its fields.
 )
 
 type User struct
@@ -12,6 +14,8 @@ func (u *User) UpdateEmail(newEmail string) error
     if newEmail == "":
     u.email = newEmail
     return nil
+// NewUser creates a new User.
+// This is a common Go pattern for a constructor.
 
 func NewUser(id string, email string) *User
     return &User{

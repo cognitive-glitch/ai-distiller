@@ -9,9 +9,9 @@ interface IPlugin:
     method execute(data: any): void
 
 class PluginManager:
-    field private plugins: Map<string, IPlugin> = new Map()
-    field private settings: PluginSettings
-    function constructor(settings: PluginSettings)
-    function registerPlugin(plugin: IPlugin) -> void
-    function runAll(data: any) -> void
+    private plugins: Map<string, IPlugin> = new Map()
+    private settings: PluginSettings
+    public constructor(settings: PluginSettings)
+    public registerPlugin(plugin: IPlugin) -> void
+    public runAll(data: any) -> void
 </file>

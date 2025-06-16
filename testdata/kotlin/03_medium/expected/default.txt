@@ -20,9 +20,9 @@ class MutableRepository {
 }
 abstract class BaseService {
     fun constructor(repository: R)
-    inline fun findByType(): Flow<U>
-    suspend fun processEntities(transformer: (T) -> K, filter: (K) -> Boolean): List<K>
-    suspend fun findAndMap(id: String, mapper: (T) -> U): U?
+    inline fun <U> findByType(): Flow<U>
+    suspend fun <K> processEntities(transformer: (T) -> K, filter: (K) -> Boolean): List<K>
+    suspend fun <U> findAndMap(id: String, mapper: (T) -> U): U?
     abstract suspend fun validateEntity(entity: T): ValidationResult
 }
 class Entity {
@@ -30,7 +30,7 @@ class Entity {
     var version: Long
     override fun compareTo(other: Entity): Int
 }
-data class User(var id: String, var version: Long, var name: String, var email: String, var role: UserRole) {
+data class User(val id: String, val version: Long, val name: String, val email: String, val role: UserRole) {
     fun compareByName(other: User): Int
 }
 enum class UserRole {
@@ -42,7 +42,7 @@ enum class UserRole {
 sealed class ValidationResult {
     object Valid {
     }
-    data class Invalid(var errors: List) {
+    data class Invalid(val errors: List) {
     }
     fun isValid(): Boolean
     fun getErrors(): List<String>
@@ -60,19 +60,19 @@ class UserRepository {
 class UserService {
     fun constructor(repository: UserRepository)
     override suspend fun validateEntity(entity: User): ValidationResult
-    inline fun getEventsOfType(): Flow<T>
+    inline fun <T> getEventsOfType(): Flow<T>
     suspend fun processUsersInBatches(batchSize: Int, processor: (List<User>) -> Unit)
     suspend fun createUsersAsync(userDtos: List): List<User>
 }
 sealed class UserEvent {
-    data class Created(var userId: String) {
+    data class Created(val userId: String) {
     }
-    data class Updated(var userId: String) {
+    data class Updated(val userId: String) {
     }
-    data class Deleted(var userId: String) {
+    data class Deleted(val userId: String) {
     }
 }
-data class UserDto(var name: String, var email: String, var role: UserRole) {
+data class UserDto(val name: String, val email: String, val role: UserRole) {
 }
 class Cache {
     fun constructor(maxSize: Int)
@@ -80,9 +80,9 @@ class Cache {
     fun put(key: K, value: V, ttlMillis: Long)
     fun clearExpired()
 }
-inline fun T?.requireNotNull(message: () -> String): T
-inline fun combineAndTransform(first: T, second: R, transformer: (T, R) -> S): S
-inline fun Any.safeCast(): T?
-suspend fun List<T>.forEachAsync(dispatcher: CoroutineDispatcher, action: (T) -> Unit)
+inline fun <T> T?.requireNotNull(message: () -> String): T
+inline fun <T, R, S> combineAndTransform(first: T, second: R, transformer: (T, R) -> S): S
+inline fun <T> Any.safeCast(): T?
+suspend fun <T> List<T>.forEachAsync(dispatcher: CoroutineDispatcher, action: (T) -> Unit)
 fun main()
 </file>

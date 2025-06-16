@@ -8,23 +8,25 @@
 #include "functional"
 #include "map"
 #include "set"
--class LibraryItem:
-    void constructor(& id, & title):
+class Employee {
+};
+class LibraryItem {
+    void LibraryItem(& id, & title) {
         {}
-
-    virtual void destructor():
+    }
+    virtual void ~LibraryItem() {
         = default
-
-    void () const:
+    }
+    void () const {
         { return id_; }
-
-    void () const:
+    }
+    void () const {
         { return title_; }
-
-    bool isAvailable():
+    }
+    bool isAvailable() {
         { return isAvailable_; }
-
-    virtual bool borrow():
+    }
+    virtual bool borrow() {
         {
                 if (isAvailable_) {
                     isAvailable_ = false;
@@ -32,67 +34,70 @@
                 }
                 return false;
             }
-
-    virtual void returnItem():
+    }
+    virtual void returnItem() {
         {
                 isAvailable_ = true;
             }
-
+    }
     virtual void getDetails() = 0
-    *void setAvailability(bool status):
+    void setAvailability(bool status) {
         { isAvailable_ = status; }
-
-    -auto id_
-    -auto title_
-    -bool isAvailable_
--class Book : public LibraryItem:
-    void constructor(& id, & title, & author, & isbn):
+    }
+    auto id_;
+    auto title_;
+    bool isAvailable_;
+};
+class Book : public LibraryItem {
+    void Book(& id, & title, & author, & isbn) {
         {}
-
-    void () const:
+    }
+    void () const {
         { return author_; }
-
-    void () const:
+    }
+    void () const {
         { return isbn_; }
-
-    void getDetails():
+    }
+    void getDetails() {
         {
                 return "Book: " + getTitle() + " by " + author_ + " (ISBN: " + isbn_ + ")";
             }
-
-    -auto author_
-    -auto isbn_
--class Magazine : public LibraryItem:
-    void constructor(& id, & title, int issueNumber, & publisher):
+    }
+    auto author_;
+    auto isbn_;
+};
+class Magazine : public LibraryItem {
+    void Magazine(& id, & title, int issueNumber, & publisher) {
         {}
-
-    int getIssueNumber():
+    }
+    int getIssueNumber() {
         { return issueNumber_; }
-
-    void () const:
+    }
+    void () const {
         { return publisher_; }
-
-    void getDetails():
+    }
+    void getDetails() {
         {
                 return "Magazine: " + getTitle() + " Issue #" + 
                        std::to_string(issueNumber_) + " (" + publisher_ + ")";
             }
-
-    -int issueNumber_
-    -auto publisher_
--class LibraryCatalog:
-    void addItem(auto item):
+    }
+    int issueNumber_;
+    auto publisher_;
+};
+class LibraryCatalog {
+    void addItem(auto item) {
         {
                 items_[item->getId()] = std::move(item);
             }
-
-    LibraryItem ():
+    }
+    LibraryItem () {
         {
                 auto it = items_.find(id);
                 return (it != items_.end()) ? it->second.get() : nullptr;
             }
-
-    void getAvailableItems():
+    }
+    void getAvailableItems() {
         {
                 std::vector<LibraryItem*> available;
                 for (const auto& pair : items_) {
@@ -102,8 +107,8 @@
                 }
                 return available;
             }
-
-    void searchByTitle(& searchTerm):
+    }
+    void searchByTitle(& searchTerm) {
         {
                 std::vector<LibraryItem*> results;
                 
@@ -124,41 +129,55 @@
                 
                 return results;
             }
-
-    size_t getItemCount():
+    }
+    size_t getItemCount() {
         { return items_.size(); }
-
-    -auto items_
-struct TitleComparator:
-    bool operator()(LibraryItem* a, LibraryItem* b):
+    }
+    auto items_;
+};
+struct TitleComparator {
+    bool operator()(LibraryItem* a, LibraryItem* b) {
         {
                 return a->getTitle() < b->getTitle();
             }
-
--class LibraryUtils:
-    static void sortByTitle(& items):
+    }
+};
+class LibraryUtils {
+    static void sortByTitle(& items) {
         {
                 std::sort(items.begin(), items.end(), TitleComparator{});
             }
-
-    static void filterItems(& items, Predicate pred):
+    }
+    template<typename Predicate>
+    static void filterItems(& items, Predicate pred) {
         {
                 std::vector<LibraryItem*> filtered;
                 std::copy_if(items.begin(), items.end(), 
                             std::back_inserter(filtered), pred);
                 return filtered;
             }
-
-    static size_t countItemsByType(& items):
+    }
+    template<typename ItemType>
+    static size_t countItemsByType(& items) {
         {
                 return std::count_if(items.begin(), items.end(),
                                    [](const LibraryItem* item) {
                                        return dynamic_cast<const ItemType*>(item) != nullptr;
                                    });
             }
-
-    -void constructor():
+    }
+    void LibraryUtils() {
         = delete
-
-void demonstrateLibrarySystem()
+    }
+};
+class FileManager {
+    void FileManager(& filename)
+    void ~FileManager()
+    void FileManager(FileManager )
+    FileManager ()
+    bool open()
+    void close()
+    bool isOpen()
+};
+void demonstrateLibrarySystem();
 </file>

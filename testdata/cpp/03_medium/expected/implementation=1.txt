@@ -1,4 +1,4 @@
-<file path="/home/janreges/ai-distiller/testdata/cpp/03_medium/source.cpp">
+<file path="source.cpp">
 #include "iostream"
 #include "string"
 #include "vector"
@@ -12,45 +12,248 @@
 #include "exception"
 #include "utility"
 bool has_process_method_v;
+template<typename Resource>
+class ResourceManager {
+    void ResourceManager(Resource* resource, Deleter deleter) {
+        {}
+    }
+    void ResourceManager(ResourceManager& other) {
+        {}
+    }
+    ResourceManager () {
+        {
+                if (this != &other) {
+                    reset();
+                    resource_ = std::exchange(other.resource_, nullptr);
+                    deleter_ = std::move(other.deleter_);
+                }
+                return *this;
+            }
+    }
+    void ~ResourceManager() {
+        {
+                reset();
+            }
+    }
+    void ResourceManager(ResourceManager ) {
+        = delete
+    }
+    ResourceManager () {
+        = delete
+    }
+    Resource () {
+        { return resource_; }
+    }
+    Resource () {
+        {
+                return std::exchange(resource_, nullptr);
+            }
+    }
+    void reset(Resource* resource) {
+        {
+                if (resource_) {
+                    deleter_(resource_);
+                }
+                resource_ = resource;
+            }
+    }
+    void () {
+        {
+                return resource_ != nullptr;
+            }
+    }
+    Resource () {
+        {
+                return *resource_;
+            }
+    }
+    Resource () {
+        {
+                return resource_;
+            }
+    }
+};
+class IProcessor {
+    virtual void ~IProcessor() {
+        = default
+    }
+    virtual void process(& data) = 0
+    virtual void getName() = 0
+};
+class TextProcessor : public IProcessor {
+    void TextProcessor(& name) {
+        {}
+    }
+    void process(& data) {
+        {
+                return "[" + name_ + "] " + data;
+            }
+    }
+    void getName() {
+        {
+                return name_;
+            }
+    }
+};
+template<typename T>
+class Calculator {
+    static T add(T& a, T& b) {
+        {
+                return a + b;
+            }
+    }
+    static T multiply(T& a, T& b) {
+        {
+                return a * b;
+            }
+    }
+    static void getTypeName() {
+        {
+                return "generic";
+            }
+    }
+};
+class  {
+    static double add(double& a, double& b) {
+        {
+                return a + b;
+            }
+    }
+    static double multiply(double& a, double& b) {
+        {
+                return a * b;
+            }
+    }
+    static double divide(double& a, double& b) {
+        {
+                if (std::abs(b) < 1e-10) {
+                    throw std::invalid_argument("Division by zero");
+                }
+                return a / b;
+            }
+    }
+    static void getTypeName() {
+        {
+                return "double";
+            }
+    }
+};
+template<typename T>
+class  {
+    static T () {
+        {
+                return ptr + offset;
+            }
+    }
+    static void getTypeName() {
+        {
+                return "pointer";
+            }
+    }
+};
+class ProcessingPipeline {
+    void ProcessingPipeline() {
+        = default
+    }
+    void addProcessor(auto processor) {
+        {
+                processors_.push_back(std::move(processor));
+            }
+    }
+    void process(& input) {
+        {
+                std::string result = input;
+                for (const auto& processor : processors_) {
+                    result = processor->process(result);
+                }
+                return result;
+            }
+    }
+    void processAsync(& input) {
+        {
+                return std::async(std::launch::async, [this, input]() {
+                    return this->process(input);
+                });
+            }
+    }
+    void processMultiple(& inputs) {
+        {
+                std::vector<std::future<std::string>> futures;
+                futures.reserve(inputs.size());
+                
+                for (const auto& input : inputs) {
+                    futures.push_back(processAsync(input));
+                }
+                
+                return futures;
+            }
+    }
+    size_t getProcessorCount() {
+        {
+                return processors_.size();
+            }
+    }
+};
+template<typename T>
 void safeProcess(T& obj, & data) {
-return obj.process(data);
+    {
+        return obj.process(data);
+    }
 }
+template<typename T>
 void safeProcess(T& obj, & data) {
-return "";
+    {
+        return "";
+    }
 }
+template<typename T>
 void makeUnique() {
-return std::make_unique<T>(std::forward<Args>(args)...);
+    {
+        return std::make_unique<T>(std::forward<Args>(args)...);
+    }
 }
+class ProcessingException : public std::exception {
+    void ProcessingException(& message) {
+        {}
+    }
+    char () const {
+        {
+                return message_.c_str();
+            }
+    }
+};
 void demonstrateAdvancedFeatures() {
-// Resource management with custom deleter
-    auto customDeleter = [](TextProcessor* p) {
-        std::cout << "Custom deleting processor: " << p->getName() << std::endl;
-        delete p;
-    };
-    
-    ResourceManager<TextProcessor, decltype(customDeleter)> manager(
-        new TextProcessor("Advanced"), customDeleter);
-    
-    // Processing pipeline
-    ProcessingPipeline pipeline;
-    pipeline.addProcessor(makeUnique<TextProcessor>("First"));
-    pipeline.addProcessor(makeUnique<TextProcessor>("Second"));
-    
-    // Async processing
-    auto future = pipeline.processAsync("Hello World");
-    std::string result = future.get();
-    
-    // Template specialization
-    auto intSum = Calculator<int>::add(5, 10);
-    auto doubleSum = Calculator<double>::add(3.14, 2.86);
-    
-    // SFINAE demonstration
-    TextProcessor processor("SFINAE Test");
-    std::string sfResult = safeProcess(processor, "test data");
-    
-    std::cout << "Async result: " << result << std::endl;
-    std::cout << "Int sum: " << intSum << std::endl;
-    std::cout << "Double sum: " << doubleSum << std::endl;
-    std::cout << "SFINAE result: " << sfResult << std::endl;
+    {
+        // Resource management with custom deleter
+        auto customDeleter = [](TextProcessor* p) {
+            std::cout << "Custom deleting processor: " << p->getName() << std::endl;
+            delete p;
+        };
+        
+        ResourceManager<TextProcessor, decltype(customDeleter)> manager(
+            new TextProcessor("Advanced"), customDeleter);
+        
+        // Processing pipeline
+        ProcessingPipeline pipeline;
+        pipeline.addProcessor(makeUnique<TextProcessor>("First"));
+        pipeline.addProcessor(makeUnique<TextProcessor>("Second"));
+        
+        // Async processing
+        auto future = pipeline.processAsync("Hello World");
+        std::string result = future.get();
+        
+        // Template specialization
+        auto intSum = Calculator<int>::add(5, 10);
+        auto doubleSum = Calculator<double>::add(3.14, 2.86);
+        
+        // SFINAE demonstration
+        TextProcessor processor("SFINAE Test");
+        std::string sfResult = safeProcess(processor, "test data");
+        
+        std::cout << "Async result: " << result << std::endl;
+        std::cout << "Int sum: " << intSum << std::endl;
+        std::cout << "Double sum: " << doubleSum << std::endl;
+        std::cout << "SFINAE result: " << sfResult << std::endl;
+    }
 }
 </file>
