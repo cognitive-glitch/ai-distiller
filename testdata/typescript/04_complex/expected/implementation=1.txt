@@ -10,6 +10,7 @@ interface IPlugin:
 class PluginManager:
     public constructor(settings: PluginSettings)
         // implementation
+    @LogExecution
     public registerPlugin(plugin: IPlugin) -> void
         // implementation
     public runAll(data: any) -> void

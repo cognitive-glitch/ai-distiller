@@ -188,6 +188,11 @@ func (f *TypeScriptFormatter) formatInterface(w io.Writer, intf *ir.DistilledInt
 func (f *TypeScriptFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, indent int) error {
 	indentStr := strings.Repeat("    ", indent)
 	
+	// Format decorators/annotations
+	for _, dec := range fn.Decorators {
+		fmt.Fprintf(w, "%s@%s\n", indentStr, dec)
+	}
+	
 	modifiers := ""
 	isConst := false
 	

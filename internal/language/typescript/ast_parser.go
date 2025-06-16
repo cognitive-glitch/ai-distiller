@@ -366,6 +366,7 @@ func (p *ASTParser) parseClassBody(node *sitter.Node, class *ir.DistilledClass) 
 	var fields []ir.DistilledNode
 	var methods []ir.DistilledNode
 	var constructorMethod *ir.DistilledFunction
+	var pendingDecorators []string
 	
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
@@ -374,8 +375,62 @@ func (p *ASTParser) parseClassBody(node *sitter.Node, class *ir.DistilledClass) 
 		}
 		
 		switch child.Type() {
+		case "decorated_definition":
+			// Collect decorators and locate the real definition
+			var localDecs []string
+			var def *sitter.Node
+			for j := 0; j < int(child.ChildCount()); j++ {
+				sub := child.Child(j)
+				if sub == nil { 
+					continue 
+				}
+				if sub.Type() == "decorator" {
+					if d := p.parseDecorator(sub); d != "" {
+						localDecs = append(localDecs, d)
+					}
+				} else {
+					def = sub // first non-decorator child = wrapped definition
+				}
+			}
+			if def != nil {
+				switch def.Type() {
+				case "method_definition":
+					if m := p.parseMethod(def); m != nil {
+						m.Decorators = append(m.Decorators, localDecs...)
+						if m.Name == "constructor" {
+							constructorMethod = m
+							for k := 0; k < int(def.ChildCount()); k++ {
+								if fc := def.Child(k); fc != nil && fc.Type() == "formal_parameters" {
+									for _, f := range p.parseParameterProperties(fc) {
+										fields = append(fields, f)
+									}
+									break
+								}
+							}
+						} else {
+							methods = append(methods, m)
+						}
+					}
+				case "public_field_definition", "private_field_definition", "protected_field_definition":
+					if f := p.parseField(def); f != nil {
+						f.Decorators = append(f.Decorators, localDecs...)
+						fields = append(fields, f)
+					}
+				}
+			}
+		case "decorator":
+			// Collect decorators for the next method/field
+			if decoratorText := p.parseDecorator(child); decoratorText != "" {
+				pendingDecorators = append(pendingDecorators, decoratorText)
+			}
 		case "method_definition":
 			if method := p.parseMethod(child); method != nil {
+				// Attach any pending decorators
+				if len(pendingDecorators) > 0 {
+					method.Decorators = append(method.Decorators, pendingDecorators...)
+					pendingDecorators = nil // Reset for next item
+				}
+				
 				if method.Name == "constructor" {
 					constructorMethod = method
 					// Find parameter properties from constructor
@@ -396,10 +451,21 @@ func (p *ASTParser) parseClassBody(node *sitter.Node, class *ir.DistilledClass) 
 			}
 		case "public_field_definition", "private_field_definition", "protected_field_definition":
 			if field := p.parseField(child); field != nil {
+				// Attach any pending decorators
+				if len(pendingDecorators) > 0 {
+					field.Decorators = append(field.Decorators, pendingDecorators...)
+					pendingDecorators = nil // Reset for next item
+				}
 				fields = append(fields, field)
 			}
 		case "method_signature", "abstract_method_signature":
 			if method := p.parseMethodSignature(child); method != nil {
+				// Attach any pending decorators
+				if len(pendingDecorators) > 0 {
+					method.Decorators = append(method.Decorators, pendingDecorators...)
+					pendingDecorators = nil // Reset for next item
+				}
+				
 				// Mark as abstract if it's an abstract_method_signature
 				// (and parseMethodSignature didn't already add it)
 				if child.Type() == "abstract_method_signature" {
@@ -438,7 +504,7 @@ func (p *ASTParser) parseMethod(node *sitter.Node) *ir.DistilledFunction {
 		Parameters: []ir.Parameter{},
 	}
 	
-	// Parse accessibility modifiers
+	// Parse accessibility modifiers and decorators
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		if child == nil {
@@ -446,6 +512,11 @@ func (p *ASTParser) parseMethod(node *sitter.Node) *ir.DistilledFunction {
 		}
 		
 		switch child.Type() {
+		case "decorator":
+			// Process decorators that are children of the method_definition
+			if decoratorText := p.parseDecorator(child); decoratorText != "" {
+				method.Decorators = append(method.Decorators, decoratorText)
+			}
 		case "accessibility_modifier":
 			switch p.nodeText(child) {
 			case "private":
@@ -1219,6 +1290,19 @@ func (p *ASTParser) parseTypeParameters(node *sitter.Node) []ir.TypeParam {
 	}
 	
 	return typeParams
+}
+
+// parseDecorator parses decorator expressions
+func (p *ASTParser) parseDecorator(node *sitter.Node) string {
+	// TypeScript decorators are like @LogExecution or @Component({...})
+	decoratorText := p.nodeText(node)
+	
+	// Remove the leading @ symbol if present
+	if strings.HasPrefix(decoratorText, "@") {
+		decoratorText = decoratorText[1:]
+	}
+	
+	return decoratorText
 }
 
 // Helper functions
