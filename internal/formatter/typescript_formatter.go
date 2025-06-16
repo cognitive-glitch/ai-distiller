@@ -188,17 +188,16 @@ func (f *TypeScriptFormatter) formatInterface(w io.Writer, intf *ir.DistilledInt
 func (f *TypeScriptFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, indent int) error {
 	indentStr := strings.Repeat("    ", indent)
 	
-	// Format visibility and modifiers
-	visPrefix := ""
-	switch fn.Visibility {
-	case ir.VisibilityPrivate:
-		visPrefix = "private "
-	case ir.VisibilityProtected:
-		visPrefix = "protected "
-	}
-	
 	modifiers := ""
 	isConst := false
+	
+	// Format visibility keyword (only for class methods, not top-level functions)
+	if indent > 0 {
+		visKeyword := f.getTypeScriptVisibilityKeyword(fn.Visibility)
+		if visKeyword != "" {
+			modifiers = visKeyword + " " + modifiers
+		}
+	}
 	for _, mod := range fn.Modifiers {
 		if mod == ir.ModifierAbstract {
 			modifiers += "abstract "
@@ -218,11 +217,11 @@ func (f *TypeScriptFormatter) formatFunction(w io.Writer, fn *ir.DistilledFuncti
 		if isConst {
 			fmt.Fprintf(w, "%sconst %s", indentStr, fn.Name)
 		} else {
-			fmt.Fprintf(w, "%s%s%sfunction %s", indentStr, visPrefix, modifiers, fn.Name)
+			fmt.Fprintf(w, "%s%sfunction %s", indentStr, modifiers, fn.Name)
 		}
 	} else {
-		// Methods inside classes/interfaces
-		fmt.Fprintf(w, "%s%s%sfunction %s", indentStr, visPrefix, modifiers, fn.Name)
+		// Methods inside classes/interfaces - no "function" keyword needed
+		fmt.Fprintf(w, "%s%s%s", indentStr, modifiers, fn.Name)
 	}
 	
 	// Add generic type parameters
@@ -291,18 +290,13 @@ func (f *TypeScriptFormatter) formatField(w io.Writer, field *ir.DistilledField,
 		}
 		fmt.Fprintln(w)
 	} else {
-		// Class field
-		visPrefix := ""
-		switch field.Visibility {
-		case ir.VisibilityPrivate:
-			visPrefix = "private "
-		case ir.VisibilityProtected:
-			visPrefix = "protected "
-		case ir.VisibilityPublic:
-			visPrefix = "public "
-		}
+		// Class field - use visibility keywords
+		visKeyword := f.getTypeScriptVisibilityKeyword(field.Visibility)
 		
 		modifiers := ""
+		if visKeyword != "" {
+			modifiers = visKeyword + " "
+		}
 		for _, mod := range field.Modifiers {
 			if mod == ir.ModifierReadonly {
 				modifiers += "readonly "
@@ -311,7 +305,7 @@ func (f *TypeScriptFormatter) formatField(w io.Writer, field *ir.DistilledField,
 			}
 		}
 		
-		fmt.Fprintf(w, "    field %s%s%s", visPrefix, modifiers, field.Name)
+		fmt.Fprintf(w, "    %s%s", modifiers, field.Name)
 		if field.Type != nil && field.Type.Name != "" {
 			fmt.Fprintf(w, ": %s", field.Type.Name)
 		}
@@ -342,4 +336,21 @@ func (f *TypeScriptFormatter) formatTypeAlias(w io.Writer, alias *ir.DistilledTy
 	fmt.Fprintf(w, " = %s\n", alias.Type.Name)
 	
 	return nil
+}
+
+// getTypeScriptVisibilityKeyword returns the TypeScript visibility keyword for the given visibility
+func (f *TypeScriptFormatter) getTypeScriptVisibilityKeyword(visibility ir.Visibility) string {
+	switch visibility {
+	case ir.VisibilityPublic:
+		return "public"
+	case ir.VisibilityPrivate:
+		return "private"
+	case ir.VisibilityProtected:
+		return "protected"
+	case ir.VisibilityInternal:
+		// TypeScript doesn't have internal, use protected
+		return "protected"
+	default:
+		return ""
+	}
 }

@@ -28,10 +28,10 @@ TypeScript support in AI Distiller is designed to capture the rich type informat
 ### Visibility Rules
 
 TypeScript visibility in AI Distiller follows the language's access modifiers:
-- **Public**: Default visibility or explicit `public` keyword
-- **Private**: `private` keyword or `#` private fields
+- **Public**: Default visibility or explicit `public` keyword, exported declarations
+- **Private**: `private` keyword, `#` private fields, or underscore-prefixed non-exported members
 - **Protected**: `protected` keyword
-- **Internal**: No TypeScript equivalent (uses public)
+- **Internal**: Non-exported top-level declarations (module-private)
 
 ## Key Features
 
@@ -182,7 +182,7 @@ class PluginManager:
 </details>
 
 <details>
-<summary>Output: `--strip non-public`</summary>
+<summary>Output: `--private=0 --protected=0 --internal=0`</summary>
 <blockquote>
 
 ```
@@ -203,7 +203,7 @@ class PluginManager:
 </details>
 
 <details>
-<summary>Output: `--strip implementation`</summary>
+<summary>Output: `--implementation=0`</summary>
 <blockquote>
 
 ```
@@ -282,13 +282,13 @@ TypeScript code often includes extensive type definitions. Use stripping options
 
 ```bash
 # For implementation analysis - keep types, remove docs
-aid src/ --strip comments --format text
+aid src/ --comments=0 --format text
 
 # For API understanding - keep signatures, remove implementation
-aid src/ --strip implementation --format text
+aid src/ --implementation=0 --format text
 
 # For architecture overview - public API only
-aid src/ --strip non-public,implementation --format text
+aid src/ --private=0 --protected=0 --internal=0,implementation --format text
 ```
 
 ### Framework-Specific Patterns
@@ -360,6 +360,35 @@ class Service {
   private helper(): void {}  // Internal only
 }
 ```
+
+## Known Issues & Recent Fixes
+
+### Recently Fixed (December 2024)
+
+1. **Non-exported classes visibility** (✅ Fixed)
+   - **Issue**: Non-exported abstract classes were filtered out in default view
+   - **Fix**: Improved visibility handling for module-internal declarations
+   - **Impact**: Abstract base classes now properly appear in output
+
+2. **Underscore-prefixed members** (✅ Fixed)
+   - **Issue**: Functions like `_normalizeString` appeared in default output
+   - **Fix**: Added convention-based private detection for underscore prefix
+   - **Impact**: Better alignment with JavaScript/TypeScript conventions
+
+3. **Top-level function visibility** (✅ Fixed)
+   - **Issue**: Top-level functions showed "public" prefix incorrectly
+   - **Fix**: Updated formatter to omit visibility for top-level declarations
+   - **Impact**: Cleaner, more idiomatic output
+
+### Current Limitations
+
+1. **Decorator values not captured** (🟡 Minor)
+   - Decorators are shown but their arguments/values aren't preserved
+   - Workaround: Decorator presence is sufficient for most AI use cases
+
+2. **Namespace support missing** (🟢 By design)
+   - Modern ES modules are preferred over legacy namespaces
+   - Workaround: Use ES6 modules instead
 
 ## Performance Characteristics
 

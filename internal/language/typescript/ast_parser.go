@@ -898,6 +898,10 @@ func (p *ASTParser) parseFunction(node *sitter.Node, isExported bool) *ir.Distil
 			fn.Modifiers = append(fn.Modifiers, ir.ModifierAsync)
 		case "identifier":
 			fn.Name = p.nodeText(child)
+			// Check for underscore prefix indicating private
+			if strings.HasPrefix(fn.Name, "_") && !isExported {
+				fn.Visibility = ir.VisibilityPrivate
+			}
 		case "type_parameters":
 			fn.TypeParams = p.parseTypeParameters(child)
 		case "formal_parameters":
@@ -935,6 +939,10 @@ func (p *ASTParser) parseVariableDeclaration(node *sitter.Node, isExported bool)
 				nameNode := p.findChild(child, "identifier")
 				if nameNode != nil {
 					fn.Name = p.nodeText(nameNode)
+					// Check for underscore prefix indicating private
+					if strings.HasPrefix(fn.Name, "_") && !isExported {
+						fn.Visibility = ir.VisibilityPrivate
+					}
 				}
 				// fmt.Printf("Parsed arrow function %s with %d params\n", fn.Name, len(fn.Parameters))
 				
@@ -964,6 +972,10 @@ func (p *ASTParser) parseVariableDeclaration(node *sitter.Node, isExported bool)
 			nameNode := p.findChild(child, "identifier")
 			if nameNode != nil {
 				field.Name = p.nodeText(nameNode)
+				// Check for underscore prefix indicating private
+				if strings.HasPrefix(field.Name, "_") && !isExported {
+					field.Visibility = ir.VisibilityPrivate
+				}
 			}
 			
 			typeAnnotation := p.findChild(child, "type_annotation")
@@ -1269,7 +1281,9 @@ func (p *ASTParser) getVisibility(isExported bool) ir.Visibility {
 	if isExported {
 		return ir.VisibilityPublic
 	}
-	return ir.VisibilityPackage
+	// Non-exported items are module-private (internal)
+	// They're accessible within the module but not externally
+	return ir.VisibilityInternal
 }
 
 // analyzeInterfaceSatisfaction analyzes interface implementations
