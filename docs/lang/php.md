@@ -14,7 +14,7 @@ PHP support in AI Distiller is designed to extract the essential structure of PH
 |-----------|--------------|-------|
 | **Classes** | ✅ Full | Including abstract, final, readonly (8.2+) |
 | **Interfaces** | ✅ Full | Multiple inheritance supported |
-| **Traits** | ✅ Full | Shown as special classes with usage markers |
+| **Traits** | ✅ Full | Full support with proper `trait` keyword and `use` statements |
 | **Enums** | ✅ Full | Pure and backed enums (8.1+) with values |
 | **Functions** | ✅ Full | Global functions with type hints |
 | **Methods** | ✅ Full | Including magic methods, final, abstract |
@@ -135,7 +135,44 @@ public function process(array $data): string
 public process(array $data): class-string<Model>
 ```
 
-### 4. **Smart Docblock Handling**
+### 4. **Trait Support**
+
+PHP traits are fully supported with proper syntax:
+- Displayed with `trait` keyword (not as classes)
+- `use` statements shown inside classes that use traits
+- Multiple trait usage supported
+
+```php
+// Input
+trait Timestampable {
+    private ?DateTime $createdAt = null;
+    
+    public function touch(): void {
+        $this->createdAt = new DateTime();
+    }
+}
+
+class User {
+    use Timestampable, Loggable;
+    
+    public string $name;
+}
+```
+
+```
+// Output
+trait Timestampable {
+    public touch(): void
+}
+
+class User {
+    use Timestampable;
+    use Loggable;
+    public name: string
+}
+```
+
+### 5. **Smart Docblock Handling**
 
 API-defining docblocks are shown even when `--comments=0`:
 - Classes with `@property*`, `@method`, `@deprecated` annotations
@@ -273,6 +310,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Contracts\{Cacheable, Loggable};
+use App\Traits\{TimestampableTrait, ValidatableTrait};
 use App\Enums\Permission;
 
 /**
@@ -286,8 +324,21 @@ class Service {
     ) {}
 }
 
+trait TimestampableTrait {
+    private ?DateTime $createdAt = null;
+    private ?DateTime $updatedAt = null;
+    
+    public function touch(): void {
+        $this->updatedAt = new DateTime();
+        if ($this->createdAt === null) {
+            $this->createdAt = $this->updatedAt;
+        }
+    }
+}
+
 #[Service(name: 'notifications', version: 2)]
 class NotificationService implements Cacheable, Loggable {
+    use TimestampableTrait, ValidatableTrait;
     public function __construct(
         private readonly DatabaseConnection $db,
         private readonly CacheInterface $cache,
@@ -340,6 +391,8 @@ interface CacheInterface {
 namespace App\Services;
 use App\Contracts\Cacheable;
 use App\Contracts\Loggable;
+use App\Traits\TimestampableTrait;
+use App\Traits\ValidatableTrait;
 use App\Enums\Permission;
 
 /**
@@ -352,8 +405,14 @@ class Service {
     public __construct(string $name, int $version = 1)
 }
 
+trait TimestampableTrait {
+    public touch(): void
+}
+
 #[Service(name: 'notifications', version: 2)]
 class NotificationService implements Cacheable, Loggable {
+    use TimestampableTrait;
+    use ValidatableTrait;
     public __construct(DatabaseConnection $db, CacheInterface $cache, LoggerInterface $logger, bool $debug = false)
     public send(string|Email $message, User|string $recipient, ?array $options = null): Result|false
     public hasPermission(User $user, Permission $permission): bool
@@ -573,7 +632,27 @@ Use PHPDoc to specify array structures:
  */
 ```
 
-### 4. **Structure for AI Consumption**
+### 4. **Use Traits for Code Reuse**
+
+Traits are fully supported and clearly displayed:
+
+```php
+trait Timestampable {
+    use LoggerAwareTrait; // Traits can use other traits
+    
+    private ?DateTime $createdAt = null;
+    
+    public function touch(): void {
+        $this->createdAt = new DateTime();
+    }
+}
+
+class User {
+    use Timestampable, SoftDeletes;
+}
+```
+
+### 5. **Structure for AI Consumption**
 
 - Keep classes under 500 lines
 - Use meaningful names (preserved in output!)
@@ -783,6 +862,7 @@ PHPDoc types like `array<K,V>`, `class-string<T>` are fully supported in latest 
 - [ ] Closure and arrow function type extraction
 - [ ] `@template` as API-defining tag
 - [ ] Trait conflict resolution (`as`, `insteadof`)
+- [x] ~~Trait support~~ ✅ Implemented in v0.2.x
 - [ ] Property hooks (PHP 8.4+)
 
 ## Contributing
