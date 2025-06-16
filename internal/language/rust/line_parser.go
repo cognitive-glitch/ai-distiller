@@ -1013,7 +1013,7 @@ func (p *LineParser) parseTraitBlock(file *ir.DistilledFile, parent ir.Distilled
 	// Regular expressions for trait items
 	// Handle GATs like: type Reader<'a>: std::io::Read where Self: 'a;
 	assocTypeRe := regexp.MustCompile(`^\s*type\s+(\w+)(?:<([^>]+)>)?(?:\s*:\s*([^;]+?))?(?:\s*where\s+([^;]+))?;`)
-	traitFnRe := regexp.MustCompile(`^\s*(async\s+)?fn\s+(\w+)(?:<([^>]+)>)?\s*\(([^)]*)\)(?:\s*->\s*([^{;]+))?(?:\s*where\s+([^{;]+))?`)
+	traitFnRe := regexp.MustCompile(`^\s*fn\s+(\w+)(?:<([^>]+)>)?\s*\(([^)]*)\)(?:\s*->\s*([^{;]+))?(?:\s*where\s+([^{;]+))?`)
 	
 	for p.currentLine < len(p.lines) && braceCount > 0 {
 		line := p.lines[p.currentLine]
@@ -1070,27 +1070,22 @@ func (p *LineParser) parseTraitBlock(file *ir.DistilledFile, parent ir.Distilled
 							StartLine: p.currentLine + 1,
 						},
 					},
-					Name:       matches[2],
+					Name:       matches[1],
 					Visibility: ir.VisibilityPublic,
-					Parameters: p.parseParameters(matches[4]),
+					Parameters: p.parseParameters(matches[3]),
 					Modifiers:  []ir.Modifier{ir.ModifierAbstract}, // Trait methods are abstract by default
 				}
 				
-				// Add async modifier if present
-				if matches[1] != "" {
-					fn.Modifiers = append(fn.Modifiers, ir.ModifierAsync)
-				}
-				
 				// Add generics to name if present
-				if matches[3] != "" {
-					fn.Name = fn.Name + "<" + matches[3] + ">"
+				if matches[2] != "" {
+					fn.Name = fn.Name + "<" + matches[2] + ">"
 				}
 				
 				// Handle return type with where clause
-				if matches[5] != "" {
-					returnType := strings.TrimSpace(matches[5])
-					if matches[6] != "" {
-						returnType += " where " + strings.TrimSpace(matches[6])
+				if matches[4] != "" {
+					returnType := strings.TrimSpace(matches[4])
+					if matches[5] != "" {
+						returnType += " where " + strings.TrimSpace(matches[5])
 					}
 					fn.Returns = &ir.TypeRef{Name: returnType}
 				}
@@ -1102,9 +1097,6 @@ func (p *LineParser) parseTraitBlock(file *ir.DistilledFile, parent ir.Distilled
 					if nextLine == "{" || strings.HasSuffix(trimmed, "{") {
 						// Has implementation, remove abstract modifier
 						fn.Modifiers = []ir.Modifier{}
-						if matches[1] != "" {
-							fn.Modifiers = append(fn.Modifiers, ir.ModifierAsync)
-						}
 						// Skip the implementation block
 						if nextLine == "{" {
 							p.currentLine++

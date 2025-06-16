@@ -360,16 +360,21 @@ func (f *RustFormatter) formatTrait(w io.Writer, trait *ir.DistilledInterface, i
 }
 
 func (f *RustFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, indent string) error {
-	// Get visibility keyword
-	visKeyword := f.getRustVisibilityKeyword(fn.Visibility)
-	
 	// Check for async
 	isAsync := false
+	isTrait := false
 	for _, mod := range fn.Modifiers {
 		if mod == ir.ModifierAsync {
 			isAsync = true
-			break
+		} else if mod == ir.ModifierAbstract {
+			isTrait = true
 		}
+	}
+	
+	// Get visibility keyword - trait methods don't use pub
+	visKeyword := ""
+	if !isTrait {
+		visKeyword = f.getRustVisibilityKeyword(fn.Visibility)
 	}
 	
 	// Format function signature
