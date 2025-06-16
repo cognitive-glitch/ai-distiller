@@ -206,7 +206,7 @@ func TestCLIFlags(t *testing.T) {
 			"--strip", "comments,imports",
 			"--include", "*.go",
 			"--exclude", "*_test.go",
-			"--absolute-paths",
+			"--file-path-type", "absolute",
 			"--strict",
 			"-vvv",
 		}
@@ -232,8 +232,8 @@ func TestCLIFlags(t *testing.T) {
 		exclude, _ := cmd.Flags().GetString("exclude")
 		assert.Equal(t, "*_test.go", exclude)
 
-		absPath, _ := cmd.Flags().GetBool("absolute-paths")
-		assert.True(t, absPath)
+		filePathType, _ := cmd.Flags().GetString("file-path-type")
+		assert.Equal(t, "absolute", filePathType)
 
 		strictFlag, _ := cmd.Flags().GetBool("strict")
 		assert.True(t, strictFlag)
