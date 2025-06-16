@@ -26,6 +26,30 @@ func (f *CSharpFormatter) FormatNode(w io.Writer, node ir.DistilledNode, indent 
 	case *ir.DistilledImport:
 		_, err := fmt.Fprintln(w, f.formatImport(n))
 		return err
+	case *ir.DistilledStruct:
+		// Format struct declaration
+		structDecl := fmt.Sprintf("%sstruct %s", strings.Repeat("    ", indent), n.Name)
+		if len(n.TypeParams) > 0 {
+			genericParams := []string{}
+			for _, g := range n.TypeParams {
+				genericParams = append(genericParams, g.Name)
+			}
+			structDecl += "<" + strings.Join(genericParams, ", ") + ">"
+		}
+		_, err := fmt.Fprintln(w, structDecl + " {")
+		if err != nil {
+			return err
+		}
+		// Format struct members
+		for _, child := range n.Children {
+			if err := f.FormatNode(w, child, indent+1); err != nil {
+				return err
+			}
+		}
+		// Closing brace
+		indentStr := strings.Repeat("    ", indent)
+		fmt.Fprintf(w, "%s}\n", indentStr)
+		return nil
 	case *ir.DistilledClass:
 		// Format attributes/decorators
 		indentStr := strings.Repeat("    ", indent)
@@ -88,22 +112,6 @@ func (f *CSharpFormatter) FormatNode(w io.Writer, node ir.DistilledNode, indent 
 			return err
 		}
 		// Format interface members
-		for _, child := range n.Children {
-			if err := f.FormatNode(w, child, indent+1); err != nil {
-				return err
-			}
-		}
-		// Closing brace
-		indentStr := strings.Repeat("    ", indent)
-		fmt.Fprintf(w, "%s}\n", indentStr)
-		return nil
-	case *ir.DistilledStruct:
-		// Format struct declaration
-		_, err := fmt.Fprintln(w, f.formatStruct(n, indent) + " {")
-		if err != nil {
-			return err
-		}
-		// Format struct members
 		for _, child := range n.Children {
 			if err := f.FormatNode(w, child, indent+1); err != nil {
 				return err
@@ -184,13 +192,18 @@ func (f *CSharpFormatter) formatClass(class *ir.DistilledClass, indent int) stri
 		modifiers = append(modifiers, visibility)
 	}
 
-	// Check if this is a record
+	// Check if this is a record and/or struct
 	isRecord := false
+	isStruct := false
 	
 	// Add other modifiers
 	for _, mod := range class.Modifiers {
 		if mod == ir.ModifierData {
 			isRecord = true
+		} else if mod == ir.ModifierStruct {
+			isStruct = true
+		} else if mod == ir.ModifierReadonly {
+			modifiers = append(modifiers, "readonly")
 		} else if mod == ir.ModifierAbstract {
 			modifiers = append(modifiers, "abstract")
 		} else if mod == ir.ModifierSealed {
@@ -208,7 +221,9 @@ func (f *CSharpFormatter) formatClass(class *ir.DistilledClass, indent int) stri
 		classDecl += strings.Join(modifiers, " ") + " "
 	}
 	
-	if isRecord {
+	if isRecord && isStruct {
+		classDecl += "record struct " + class.Name
+	} else if isRecord {
 		classDecl += "record " + class.Name
 		
 		// For records, check if there are constructor parameters (properties)
@@ -262,6 +277,8 @@ func (f *CSharpFormatter) formatClass(class *ir.DistilledClass, indent int) stri
 				classDecl += ")"
 			}
 		}
+	} else if isStruct {
+		classDecl += "struct " + class.Name
 	} else {
 		classDecl += "class " + class.Name
 	}
@@ -351,43 +368,6 @@ func (f *CSharpFormatter) formatInterface(intf *ir.DistilledInterface, indent in
 	return intfDecl
 }
 
-func (f *CSharpFormatter) formatStruct(strct *ir.DistilledStruct, indent int) string {
-	indentStr := strings.Repeat("    ", indent)
-
-	// Build visibility keyword
-	visibility := f.getVisibilityKeyword(strct.Visibility)
-	
-	// Struct declaration
-	structDecl := indentStr
-	if visibility != "" {
-		structDecl += visibility + " "
-	}
-	structDecl += "struct " + strct.Name
-
-	// Generics
-	if len(strct.TypeParams) > 0 {
-		genericParams := []string{}
-		for _, g := range strct.TypeParams {
-			genericParams = append(genericParams, g.Name)
-		}
-		structDecl += "<" + strings.Join(genericParams, ", ") + ">"
-	}
-
-	// Add generic constraints with 'where' clauses if present
-	if len(strct.TypeParams) > 0 {
-		for _, typeParam := range strct.TypeParams {
-			if len(typeParam.Constraints) > 0 {
-				constraints := []string{}
-				for _, constraint := range typeParam.Constraints {
-					constraints = append(constraints, f.formatTypeRef(&constraint))
-				}
-				structDecl += " where " + typeParam.Name + " : " + strings.Join(constraints, ", ")
-			}
-		}
-	}
-
-	return structDecl
-}
 
 func (f *CSharpFormatter) formatEnum(enum *ir.DistilledEnum, indent int) string {
 	indentStr := strings.Repeat("    ", indent)

@@ -5,6 +5,7 @@ namespace Constructs.VeryComplex05;
 public record VectorN(
     T[] Components,
     int Dim) {
+    public static VectorN<T> operator +(VectorN<T> a, VectorN<T> b);
     public T Dot(VectorN<T> other);
     public override string ToString();
 }

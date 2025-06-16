@@ -85,6 +85,8 @@ func (p *TreeSitterProcessor) processNode(node *sitter.Node, source []byte, file
 		p.processDelegateDeclaration(node, source, file, parent)
 	case "method_declaration":
 		p.processMethodDeclaration(node, source, file, parent)
+	case "operator_declaration":
+		p.processOperatorDeclaration(node, source, file, parent)
 	case "constructor_declaration":
 		p.processConstructorDeclaration(node, source, file, parent)
 	case "property_declaration":
@@ -390,24 +392,21 @@ func (p *TreeSitterProcessor) processEnumDeclaration(node *sitter.Node, source [
 // processRecordDeclaration handles record declarations (C# 9+)
 func (p *TreeSitterProcessor) processRecordDeclaration(node *sitter.Node, source []byte, file *ir.DistilledFile, parent ir.DistilledNode) {
 	// Records are classes or structs with special compiler-generated members
+	// We represent both as classes with different modifiers
 	isStruct := node.Type() == "record_struct_declaration"
 	
-	var record ir.DistilledNode
+	record := &ir.DistilledClass{
+		BaseNode: ir.BaseNode{
+			Location: p.nodeLocation(node),
+		},
+		Modifiers: []ir.Modifier{ir.ModifierData}, // Mark as record
+		Children:  []ir.DistilledNode{},
+	}
+	
+	// If it's a record struct, add struct modifier
 	if isStruct {
-		record = &ir.DistilledStruct{
-			BaseNode: ir.BaseNode{
-				Location: p.nodeLocation(node),
-			},
-			Children: []ir.DistilledNode{},
-		}
-	} else {
-		record = &ir.DistilledClass{
-			BaseNode: ir.BaseNode{
-				Location: p.nodeLocation(node),
-			},
-			Modifiers: []ir.Modifier{ir.ModifierData}, // Mark as record
-			Children:  []ir.DistilledNode{},
-		}
+		record.Modifiers = append(record.Modifiers, ir.ModifierStruct) // Mark as struct
+		record.Modifiers = append(record.Modifiers, ir.ModifierReadonly) // Record structs are readonly by default
 	}
 
 	// Extract modifiers, attributes, name, parameters, base types
@@ -415,55 +414,25 @@ func (p *TreeSitterProcessor) processRecordDeclaration(node *sitter.Node, source
 		child := node.Child(i)
 		switch child.Type() {
 		case "modifier":
-			if isStruct {
-				p.extractStructModifiers(child, source, record.(*ir.DistilledStruct))
-			} else {
-				p.extractClassModifiers(child, source, record.(*ir.DistilledClass))
-			}
+			p.extractClassModifiers(child, source, record)
 		case "attribute_list":
 			// Extract attributes
-			var decorators *[]string
-			if isStruct {
-				// TODO: Add decorator support to structs
-			} else {
-				decorators = &record.(*ir.DistilledClass).Decorators
-			}
-			if decorators != nil {
-				p.extractAttributes(child, source, decorators)
-			}
+			p.extractAttributes(child, source, &record.Decorators)
 		case "identifier":
-			if isStruct {
-				record.(*ir.DistilledStruct).Name = string(source[child.StartByte():child.EndByte()])
-			} else {
-				record.(*ir.DistilledClass).Name = string(source[child.StartByte():child.EndByte()])
-			}
+			record.Name = string(source[child.StartByte():child.EndByte()])
 		case "parameter_list":
 			// Record parameters become properties
 			p.extractRecordParameters(child, source, record)
 		case "base_list":
-			if isStruct {
-				p.extractStructInterfaces(child, source, record.(*ir.DistilledStruct))
-			} else {
-				p.extractBaseList(child, source, record.(*ir.DistilledClass))
-			}
+			p.extractBaseList(child, source, record)
 		case "declaration_list":
-			if isStruct {
-				p.processStructBody(child, source, file, record.(*ir.DistilledStruct))
-			} else {
-				p.processClassBody(child, source, file, record.(*ir.DistilledClass))
-			}
+			p.processClassBody(child, source, file, record)
 		}
 	}
 
 	// Set default visibility if not specified
-	if isStruct {
-		if record.(*ir.DistilledStruct).Visibility == "" {
-			record.(*ir.DistilledStruct).Visibility = ir.VisibilityInternal
-		}
-	} else {
-		if record.(*ir.DistilledClass).Visibility == "" {
-			record.(*ir.DistilledClass).Visibility = ir.VisibilityInternal
-		}
+	if record.Visibility == "" {
+		record.Visibility = ir.VisibilityInternal
 	}
 
 	p.addToParent(file, parent, record)
@@ -1581,4 +1550,58 @@ func (p *TreeSitterProcessor) extractTypeConstraint(node *sitter.Node, source []
 	}
 	
 	return nil
+}
+
+// processOperatorDeclaration handles operator declarations
+func (p *TreeSitterProcessor) processOperatorDeclaration(node *sitter.Node, source []byte, file *ir.DistilledFile, parent ir.DistilledNode) {
+	operator := &ir.DistilledFunction{
+		BaseNode: ir.BaseNode{
+			Location: p.nodeLocation(node),
+		},
+		Parameters: []ir.Parameter{},
+		Modifiers:  []ir.Modifier{},
+	}
+
+	// Extract modifiers, return type, operator symbol, parameters
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		switch child.Type() {
+		case "modifier":
+			p.extractMethodModifiers(child, source, operator)
+		case "predefined_type", "array_type", "generic_name", "qualified_name", "identifier":
+			if operator.Returns == nil {
+				operator.Returns = p.extractType(child, source)
+			}
+		case "operator":
+			// Next child should be the operator symbol
+			if i+1 < int(node.ChildCount()) {
+				nextChild := node.Child(i + 1)
+				operatorSymbol := string(source[nextChild.StartByte():nextChild.EndByte()])
+				operator.Name = "operator " + operatorSymbol
+				i++ // Skip the operator symbol
+			}
+		case "parameter_list":
+			p.extractParameters(child, source, operator)
+		case "block", "arrow_expression_clause":
+			operator.Implementation = string(source[child.StartByte():child.EndByte()])
+		}
+	}
+
+	// Operators are always public static
+	operator.Visibility = ir.VisibilityPublic
+	if !p.hasModifier(operator.Modifiers, ir.ModifierStatic) {
+		operator.Modifiers = append(operator.Modifiers, ir.ModifierStatic)
+	}
+
+	p.addToParent(file, parent, operator)
+}
+
+// hasModifier checks if a modifier list contains a specific modifier
+func (p *TreeSitterProcessor) hasModifier(modifiers []ir.Modifier, modifier ir.Modifier) bool {
+	for _, m := range modifiers {
+		if m == modifier {
+			return true
+		}
+	}
+	return false
 }
