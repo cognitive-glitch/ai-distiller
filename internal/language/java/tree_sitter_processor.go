@@ -72,6 +72,8 @@ func (p *TreeSitterProcessor) processNode(node *sitter.Node, source []byte, file
 		p.processEnumDeclaration(node, source, file, parent)
 	case "record_declaration":
 		p.processRecordDeclaration(node, source, file, parent)
+	case "annotation_type_declaration":
+		p.processAnnotationTypeDeclaration(node, source, file, parent)
 	case "method_declaration":
 		p.processMethodDeclaration(node, source, file, parent)
 	case "field_declaration":
@@ -256,6 +258,80 @@ func (p *TreeSitterProcessor) processEnumDeclaration(node *sitter.Node, source [
 	p.addToParent(file, parent, enum)
 }
 
+// processAnnotationTypeDeclaration handles annotation type declarations (@interface)
+func (p *TreeSitterProcessor) processAnnotationTypeDeclaration(node *sitter.Node, source []byte, file *ir.DistilledFile, parent ir.DistilledNode) {
+	// Annotation types are represented as classes with @interface decorator
+	annotation := &ir.DistilledClass{
+		BaseNode: ir.BaseNode{
+			Location: p.nodeLocation(node),
+		},
+		Children: []ir.DistilledNode{},
+		Decorators: []string{"@interface"},
+	}
+
+	// Extract modifiers, name, and body
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		switch child.Type() {
+		case "modifiers":
+			p.extractModifiers(child, source, annotation)
+		case "identifier":
+			annotation.Name = string(source[child.StartByte():child.EndByte()])
+		case "annotation_type_body":
+			p.processAnnotationTypeBody(child, source, file, annotation)
+		}
+	}
+
+	// Set default visibility if not specified
+	if annotation.Visibility == "" {
+		annotation.Visibility = ir.VisibilityPublic // Annotations are public by default
+	}
+
+	p.addToParent(file, parent, annotation)
+}
+
+// processAnnotationTypeBody processes the body of an annotation type
+func (p *TreeSitterProcessor) processAnnotationTypeBody(node *sitter.Node, source []byte, file *ir.DistilledFile, parent ir.DistilledNode) {
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		if child.Type() == "annotation_type_element_declaration" {
+			p.processAnnotationElement(child, source, file, parent)
+		} else {
+			p.processNode(child, source, file, parent)
+		}
+	}
+}
+
+// processAnnotationElement processes annotation element declarations
+func (p *TreeSitterProcessor) processAnnotationElement(node *sitter.Node, source []byte, file *ir.DistilledFile, parent ir.DistilledNode) {
+	// Annotation elements are like abstract methods with optional default values
+	element := &ir.DistilledFunction{
+		BaseNode: ir.BaseNode{
+			Location: p.nodeLocation(node),
+		},
+		Parameters: []ir.Parameter{},
+		Modifiers:  []ir.Modifier{ir.ModifierAbstract},
+		Visibility: ir.VisibilityPublic,
+	}
+
+	// Extract type, name, and default value
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		switch child.Type() {
+		case "type_identifier", "integral_type", "floating_point_type", "boolean_type":
+			element.Returns = &ir.TypeRef{Name: string(source[child.StartByte():child.EndByte()])}
+		case "array_type":
+			element.Returns = p.extractType(child, source)
+		case "identifier":
+			element.Name = string(source[child.StartByte():child.EndByte()])
+		case "default_value":
+			// TODO: Extract default value if needed
+		}
+	}
+
+	p.addToParent(file, parent, element)
+}
+
 // processRecordDeclaration handles record declarations (Java 14+)
 func (p *TreeSitterProcessor) processRecordDeclaration(node *sitter.Node, source []byte, file *ir.DistilledFile, parent ir.DistilledNode) {
 	// Records are represented as classes with a special modifier
@@ -308,6 +384,10 @@ func (p *TreeSitterProcessor) processMethodDeclaration(node *sitter.Node, source
 	// Extract modifiers, return type, name, parameters, body
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
+		// DEBUG
+		if child.Type() == "throws" {
+			fmt.Printf("DEBUG processMethodDeclaration: Found throws at child %d\n", i)
+		}
 		switch child.Type() {
 		case "modifiers":
 			p.extractMethodModifiers(child, source, method)
@@ -760,19 +840,26 @@ func (p *TreeSitterProcessor) extractParameters(node *sitter.Node, source []byte
 
 // extractParameter extracts a single parameter
 func (p *TreeSitterProcessor) extractParameter(node *sitter.Node, source []byte) *ir.Parameter {
-	param := &ir.Parameter{}
+	param := &ir.Parameter{
+		Decorators: []string{},
+	}
 	
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		switch child.Type() {
 		case "modifiers":
-			// Handle parameter modifiers like final
+			// Handle parameter modifiers like final and annotations
 			for j := 0; j < int(child.ChildCount()); j++ {
 				modChild := child.Child(j)
-				if string(source[modChild.StartByte():modChild.EndByte()]) == "final" {
+				if modChild.Type() == "marker_annotation" || modChild.Type() == "annotation" {
+					p.extractAnnotation(modChild, source, &param.Decorators)
+				} else if string(source[modChild.StartByte():modChild.EndByte()]) == "final" {
 					// TODO: Add IsFinal support to Parameter in IR if needed
 				}
 			}
+		case "marker_annotation", "annotation":
+			// Handle annotations directly on parameters
+			p.extractAnnotation(child, source, &param.Decorators)
 		case "type_identifier", "integral_type", "floating_point_type", "boolean_type":
 			param.Type = *p.extractType(child, source)
 		case "array_type", "generic_type":
@@ -827,11 +914,28 @@ func (p *TreeSitterProcessor) extractRecordComponents(node *sitter.Node, source 
 
 // extractThrows extracts thrown exceptions
 func (p *TreeSitterProcessor) extractThrows(node *sitter.Node, source []byte, method *ir.DistilledFunction) {
+	// The throws node contains the 'throws' keyword itself as first child, skip it
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
-		if child.Type() == "type_identifier" || child.Type() == "scoped_type_identifier" {
+		childType := child.Type()
+		
+		// Skip the 'throws' keyword and commas
+		if childType == "throws" || childType == "," {
+			continue
+		}
+		
+		if childType == "type_identifier" || childType == "scoped_type_identifier" {
 			exception := p.extractType(child, source)
 			method.Throws = append(method.Throws, *exception)
+		} else if childType == "type_list" {
+			// Throws can have a type_list child containing multiple exceptions
+			for j := 0; j < int(child.ChildCount()); j++ {
+				typeChild := child.Child(j)
+				if typeChild.Type() == "type_identifier" || typeChild.Type() == "scoped_type_identifier" {
+					exception := p.extractType(typeChild, source)
+					method.Throws = append(method.Throws, *exception)
+				}
+			}
 		}
 	}
 }

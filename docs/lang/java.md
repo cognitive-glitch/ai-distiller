@@ -25,7 +25,7 @@ AI Distiller models Java code as a semantic graph, representing not just the syn
 | **Packages** | ✅ Full | Package declarations and structure |
 | **Imports** | ✅ Full | Standard and static imports |
 | **Classes** | ✅ Full | Including abstract, final, nested classes |
-| **Interfaces** | ⚠️ Partial | Basic support, generics limitations |
+| **Interfaces** | ⚠️ Partial | Declaration captured but methods not extracted |
 | **Enums** | ✅ Full | Enum declarations and constants |
 | **Records** | ⚠️ Partial | Basic structure, components limited |
 
@@ -45,9 +45,9 @@ AI Distiller models Java code as a semantic graph, representing not just the syn
 | Feature | Support Level | Notes |
 |---------|--------------|-------|
 | **Basic Types** | ✅ Full | Primitives and wrapper classes |
-| **Generics** | ✅ Full | Type parameters, constraints, bounded generics |
+| **Generics** | ⚠️ Partial | Type parameters captured, multiple bounds supported, inheritance generics dropped |
 | **Arrays** | ✅ Full | Array type declarations |
-| **Annotations** | ✅ Full | All annotations with argument parsing |
+| **Annotations** | ⚠️ Partial | Type/method annotations work, parameter annotations supported, @interface definitions basic |
 | **Lambda Expressions** | ❌ Not supported | Not parsed correctly |
 | **Method References** | ❌ Not supported | Not parsed correctly |
 
@@ -141,7 +141,7 @@ public class UserService extends BaseService implements Cacheable, Auditable {
     }
     ```
   </blockquote></details>
-  <details open><summary>Compact AI-friendly version (`--strip 'non-public,comments,implementation'`)</summary><blockquote>
+  <details open><summary>Compact AI-friendly version (`default output (public only, no implementation)`)</summary><blockquote>
     ```
     <file path="Basic.java">
     package com.aidi.test.basic;
@@ -152,7 +152,7 @@ public class UserService extends BaseService implements Cacheable, Auditable {
     </file>
     ```
   </blockquote></details>
-  <details><summary>Full version (`--strip ''`)</summary><blockquote>
+  <details><summary>Full version (`--public=1 --protected=1 --internal=1 --private=1 --implementation=1`)</summary><blockquote>
     ```
     <file path="Basic.java">
     package com.aidi.test.basic;
@@ -203,7 +203,7 @@ public class UserService extends BaseService implements Cacheable, Auditable {
     }
     ```
   </blockquote></details>
-  <details open><summary>Compact AI-friendly version (`--strip 'non-public,comments,implementation'`)</summary><blockquote>
+  <details open><summary>Compact AI-friendly version (`default output (public only, no implementation)`)</summary><blockquote>
     ```
     <file path="SimpleOOP.java">
     package com.aidi.test.oop;
@@ -239,19 +239,41 @@ public class UserService extends BaseService implements Cacheable, Auditable {
   </blockquote></details>
 </blockquote></details>
 
+## Recent Improvements (2025-01)
+
+- **Enhanced Generic Bounds**: Now shows all bounds in generic type constraints (e.g., `T extends Number & Runnable & Serializable`)
+- **Parameter Annotations**: Method parameter annotations are now extracted (e.g., `@NotNull U input`)
+- **Annotation Type Support**: Basic support for `@interface` declarations (represented as classes with @interface decorator)
+
 ## Known Issues
 
 ### 🔴 Critical Limitations
 
+**Throws Clauses**
+- Method `throws` declarations are not being extracted despite parser support
+- This affects API completeness and exception handling documentation
+
+**Multiple Type Definitions**
+- Parser may miss additional classes/interfaces/annotations in the same file
+- Nested types and inner classes have limited support
+
 **Custom Annotation Definitions**
-- Annotation definitions (`@interface`) are parsed as classes but not properly typed
-- Annotation inheritance and meta-annotations need improvement
+- Annotation definitions (`@interface`) are now parsed but represented as classes
+- Annotation element methods with default values need improvement
+- Meta-annotations on annotation types are captured
 
 **Advanced Type Features**
 - Wildcard generics `? extends T` and `? super T` are not yet supported
 - Type inference with `var` keyword loses type information
 
 ### 🟡 Major Limitations
+
+**Interface Method Extraction**
+- Interface methods are not being extracted, showing empty bodies
+- Abstract class abstract methods may also be affected
+
+**Generic Type Arguments in Inheritance**
+- Generic arguments in `extends` clauses are dropped (e.g., `extends BaseStore<User>` becomes `extends BaseStore`)
 
 **Modern Java Features**
 - Records are parsed as classes but component extraction is limited
@@ -269,6 +291,9 @@ public class UserService extends BaseService implements Cacheable, Auditable {
 - Some complex nested generic expressions may lose precision
 
 ### 🟢 Minor Issues
+
+**Package Declaration Formatting**
+- Package declarations are missing semicolons in output
 
 **Formatting Inconsistencies**
 - Method implementations have extra indentation

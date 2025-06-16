@@ -63,14 +63,32 @@ func (f *JavaFormatter) formatPackage(w io.Writer, pkg *ir.DistilledPackage, ind
 func (f *JavaFormatter) formatClass(w io.Writer, class *ir.DistilledClass, indent int) error {
 	indentStr := strings.Repeat("    ", indent)
 	
+	// Check if this is an annotation type
+	isAnnotation := false
+	for _, dec := range class.Decorators {
+		if dec == "@interface" {
+			isAnnotation = true
+			break
+		}
+	}
+	
+	// Format decorators (excluding @interface which is handled specially)
+	for _, dec := range class.Decorators {
+		if dec != "@interface" {
+			fmt.Fprintf(w, "%s%s\n", indentStr, dec)
+		}
+	}
+	
 	// Format class declaration
 	fmt.Fprintf(w, "\n%s", indentStr)
 	
-	// Add visibility prefix
-	visPrefix := getVisibilityPrefix(class.Visibility)
-	fmt.Fprintf(w, "%s", visPrefix)
+	// Add visibility keyword
+	visKeyword := f.getJavaVisibilityKeyword(class.Visibility)
+	if visKeyword != "" {
+		fmt.Fprintf(w, "%s ", visKeyword)
+	}
 	
-	// Add modifiers (but not visibility keywords)
+	// Add modifiers
 	for _, mod := range class.Modifiers {
 		switch mod {
 		case ir.ModifierStatic:
@@ -91,7 +109,9 @@ func (f *JavaFormatter) formatClass(w io.Writer, class *ir.DistilledClass, inden
 		}
 	}
 	
-	if isRecord {
+	if isAnnotation {
+		fmt.Fprintf(w, "@interface %s", class.Name)
+	} else if isRecord {
 		fmt.Fprintf(w, "record %s", class.Name)
 	} else {
 		fmt.Fprintf(w, "class %s", class.Name)
@@ -103,19 +123,23 @@ func (f *JavaFormatter) formatClass(w io.Writer, class *ir.DistilledClass, inden
 		for i, param := range class.TypeParams {
 			params[i] = param.Name
 			if len(param.Constraints) > 0 {
-				params[i] += " extends " + param.Constraints[0].Name
+				bounds := make([]string, len(param.Constraints))
+				for j, bound := range param.Constraints {
+					bounds[j] = bound.Name
+				}
+				params[i] += " extends " + strings.Join(bounds, " & ")
 			}
 		}
 		fmt.Fprintf(w, "<%s>", strings.Join(params, ", "))
 	}
 	
-	// Add extends
-	if len(class.Extends) > 0 {
+	// Add extends (not for annotation types)
+	if !isAnnotation && len(class.Extends) > 0 {
 		fmt.Fprintf(w, " extends %s", class.Extends[0].Name)
 	}
 	
-	// Add implements
-	if len(class.Implements) > 0 {
+	// Add implements (not for annotation types)
+	if !isAnnotation && len(class.Implements) > 0 {
 		implements := make([]string, len(class.Implements))
 		for i, impl := range class.Implements {
 			implements[i] = impl.Name
@@ -123,7 +147,7 @@ func (f *JavaFormatter) formatClass(w io.Writer, class *ir.DistilledClass, inden
 		fmt.Fprintf(w, " implements %s", strings.Join(implements, ", "))
 	}
 	
-	fmt.Fprintln(w, ":")
+	fmt.Fprintln(w, " {")
 	
 	// Format class body
 	for _, child := range class.Children {
@@ -131,6 +155,9 @@ func (f *JavaFormatter) formatClass(w io.Writer, class *ir.DistilledClass, inden
 			return err
 		}
 	}
+	
+	// Closing brace
+	fmt.Fprintf(w, "%s}\n", indentStr)
 	
 	return nil
 }
@@ -141,9 +168,11 @@ func (f *JavaFormatter) formatInterface(w io.Writer, intf *ir.DistilledInterface
 	// Format interface declaration
 	fmt.Fprintf(w, "\n%s", indentStr)
 	
-	// Add visibility prefix
-	visPrefix := getVisibilityPrefix(intf.Visibility)
-	fmt.Fprintf(w, "%s", visPrefix)
+	// Add visibility keyword
+	visKeyword := f.getJavaVisibilityKeyword(intf.Visibility)
+	if visKeyword != "" {
+		fmt.Fprintf(w, "%s ", visKeyword)
+	}
 	
 	fmt.Fprintf(w, "interface %s", intf.Name)
 	
@@ -152,6 +181,13 @@ func (f *JavaFormatter) formatInterface(w io.Writer, intf *ir.DistilledInterface
 		params := make([]string, len(intf.TypeParams))
 		for i, param := range intf.TypeParams {
 			params[i] = param.Name
+			if len(param.Constraints) > 0 {
+				bounds := make([]string, len(param.Constraints))
+				for j, bound := range param.Constraints {
+					bounds[j] = bound.Name
+				}
+				params[i] += " extends " + strings.Join(bounds, " & ")
+			}
 		}
 		fmt.Fprintf(w, "<%s>", strings.Join(params, ", "))
 	}
@@ -165,7 +201,7 @@ func (f *JavaFormatter) formatInterface(w io.Writer, intf *ir.DistilledInterface
 		fmt.Fprintf(w, " extends %s", strings.Join(extends, ", "))
 	}
 	
-	fmt.Fprintln(w, ":")
+	fmt.Fprintln(w, " {")
 	
 	// Format interface body
 	for _, child := range intf.Children {
@@ -173,6 +209,9 @@ func (f *JavaFormatter) formatInterface(w io.Writer, intf *ir.DistilledInterface
 			return err
 		}
 	}
+	
+	// Closing brace
+	fmt.Fprintf(w, "%s}\n", indentStr)
 	
 	return nil
 }
@@ -183,16 +222,18 @@ func (f *JavaFormatter) formatEnum(w io.Writer, enum *ir.DistilledEnum, indent i
 	// Format enum declaration
 	fmt.Fprintf(w, "\n%s", indentStr)
 	
-	// Add visibility prefix
-	visPrefix := getVisibilityPrefix(enum.Visibility)
-	fmt.Fprintf(w, "%s", visPrefix)
+	// Add visibility keyword
+	visKeyword := f.getJavaVisibilityKeyword(enum.Visibility)
+	if visKeyword != "" {
+		fmt.Fprintf(w, "%s ", visKeyword)
+	}
 	
 	fmt.Fprintf(w, "enum %s", enum.Name)
 	
 	// Enums in IR don't have Implements field
 	// TODO: Add support if needed
 	
-	fmt.Fprintln(w, ":")
+	fmt.Fprintln(w, " {")
 	
 	// Format enum values and body
 	for _, child := range enum.Children {
@@ -200,6 +241,9 @@ func (f *JavaFormatter) formatEnum(w io.Writer, enum *ir.DistilledEnum, indent i
 			return err
 		}
 	}
+	
+	// Closing brace
+	fmt.Fprintf(w, "%s}\n", indentStr)
 	
 	return nil
 }
@@ -215,11 +259,13 @@ func (f *JavaFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, in
 	// Format method signature
 	fmt.Fprintf(w, "%s", indentStr)
 	
-	// Add visibility prefix
-	visPrefix := getVisibilityPrefix(fn.Visibility)
-	fmt.Fprintf(w, "%s", visPrefix)
+	// Add visibility keyword
+	visKeyword := f.getJavaVisibilityKeyword(fn.Visibility)
+	if visKeyword != "" {
+		fmt.Fprintf(w, "%s ", visKeyword)
+	}
 	
-	// Add modifiers (but not visibility keywords)
+	// Add modifiers
 	for _, mod := range fn.Modifiers {
 		switch mod {
 		case ir.ModifierStatic:
@@ -262,7 +308,9 @@ func (f *JavaFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, in
 		paramStr := ""
 		// Add parameter decorators (annotations)
 		for _, dec := range param.Decorators {
-			paramStr += "@" + dec + " "
+			// Remove @ if already present to avoid @@
+			decStr := strings.TrimPrefix(dec, "@")
+			paramStr += "@" + decStr + " "
 		}
 		paramStr += formatTypeRef(&param.Type) + " "
 		paramStr += param.Name
@@ -281,16 +329,17 @@ func (f *JavaFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, in
 	
 	// Format implementation
 	if fn.Implementation != "" {
-		fmt.Fprintln(w, ":")
+		fmt.Fprintln(w, " {")
 		lines := strings.Split(strings.TrimSpace(fn.Implementation), "\n")
 		for _, line := range lines {
 			if line != "" {
 				fmt.Fprintf(w, "%s    %s\n", indentStr, line)
 			}
 		}
+		fmt.Fprintf(w, "%s}\n", indentStr)
 	} else {
 		// No implementation - abstract method or interface method
-		fmt.Fprintln(w)
+		fmt.Fprintln(w, ";")
 	}
 	
 	return nil
@@ -300,11 +349,13 @@ func (f *JavaFormatter) formatField(w io.Writer, field *ir.DistilledField, inden
 	// Format field with Java syntax
 	fmt.Fprintf(w, "%s", indent)
 	
-	// Add visibility prefix
-	visPrefix := getVisibilityPrefix(field.Visibility)
-	fmt.Fprintf(w, "%s", visPrefix)
+	// Add visibility keyword
+	visKeyword := f.getJavaVisibilityKeyword(field.Visibility)
+	if visKeyword != "" {
+		fmt.Fprintf(w, "%s ", visKeyword)
+	}
 	
-	// Add modifiers (but not visibility keywords)
+	// Add modifiers
 	for _, mod := range field.Modifiers {
 		switch mod {
 		case ir.ModifierStatic:
@@ -384,5 +435,22 @@ func formatTypeRef(ref *ir.TypeRef) string {
 	}
 	
 	return result
+}
+
+// getJavaVisibilityKeyword returns the Java visibility keyword for the given visibility
+func (f *JavaFormatter) getJavaVisibilityKeyword(visibility ir.Visibility) string {
+	switch visibility {
+	case ir.VisibilityPublic:
+		return "public"
+	case ir.VisibilityPrivate:
+		return "private"
+	case ir.VisibilityProtected:
+		return "protected"
+	case ir.VisibilityInternal:
+		// Java package-private has no keyword
+		return ""
+	default:
+		return ""
+	}
 }
 
