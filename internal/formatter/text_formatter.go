@@ -126,9 +126,22 @@ func (f *TextFormatter) formatImport(w io.Writer, imp *ir.DistilledImport, inden
 func (f *TextFormatter) formatClass(w io.Writer, class *ir.DistilledClass, indent int) error {
 	indentStr := strings.Repeat("    ", indent)
 	
+	// Format API docblock if present (PHP)
+	if class.APIDocblock != "" {
+		// Add a newline before the docblock if at top level
+		if indent == 0 {
+			fmt.Fprintln(w)
+		}
+		// Output the docblock before the class
+		lines := strings.Split(class.APIDocblock, "\n")
+		for _, line := range lines {
+			fmt.Fprintf(w, "%s%s\n", indentStr, line)
+		}
+	}
+	
 	// Format decorators/attributes
 	for _, dec := range class.Decorators {
-		fmt.Fprintf(w, "\n%s@%s", indentStr, dec)
+		fmt.Fprintf(w, "%s@%s\n", indentStr, dec)
 	}
 	
 	// Format class declaration - check if it's a struct
@@ -139,7 +152,11 @@ func (f *TextFormatter) formatClass(w io.Writer, class *ir.DistilledClass, inden
 			break
 		}
 	}
-	fmt.Fprintf(w, "\n%s%s %s", indentStr, classType, class.Name)
+	// Add newline before class if no docblock or decorators
+	if class.APIDocblock == "" && len(class.Decorators) == 0 {
+		fmt.Fprintln(w)
+	}
+	fmt.Fprintf(w, "%s%s %s", indentStr, classType, class.Name)
 	
 	// Add base classes if any
 	if len(class.Extends) > 0 {
@@ -185,10 +202,24 @@ func (f *TextFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, in
 		fmt.Fprintf(w, "%s@%s\n", indent, dec)
 	}
 	
+	// Check if this is a magic method from PHP docblock
+	isMethodFromDocblock := false
+	if fn.Extensions != nil && fn.Extensions.PHP != nil {
+		if fn.Extensions.PHP.Origin == ir.FieldOriginDocblock {
+			isMethodFromDocblock = true
+		}
+	}
+	
 	// Format function signature with visibility prefix and modifiers
 	visPrefix := getVisibilityPrefix(fn.Visibility)
 	modifiers := formatModifiers(fn.Modifiers)
-	fmt.Fprintf(w, "%s%s%s%s(", indent, visPrefix, modifiers, fn.Name)
+	
+	if isMethodFromDocblock {
+		// For magic methods, prefix with "method"
+		fmt.Fprintf(w, "%smethod %s%s(", indent, modifiers, fn.Name)
+	} else {
+		fmt.Fprintf(w, "%s%s%s%s(", indent, visPrefix, modifiers, fn.Name)
+	}
 	
 	// Format parameters
 	// fmt.Printf("Function %s has %d parameters\n", fn.Name, len(fn.Parameters))
@@ -214,6 +245,11 @@ func (f *TextFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, in
 		fmt.Fprintf(w, " -> %s", fn.Returns.Name)
 	}
 	
+	// Add source annotation comment for magic methods
+	if isMethodFromDocblock && fn.Extensions.PHP.SourceAnnotation != "" {
+		fmt.Fprintf(w, " // %s", fn.Extensions.PHP.SourceAnnotation)
+	}
+	
 	// Format implementation
 	if fn.Implementation != "" {
 		fmt.Fprintln(w, ":")
@@ -237,11 +273,33 @@ func (f *TextFormatter) formatField(w io.Writer, field *ir.DistilledField, inden
 		fmt.Fprintf(w, "%s@%s\n", indent, dec)
 	}
 	
+	// Check if this is a magic property from PHP docblock
+	isPropertyFromDocblock := false
+	var accessMode string
+	if field.Extensions != nil && field.Extensions.PHP != nil {
+		if field.Extensions.PHP.Origin == ir.FieldOriginDocblock {
+			isPropertyFromDocblock = true
+			switch field.Extensions.PHP.AccessMode {
+			case ir.FieldAccessReadOnly:
+				accessMode = "property-read "
+			case ir.FieldAccessWriteOnly:
+				accessMode = "property-write "
+			default:
+				accessMode = "property "
+			}
+		}
+	}
+	
 	// Format field with visibility prefix
 	visPrefix := getVisibilityPrefix(field.Visibility)
 	modifiers := formatModifiers(field.Modifiers)
 	
-	fmt.Fprintf(w, "%s%s%s%s", indent, visPrefix, modifiers, field.Name)
+	if isPropertyFromDocblock {
+		// For magic properties, show property/property-read/property-write
+		fmt.Fprintf(w, "%s%s%s%s", indent, accessMode, modifiers, field.Name)
+	} else {
+		fmt.Fprintf(w, "%s%s%s%s", indent, visPrefix, modifiers, field.Name)
+	}
 	
 	// Add type if present
 	if field.Type != nil {
@@ -251,6 +309,11 @@ func (f *TextFormatter) formatField(w io.Writer, field *ir.DistilledField, inden
 	// Add default value if present
 	if field.DefaultValue != "" {
 		fmt.Fprintf(w, " = %s", field.DefaultValue)
+	}
+	
+	// Add source annotation comment for magic properties
+	if isPropertyFromDocblock && field.Extensions.PHP.SourceAnnotation != "" {
+		fmt.Fprintf(w, " // %s", field.Extensions.PHP.SourceAnnotation)
 	}
 	
 	fmt.Fprintln(w)
@@ -345,6 +408,8 @@ func (f *TextFormatter) formatRawContent(w io.Writer, n *ir.DistilledRawContent,
 
 // getVisibilityPrefix converts visibility to UML-style prefix
 func getVisibilityPrefix(vis ir.Visibility) string {
+	// For now, keep using prefixes in the base text formatter
+	// The language-aware formatter will use full keywords
 	switch vis {
 	case ir.VisibilityPublic:
 		return ""   // No prefix for public
