@@ -145,7 +145,7 @@ func Add(x int, y int) int { // Line comment on the function signature
 ```
 
   </blockquote></details>
-  <details open><summary>Default compact AI-friendly version (`--strip 'non-public,comments,implementation'`)</summary><blockquote>
+  <details open><summary>Default compact AI-friendly version (`default output (public only, no implementation)`)</summary><blockquote>
 
 ```
 <file path="construct_1_basic.go">
@@ -167,7 +167,7 @@ func Add(x int, y int) int
 ```
 
   </blockquote></details>
-  <details><summary>Full version (`--strip ''`)</summary><blockquote>
+  <details><summary>Full version (`--public=1 --protected=1 --internal=1 --private=1 --implementation=1`)</summary><blockquote>
 
 ```
 <file path="construct_1_basic.go">

@@ -14,7 +14,7 @@ JavaScript is a dynamically-typed language with several key constructs:
 
 ## Primary Goal of Text Format
 
-The default text format (without stripping) aims to provide AI systems with a complete understanding of available functions, classes, and their signatures. When using `--strip non-public,comments,implementation`, the output focuses on:
+The default text format (without stripping) aims to provide AI systems with a complete understanding of available functions, classes, and their signatures. When using `--private=0 --protected=0 --internal=0,comments,implementation`, the output focuses on:
 
 - Public API surface (exported functions, classes, methods)
 - Function and method signatures with parameter names
@@ -160,7 +160,7 @@ module.exports = { greet, User };
 ```
     
   </blockquote></details>
-  <details open><summary>Default compact AI-friendly version (`--strip 'non-public,comments,implementation'`)</summary><blockquote>
+  <details open><summary>Default compact AI-friendly version (`default output (public only, no implementation)`)</summary><blockquote>
     
 ```
 <file path="basic.js">
@@ -176,7 +176,7 @@ class User
 ```
     
   </blockquote></details>
-  <details><summary>Full version (`--strip ''`)</summary><blockquote>
+  <details><summary>Full version (`--public=1 --protected=1 --internal=1 --private=1 --implementation=1`)</summary><blockquote>
     
 ```
 <file path="basic.js">
@@ -266,7 +266,7 @@ export default UserList;
 ```
     
   </blockquote></details>
-  <details open><summary>Default compact AI-friendly version (`--strip 'non-public,comments,implementation'`)</summary><blockquote>
+  <details open><summary>Default compact AI-friendly version (`default output (public only, no implementation)`)</summary><blockquote>
     
 ```
 <file path="UserList.jsx">
@@ -334,7 +334,7 @@ export default ApiClient;
 ```
     
   </blockquote></details>
-  <details open><summary>Default compact AI-friendly version (`--strip 'non-public,comments,implementation'`)</summary><blockquote>
+  <details open><summary>Default compact AI-friendly version (`default output (public only, no implementation)`)</summary><blockquote>
     
 ```
 <file path="api-client.js">
@@ -424,7 +424,7 @@ async function processItems(items, callback) {
 ```
     
   </blockquote></details>
-  <details open><summary>Default compact AI-friendly version (`--strip 'non-public,comments,implementation'`)</summary><blockquote>
+  <details open><summary>Default compact AI-friendly version (`default output (public only, no implementation)`)</summary><blockquote>
     
 ```
 <file path="advanced-features.js">
@@ -457,7 +457,7 @@ class SecureStore:
 aid app.js
 
 # Analyze a React project, showing only public APIs
-aid src/ --strip non-public,implementation
+aid src/ --private=0 --protected=0 --internal=0,implementation
 
 # Generate JSON output for tooling integration
 aid src/ --format json --output structure.json

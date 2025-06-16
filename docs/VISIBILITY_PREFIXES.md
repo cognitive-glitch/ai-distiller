@@ -66,20 +66,20 @@ class Example:
 
 You can control which visibility levels are included in the output:
 
-- `--strip non-public` - Remove both private and protected members
-- `--strip private` - Remove only private members (keep protected)
-- `--strip protected` - Remove only protected members (keep private)
+- `--private=0 --protected=0 --internal=0` - Remove both private and protected members
+- `--private=0` - Remove only private members (keep protected)
+- `--protected=0` - Remove only protected members (keep private)
 
 Examples:
 ```bash
 # Show only public members
-aid myproject --strip non-public
+aid myproject --private=0 --protected=0 --internal=0
 
 # Show public and protected members
-aid myproject --strip private
+aid myproject --private=0
 
 # Show public and private members
-aid myproject --strip protected
+aid myproject --protected=0
 ```
 
 ## Language Support

@@ -41,7 +41,7 @@ We should NOT create a full AST for function bodies. Instead:
 
 1. **Purpose Alignment**: LLMs need to understand APIs and structure, not implementation details
 2. **Performance**: Full AST for large codebases would be prohibitive
-3. **Stripping Logic**: `--strip implementation` is a core feature
+3. **Stripping Logic**: `--implementation=0` is a core feature
 4. **Practical Value**: Users want "what can I call" not "how is it implemented"
 
 ### Proposed Body Representation:

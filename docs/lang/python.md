@@ -47,7 +47,7 @@ def process_data(items: List[Dict[str, Any]],
 ```
 
 ```
-# Output (with --strip implementation)
+# Output (with --implementation=0)
 +def process_data(items: List[Dict[str, Any]], callback: Callable[[str], None] = None) -> Optional[DataFrame]
 ```
 
@@ -56,7 +56,7 @@ def process_data(items: List[Dict[str, Any]],
 Docstrings are preserved as documentation, not implementation:
 
 ```python
-# Even with --strip implementation, docstrings remain
+# Even with --implementation=0, docstrings remain
 def calculate(x: float) -> float:
     """Calculate the square root of x."""
     return math.sqrt(x)
@@ -113,7 +113,7 @@ class User:
 </details>
 
 <details open>
-<summary>Default Output (`--strip 'non-public,comments,implementation'`)</summary>
+<summary>Default Output (`default output (public only, no implementation)`)</summary>
 <blockquote>
 
 ```
@@ -214,7 +214,7 @@ class AsyncService(ABC):
 </details>
 
 <details open>
-<summary>Default Output (`--strip 'non-public,comments,implementation'`)</summary>
+<summary>Default Output (`default output (public only, no implementation)`)</summary>
 <blockquote>
 
 ```
@@ -306,7 +306,7 @@ def process_config(config: ConfigDict,
 </details>
 
 <details open>
-<summary>Default Output (`--strip 'non-public,comments,implementation'`)</summary>
+<summary>Default Output (`default output (public only, no implementation)`)</summary>
 <blockquote>
 
 ```

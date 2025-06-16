@@ -114,13 +114,13 @@ FLAGS:
 
 EXAMPLES:  
   # Distill the current directory, removing implementation and comments  
-  aid --strip implementation,comments
+  aid --implementation=0,comments
 
   # Distill a specific Python project into a named file  
   aid ./my-python-app -o context.txt --include "*.py"
 
   # Distill only the public interface of a Typescript file to stdout  
-  aid src/api.ts --strip implementation,non-public --stdout
+  aid src/api.ts --implementation=0,non-public --stdout
 
 ### **5.2. Output Format**
 
@@ -138,7 +138,7 @@ The output must be a well-structured text file, using a simple XML-like format t
 ### **5.3. Default Behaviors**
 
 * **No Path Argument:** Use the current working directory (.).  
-* **No Output Argument:** Generate filename automatically in the format .DIRECTORY_NAME.[flags].aid.txt. Example: aid --strip comments,implementation in folder MyProject creates .MyProject.ncom.nimpl.aid.txt. The flag abbreviations must be deterministic and documented.  
+* **No Output Argument:** Generate filename automatically in the format .DIRECTORY_NAME.[flags].aid.txt. Example: aid --comments=0,implementation in folder MyProject creates .MyProject.ncom.nimpl.aid.txt. The flag abbreviations must be deterministic and documented.  
 * **Processing:** Default to recursive.
 
 ## **6. Language Support & Testing**

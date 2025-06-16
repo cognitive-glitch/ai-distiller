@@ -285,7 +285,7 @@ func loadConfig() (*Config, error)
 - **Preconditions**: Large codebase with complex architecture
 - **Steps**:
   1. Navigate to project root
-  2. Run `aid . --strip implementation,comments`
+  2. Run `aid . --implementation=0,comments`
   3. Copy output to AI assistant
   4. Ask questions about design patterns, potential improvements
 - **Success Criteria**: AI provides meaningful architectural insights
@@ -296,7 +296,7 @@ func loadConfig() (*Config, error)
 - **Goal**: Generate API documentation with AI assistance
 - **Preconditions**: Codebase with public APIs
 - **Steps**:
-  1. Run `aid ./src --strip implementation,non-public,comments --include "*.ts"`
+  1. Run `aid ./src --implementation=0,non-public,comments --include "*.ts"`
   2. Feed output to AI with documentation template
   3. Review and refine generated documentation
 - **Success Criteria**: Complete, accurate API documentation
@@ -307,7 +307,7 @@ func loadConfig() (*Config, error)
 - **Goal**: Prepare codebase summary for security analysis
 - **Preconditions**: Access to full codebase
 - **Steps**:
-  1. Run `aid . --strip comments --include "*.go,*.js" --exclude "*_test.*"`
+  1. Run `aid . --comments=0 --include "*.go,*.js" --exclude "*_test.*"`
   2. Provide output to AI security analysis tool
   3. Focus on identified risk areas
 - **Success Criteria**: Comprehensive security findings
