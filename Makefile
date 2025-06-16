@@ -132,11 +132,17 @@ run: build
 	@$(BUILD_DIR)/$(BINARY_NAME) $(ARGS)
 
 # Quick build and run for development
+# Usage: make aid ARGS="<args>"
 aid:
 	@if $(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/aid 2>&1 | grep -E "(error|cannot|undefined)" >&2; then \
 		exit 1; \
 	fi
-	@$(BUILD_DIR)/$(BINARY_NAME) $(filter-out $@,$(MAKECMDGOALS))
+	@if [ -n "$(ARGS)" ]; then \
+		$(BUILD_DIR)/$(BINARY_NAME) $(ARGS); \
+	else \
+		echo "Usage: make aid ARGS=\"<arguments>\""; \
+		echo "Example: make aid ARGS=\"testdata/java/02_simple/source.java --implementation=1 --stdout\""; \
+	fi
 
 # Catch-all target to allow passing arguments to aid
 %:

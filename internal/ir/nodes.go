@@ -95,8 +95,10 @@ type DistilledInterface struct {
 	BaseNode
 	Name       string          `json:"name"`
 	Visibility Visibility      `json:"visibility"`
+	Modifiers  []Modifier      `json:"modifiers,omitempty"`
 	TypeParams []TypeParam     `json:"type_params,omitempty"`
 	Extends    []TypeRef       `json:"extends,omitempty"`
+	Permits    []TypeRef       `json:"permits,omitempty"`
 	Children   []DistilledNode `json:"children,omitempty"`
 }
 

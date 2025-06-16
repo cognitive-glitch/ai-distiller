@@ -2,12 +2,11 @@
 package com.aidi.test.modern
 import java.util.stream.Stream
 
-public interface Shape {
-    double area();
+public sealed interface Shape permits Circle, Rectangle {
+    public double area();
 }
 
-record Circle implements Shape {
-    public final double radius;
+record Circle(double radius) implements Shape {
     @Override
     public double area();
 }

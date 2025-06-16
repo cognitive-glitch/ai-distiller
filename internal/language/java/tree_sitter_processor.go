@@ -58,7 +58,7 @@ func (p *TreeSitterProcessor) ProcessSource(ctx context.Context, source []byte, 
 // processNode recursively processes tree-sitter nodes
 func (p *TreeSitterProcessor) processNode(node *sitter.Node, source []byte, file *ir.DistilledFile, parent ir.DistilledNode) {
 	nodeType := node.Type()
-
+	
 	switch nodeType {
 	case "package_declaration":
 		p.processPackageDeclaration(node, source, file)
@@ -334,13 +334,17 @@ func (p *TreeSitterProcessor) processAnnotationElement(node *sitter.Node, source
 
 // processRecordDeclaration handles record declarations (Java 14+)
 func (p *TreeSitterProcessor) processRecordDeclaration(node *sitter.Node, source []byte, file *ir.DistilledFile, parent ir.DistilledNode) {
-	// Records are represented as classes with a special modifier
+	// Records are represented as classes with Java extensions
 	record := &ir.DistilledClass{
 		BaseNode: ir.BaseNode{
 			Location: p.nodeLocation(node),
+			Extensions: &ir.NodeExtensions{
+				Java: &ir.JavaExtensions{
+					IsRecord: true,
+				},
+			},
 		},
-		Modifiers: []ir.Modifier{ir.ModifierData}, // Use data modifier to indicate record
-		Children:  []ir.DistilledNode{},
+		Children: []ir.DistilledNode{},
 	}
 
 	// Extract modifiers, name, parameters, implements
@@ -384,10 +388,6 @@ func (p *TreeSitterProcessor) processMethodDeclaration(node *sitter.Node, source
 	// Extract modifiers, return type, name, parameters, body
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
-		// DEBUG
-		if child.Type() == "throws" {
-			fmt.Printf("DEBUG processMethodDeclaration: Found throws at child %d\n", i)
-		}
 		switch child.Type() {
 		case "modifiers":
 			p.extractMethodModifiers(child, source, method)
@@ -412,7 +412,12 @@ func (p *TreeSitterProcessor) processMethodDeclaration(node *sitter.Node, source
 
 	// Set default visibility if not specified
 	if method.Visibility == "" {
-		method.Visibility = ir.VisibilityPackage
+		// Check if this method is in an interface - interface methods are public by default
+		if _, isInterface := parent.(*ir.DistilledInterface); isInterface {
+			method.Visibility = ir.VisibilityPublic
+		} else {
+			method.Visibility = ir.VisibilityPackage
+		}
 	}
 
 	p.addToParent(file, parent, method)
@@ -578,7 +583,7 @@ func (p *TreeSitterProcessor) extractInterfaceModifiers(node *sitter.Node, sourc
 		case "private":
 			iface.Visibility = ir.VisibilityPrivate
 		case "sealed":
-			// TODO: Add sealed modifier support to interfaces in IR if needed
+			iface.Modifiers = append(iface.Modifiers, ir.ModifierSealed)
 		}
 
 		// Handle annotations as decorators
@@ -745,9 +750,23 @@ func (p *TreeSitterProcessor) extractPermits(node *sitter.Node, source []byte, c
 
 // extractInterfacePermits extracts permitted implementations for sealed interfaces
 func (p *TreeSitterProcessor) extractInterfacePermits(node *sitter.Node, source []byte, iface *ir.DistilledInterface) {
-	// Java's permits clause is specific to sealed interfaces
-	// We can store this information in interface extensions if needed
-	// For now, we'll skip it as the IR doesn't have a Permits field
+	// Extract permitted types from permits clause
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		if child.Type() == "type_list" {
+			// Process type_list to extract individual types
+			for j := 0; j < int(child.ChildCount()); j++ {
+				grandchild := child.Child(j)
+				if grandchild.Type() == "type_identifier" || grandchild.Type() == "scoped_type_identifier" {
+					typeName := string(source[grandchild.StartByte():grandchild.EndByte()])
+					iface.Permits = append(iface.Permits, ir.TypeRef{Name: typeName})
+				}
+			}
+		} else if child.Type() == "type_identifier" || child.Type() == "scoped_type_identifier" {
+			typeName := string(source[child.StartByte():child.EndByte()])
+			iface.Permits = append(iface.Permits, ir.TypeRef{Name: typeName})
+		}
+	}
 }
 
 // extractTypeList extracts a list of types
@@ -890,26 +909,25 @@ func (p *TreeSitterProcessor) extractParameter(node *sitter.Node, source []byte)
 
 // extractRecordComponents extracts record component parameters
 func (p *TreeSitterProcessor) extractRecordComponents(node *sitter.Node, source []byte, record *ir.DistilledClass) {
-	// Record components are like constructor parameters but also define fields
+	// Record components are stored as parameters in JavaExtensions, not as fields
+	var recordParams []ir.Parameter
+	
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		if child.Type() == "formal_parameter" {
 			param := p.extractParameter(child, source)
-			
-			// Create a field for each record component
-			field := &ir.DistilledField{
-				BaseNode: ir.BaseNode{
-					Location: p.nodeLocation(child),
-				},
-				Name:       param.Name,
-				Type:       &param.Type,
-				Visibility: ir.VisibilityPublic, // Record components are always public
-				Modifiers:  []ir.Modifier{ir.ModifierFinal}, // Record fields are always final
-			}
-			
-			record.Children = append(record.Children, field)
+			recordParams = append(recordParams, *param)
 		}
 	}
+	
+	// Store parameters in JavaExtensions
+	if record.Extensions == nil {
+		record.Extensions = &ir.NodeExtensions{}
+	}
+	if record.Extensions.Java == nil {
+		record.Extensions.Java = &ir.JavaExtensions{}
+	}
+	record.Extensions.Java.RecordParameters = recordParams
 }
 
 // extractThrows extracts thrown exceptions

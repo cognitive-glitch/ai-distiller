@@ -1,4 +1,3 @@
-DEBUG processMethodDeclaration: Found throws at child 5
 <file path="source.java">
 package com.aidi.test.advanced
 @Target(ElementType.PARAMETER)

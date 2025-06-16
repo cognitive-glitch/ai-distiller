@@ -201,8 +201,10 @@ func (s *Stripper) visitInterface(n *ir.DistilledInterface) ir.DistilledNode {
 		BaseNode:   n.BaseNode,
 		Name:       n.Name,
 		Visibility: n.Visibility,
+		Modifiers:  n.Modifiers,
 		TypeParams: n.TypeParams,
 		Extends:    n.Extends,
+		Permits:    n.Permits,
 	}
 	
 	// Visit children

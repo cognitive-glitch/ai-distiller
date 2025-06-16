@@ -100,19 +100,37 @@ func (f *JavaFormatter) formatClass(w io.Writer, class *ir.DistilledClass, inden
 		}
 	}
 	
-	// If it's a record (has ModifierData), format as record
+	// If it's a record (has Java extensions with IsRecord), format as record
 	isRecord := false
-	for _, mod := range class.Modifiers {
-		if mod == ir.ModifierData {
-			isRecord = true
-			break
-		}
+	if class.Extensions != nil && class.Extensions.Java != nil {
+		isRecord = class.Extensions.Java.IsRecord
 	}
 	
 	if isAnnotation {
 		fmt.Fprintf(w, "@interface %s", class.Name)
 	} else if isRecord {
+		// For records, show parameters instead of separate fields
 		fmt.Fprintf(w, "record %s", class.Name)
+		
+		// Get record parameters from JavaExtensions
+		var recordParams []ir.Parameter
+		if class.Extensions != nil && class.Extensions.Java != nil {
+			recordParams = class.Extensions.Java.RecordParameters
+		}
+		
+		// Display parameters
+		if len(recordParams) > 0 {
+			fmt.Fprintf(w, "(")
+			for i, param := range recordParams {
+				if i > 0 {
+					fmt.Fprintf(w, ", ")
+				}
+				fmt.Fprintf(w, "%s %s", formatTypeRef(&param.Type), param.Name)
+			}
+			fmt.Fprintf(w, ")")
+		} else {
+			fmt.Fprintf(w, "()")
+		}
 	} else {
 		fmt.Fprintf(w, "class %s", class.Name)
 	}
@@ -174,6 +192,14 @@ func (f *JavaFormatter) formatInterface(w io.Writer, intf *ir.DistilledInterface
 		fmt.Fprintf(w, "%s ", visKeyword)
 	}
 	
+	// Add modifiers
+	for _, mod := range intf.Modifiers {
+		switch mod {
+		case ir.ModifierSealed:
+			fmt.Fprintf(w, "sealed ")
+		}
+	}
+	
 	fmt.Fprintf(w, "interface %s", intf.Name)
 	
 	// Add generics if present
@@ -199,6 +225,15 @@ func (f *JavaFormatter) formatInterface(w io.Writer, intf *ir.DistilledInterface
 			extends[i] = ext.Name
 		}
 		fmt.Fprintf(w, " extends %s", strings.Join(extends, ", "))
+	}
+	
+	// Add permits
+	if len(intf.Permits) > 0 {
+		permits := make([]string, len(intf.Permits))
+		for i, permit := range intf.Permits {
+			permits[i] = permit.Name
+		}
+		fmt.Fprintf(w, " permits %s", strings.Join(permits, ", "))
 	}
 	
 	fmt.Fprintln(w, " {")
@@ -346,6 +381,7 @@ func (f *JavaFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, in
 }
 
 func (f *JavaFormatter) formatField(w io.Writer, field *ir.DistilledField, indent string) error {
+	
 	// Format field with Java syntax
 	fmt.Fprintf(w, "%s", indent)
 	
