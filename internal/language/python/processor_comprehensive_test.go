@@ -82,7 +82,7 @@ func TestPythonConstructs(t *testing.T) {
 	}
 
 	// Get test data directory
-	testDataDir := filepath.Join("..", "..", "..", "test-data", "python")
+	testDataDir := filepath.Join("..", "..", "..", "testdata", "python")
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
