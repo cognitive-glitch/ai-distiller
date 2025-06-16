@@ -1,49 +1,38 @@
 <file path="source.swift">
-// //
-// //  03_medium.swift
-// //  DistillerSample
-// //
-// //  Demonstrates: generics, extensions, protocol with associatedtype,
-// //  constrained extensions, custom error types, higher-order functions.
-// //
 import Foundation
-// // MARK: - Generic Stack
-// /// A simple LIFO stack.
+//  - Generic Stack
+// A simple LIFO stack.
 
 public class Stack {
-    public init()
-    // /// Pushes a new element.
-    public mutating push()
-    // /// Returns the top element without removing it.
-    public peek() -> Element?
-    // /// Removes and returns the top element.
-    public mutating pop() -> Element?
-    // /// Private helper for validation
-    // /// Internal method for debugging
+    // Pushes a new element.
+    public push(element: Element)
+    // Returns the top element without removing it.
+    public peek() -> Element? { storage.last }
+    // Removes and returns the top element.
+    public pop() -> Element? { storage.popLast() }
 }
-// // Constrained extension adding `average()` only when `Element` is numeric.
-// /// Errors for math-centric operations.
+
+public class extension Stack {
+}
+// Errors for math-centric operations.
 
 public enum MathError {
     case emptyStack
     case divideByZero
     case negativeValue
+    // Private helper for error categorization
 }
-// // MARK: - Protocol & Extension with AssociatedType
-// /// Describes a cache that stores key/value pairs.
+//  - Protocol & Extension with AssociatedType
+// Describes a cache that stores key/value pairs.
 
 public protocol Cacheable {
+    public value(key: Key) -> Value?
+    public contains(key: Key) -> Bool
 }
-// /// Dictionary already satisfies `Cacheable` when paired properly.
-// /// Generic cache with expiration
+// Dictionary already satisfies `Cacheable` when paired properly.
+// Generic cache with expiration
 
 public class ExpiringCache {
-    public init()
-    public mutating insert()
-    public value() -> Value?
-    public contains() -> Bool
-    // /// Private cleanup method
-    // /// Internal method for cache statistics
 }
-// // MARK: - Demo
+//  - Demo
 </file>

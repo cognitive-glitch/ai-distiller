@@ -1,71 +1,45 @@
 <file path="source.swift">
 import Foundation
 import Combine
-// /// A property wrapper that clamps a numeric value within a given range
-// /// and publishes changes via a Combine publisher.
+// A property wrapper that clamps a numeric value within a given range
+// and publishes changes via a Combine publisher.
 
 public class Clamped {
-    public var wrappedValue: Value { get set }
-    // /// The projected value is a Combine publisher that emits new values.
-    public var projectedValue: AnyPublisher<Value, Never> { get set }
-    public init() {
-        {
-                self.range = range
-                self.value = max(range.lowerBound, min(wrappedValue, range.upperBound))
-            }
-    // /// Private helper for validation
+    public var wrappedValue: Value {
+    // The projected value is a Combine publisher that emits new values.
+    public var projectedValue: AnyPublisher<Value, Never> {
 }
-// /// A simple validation result type.
+// A simple validation result type.
 
 public enum ValidationResult {
-    case success
-    case failure
+    case success(String)
+    case failure(String)
+    // Private helper for result categorization
 }
-// /// A result builder for creating an array of `ValidationResult` declaratively.
+// A result builder for creating an array of `ValidationResult` declaratively.
 
 public class ConfigurationBuilder {
-    public buildBlock() -> [ValidationResult] {
-        {
-                components
-            }
-    public buildExpression() -> ValidationResult {
-        {
-                .success(expression)
-            }
-    public buildEither() -> [ValidationResult] {
-        {
-                component
-            }
-    public buildEither() -> [ValidationResult] {
-        {
-                component
-            }
-    // /// Private helper for building optional components
+    public static buildBlock(components: ValidationResult...) -> [ValidationResult] {
+    public static buildExpression(expression: String) -> ValidationResult {
+    public static buildEither(component: [ValidationResult]) -> [ValidationResult] {
+    public static buildEither(component: [ValidationResult]) -> [ValidationResult] {
 }
-// /// A protocol for items that can be described.
+// A protocol for items that can be described.
 
 public protocol Describable {
-    // /// A textual description of the instance.
-    // /// Resets to a default state.
+    // A textual description of the instance.
+    public var description: String
+    // Resets to a default state.
+    public reset()
 }
-// /// A read-only proxy for accessing UserSettings.
+// A read-only proxy for accessing UserSettings.
 
 public class SettingsProxy {
-    // /// Private helper for proxy validation
 }
-// /// Main settings structure for a user.
+// Main settings structure for a user.
 
 public class UserSettings {
-    public init() {
-        {
-                self.username = username
-            }
-    // /// Creates a read-only proxy for these settings.
+    // Creates a read-only proxy for these settings.
     public asProxy() -> SettingsProxy {
-        {
-                SettingsProxy(self)
-            }
-    // /// Private validation method
-    // /// Internal method for settings synchronization
 }
 </file>

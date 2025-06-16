@@ -62,7 +62,7 @@ func NewLineParser(source []byte, filename string) *LineParser {
 		protocolRe:         regexp.MustCompile(`^\s*(public\s+|internal\s+|fileprivate\s+|private\s+)?protocol\s+(\w+)(\s*:\s*(.+))?`),
 		extensionRe:        regexp.MustCompile(`^\s*(public\s+|internal\s+|fileprivate\s+|private\s+)?extension\s+(\w+)(\s*:\s*(.+))?`),
 		enumRe:             regexp.MustCompile(`^\s*(public\s+|internal\s+|fileprivate\s+|private\s+)?enum\s+(\w+)(\s*:\s*(.+))?`),
-		functionRe:         regexp.MustCompile(`^\s*(public\s+|internal\s+|fileprivate\s+|private\s+|open\s+)?(static\s+|class\s+|final\s+|override\s+|mutating\s+)*(func\s+)?(\w+)\s*\((.*?)\)(\s*(async\s+)?(throws\s+)?->\s*(.+))?`),
+		functionRe:         regexp.MustCompile(`^\s*(public\s+|internal\s+|fileprivate\s+|private\s+|open\s+)?(static\s+|class\s+|final\s+|override\s+|mutating\s+)*func\s+(\w+)\s*\((.*?)\)(\s*(async\s+)?(throws\s+)?->\s*(.+))?`),
 		propertyRe:         regexp.MustCompile(`^\s*(@\w+\s+)*(public\s+|internal\s+|fileprivate\s+|private\s+)?(static\s+|class\s+)?(let|var)\s+(\w+)\s*:\s*(.+?)(\s*=.*)?$`),
 		typeAliasRe:        regexp.MustCompile(`^\s*(public\s+|internal\s+|fileprivate\s+|private\s+)?typealias\s+(\w+)\s*=\s*(.+)`),
 		enumCaseRe:         regexp.MustCompile(`^\s*case\s+(\w+)(\((.*?)\))?`),
@@ -90,11 +90,30 @@ func (p *LineParser) Parse() *ir.DistilledFile {
 		lineNum++
 		line := scanner.Text()
 		trimmedLine := strings.TrimSpace(line)
+		
+		// DEBUG
+		// if strings.Contains(trimmedLine, "enum") || strings.Contains(trimmedLine, "func") {
+		// 	fmt.Printf("DEBUG: Line %d: %s\n", lineNum, trimmedLine)
+		// }
 
-		// Skip empty lines and single-line comments
-		if trimmedLine == "" || strings.HasPrefix(trimmedLine, "//") {
-			// Parse MARK comments as they're commonly used for organization
-			if strings.HasPrefix(trimmedLine, "// MARK:") || strings.HasPrefix(trimmedLine, "//MARK:") {
+		// Skip empty lines but handle comments separately
+		if trimmedLine == "" {
+			continue
+		}
+		
+		// Handle comments
+		if strings.HasPrefix(trimmedLine, "//") {
+			// Parse doc comments
+			if strings.HasPrefix(trimmedLine, "///") {
+				comment := &ir.DistilledComment{
+					BaseNode: ir.BaseNode{
+						Location: ir.Location{StartLine: lineNum, EndLine: lineNum},
+					},
+					Text:   strings.TrimSpace(strings.TrimPrefix(trimmedLine, "///")),
+					Format: "doc",
+				}
+				p.addToParent(file, state, comment)
+			} else if strings.HasPrefix(trimmedLine, "// MARK:") || strings.HasPrefix(trimmedLine, "//MARK:") {
 				comment := &ir.DistilledComment{
 					BaseNode: ir.BaseNode{
 						Location: ir.Location{StartLine: lineNum, EndLine: lineNum},
@@ -136,7 +155,7 @@ func (p *LineParser) Parse() *ir.DistilledFile {
 			} else if matches := p.protocolPropertyRe.FindStringSubmatch(trimmedLine); matches != nil {
 				p.parseProtocolProperty(matches, lineNum, state)
 			}
-		} else if matches := p.functionRe.FindStringSubmatch(line); matches != nil && strings.Contains(line, "func") {
+		} else if matches := p.functionRe.FindStringSubmatch(line); matches != nil {
 			p.parseFunction(matches, lineNum, file, state)
 		} else if matches := p.propertyRe.FindStringSubmatch(line); matches != nil {
 			p.parseProperty(matches, lineNum, file, state)
@@ -333,9 +352,9 @@ func (p *LineParser) parseFunction(matches []string, lineNum int, file *ir.Disti
 		BaseNode: ir.BaseNode{
 			Location: ir.Location{StartLine: lineNum, EndLine: lineNum},
 		},
-		Name:       matches[4],
+		Name:       matches[3], // Changed from 4 to 3 after removing optional func group
 		Visibility: p.parseVisibility(matches[1]),
-		Parameters: p.parseParameters(matches[5]),
+		Parameters: p.parseParameters(matches[4]), // Changed from 5 to 4
 		Modifiers:  []ir.Modifier{},
 	}
 
@@ -348,8 +367,8 @@ func (p *LineParser) parseFunction(matches []string, lineNum int, file *ir.Disti
 	}
 
 	// Parse return type
-	if matches[6] != "" && matches[9] != "" {
-		fn.Returns = &ir.TypeRef{Name: strings.TrimSpace(matches[9])}
+	if matches[5] != "" && matches[8] != "" { // Changed from 6,9 to 5,8
+		fn.Returns = &ir.TypeRef{Name: strings.TrimSpace(matches[8])}
 	}
 
 	p.addToParent(file, state, fn)

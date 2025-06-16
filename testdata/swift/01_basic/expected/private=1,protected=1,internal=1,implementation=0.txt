@@ -1,33 +1,33 @@
 <file path="source.swift">
 import Foundation
-// /// Temperature‐related helper utilities.
+// Temperature‐related helper utilities.
 
 internal enum TemperatureScale {
-    case celsius = "°C"
-    case fahrenheit = "°F"
+    case celsius
+    case fahrenheit
 }
-// /// An error that can occur while converting temperatures.
-// ///
-// /// Even though errors are introduced later in depth,
-// /// having a minimal `Error` here provides optional handling practice.
+// An error that can occur while converting temperatures.
+//
+// Even though errors are introduced later in depth,
+// having a minimal `Error` here provides optional handling practice.
 
 internal enum TemperatureError {
     case negativeAbsolute
 }
-// /// Converts a temperature value from one scale to another.
-// ///
-// /// - Parameters:
-// ///   - value: The numeric temperature to convert.
-// ///   - from:  Original scale.
-// ///   - to:    Desired scale.
-// /// - Returns: The converted value, or `nil` if conversion is impossible (e.g. below absolute zero).
-internal convert() -> Double?
-// /// Entry-point for quick playground testing.
-// ///
-// /// Not marked `public` to keep visibility minimal for a basic example.
-fileprivate demo()
-// /// Private helper for validation
-private validateTemperature() -> Bool
-// /// Internal constant for configuration
-internal var defaultScale: TemperatureScale
+// Converts a temperature value from one scale to another.
+//
+// - Parameters:
+// - value: The numeric temperature to convert.
+// - from:  Original scale.
+// - to:    Desired scale.
+// - Returns: The converted value, or `nil` if conversion is impossible (e.g. below absolute zero).
+// Entry-point for quick playground testing.
+//
+// Not marked `public` to keep visibility minimal for a basic example.
+private demo()
+internal let celsius: Double = = 22
+// Private helper for validation
+private validateTemperature(value: Double, scale: TemperatureScale) -> Bool {
+// Internal constant for configuration
+internal let defaultScale: TemperatureScale = = .celsius
 </file>

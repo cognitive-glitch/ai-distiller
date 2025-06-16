@@ -1,38 +1,35 @@
 <file path="source.swift">
 import Foundation
-// /// A simple LIFO stack.
+// A simple LIFO stack.
 
 public class Stack {
-    public init()
-    // /// Pushes a new element.
-    public mutating push()
-    // /// Returns the top element without removing it.
-    public peek() -> Element?
-    // /// Removes and returns the top element.
-    public mutating pop() -> Element?
-    // /// Private helper for validation
-    // /// Internal method for debugging
+    // Pushes a new element.
+    public push(element: Element)
+    // Returns the top element without removing it.
+    public peek() -> Element? { storage.last }
+    // Removes and returns the top element.
+    public pop() -> Element? { storage.popLast() }
 }
-// /// Errors for math-centric operations.
+
+public class extension Stack {
+}
+// Errors for math-centric operations.
 
 public enum MathError {
     case emptyStack
     case divideByZero
     case negativeValue
+    // Private helper for error categorization
 }
-// /// Describes a cache that stores key/value pairs.
+// Describes a cache that stores key/value pairs.
 
 public protocol Cacheable {
+    public value(key: Key) -> Value?
+    public contains(key: Key) -> Bool
 }
-// /// Dictionary already satisfies `Cacheable` when paired properly.
-// /// Generic cache with expiration
+// Dictionary already satisfies `Cacheable` when paired properly.
+// Generic cache with expiration
 
 public class ExpiringCache {
-    public init()
-    public mutating insert()
-    public value() -> Value?
-    public contains() -> Bool
-    // /// Private cleanup method
-    // /// Internal method for cache statistics
 }
 </file>

@@ -47,6 +47,14 @@ func (p *TreeSitterProcessor) ProcessSource(ctx context.Context, source []byte, 
 	p.currentClass = nil
 	p.currentProtocol = nil
 	
+	// Defer panic recovery to catch segfaults
+	defer func() {
+		if r := recover(); r != nil {
+			// Tree-sitter crashed, return error to trigger line-based parser
+			panic(fmt.Errorf("tree-sitter panic: %v", r))
+		}
+	}()
+	
 	// Parse with tree-sitter
 	tree, err := p.parser.ParseCtx(ctx, nil, source)
 	if err != nil {
@@ -71,6 +79,20 @@ func (p *TreeSitterProcessor) ProcessSource(ctx context.Context, source []byte, 
 	
 	// Process the AST
 	p.processNode(tree.RootNode(), file, nil)
+	
+	// Check if we got meaningful results
+	// If we only have imports or less than 2 nodes, it's likely tree-sitter failed
+	nonImportCount := 0
+	for _, child := range file.Children {
+		if _, isImport := child.(*ir.DistilledImport); !isImport {
+			nonImportCount++
+		}
+	}
+	
+	// If source has significant content but we only found imports, tree-sitter likely failed
+	if nonImportCount == 0 && len(source) > 100 && strings.Contains(string(source), "func") {
+		return nil, fmt.Errorf("tree-sitter produced insufficient results")
+	}
 	
 	return file, nil
 }

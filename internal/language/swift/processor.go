@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"os"
 
 	"github.com/janreges/ai-distiller/internal/ir"
 	"github.com/janreges/ai-distiller/internal/processor"
@@ -46,45 +45,46 @@ func (p *Processor) ProcessWithOptions(ctx context.Context, reader io.Reader, fi
 		return nil, fmt.Errorf("failed to read source: %w", err)
 	}
 
-	// Try tree-sitter parser first
-	treeparser, err := NewTreeSitterProcessor()
-	if err == nil {
-		defer treeparser.Close()
-		file, err := treeparser.ProcessSource(ctx, source, filename)
-		if err != nil {
-			// Fall back to line-based parser on error
-			fmt.Fprintf(os.Stderr, "warning: Swift tree-sitter for %s failed with error: %v. Falling back to line parser.\n", filename, err)
-			parser := NewLineParser(source, filename)
-			file := parser.Parse()
-			
-			// Apply standardized stripper for filtering
-			stripperOpts := opts.ToStripperOptions()
-			
-			// Only apply stripper if we need to remove something
-			if stripperOpts.HasAnyOption() {
-				s := stripper.New(stripperOpts)
-				stripped := file.Accept(s)
-				return stripped.(*ir.DistilledFile), nil
-			}
-			
-			return file, nil
-		}
-		
-		// Apply standardized stripper for filtering
-		stripperOpts := opts.ToStripperOptions()
-		
-		// Only apply stripper if we need to remove something
-		if stripperOpts.HasAnyOption() {
-			s := stripper.New(stripperOpts)
-			stripped := file.Accept(s)
-			return stripped.(*ir.DistilledFile), nil
-		}
-		
-		return file, nil
-	}
+	// TEMPORARY: Skip tree-sitter parser due to segfault issues
+	// TODO: Fix tree-sitter Swift integration
+	// treeparser, err := NewTreeSitterProcessor()
+	// if err == nil {
+	// 	defer treeparser.Close()
+	// 	file, err := treeparser.ProcessSource(ctx, source, filename)
+	// 	if err != nil {
+	// 		// Fall back to line-based parser on error
+	// 		fmt.Fprintf(os.Stderr, "warning: Swift tree-sitter for %s failed with error: %v. Falling back to line parser.\n", filename, err)
+	// 		parser := NewLineParser(source, filename)
+	// 		file := parser.Parse()
+	// 		
+	// 		// Apply standardized stripper for filtering
+	// 		stripperOpts := opts.ToStripperOptions()
+	// 		
+	// 		// Only apply stripper if we need to remove something
+	// 		if stripperOpts.HasAnyOption() {
+	// 			s := stripper.New(stripperOpts)
+	// 			stripped := file.Accept(s)
+	// 			return stripped.(*ir.DistilledFile), nil
+	// 		}
+	// 		
+	// 		return file, nil
+	// 	}
+	// 	
+	// 	// Apply standardized stripper for filtering
+	// 	stripperOpts := opts.ToStripperOptions()
+	// 	
+	// 	// Only apply stripper if we need to remove something
+	// 	if stripperOpts.HasAnyOption() {
+	// 		s := stripper.New(stripperOpts)
+	// 		stripped := file.Accept(s)
+	// 		return stripped.(*ir.DistilledFile), nil
+	// 	}
+	// 	
+	// 	return file, nil
+	// }
 
-	// Fall back to line-based parser
-	fmt.Fprintf(os.Stderr, "warning: Swift tree-sitter creation failed. Falling back to line parser.\n")
+	// Direct fall back to line-based parser due to tree-sitter issues
+	// fmt.Fprintf(os.Stderr, "warning: Swift tree-sitter creation failed. Falling back to line parser.\n")
 	parser := NewLineParser(source, filename)
 	file := parser.Parse()
 	

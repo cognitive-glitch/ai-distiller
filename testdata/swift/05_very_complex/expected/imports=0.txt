@@ -1,71 +1,64 @@
 <file path="source.swift">
-// /// A protocol defining a generic event with a specific payload.
+// A protocol defining a generic event with a specific payload.
 
 public protocol Event {
+    public var payload: Payload
 }
-// /// A protocol for a type that can handle a specific kind of event.
+// A protocol for a type that can handle a specific kind of event.
 
-public protocol EventHandler {
+public protocol EventHandler: AnyObject { {
+    public handle(event: HandledEvent)
 }
-// /// A weak reference wrapper to prevent retain cycles in the subscriber list.
-// /// A type-erased wrapper for any `EventHandler`.
-// /// This allows storing handlers for different event types in the same collection.
-// /// An actor that manages event subscriptions and dispatches events concurrently.
-// /// Custom operator for subscribing an EventHandler to an EventBus.
-public <H>()
-public <T, U>() -> (T, U)
-// /// Uses Mirror to generate a debug description of any event payload.
-public detailedDebugLog<T>() -> String
-// /// Advanced reflection utility
+// A weak reference wrapper to prevent retain cycles in the subscriber list.
+// A type-erased wrapper for any `EventHandler`.
+// This allows storing handlers for different event types in the same collection.
+// An actor that manages event subscriptions and dispatches events concurrently.
+
+public class EventBus {
+}
+// Custom operator for subscribing an EventHandler to an EventBus.
+// Uses Mirror to generate a debug description of any event payload.
+// Advanced reflection utility
 
 public class ReflectionAnalyzer {
-    // /// Analyzes any object and returns its structure
-    public analyze<T>() -> StructureInfo
-    // /// Private helper for type analysis
 }
 
 public class StructureInfo {
-    public var typeName: String
-    public var properties: [PropertyInfo]
-    public var childCount: Int
-    // /// Private validation method
+    public let typeName: String
+    public let properties: [PropertyInfo]
+    public let childCount: Int
 }
 
 public class PropertyInfo {
-    public var name: String
-    public var type: String
-    // /// Private helper for property validation
+    public let name: String
+    public let type: String
 }
-// /// A basic thread-safe queue implementing Sequence.
+// A basic thread-safe queue implementing Sequence.
 
-public class ThreadSafeQueue {
-    public enqueue()
-    public dequeue() -> T?
-    public makeIterator() -> IndexingIterator<[T]>
-    // /// Private helper for queue validation
-    // /// Internal method for queue statistics
+public final class ThreadSafeQueue {
+    public enqueue(element: T)
+    public dequeue() -> T? {
+    public makeIterator() -> IndexingIterator<[T]> {
 }
 
 public class CircularBuffer {
-    public var startIndex: Int { get set }
-    public var endIndex: Int { get set }
-    public init()
-    public index() -> Int
-    public var count: Int { get set }
-    // /// Private helper for buffer validation
-    // /// Internal method for buffer manipulation
+    public var startIndex: Int { 0 }
+    public var endIndex: Int { count }
+    public index(i: Int) -> Int {
+    public var count: Int {
 }
-// /// A service that demonstrates complex memory management patterns.
+// A service that demonstrates complex memory management patterns.
 
-public class ConcurrentEventLogger {
-    public var monitor: ActivityMonitor
-    public var delegate: EventLoggerDelegate?
-    public init()
-    public logEvent<E>()
-    // /// Private cleanup method
+public final class ConcurrentEventLogger {
+    public let monitor: ActivityMonitor
 }
-// /// Protocol for event logger delegation
+// Protocol for event logger delegation
 
-public protocol EventLoggerDelegate {
+public protocol EventLoggerDelegate: AnyObject { {
+    public didLogEvent(entry: String)
+}
+
+public class ActivityMonitor {
+    public record(entry: String)
 }
 </file>
