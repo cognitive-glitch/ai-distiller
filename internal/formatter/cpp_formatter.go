@@ -86,11 +86,9 @@ func (f *CppFormatter) formatClass(class *ir.DistilledClass, indent int) string 
 		parts = append(parts, indentStr+"template<"+strings.Join(templateParams, ", ")+">")
 	}
 
-	// Get visibility prefix
-	visPrefix := getVisibilityPrefix(class.Visibility)
-	
 	// Class declaration
-	classDecl := visPrefix + classType + " " + class.Name
+	// In C++, visibility is not used on class declarations, only on members
+	classDecl := classType + " " + class.Name
 
 	// Inheritance
 	if len(class.Extends) > 0 || len(class.Implements) > 0 {
@@ -107,7 +105,7 @@ func (f *CppFormatter) formatClass(class *ir.DistilledClass, indent int) string 
 		classDecl += " : " + strings.Join(bases, ", ")
 	}
 
-	parts = append(parts, indentStr+classDecl+":")
+	parts = append(parts, indentStr+classDecl+" {")
 
 	// Format children (methods, fields, etc.)
 	for _, child := range class.Children {
@@ -118,6 +116,9 @@ func (f *CppFormatter) formatClass(class *ir.DistilledClass, indent int) string 
 			parts = append(parts, f.formatField(n, indent+1))
 		}
 	}
+	
+	// Closing brace
+	parts = append(parts, indentStr+"};")
 
 	return strings.Join(parts, "\n")
 }
@@ -139,13 +140,11 @@ func (f *CppFormatter) formatStruct(strct *ir.DistilledStruct, indent int) strin
 		parts = append(parts, indentStr+"template<"+strings.Join(templateParams, ", ")+">")
 	}
 
-	// Get visibility prefix
-	visPrefix := getVisibilityPrefix(strct.Visibility)
-	
 	// Struct declaration
-	structDecl := visPrefix + "struct " + strct.Name
+	// In C++, visibility is not used on struct declarations, only on members
+	structDecl := "struct " + strct.Name
 
-	parts = append(parts, indentStr+structDecl+":")
+	parts = append(parts, indentStr+structDecl+" {")
 
 	// Format children (methods, fields, etc.)
 	for _, child := range strct.Children {
@@ -156,6 +155,9 @@ func (f *CppFormatter) formatStruct(strct *ir.DistilledStruct, indent int) strin
 			parts = append(parts, f.formatField(n, indent+1))
 		}
 	}
+	
+	// Closing brace
+	parts = append(parts, indentStr+"};")
 
 	return strings.Join(parts, "\n")
 }
@@ -163,11 +165,9 @@ func (f *CppFormatter) formatStruct(strct *ir.DistilledStruct, indent int) strin
 func (f *CppFormatter) formatEnum(enum *ir.DistilledEnum, indent int) string {
 	indentStr := strings.Repeat("    ", indent)
 
-	// Get visibility prefix
-	visPrefix := getVisibilityPrefix(enum.Visibility)
-	
 	// Enum declaration
-	enumDecl := visPrefix + "enum class " + enum.Name
+	// In C++, visibility is not used on enum declarations, only on members
+	enumDecl := "enum class " + enum.Name
 
 	// Base type
 	if enum.Type != nil {
@@ -175,7 +175,7 @@ func (f *CppFormatter) formatEnum(enum *ir.DistilledEnum, indent int) string {
 	}
 
 	var parts []string
-	parts = append(parts, indentStr+enumDecl+":")
+	parts = append(parts, indentStr+enumDecl+" {")
 	
 	// Format enum values
 	for _, child := range enum.Children {
@@ -188,14 +188,17 @@ func (f *CppFormatter) formatEnum(enum *ir.DistilledEnum, indent int) string {
 		}
 	}
 	
+	// Closing brace
+	parts = append(parts, indentStr+"};")
+	
 	return strings.Join(parts, "\n")
 }
 
 func (f *CppFormatter) formatFunction(fn *ir.DistilledFunction, indent int) string {
 	indentStr := strings.Repeat("    ", indent)
 	
-	// Get visibility prefix
-	visPrefix := getVisibilityPrefix(fn.Visibility)
+	// C++ doesn't use visibility keywords on standalone functions
+	// Access specifiers are used in class/struct scope
 
 	// Template parameters
 	var templateLine string
@@ -232,7 +235,7 @@ func (f *CppFormatter) formatFunction(fn *ir.DistilledFunction, indent int) stri
 	}
 
 	// Function signature
-	signature := indentStr + visPrefix
+	signature := indentStr
 	if len(modifiers) > 0 {
 		signature += strings.Join(modifiers, " ") + " "
 	}
@@ -269,13 +272,17 @@ func (f *CppFormatter) formatFunction(fn *ir.DistilledFunction, indent int) stri
 
 	// Add implementation if present
 	if fn.Implementation != "" {
-		signature += ":\n"
+		signature += " {\n"
 		lines := strings.Split(strings.TrimSpace(fn.Implementation), "\n")
 		for _, line := range lines {
 			if line != "" {
 				signature += indentStr + "    " + line + "\n"
 			}
 		}
+		signature += indentStr + "}"
+	} else if indent == 0 {
+		// Top-level function declaration without implementation
+		signature += ";"
 	}
 
 	if templateLine != "" {
@@ -321,23 +328,11 @@ func (f *CppFormatter) formatField(field *ir.DistilledField, indent int) string 
 		fieldDecl += " = " + field.DefaultValue
 	}
 
-	// Remove semicolon for Python-like syntax
-	// fieldDecl += ";"
+	// Add semicolon
+	fieldDecl += ";"
 
-	return indentStr + f.addVisibilityPrefix(field.Visibility) + fieldDecl
+	// In C++, visibility is controlled by access specifier sections (public:, private:, protected:)
+	// For text format, we'll just show the field without prefix
+	return indentStr + fieldDecl
 }
 
-func (f *CppFormatter) addVisibilityPrefix(visibility ir.Visibility) string {
-	switch visibility {
-	case ir.VisibilityPublic:
-		return "" // No prefix for public
-	case ir.VisibilityPrivate:
-		return "-"
-	case ir.VisibilityProtected:
-		return "*"
-	case ir.VisibilityInternal:
-		return "~"
-	default:
-		return "-" // Default is private in C++ classes
-	}
-}

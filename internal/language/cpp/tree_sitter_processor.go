@@ -427,14 +427,8 @@ func (p *TreeSitterProcessor) processMethodDefinition(node *sitter.Node, source 
 		}
 	}
 
-	// Check if it's a constructor or destructor
-	if method.Name == class.Name {
-		// Constructor - add as a special comment to indicate it
-		method.Name = "constructor"
-	} else if method.Name == "~"+class.Name {
-		// Destructor
-		method.Name = "destructor"
-	}
+	// In C++, constructors and destructors should keep their original names
+	// No need to rename them
 
 	class.Children = append(class.Children, method)
 }
@@ -698,12 +692,8 @@ func (p *TreeSitterProcessor) processMethodDeclaration(node *sitter.Node, source
 		}
 	}
 
-	// Check if it's a constructor or destructor
-	if method.Name == class.Name {
-		method.Name = "constructor"
-	} else if method.Name == "~"+class.Name {
-		method.Name = "destructor"
-	}
+	// In C++, constructors and destructors should keep their original names
+	// No need to rename them
 
 	class.Children = append(class.Children, method)
 }
@@ -919,26 +909,54 @@ func (p *TreeSitterProcessor) processVariableDeclaration(node *sitter.Node, sour
 
 // processTemplateDeclaration handles template declarations
 func (p *TreeSitterProcessor) processTemplateDeclaration(node *sitter.Node, source []byte, file *ir.DistilledFile, parent ir.DistilledNode) {
-	// Extract template parameters for future use
-	// var templateParams []ir.TypeParam
-	// for i := 0; i < int(node.ChildCount()); i++ {
-	// 	child := node.Child(i)
-	// 	if child.Type() == "template_parameter_list" {
-	// 		templateParams = p.extractTemplateParameters(child, source)
-	// 		break
-	// 	}
-	// }
+	// Extract template parameters
+	var templateParams []ir.TypeParam
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		if child.Type() == "template_parameter_list" {
+			templateParams = p.extractTemplateParameters(child, source)
+			break
+		}
+	}
 
 	// Process the templated declaration
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		switch child.Type() {
 		case "class_specifier":
-			p.processClass(child, source, file, parent)
-			// TODO: Add template parameters to the class
+			// Create a temporary parent to capture the class
+			var capturedClass *ir.DistilledClass
+			tempParent := &captureNode{
+				onAdd: func(child ir.DistilledNode) {
+					if class, ok := child.(*ir.DistilledClass); ok {
+						capturedClass = class
+					}
+				},
+			}
+			p.processClass(child, source, file, tempParent)
+			
+			// Add template parameters to the class
+			if capturedClass != nil {
+				capturedClass.TypeParams = templateParams
+				p.addChild(file, parent, capturedClass)
+			}
 		case "function_definition":
-			p.processFunctionDefinition(child, source, file, parent)
-			// TODO: Add template parameters to the function
+			// Create a temporary parent to capture the function
+			var capturedFunc *ir.DistilledFunction
+			tempParent := &captureNode{
+				onAdd: func(child ir.DistilledNode) {
+					if fn, ok := child.(*ir.DistilledFunction); ok {
+						capturedFunc = fn
+					}
+				},
+			}
+			p.processFunctionDefinition(child, source, file, tempParent)
+			
+			// Add template parameters to the function
+			if capturedFunc != nil {
+				capturedFunc.TypeParams = templateParams
+				p.addChild(file, parent, capturedFunc)
+			}
 		case "declaration":
 			p.processDeclaration(child, source, file, parent)
 		}
@@ -1072,6 +1090,20 @@ func (p *TreeSitterProcessor) addChild(file *ir.DistilledFile, parent ir.Distill
 			p.Children = append(p.Children, child)
 		case *ir.DistilledEnum:
 			p.Children = append(p.Children, child)
+		case *captureNode:
+			p.onAdd(child)
 		}
 	}
 }
+
+// captureNode is a helper type for capturing nodes during processing
+type captureNode struct {
+	onAdd func(ir.DistilledNode)
+}
+
+// Implement ir.DistilledNode interface
+func (c *captureNode) GetLocation() ir.Location { return ir.Location{} }
+func (c *captureNode) GetChildren() []ir.DistilledNode { return nil }
+func (c *captureNode) Accept(v ir.Visitor) ir.DistilledNode { return c }
+func (c *captureNode) GetNodeKind() ir.NodeKind { return ir.NodeKind("capture") }
+func (c *captureNode) GetSymbolID() *ir.SymbolID { return nil }
