@@ -15,6 +15,18 @@ Kotlin support in AI Distiller is designed to extract the complete structure of 
 - **Enum Values**: Fixed to show all enum values (was only showing first)
 - **Const Properties**: Added support for `const val` declarations
 
+## Recent Fixes (December 2024)
+
+1. **Annotation classes** (✅ Fixed)
+   - **Issue**: Annotation classes were shown as regular classes
+   - **Fix**: Added ModifierAnnotation and updated formatter to show `annotation class`
+   - **Impact**: Proper Kotlin annotation syntax in output
+
+2. **Interface keyword** (✅ Fixed)
+   - **Issue**: Interfaces were displayed as `class` instead of `interface`
+   - **Fix**: Updated formatter to check for ModifierInterface
+   - **Impact**: Correct idiomatic Kotlin syntax
+
 ## Supported Kotlin Constructs
 
 ### Core Language Features
@@ -62,6 +74,12 @@ var secondOrNull: T?
 // Expected output
 val <T> List<T>.secondOrNull: T?
 ```
+
+### Primary Constructor Syntax
+Primary constructors in data classes may show incorrect parameter order in some cases.
+
+### Generic Type Arguments
+Generic type arguments in some contexts (like base class declarations) may be incomplete or missing.
 
 ### Companion Object Naming
 Companion objects always show as `Companion` even when they have custom names.

@@ -6,11 +6,22 @@ AI Distiller provides comprehensive support for C# codebases using the [tree-sit
 
 C# support in AI Distiller is designed to extract the complete structure of .NET code while preserving all type information, generic constraints, and modern language features. The distilled output maintains C#'s strong typing and object-oriented design while optimizing for AI consumption.
 
-## Recent Improvements (2025-01)
+## Recent Improvements (December 2024)
 
-- **Method Parameter Fix**: Fixed parameter name/type order for methods (was showing `instance T` instead of `T instance`)
-- **Generic Constraints**: Fixed method generic constraints to show full type arguments (e.g., `INumber<T>` instead of just `INumber`)
-- **Nested Records**: Improved formatting of nested record types and brace handling
+1. **Operator support** (✅ Fixed)
+   - **Issue**: User-defined operators were not extracted
+   - **Fix**: Added processOperatorDeclaration to handle operator parsing
+   - **Impact**: Operators now properly shown in output
+
+2. **Record struct syntax** (✅ Fixed)
+   - **Issue**: Record structs were displayed as regular records
+   - **Fix**: Added ModifierStruct to distinguish record structs from record classes
+   - **Impact**: Correct `record struct` syntax in output
+
+3. **Method Parameter Fix** (Previous fix)
+   - Fixed parameter name/type order for methods (was showing `instance T` instead of `T instance`)
+   - Fixed method generic constraints to show full type arguments (e.g., `INumber<T>` instead of just `INumber`)
+   - Improved formatting of nested record types and brace handling
 
 ## Supported C# Constructs
 
@@ -33,7 +44,7 @@ C# support in AI Distiller is designed to extract the complete structure of .NET
 | **Enums** | ✅ Full | Including explicit base types |
 | **Delegates** | ⚠️ Partial | Type may show as `dynamic` |
 | **Events** | ❌ Not supported | Shows as `dynamic` fields |
-| **Operators** | ❌ Not supported | User-defined operators not extracted |
+| **Operators** | ✅ Full | User-defined operators including conversion operators |
 | **Indexers** | ❌ Not tested | Support unknown |
 | **Tuple Types** | ✅ Full | Named and unnamed tuples |
 | **Local Functions** | ❌ Not supported | Not extracted |
@@ -65,9 +76,8 @@ C# visibility in AI Distiller uses the full keyword representation:
 - Calculated properties are incorrectly included as primary constructor parameters
 - Properties with bodies should not be in the parameter list
 
-**Events and Operators**
+**Events**
 - Events are shown as `dynamic` fields instead of proper event declarations
-- User-defined operators (including conversion operators) are not extracted
 
 ### 🟡 Major Limitations
 

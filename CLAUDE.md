@@ -26,6 +26,10 @@ aid main.py                           # Process single file
 aid --comments=0,implementation   # Remove comments and implementations
 aid --format json --output api.json   # JSON output to file
 aid --private=0 --protected=0 --internal=0 --stdout       # Print only public members to stdout
+
+# Special git mode (activated when path is .git):
+aid .git                              # Show full git history
+aid .git --git-limit=50              # Show last 50 commits
 ```
 
 ### Important Flags
@@ -87,6 +91,27 @@ aid src/ --include-only=public,protected,imports
   - Default pattern: `.<dirname>.[options].aid.txt`
   - Example: `.MyProject.prot.int.impl.aid.txt` (includes protected, internal, implementation)
 
+**Git Mode:**
+- `--git-limit <n>` - Number of commits to show (default: 0 = all)
+  - Activated automatically when path is `.git`
+  - Shows commit history in clean format: `[hash] date time | author | subject`
+  - Multi-line commit messages are properly indented
+
+Example output:
+```
+[1b4aa1b] 2025-06-17 00:56:32 | jan.reges            | fix(formatters): major C++ and Ruby formatter improvements
+        - Ruby: Add 'def' keyword to methods, remove Python-style colons from class/module declarations
+        - C++: Fix critical bug where implementation was always shown in text format
+        - C++: Improve return type parsing - collect types before function declarator
+        - C++: Fix parameter type extraction
+        This resolves major issues in both languages' output formatting.
+
+[816a7d3] 2025-06-17 00:39:48 | jan.reges            | fix(swift): improve Swift line parser formatting
+        - Add func keyword to function declarations
+        - Fix protocol/class/struct inheritance regex to exclude opening braces
+        - Fix protocol property regex to be optional
+```
+
 ## Quick Testing with stdin
 
 For rapid testing and experimentation with AI Distiller, use stdin input:
@@ -112,6 +137,35 @@ echo 'const x = 10' | aid --lang javascript --implementation=0
 - Language auto-detection from code patterns
 
 **Supported languages for auto-detection:** python, typescript, javascript, go, ruby, swift, rust, java, c#, kotlin, c++, php
+
+## Git Mode - Special Feature
+
+When you pass a `.git` directory path to aid, it switches to a special git log mode:
+
+```bash
+# Show full git commit history
+aid .git
+
+# Limit to latest 50 commits
+aid .git --git-limit=50
+
+# Example output:
+abc123 2024-01-15 14:30:00 +0100 john.doe
+    feat: add new authentication system
+    - Implement JWT token generation
+    - Add user session management
+    - Update API endpoints
+
+def456 2024-01-14 11:20:00 +0100 jane.smith
+    fix: resolve memory leak in parser
+    Fixed issue where large files caused excessive memory usage
+```
+
+This mode is useful for:
+- Quickly reviewing project history
+- Generating commit summaries for AI context
+- Understanding project evolution
+- Creating release notes
 
 ## Expected Output Examples
 

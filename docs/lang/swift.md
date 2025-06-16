@@ -62,7 +62,7 @@ Swift emphasizes protocol-oriented programming. AI Distiller recognizes:
 
 ### Current Implementation Status
 
-⚠️ **Important**: Swift support uses a tree-sitter parser with significant functionality implemented. The following features are currently supported:
+⚠️ **Important**: Swift support currently uses a line-based parser due to tree-sitter stability issues. The following features are currently supported:
 
 **Supported Features:**
 - Enum declarations with raw values (String, Int)
@@ -77,32 +77,45 @@ Swift emphasizes protocol-oriented programming. AI Distiller recognizes:
 - Import statements
 - Actor declarations
 
+## Recent Fixes (December 2024)
+
+1. **Tree-sitter segfault** (✅ Fixed)
+   - **Issue**: Tree-sitter Swift parser was causing segmentation faults
+   - **Fix**: Temporarily disabled tree-sitter, using improved line-based parser
+   - **Impact**: Stable parsing, though with some limitations
+
+2. **Missing `func` keyword** (✅ Fixed)
+   - **Issue**: Functions were displayed without the `func` keyword
+   - **Fix**: Updated Swift formatter to include proper function syntax
+   - **Impact**: More recognizable Swift syntax in output
+
+3. **Protocol inheritance syntax** (✅ Fixed)
+   - **Issue**: Extra `{` appeared in protocol inheritance
+   - **Fix**: Updated regex to exclude opening braces from inheritance capture
+   - **Impact**: Clean protocol declarations
+
 **Known Issues:**
-1. **Critical Issues**
-   - Function/method parameters are not extracted
-   - Protocol requirements are not parsed
-   - Enum associated values not shown
-   - Generic parameters and constraints missing
-   - Static modifiers not detected
+1. **Line-based parser limitations**
+   - Multi-line function signatures not fully captured
+   - Complex generic constraints may be missed
+   - Associated types in protocols not parsed
 
 2. **Not Yet Implemented**
    - Property wrappers (@State, @Published, etc.)
    - Result builders (@ViewBuilder, etc.)
-   - Async/await/throws modifiers
+   - Async/await/throws modifiers (partially supported)
    - Where clauses in extensions and generics
    - Conditional compilation blocks (#if/#endif)
-   - Attributes beyond basic visibility
    - Subscripts
    - Type aliases
 
-3. **Formatting Issues**
-   - Missing `func` keyword in text output
-   - Constants (`let`) shown as variables (`var`)
-   - Some struct types misidentified as classes
+3. **Minor Issues**
+   - Some computed property syntax variations
+   - Complex enum associated values
 
-### Fallback Mechanism
+### Parser Implementation
 
-If the tree-sitter parser encounters an error, the processor falls back to a simpler line-based parser. This ensures that files are always processed, though with reduced accuracy.
+Due to stability issues with the tree-sitter Swift parser, AI Distiller currently uses an improved line-based parser that provides reliable parsing with good coverage of common Swift constructs.
 
 ## Examples
 

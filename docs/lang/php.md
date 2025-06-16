@@ -42,7 +42,7 @@ PHP support in AI Distiller is designed to extract the essential structure of PH
 | **@property** | ✅ Full | Creates virtual public properties |
 | **@property-read** | ✅ Full | Creates virtual read-only properties |
 | **@property-write** | ✅ Full | Creates virtual write-only properties |
-| **@method** | ✅ Full | Creates virtual methods |
+| **@method** | ✅ Full | Creates virtual methods (shown as actual methods in output) |
 | **@deprecated** | ✅ Full | Marks elements as deprecated |
 | **@internal** | ✅ Full | API documentation preserved |
 | **@param** | ✅ Full | Enhanced parameter types |
@@ -820,6 +820,34 @@ aid src/Controller --implementation=0 > controllers-api.txt
     * } $order
     */
    ```
+
+## Known Issues
+
+### @method Tag Behavior
+
+The `@method` PHPDoc tags are parsed and displayed as actual methods in the output. This is by design to make magic methods visible to AI systems, but it means:
+
+1. **Duplication**: If you have both a docblock with `@method` tags and the actual method implementation, both will appear
+2. **Parameter defaults**: Default values in `@method` tags (e.g., `array $options = []`) may not be parsed correctly and could show as `$[]`
+
+Example:
+```php
+/**
+ * @method static User|null find(int $id)
+ * @method void sendNotification(string $message, array $options = [])
+ */
+class User { }
+```
+
+Will output:
+```
+class User {
+    public static find(int $id): User|null
+    public sendNotification(string $message, array $options = $[]): void
+}
+```
+
+This is considered a feature for AI comprehension, as it makes magic methods explicit in the API surface.
 
 ## Comparison with Other Tools
 

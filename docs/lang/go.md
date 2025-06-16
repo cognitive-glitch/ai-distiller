@@ -373,30 +373,40 @@ type Node[T any] struct
     Value T
     Next *Node[T]
 
-func Map(input []T, f func) []V
+func Map[T any, V any](input []T, f func(T) V) []V
 
-func ProcessNumericChan(ch <-chan *Node[T]) T
+func ProcessNumericChan[T Number](ch <-chan *Node[T]) T
 </file>
 ```
-
-**Note**: Generic type parameters are partially supported but may have formatting issues.
 
   </blockquote></details>
 </blockquote></details>
 
+## Recent Fixes (December 2024)
+
+1. **Generic type parameters** (✅ Fixed)
+   - **Issue**: Generic type parameters were missing from function signatures
+   - **Fix**: Added proper extraction of type parameters from function declarations in AST parser
+   - **Impact**: Generics now properly displayed for functions like `Map[T any, V any]`
+
+2. **Method association** (✅ Fixed)
+   - **Issue**: Methods were displayed separately from their types
+   - **Fix**: Implemented two-pass processing to properly associate methods with types
+   - **Impact**: Methods now correctly nested under their receiver types
+
 ## Usage Notes
 
-1. **Current Limitations**: The Go support is functional but has several known issues that affect the quality of distilled output. Comments and method associations are the most significant losses.
-
-2. **Visibility Rules**: Go's visibility is determined by the first character of identifiers:
+1. **Visibility Rules**: Go's visibility is determined by the first character of identifiers:
    - Uppercase first letter = Exported (public)
    - Lowercase first letter = Unexported (package-private)
 
-3. **Import Organization**: The distiller attempts to preserve import grouping but may lose some formatting.
+2. **Import Organization**: The distiller preserves import grouping and formatting.
 
-4. **Best Practices**: Until the parser is improved, consider:
-   - Using the full output mode to preserve implementations
-   - Manually reviewing distilled output for completeness
+3. **Generic Support**: Full support for Go 1.18+ generics including type parameters, constraints, and type inference.
+
+4. **Best Practices**: 
+   - Use appropriate visibility flags to focus on public API
+   - The text format provides the most compact representation for AI consumption
    - Being aware that methods may appear as standalone functions
 
 ## Future Improvements

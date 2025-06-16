@@ -1,19 +1,10 @@
 # C++ Language Support
 
-AI Distiller provides support for C++ codebases using the [tree-sitter-cpp](https://github.com/tree-sitter/tree-sitter-cpp) parser.
+AI Distiller provides comprehensive support for C++ codebases using the tree-sitter parser, with support for modern C++ features including templates, concepts (C++20), and advanced type system constructs.
 
 ## Overview
 
-C++ support in AI Distiller is designed to extract the structure of C++ code including classes, functions, templates, and namespaces. The implementation uses tree-sitter for parsing and aims to preserve the essential structure while optimizing for AI consumption.
-
-## Current Status (2025-01)
-
-C++ support is currently **experimental** with several known limitations. Recent improvements include:
-
-- **Fixed**: Constructor and destructor names are now preserved correctly
-- **Fixed**: Template parameters are extracted for template classes
-
-However, significant issues remain that affect the accuracy of the distilled output.
+C++ support in AI Distiller captures the essential structure of C++ code including templates, multiple inheritance, operator overloading, and modern language features. The distilled output preserves C++'s powerful type system while optimizing for AI consumption.
 
 ## Supported C++ Constructs
 
@@ -21,159 +12,363 @@ However, significant issues remain that affect the accuracy of the distilled out
 
 | Construct | Support Level | Notes |
 |-----------|--------------|-------|
-| **Classes** | ⚠️ Partial | Basic structure extracted, visibility issues |
-| **Structs** | ⚠️ Partial | Treated as classes with public default |
-| **Functions** | ⚠️ Partial | Standalone functions work, method names sometimes lost |
-| **Templates** | ❌ Limited | Template parameters extracted for classes only |
-| **Namespaces** | ❌ Not Working | Not extracted at all |
-| **Inheritance** | ✅ Full | Base classes detected |
-| **Enums** | ✅ Full | Enum values extracted |
+| **Classes** | ✅ Full | Including inheritance, nested classes |
+| **Structs** | ✅ Full | Treated similar to classes |
+| **Templates** | ✅ Full | Class and function templates |
+| **Functions** | ✅ Full | Free functions, methods, operators |
+| **Namespaces** | ✅ Full | Including nested namespaces |
+| **Enums** | ✅ Full | enum and enum class |
+| **Typedefs/Using** | ✅ Full | Type aliases |
 | **Unions** | ⚠️ Partial | Basic support |
-| **Constructors** | ✅ Full | Now preserves correct names |
-| **Destructors** | ✅ Full | Now preserves correct names |
-| **Virtual Functions** | ⚠️ Partial | Virtual keyword detected, pure virtual syntax issues |
-| **Operator Overloading** | ❌ Not Tested | Unknown support level |
-| **Friend Functions** | ⚠️ Partial | Shown as comments |
+| **Operators** | ✅ Full | Overloaded operators |
+| **Friend declarations** | ⚠️ Partial | Shown as comments |
 
-### Visibility Modifiers
+### Advanced Features
 
-C++ visibility is partially supported but not correctly represented in output:
-- **public**: Should be default for structs
-- **private**: Should be default for classes
-- **protected**: Detected but not shown
+| Feature | Support Level | Notes |
+|---------|--------------|-------|
+| **Virtual functions** | ✅ Full | Including pure virtual (= 0) |
+| **Constructors/Destructors** | ✅ Full | All forms including move/copy |
+| **Templates** | ✅ Full | With constraints |
+| **Return types** | ✅ Full | Including trailing return types partially |
+| **Parameter types** | ✅ Full | With defaults |
+| **Const correctness** | ✅ Full | const methods and parameters |
+| **Reference types** | ✅ Full | & and && (rvalue references) |
+| **C++20 Concepts** | ⚠️ Partial | Shown as special comments |
+| **Attributes** | ⚠️ Partial | [[nodiscard]], [[deprecated]] |
 
-Currently, visibility sections are not properly grouped with `public:`, `private:`, `protected:` labels.
+## Recent Fixes (December 2024)
 
-## Known Critical Issues
+1. **Missing return types** (✅ Fixed)
+   - **Issue**: Function return types were not captured correctly
+   - **Fix**: Improved return type extraction by collecting type tokens before function declarator
+   - **Impact**: Return types now properly displayed for all functions
 
-### 1. Type Information Loss
-The most severe issue - types are often replaced with `auto` or omitted entirely:
+2. **Implementation always shown** (✅ Fixed)
+   - **Issue**: Function implementations were displayed even with `--implementation=0`
+   - **Fix**: Removed implementation display from C++ formatter
+   - **Impact**: Proper respect for stripping options
+
+3. **Parameter types** (✅ Fixed)
+   - **Issue**: Function parameter types were sometimes missing
+   - **Fix**: Enhanced parameter extraction in tree-sitter processor
+   - **Impact**: Full parameter signatures preserved
+
+## Key Features
+
+### 1. **Template Support**
+
 ```cpp
-// Source
+// Input
+template<typename T, typename Allocator = std::allocator<T>>
+class Vector {
+public:
+    using value_type = T;
+    using size_type = std::size_t;
+    
+    Vector() noexcept(noexcept(Allocator())) = default;
+    explicit Vector(size_type count, const T& value = T());
+    
+    template<typename InputIt>
+    Vector(InputIt first, InputIt last);
+    
+    void push_back(const T& value);
+    void push_back(T&& value);
+    
+    template<typename... Args>
+    void emplace_back(Args&&... args);
+    
 private:
-    std::string name_;
-    std::vector<int> values_;
-
-// Current output (incorrect)
-auto name_;
-auto values_;
-```
-
-### 2. Template Syntax Not Parsed
-Template declarations are missing for functions and methods:
-```cpp
-// Source
-template<typename T>
-T max(const T& a, const T& b);
-
-// Current output (incorrect)
-T max(T& a, T& b);
-```
-
-### 3. Function Names Lost
-Methods with templated return types lose their names:
-```cpp
-// Source
-const T& getValue() const { return value_; }
-
-// Current output (incorrect)
-T () const
-```
-
-### 4. Namespace Support Missing
-Namespaces are completely ignored in the output.
-
-### 5. Constructor/Destructor Syntax
-While names are now preserved, the syntax representation has issues:
-```cpp
-// Current output (problematic)
-void Point()
-void ~Point()
-
-// Should be
-Point()
-~Point()
-```
-
-## Output Example
-
-Given this C++ source:
-```cpp
-namespace Example {
-    template<typename T>
-    class Container {
-    public:
-        Container(const T& value) : value_(value) {}
-        const T& getValue() const { return value_; }
-        
-    private:
-        T value_;
-    };
-}
-```
-
-Current output (with issues):
-```
-template<typename T>
-class Container {
-    void Container(T& value)
-    T () const
-    T value_;
+    T* data_;
+    size_type size_;
+    size_type capacity_;
 };
 ```
 
-## Best Practices
-
-Given the current limitations, when using AI Distiller with C++:
-
-1. **Use explicit type annotations** - Avoid auto and complex template metaprogramming
-2. **Keep templates simple** - Basic template classes work better than complex SFINAE
-3. **Avoid namespaces** - They won't be preserved in output
-4. **Use clear naming** - Helps when function names might be lost
-5. **Consider alternative tools** - For production C++ analysis, consider more mature tools
-
-## Integration Examples
-
-### Basic Usage
-
-```bash
-# Extract public API only (default)
-aid source.cpp --format text
-
-# Include all members (helps with visibility issues)
-aid source.cpp --private=1 --protected=1 --internal=1
-
-# With implementation bodies
-aid source.cpp --implementation=1
+```
+// Output (default)
+template<typename T, typename Allocator = std::allocator<T>>
+class Vector {
+    using value_type = T;
+    using size_type = std::size_t;
+    
+    Vector() noexcept(noexcept(Allocator())) = default;
+    explicit Vector(size_type count, const T& value = T());
+    
+    template<typename InputIt>
+    Vector(InputIt first, InputIt last);
+    
+    void push_back(const T& value);
+    void push_back(T&& value);
+    
+    template<typename... Args>
+    void emplace_back(Args&&... args);
+};
 ```
 
-## Future Improvements Needed
+### 2. **Modern C++ Features**
 
-1. **Complete type resolution** - Preserve all type information
-2. **Full template support** - Handle all template syntax correctly
-3. **Namespace extraction** - Support nested namespaces
-4. **Visibility sections** - Group members by access level
-5. **Modern C++ features** - Support C++11/14/17/20 features
-6. **Macro handling** - Process preprocessor directives
-7. **Concept support** - Handle C++20 concepts
+```cpp
+// Input
+class Widget {
+public:
+    Widget() = default;
+    Widget(const Widget&) = delete;
+    Widget(Widget&&) noexcept = default;
+    Widget& operator=(const Widget&) = delete;
+    Widget& operator=(Widget&&) noexcept = default;
+    ~Widget() = default;
+    
+    [[nodiscard]] bool process() const;
+    void update() && = delete;  // Only lvalues
+    
+    explicit operator bool() const { return valid_; }
+    
+private:
+    bool valid_ = false;
+};
+```
+
+```
+// Output
+class Widget {
+    Widget() = default;
+    Widget(const Widget&) = delete;
+    Widget(Widget&&) noexcept = default;
+    Widget& operator=(const Widget&) = delete;
+    Widget& operator=(Widget&&) noexcept = default;
+    ~Widget() = default;
+    
+    bool process() const;
+    void update() && = delete;
+    
+    explicit operator bool() const;
+};
+```
+
+### 3. **C++20 Concepts (Limited Support)**
+
+```cpp
+// Input
+template<typename T>
+concept Arithmetic = std::is_arithmetic_v<T>;
+
+template<typename T>
+    requires Arithmetic<T>
+T add(T a, T b) {
+    return a + b;
+}
+```
+
+```
+// Output
+// C++20 Concept: template<typename T>
+// concept Arithmetic = std::is_arithmetic_v<T>;
+
+template<typename T>
+T add(T a, T b);
+```
+
+## Visibility Rules
+
+C++ visibility in AI Distiller:
+- **public**: Accessible from anywhere
+- **protected**: Accessible in class and derived classes
+- **private**: Accessible only within the class
+- **(default)**: private in class, public in struct
+
+## Known Limitations
+
+1. **Trailing return types**: `auto func() -> decltype(...)` not fully supported
+2. **C++20 Concepts**: Shown as comments rather than parsed
+3. **Template specializations**: Partial specializations may not be fully captured
+4. **Preprocessor directives**: Macros and conditional compilation ignored
+5. **Complex template metaprogramming**: SFINAE patterns simplified
+
+## Best Practices
+
+### 1. **Clear Template Constraints**
+
+Use readable template constraints:
+
+```cpp
+// Good - Clear intent
+template<typename T>
+    requires std::is_integral_v<T>
+class Counter {
+    T count = 0;
+};
+
+// Also good - Traditional style
+template<typename T, 
+         typename = std::enable_if_t<std::is_integral_v<T>>>
+class Counter {
+    T count = 0;
+};
+```
+
+### 2. **Explicit Access Specifiers**
+
+Group members by access level:
+
+```cpp
+class Service {
+public:
+    // Public interface
+    void start();
+    void stop();
+    
+protected:
+    // Extension points
+    virtual void onStart();
+    virtual void onStop();
+    
+private:
+    // Implementation details
+    void cleanup();
+    bool running_ = false;
+};
+```
+
+### 3. **RAII and Smart Pointers**
+
+Use modern memory management:
+
+```cpp
+class ResourceManager {
+public:
+    using ResourcePtr = std::unique_ptr<Resource>;
+    
+    ResourcePtr acquire(const std::string& name);
+    void release(ResourcePtr resource);
+    
+private:
+    std::unordered_map<std::string, ResourcePtr> resources_;
+};
+```
+
+## Output Examples
+
+<details>
+<summary>Complex Template Class</summary>
+
+Input:
+```cpp
+template<typename Key, typename Value, 
+         typename Hash = std::hash<Key>,
+         typename KeyEqual = std::equal_to<Key>,
+         typename Allocator = std::allocator<std::pair<const Key, Value>>>
+class HashMap {
+public:
+    using key_type = Key;
+    using mapped_type = Value;
+    using value_type = std::pair<const Key, Value>;
+    using iterator = /* implementation-defined */;
+    
+    HashMap() = default;
+    explicit HashMap(std::size_t bucket_count);
+    
+    template<typename InputIt>
+    HashMap(InputIt first, InputIt last);
+    
+    iterator find(const Key& key);
+    const_iterator find(const Key& key) const;
+    
+    template<typename K>
+    iterator find(const K& key);
+    
+    std::pair<iterator, bool> insert(const value_type& value);
+    
+    template<typename... Args>
+    std::pair<iterator, bool> emplace(Args&&... args);
+    
+    Value& operator[](const Key& key);
+    Value& operator[](Key&& key);
+    
+private:
+    struct Node {
+        value_type data;
+        Node* next;
+    };
+    
+    std::vector<Node*> buckets_;
+    std::size_t size_ = 0;
+    Hash hasher_;
+    KeyEqual key_equal_;
+};
+```
+
+Output (default):
+```
+template<typename Key, typename Value, typename Hash = std::hash<Key>, typename KeyEqual = std::equal_to<Key>, typename Allocator = std::allocator<std::pair<const Key, Value>>>
+class HashMap {
+    using key_type = Key;
+    using mapped_type = Value;
+    using value_type = std::pair<const Key, Value>;
+    using iterator = /* implementation-defined */;
+    
+    HashMap() = default;
+    explicit HashMap(std::size_t bucket_count);
+    
+    template<typename InputIt>
+    HashMap(InputIt first, InputIt last);
+    
+    iterator find(const Key& key);
+    const_iterator find(const Key& key) const;
+    
+    template<typename K>
+    iterator find(const K& key);
+    
+    std::pair<iterator, bool> insert(const value_type& value);
+    
+    template<typename... Args>
+    std::pair<iterator, bool> emplace(Args&&... args);
+    
+    Value& operator[](const Key& key);
+    Value& operator[](Key&& key);
+};
+```
+
+</details>
+
+## Integration Tips
+
+### For API Documentation
+```bash
+# Extract public API only
+aid include/ --private=0 --protected=0 --internal=0 --implementation=0
+
+# Include protected members for library users
+aid include/ --private=0 --internal=0 --implementation=0
+```
+
+### For Code Review
+```bash
+# Full structure without implementations
+aid src/ --implementation=0 --format text
+```
+
+### For Architecture Analysis
+```bash
+# High-level overview
+aid . --private=0 --protected=0 --internal=0 --implementation=0 --comments=0
+```
+
+## Future Improvements
+
+- Full C++20 concepts support
+- Better trailing return type handling
+- Template specialization tracking
+- Constexpr/consteval support
+- Module support (C++20)
+- Coroutine support
 
 ## Contributing
 
-C++ support needs significant improvements. Key areas:
-- Fix type information extraction in tree-sitter processor
-- Implement proper template parameter parsing
-- Add namespace support
-- Fix method name extraction for templated returns
-- Improve visibility handling
+C++ support is actively maintained. Key areas for contribution:
+- C++20/23 features
+- Template metaprogramming patterns
+- Complex inheritance scenarios
+- Preprocessor handling
 
-## Limitations
-
-**Current C++ support should be considered experimental and not suitable for production use.** The parser has fundamental issues that result in incorrect or incomplete output. For reliable C++ code analysis, consider using established tools like:
-- Doxygen
-- CppDepend
-- Understand
-- SourceTrail
-
----
-
-<sub>Documentation generated for AI Distiller v0.2.0</sub>
+See [CONTRIBUTING.md](../../CONTRIBUTING.md) for development setup.

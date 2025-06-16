@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -59,6 +60,9 @@ var (
 	
 	// Raw mode flag
 	rawMode               bool
+	
+	// Git mode flags
+	gitCommitLimit        int
 )
 
 // rootCmd represents the base command
@@ -68,6 +72,9 @@ var rootCmd = &cobra.Command{
 	Long: `AI Distiller (aid) intelligently "distills" source code from any project 
 into a compact, structured format, optimized for the context window of 
 Large Language Models (LLMs).
+
+Special Git Mode: When you pass a .git directory path, aid switches to git log
+mode and outputs formatted commit history instead of processing source files.
 
 ═══════════════════════════════════════════════════════════════════════════════
 
@@ -153,7 +160,9 @@ EXAMPLES:
   aid --file-path-type=absolute # Use absolute paths in output
   aid docs/ --raw              # Process text files without parsing
   aid -w 1                     # Force serial processing
-  aid --relative-path-prefix="module/" docs/  # Add custom prefix to paths`,
+  aid --relative-path-prefix="module/" docs/  # Add custom prefix to paths
+  aid .git                     # Show git commit history (special mode)
+  aid .git --git-limit=50      # Show latest 50 commits`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: runDistiller,
 }
@@ -217,7 +226,10 @@ func initFlags() {
 	rootCmd.Flags().IntVarP(&workers, "workers", "w", 0, "Number of parallel workers (0=auto/80% CPU cores, 1=serial, default: 0)")
 	
 	// Raw mode flag
-	rootCmd.Flags().BoolVar(&rawMode, "raw", false, "Raw mode: process all text files without parsing (txt, md, json, yaml, etc.)")
+	rootCmd.Flags().BoolVar(&rawMode, "raw", false, "Raw mode: process all text files without parsing (txt, md, json, yaml, etc.")
+	
+	// Git mode flags
+	rootCmd.Flags().IntVar(&gitCommitLimit, "git-limit", 0, "Limit number of commits in git mode (0=all)")
 
 	// Handle version flag specially
 	rootCmd.PreRun = func(cmd *cobra.Command, args []string) {
@@ -285,6 +297,11 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 	// Check if path exists
 	if _, err := os.Stat(absPath); err != nil {
 		return fmt.Errorf("path does not exist: %s", inputPath)
+	}
+
+	// Check if the path is a .git directory
+	if filepath.Base(absPath) == ".git" {
+		return handleGitMode(ctx, absPath)
 	}
 
 	// Generate output filename if not specified and not using stdout
@@ -752,4 +769,148 @@ func processExcludeList(list string) processor.ProcessOptions {
 	}
 	
 	return opts
+}
+
+// handleGitMode processes git log when user passes a .git directory
+func handleGitMode(ctx context.Context, gitPath string) error {
+	dbg := debug.FromContext(ctx).WithSubsystem("git")
+	dbg.Logf(debug.LevelBasic, "Git mode activated for: %s", gitPath)
+	
+	// Get the repository directory (parent of .git)
+	repoPath := filepath.Dir(gitPath)
+	
+	// Force stdout output for git mode
+	outputToStdout = true
+	
+	// Build git log command with custom format
+	// Using a rare delimiter to avoid conflicts with commit messages
+	delimiter := "|||DELIMITER|||"
+	// Format: hash | date | author name <email> | subject + body
+	formatStr := fmt.Sprintf("--pretty=format:%%h%s%%ai%s%%an <%%ae>%s%%s%%n%%b", delimiter, delimiter, delimiter)
+	
+	// Build command args
+	args := []string{"-C", repoPath, "log", formatStr}
+	if gitCommitLimit > 0 {
+		args = append(args, fmt.Sprintf("-n%d", gitCommitLimit))
+	}
+	
+	cmd := exec.Command("git", args...)
+	
+	dbg.Logf(debug.LevelDetailed, "Running git command: %s", strings.Join(cmd.Args, " "))
+	
+	// Execute the command
+	cmdOutput, err := cmd.Output()
+	if err != nil {
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			return fmt.Errorf("git log failed: %s\nStderr: %s", err, string(exitErr.Stderr))
+		}
+		return fmt.Errorf("failed to run git log: %w", err)
+	}
+	
+	// Process the output to format it nicely
+	lines := strings.Split(string(cmdOutput), "\n")
+	var commits []GitCommit
+	var currentCommit *GitCommit
+	
+	for _, line := range lines {
+		if line == "" {
+			continue
+		}
+		
+		// Check if this is a new commit (contains the delimiter)
+		if strings.Contains(line, delimiter) {
+			// Save previous commit if exists
+			if currentCommit != nil {
+				commits = append(commits, *currentCommit)
+			}
+			
+			// Parse new commit
+			parts := strings.SplitN(line, delimiter, 4)
+			if len(parts) >= 4 {
+				currentCommit = &GitCommit{
+					Hash:    parts[0],
+					Date:    parts[1],
+					Author:  parts[2],
+					Message: parts[3],
+				}
+			}
+		} else if currentCommit != nil {
+			// This is a continuation of the commit message (body)
+			currentCommit.Message += "\n" + line
+		}
+	}
+	
+	// Don't forget the last commit
+	if currentCommit != nil {
+		commits = append(commits, *currentCommit)
+	}
+	
+	dbg.Logf(debug.LevelBasic, "Found %d commits", len(commits))
+	
+	// Format and output the commits
+	var output strings.Builder
+	for i, commit := range commits {
+		if i > 0 {
+			output.WriteString("\n")
+		}
+		
+		// Extract just the date part (without timezone) for cleaner display
+		dateParts := strings.Fields(commit.Date)
+		cleanDate := commit.Date
+		if len(dateParts) >= 2 {
+			cleanDate = dateParts[0] + " " + dateParts[1]
+		}
+		
+		// Format the commit header in a clean, single-line format
+		// Format: [hash] YYYY-MM-DD HH:MM:SS | author | subject
+		message := strings.TrimSpace(commit.Message)
+		lines := strings.Split(message, "\n")
+		subject := lines[0]
+		if len(subject) > 80 {
+			subject = subject[:77] + "..."
+		}
+		
+		// Extract author name without email for cleaner display
+		author := commit.Author
+		if idx := strings.Index(author, " <"); idx > 0 {
+			author = author[:idx]
+		}
+		// Truncate long author names
+		if len(author) > 20 {
+			author = author[:17] + "..."
+		}
+		
+		fmt.Fprintf(&output, "[%s] %s | %-20s | %s\n", commit.Hash, cleanDate, author, subject)
+		
+		// Format the rest of the message (body) with proper indentation
+		if len(lines) > 1 {
+			for i := 1; i < len(lines); i++ {
+				line := strings.TrimSpace(lines[i])
+				if line != "" {
+					fmt.Fprintf(&output, "        %s\n", line)
+				}
+			}
+		}
+	}
+	
+	// Write to file if specified
+	if outputFile != "" && !outputToStdout {
+		if err := os.WriteFile(outputFile, []byte(output.String()), 0644); err != nil {
+			return fmt.Errorf("failed to write output file: %w", err)
+		}
+		dbg.Logf(debug.LevelBasic, "Wrote git log to %s", outputFile)
+	}
+	
+	// Write to stdout
+	fmt.Print(output.String())
+	
+	return nil
+}
+
+// GitCommit represents a single git commit
+type GitCommit struct {
+	Hash    string
+	Date    string
+	Author  string
+	Message string
 }

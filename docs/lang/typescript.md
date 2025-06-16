@@ -19,7 +19,7 @@ TypeScript support in AI Distiller is designed to capture the rich type informat
 | **Type System** | ✅ Full | Union, intersection, conditional, mapped types |
 | **Generics** | ✅ Full | With constraints, defaults, inference |
 | **Type Aliases** | ✅ Full | Including complex utility types |
-| **Imports/Exports** | ✅ Full | ES6 modules, type-only imports |
+| **Imports/Exports** | ✅ Full | ES6 modules, type-only imports, export modifiers |
 | **Enums** | ✅ Full | Const and regular enums |
 | **Decorators** | ⚠️ Partially supported | Applied to classes/methods but values not captured |
 | **Namespaces** | ❌ Not supported | Modern modules preferred |
@@ -365,17 +365,32 @@ class Service {
 
 ### Recently Fixed (December 2024)
 
-1. **Non-exported classes visibility** (✅ Fixed)
+1. **Export modifiers missing** (✅ Fixed)
+   - **Issue**: Export keywords were not captured for classes, interfaces, and functions
+   - **Fix**: Added ModifierExport throughout the IR pipeline
+   - **Impact**: Export information now properly preserved in output
+
+2. **Class syntax error** (✅ Fixed)
+   - **Issue**: Classes were formatted with `:` instead of `{` in text output
+   - **Fix**: Updated TypeScript formatter to use proper brace syntax
+   - **Impact**: Valid TypeScript-like syntax in output
+
+3. **Return type arrow syntax** (✅ Fixed)
+   - **Issue**: Return types used `->` instead of TypeScript's `:`
+   - **Fix**: Updated formatter to use TypeScript-style colon syntax
+   - **Impact**: More familiar syntax for TypeScript developers
+
+4. **Non-exported classes visibility** (✅ Fixed)
    - **Issue**: Non-exported abstract classes were filtered out in default view
    - **Fix**: Improved visibility handling for module-internal declarations
    - **Impact**: Abstract base classes now properly appear in output
 
-2. **Underscore-prefixed members** (✅ Fixed)
+5. **Underscore-prefixed members** (✅ Fixed)
    - **Issue**: Functions like `_normalizeString` appeared in default output
    - **Fix**: Added convention-based private detection for underscore prefix
    - **Impact**: Better alignment with JavaScript/TypeScript conventions
 
-3. **Top-level function visibility** (✅ Fixed)
+6. **Top-level function visibility** (✅ Fixed)
    - **Issue**: Top-level functions showed "public" prefix incorrectly
    - **Fix**: Updated formatter to omit visibility for top-level declarations
    - **Impact**: Cleaner, more idiomatic output
