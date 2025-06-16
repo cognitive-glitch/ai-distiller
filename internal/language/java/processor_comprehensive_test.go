@@ -266,19 +266,20 @@ public record Point(int x, int y) {
 		require.NoError(t, err)
 		require.NotNil(t, result)
 
-		// Records are represented as classes with ModifierData
+		// Records are represented as classes with IsRecord flag in Java extensions
 		var foundRecord *ir.DistilledClass
 		for _, child := range result.Children {
 			if class, ok := child.(*ir.DistilledClass); ok {
-				for _, mod := range class.Modifiers {
-					if mod == ir.ModifierData {
-						foundRecord = class
-						break
-					}
+				if class.Extensions != nil && 
+				   class.Extensions.Java != nil && 
+				   class.Extensions.Java.IsRecord {
+					foundRecord = class
+					break
 				}
 			}
 		}
 		assert.NotNil(t, foundRecord, "Record not found")
 		assert.Equal(t, "Point", foundRecord.Name)
+		assert.True(t, foundRecord.Extensions.Java.IsRecord, "IsRecord flag should be true")
 	})
 }
