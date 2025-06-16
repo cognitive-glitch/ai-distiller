@@ -60,6 +60,12 @@ func (p *TreeSitterProcessor) processNode(node *sitter.Node, source []byte, file
 	nodeType := node.Type()
 
 	switch nodeType {
+	case "translation_unit":
+		// Process all children of the translation unit
+		for i := 0; i < int(node.ChildCount()); i++ {
+			child := node.Child(i)
+			p.processNode(child, source, file, parent)
+		}
 	case "preproc_include":
 		p.processInclude(node, source, file)
 	case "using_declaration":
@@ -173,7 +179,7 @@ func (p *TreeSitterProcessor) processClass(node *sitter.Node, source []byte, fil
 		BaseNode: ir.BaseNode{
 			Location: p.nodeLocation(node),
 		},
-		Visibility: ir.VisibilityPrivate, // Default for C++ classes
+		Visibility: ir.VisibilityPublic, // Default for C++ classes
 		Children:   []ir.DistilledNode{},
 	}
 
