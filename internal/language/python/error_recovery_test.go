@@ -233,7 +233,7 @@ func TestErrorRecoveryOnRealFile(t *testing.T) {
 	// Test with the actual error_recovery.py test file
 	p := NewProcessor()
 	
-	file, err := p.ProcessFile("../../../test-data/input/error_recovery.py", processor.ProcessOptions{
+	file, err := p.ProcessFile("../../../testdata/input/error_recovery.py", processor.ProcessOptions{
 		IncludeComments:       true,
 		IncludeImplementation: true,
 		IncludeImports:        true,

@@ -87,7 +87,7 @@ func TestTypeScriptConstructs(t *testing.T) {
 	}
 
 	// Get test data directory
-	testDataDir := filepath.Join("..", "..", "..", "test-data", "typescript")
+	testDataDir := filepath.Join("..", "..", "..", "testdata", "typescript")
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

@@ -15,12 +15,12 @@ import (
 func FuzzProcess(f *testing.F) {
 	// Add seed corpus from our test files
 	testFiles := []string{
-		"../../../test-data/input/basic_class.py",
-		"../../../test-data/input/complex_imports.py",
-		"../../../test-data/input/decorators_and_metadata.py",
-		"../../../test-data/input/edge_cases.py",
-		"../../../test-data/input/multiline_definitions.py",
-		"../../../test-data/input/error_recovery.py",
+		"../../../testdata/input/basic_class.py",
+		"../../../testdata/input/complex_imports.py",
+		"../../../testdata/input/decorators_and_metadata.py",
+		"../../../testdata/input/edge_cases.py",
+		"../../../testdata/input/multiline_definitions.py",
+		"../../../testdata/input/error_recovery.py",
 	}
 
 	// Add contents of test files as corpus
