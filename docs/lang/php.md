@@ -1,390 +1,213 @@
 # PHP Language Support
 
-AI Distiller provides comprehensive support for PHP 7.4+ codebases using the [tree-sitter-php](https://github.com/tree-sitter/tree-sitter-php) parser, with full support for PHP 8.x features including attributes, union types, and constructor property promotion.
+AI Distiller provides comprehensive support for PHP 7.4+ codebases using the [tree-sitter-php](https://github.com/tree-sitter/tree-sitter-php) parser, with full support for PHP 8.x features including enums, attributes, union types, and PSR-19 PHPDoc standards.
 
 ## Overview
 
-PHP support in AI Distiller is designed to extract the essential structure of PHP code while preserving type information, visibility modifiers, and relationships between classes, interfaces, and traits. The distilled output maintains PHP's semantic meaning while dramatically reducing token count for AI consumption.
-
-## Core Philosophy
-
-AI Distiller models PHP code as a semantic graph, representing not just the syntax but the relationships between entities. This document explains how PHP constructs are mapped to this representation, focusing on providing AI systems with a clear understanding of your codebase's structure and API surface.
-
-## PHP Version Compatibility
-
-- **Minimum supported**: PHP 7.4
-- **Recommended**: PHP 8.0+
-- **Fully supported features**: PHP 8.0 (union types, attributes, constructor property promotion), PHP 8.1 (enums, readonly properties, intersection types), PHP 8.2 (readonly classes)
+PHP support in AI Distiller is designed to extract the essential structure of PHP code while preserving type information, visibility modifiers, and API contracts. The distilled output maintains PHP's semantic meaning while dramatically reducing token count for AI consumption.
 
 ## Supported PHP Constructs
 
-### Foundational Elements
-
-| Construct | Support Level | Notes |
-|-----------|--------------|-------|
-| **Namespaces** | ✅ Full | Including grouped use statements |
-| **Use statements** | ✅ Full | Classes, functions, constants, aliases |
-| **Strict types** | ✅ Full | `declare(strict_types=1)` preserved |
-| **File-level code** | ⚠️ Partial | Focus on OOP constructs |
-
-### Object-Oriented Constructs
+### Core Language Features
 
 | Construct | Support Level | Notes |
 |-----------|--------------|-------|
 | **Classes** | ✅ Full | Including abstract, final, readonly (8.2+) |
 | **Interfaces** | ✅ Full | Multiple inheritance supported |
-| **Traits** | ⚠️ Partial | Represented as special classes with markers |
-| **Enums** | ✅ Full | Pure and backed enums (8.1+) |
-| **Properties** | ✅ Full | Typed, readonly, promoted |
-| **Methods** | ✅ Full | Including magic methods |
-| **Constants** | ✅ Full | Class constants with visibility |
+| **Traits** | ✅ Full | Shown as special classes with usage markers |
+| **Enums** | ✅ Full | Pure and backed enums (8.1+) with values |
+| **Functions** | ✅ Full | Global functions with type hints |
+| **Methods** | ✅ Full | Including magic methods, final, abstract |
+| **Properties** | ✅ Full | Typed, readonly, promoted, magic via @property |
+| **Constants** | ✅ Full | Class constants with visibility, proper `const` syntax |
+| **Namespaces** | ✅ Full | Including grouped use statements |
 | **Attributes** | ✅ Full | PHP 8.0+ attributes/annotations |
 
 ### Type System Features
 
 | Feature | Support Level | Notes |
 |---------|--------------|-------|
-| **Type declarations** | ✅ Full | Parameters and return types |
+| **Type declarations** | ✅ Full | Parameters, returns, properties |
 | **Union types** | ✅ Full | PHP 8.0+ `string\|int` |
 | **Intersection types** | ✅ Full | PHP 8.1+ `Countable&Iterator` |
 | **Nullable types** | ✅ Full | `?string` syntax |
-| **Mixed type** | ✅ Full | Explicit `mixed` type |
-| **Array types** | ✅ Full | Via PHPDoc for specific types |
-| **Constructor promotion** | ✅ Full | PHP 8.0+ feature |
+| **Array types** | ✅ Full | Via PHPDoc: `array<K,V>`, `list<T>`, shapes |
+| **Advanced types** | ✅ Full | `class-string<T>`, `key-of<>`, `value-of<>` |
+| **Default values** | ✅ Full | Parameter defaults preserved |
+
+### PSR-19 PHPDoc Support
+
+| Annotation | Support Level | Notes |
+|------------|--------------|-------|
+| **@property** | ✅ Full | Creates virtual public properties |
+| **@property-read** | ✅ Full | Creates virtual read-only properties |
+| **@property-write** | ✅ Full | Creates virtual write-only properties |
+| **@method** | ✅ Full | Creates virtual methods |
+| **@deprecated** | ✅ Full | Marks elements as deprecated |
+| **@internal** | ✅ Full | API documentation preserved |
+| **@param** | ✅ Full | Enhanced parameter types |
+| **@return** | ✅ Full | Enhanced return types |
+| **@throws** | ✅ Full | Exception documentation |
+| **@template** | ⚠️ Partial | Preserved but not in API tags |
+| **@psalm-type** | ❌ Excluded | User preference |
+| **@phpstan-type** | ❌ Excluded | User preference |
 
 ### Visibility Rules
 
 PHP visibility in AI Distiller follows standard PHP conventions:
-- **Public**: `public` keyword or no modifier (default for methods)
+- **Public**: `public` keyword or default (methods), dunder methods (`__init__`, `__toString__`)
 - **Protected**: `protected` keyword
 - **Private**: `private` keyword
-- **Magic methods**: Always considered public (`__construct`, `__toString`, etc.)
+- **Internal**: Package-private (no PHP equivalent, unused)
 
 ## Key Features
 
-### 1. **Constructor Property Promotion**
+### 1. **Magic Property Support (PSR-19)**
 
-AI Distiller correctly extracts properties from PHP 8.0+ constructor promotion:
-
-```php
-// Input
-class User {
-    public function __construct(
-        private readonly int $id,
-        private string $name,
-        protected ?string $email = null
-    ) {}
-}
-```
-
-```
-// Output (default stripping)
-class User:
-    +__construct(id: int, name: string, email: ?string = null)
-```
-
-```
-// Output (with private members)
-class User:
-    -readonly id: int
-    -name: string
-    #email: ?string
-    +__construct(id: int, name: string, email: ?string = null)
-```
-
-### 2. **Trait Representation**
-
-Traits are represented with special markers and usage comments:
-
-```php
-// Input
-trait Timestampable {
-    private ?DateTime $createdAt = null;
-    
-    public function touch(): void {
-        $this->createdAt = new DateTime();
-    }
-}
-
-class Post {
-    use Timestampable, Sluggable;
-}
-```
-
-```
-// Output
-# PHP Trait
-trait Timestampable:
-    -createdAt: ?DateTime
-    +touch() -> void
-
-class Post:
-    # Uses traits: Timestampable, Sluggable
-```
-
-### 3. **PHPDoc Type Enhancement**
-
-PHPDoc annotations enhance type information, especially for arrays:
+AI Distiller transforms PHPDoc `@property*` annotations into virtual properties displayed directly in the class body:
 
 ```php
 // Input
 /**
- * @param Product[] $products
- * @return array<string, Product>
+ * @property-read int $id Auto-generated ID
+ * @property string $name User's full name
+ * @property-write array<string, mixed> $metadata
  */
-public function indexByName(array $products): array
+class User {
+    public function __get(string $key): mixed { /* ... */ }
+    public function __set(string $key, mixed $value): void { /* ... */ }
+}
+```
+
+```
+// Output (magic methods hidden when @property exists)
+/**
+ * @property-read int $id Auto-generated ID
+ * @property string $name User's full name
+ * @property-write array<string, mixed> $metadata
+ */
+class User {
+}
+```
+
+### 2. **Enum Support with Values**
+
+PHP 8.1+ enums are properly displayed with the `enum` keyword and their case values are always shown:
+
+```php
+// Input
+enum Status: string {
+    case DRAFT = 'draft';
+    case PUBLISHED = 'published';
+    case ARCHIVED = 'archived';
+}
+```
+
+```
+// Output (values always shown, even with --implementation=0)
+enum Status: string {
+    case DRAFT = 'draft';
+    case PUBLISHED = 'published';
+    case ARCHIVED = 'archived';
+}
+```
+
+### 3. **Advanced Type Preservation**
+
+Complex PHPDoc types are fully preserved for AI understanding:
+
+```php
+// Input
+/**
+ * @param array{
+ *   id: int,
+ *   name: non-empty-string,
+ *   tags: non-empty-list<string>,
+ *   meta?: array<string, mixed>
+ * } $data
+ * @return class-string<Model>
+ */
+public function process(array $data): string
 ```
 
 ```
 // Output
-+indexByName(products: Product[]) -> array<string, Product>
+public process(array $data): class-string<Model>
 ```
+
+### 4. **Smart Docblock Handling**
+
+API-defining docblocks are shown even when `--comments=0`:
+- Classes with `@property*`, `@method`, `@deprecated` annotations
+- Methods with enhanced type information
+- Docstrings and comments are properly separated
 
 ## Output Formats
 
 ### Text Format (Recommended for AI)
 
-The text format uses a Python-like syntax optimized for AI comprehension:
-- Clear visibility markers (`+` public, `#` protected, `-` private)
-- Type information preserved
-- Minimal syntax overhead
-- Interface implementation shown with `implements`
-- Class extension shown with parentheses
-
-## Real-World Examples
+The text format is optimized for AI comprehension with minimal syntax:
+- No visibility prefixes (unlike other languages)
+- Clear type information
+- Compact representation
+- API docblocks preserved when relevant
 
 <details open>
-<summary>Example: Basic Function and Class</summary>
+<summary>Example: PSR-19 Magic Properties</summary>
 <blockquote>
 
 <details>
-<summary>Input: `construct1_basic.php`</summary>
+<summary>Input: `magic_properties.php`</summary>
 <blockquote>
 
 ```php
 <?php
 
-declare(strict_types=1);
+namespace App\Models;
 
 /**
- * Calculates the final price after applying a discount.
- *
- * @param float $price The original price.
- * @param int $discountPercent The discount percentage.
- * @return float The price after discount.
+ * Active Record model with magic properties
+ * 
+ * @property-read int $id Primary key
+ * @property-read \DateTime $createdAt Creation timestamp
+ * @property string $name Full name
+ * @property string $email Email address
+ * @property-write string $password Hashed password (write-only)
+ * @property-read array<string, mixed> $attributes All attributes
+ * 
+ * @method static self|null find(int $id)
+ * @method static self[] findAll()
+ * @method bool save()
  */
-function calculate_final_price(float $price, int $discountPercent): float
-{
-    if ($price <= 0) {
-        return 0.0;
-    }
-
-    $discountAmount = $price * ($discountPercent / 100);
-
-    return $price - $discountAmount;
-}
-
-// A simple, empty class definition to test basic OOP parsing.
-class Product
-{
-}
-
-$bookPrice = 20.0;
-$finalPrice = calculate_final_price($bookPrice, 15);
-
-echo "Final price: " . $finalPrice;
-```
-
-</blockquote>
-</details>
-
-<details open>
-<summary>Default Output (`default output (public only, no implementation)`)</summary>
-<blockquote>
-
-```
-<file path="/home/janreges/ai-distiller/test-data/php/construct1_basic.php">
-+calculate_final_price(price: float, discountPercent: int) -> float
-
-class Product:
-</file>
-```
-
-</blockquote>
-</details>
-
-<details>
-<summary>Full Output (no stripping)</summary>
-<blockquote>
-
-```
-<file path="/home/janreges/ai-distiller/test-data/php/construct1_basic.php">
-# Calculates the final price after applying a discount.
-#
-# @param float $price The original price.
-# @param int $discountPercent The discount percentage.
-# @return float The price after discount.
-+calculate_final_price(price: float, discountPercent: int) -> float:
-    {
-        if ($price <= 0) {
-            return 0.0;
-        }
-
-        $discountAmount = $price * ($discountPercent / 100);
-
-        return $price - $discountAmount;
-    }
-# A simple, empty class definition to test basic OOP parsing.
-
-class Product:
-</file>
-```
-
-</blockquote>
-</details>
-
-</blockquote>
-</details>
-
-<details>
-<summary>Example: Constructor Property Promotion</summary>
-<blockquote>
-
-<details>
-<summary>Input: `construct2_property_promotion.php`</summary>
-<blockquote>
-
-```php
-<?php
-
-declare(strict_types=1);
-
-// Using PHP 8 Constructor Property Promotion
-class User
-{
-    public function __construct(
-        private readonly int $id,
-        private string $name,
-        private string $email
-    ) {}
-
-    public function getId(): int
-    {
-        return $this->id;
-    }
-
-    public function getDisplayName(): string
-    {
-        return "User: " . $this->name;
-    }
-
-    public function changeEmail(string $newEmail): void
-    {
-        // Basic validation logic
-        if (!filter_var($newEmail, FILTER_VALIDATE_EMAIL)) {
-            throw new InvalidArgumentException("Invalid email format provided.");
-        }
-        $this->email = $newEmail;
-    }
-}
-```
-
-</blockquote>
-</details>
-
-<details open>
-<summary>Default Output (`default output (public only, no implementation)`)</summary>
-<blockquote>
-
-```
-<file path="/home/janreges/ai-distiller/test-data/php/construct2_property_promotion.php">
-class User:
-    +__construct(id: int, name: string, email: string)
-    +getId() -> int
-    +getDisplayName() -> string
-    +changeEmail(newEmail: string) -> void
-</file>
-```
-
-</blockquote>
-</details>
-
-<details>
-<summary>Output with `--strip 'implementation'`</summary>
-<blockquote>
-
-```
-<file path="/home/janreges/ai-distiller/test-data/php/construct2_property_promotion.php">
-# Using PHP 8 Constructor Property Promotion
-
-class User:
-    -readonly id: int
-    -name: string
-    -email: string
-    +__construct(id: int, name: string, email: string)
-    +getId() -> int
-    +getDisplayName() -> string
-    +changeEmail(newEmail: string) -> void
-</file>
-```
-
-</blockquote>
-</details>
-
-</blockquote>
-</details>
-
-<details>
-<summary>Example: Interfaces and Abstract Classes</summary>
-<blockquote>
-
-<details>
-<summary>Input: `construct3_interfaces_abstract.php`</summary>
-<blockquote>
-
-```php
-<?php
-
-declare(strict_types=1);
-
-interface Loggable
-{
-    public function log(string $message): void;
-}
-
-abstract class AbstractStorage
-{
-    protected string $storagePath;
-
-    public function __construct(string $storagePath)
-    {
-        $this->storagePath = rtrim($storagePath, '/');
-    }
-
-    abstract protected function save(string $key, string $data): bool;
+abstract class ActiveRecord {
+    protected array $data = [];
     
-    final public function getStoragePath(): string
-    {
-        return $this->storagePath;
+    public function __construct(array $attributes = []) {
+        $this->fill($attributes);
+    }
+    
+    public function __get(string $name): mixed {
+        return $this->data[$name] ?? null;
+    }
+    
+    public function __set(string $name, mixed $value): void {
+        $this->data[$name] = $value;
+    }
+    
+    protected function fill(array $attributes): void {
+        $this->data = $attributes;
     }
 }
 
-class FileLogger extends AbstractStorage implements Loggable
-{
-    public function __construct(string $logDirectory)
-    {
-        parent::__construct($logDirectory);
+class User extends ActiveRecord {
+    protected string $table = 'users';
+    
+    public function getFullName(): string {
+        return $this->name;
     }
-
-    public function log(string $message): void
-    {
-        $this->save('log_' . date('Y-m-d'), $message . PHP_EOL);
-    }
-
-    protected function save(string $key, string $data): bool
-    {
-        $file = $this->storagePath . '/' . $key . '.log';
-        return file_put_contents($file, $data, FILE_APPEND) !== false;
+    
+    public function isAdmin(): bool {
+        return $this->role === 'admin';
     }
 }
 ```
@@ -393,21 +216,38 @@ class FileLogger extends AbstractStorage implements Loggable
 </details>
 
 <details open>
-<summary>Default Output (`default output (public only, no implementation)`)</summary>
+<summary>Default Output (`public only, no implementation`)</summary>
 <blockquote>
 
 ```
-<file path="/home/janreges/ai-distiller/test-data/php/construct3_interfaces_abstract.php">
-interface Loggable:
-    +log(message: string) -> void
+<file path="magic_properties.php">
+namespace App\Models;
 
-abstract class AbstractStorage:
-    +__construct(storagePath: string)
-    +final getStoragePath() -> string
+/**
+ * Active Record model with magic properties
+ * 
+ * @property-read int $id Primary key
+ * @property-read \DateTime $createdAt Creation timestamp
+ * @property string $name Full name
+ * @property string $email Email address
+ * @property-write string $password Hashed password (write-only)
+ * @property-read array<string, mixed> $attributes All attributes
+ * 
+ * @method static self|null find(int $id)
+ * @method static self[] findAll()
+ * @method bool save()
+ */
+abstract class ActiveRecord {
+    public __construct(array $attributes = [])
+    public static find(int $id): self|null
+    public static findAll(): self[]
+    public save(): bool
+}
 
-class FileLogger(AbstractStorage) implements Loggable:
-    +__construct(logDirectory: string)
-    +log(message: string) -> void
+class User extends ActiveRecord {
+    public getFullName(): string
+    public isAdmin(): bool
+}
 </file>
 ```
 
@@ -418,170 +258,73 @@ class FileLogger(AbstractStorage) implements Loggable:
 </details>
 
 <details>
-<summary>Example: Traits and Union Types</summary>
+<summary>Example: Modern PHP 8 Features</summary>
 <blockquote>
 
 <details>
-<summary>Input: `construct4_traits_union_types.php`</summary>
+<summary>Input: `modern_features.php`</summary>
 <blockquote>
 
 ```php
 <?php
 
-namespace App\Services\Notification;
+declare(strict_types=1);
 
-use App\Utils\Timestampable;
-use Psr\Log\LoggerInterface;
+namespace App\Services;
 
-class EmailPayload
-{
-    use Timestampable;
+use App\Contracts\{Cacheable, Loggable};
+use App\Enums\Permission;
 
-    public function __construct(
-        public readonly string $recipient,
-        public readonly string $subject,
-        public readonly string $body
-    ) {
-        $this->touch();
-    }
-}
-
-class Notifier
-{
-    public function __construct(private LoggerInterface $logger) {}
-
-    public function send(EmailPayload|string $payload): void
-    {
-        if (is_string($payload)) {
-            $this->logger->info("Raw string notification: {$payload}");
-            return;
-        }
-
-        $this->logger->info(
-            "Sending email to {$payload->recipient} with subject '{$payload->subject}'"
-        );
-    }
-}
-
-namespace App\Utils;
-
-trait Timestampable
-{
-    private ?\DateTimeImmutable $createdAt = null;
-
-    public function touch(): void
-    {
-        if ($this->createdAt === null) {
-            $this->createdAt = new \DateTimeImmutable();
-        }
-    }
-
-    public function getCreationDate(): ?\DateTimeImmutable
-    {
-        return $this->createdAt;
-    }
-}
-```
-
-</blockquote>
-</details>
-
-<details open>
-<summary>Default Output (`default output (public only, no implementation)`)</summary>
-<blockquote>
-
-```
-<file path="/home/janreges/ai-distiller/test-data/php/construct4_traits_union_types.php">
-import App\Utils\Timestampable
-import Psr\Log\LoggerInterface
-
-class EmailPayload:
-    # Uses traits: Timestampable
-    +readonly recipient: string
-    +readonly subject: string
-    +readonly body: string
-    +__construct(recipient: string, subject: string, body: string)
-
-class Notifier:
-    +__construct(logger: LoggerInterface)
-    +send(payload: EmailPayload|string) -> void
-# PHP Trait
-
-trait Timestampable:
-    +touch() -> void
-    +getCreationDate() -> ?\DateTimeImmutable
-</file>
-```
-
-</blockquote>
-</details>
-
-</blockquote>
-</details>
-
-<details>
-<summary>Example: Attributes and Complex Interfaces</summary>
-<blockquote>
-
-<details>
-<summary>Input: `construct5_very_complex.php`</summary>
-<blockquote>
-
-```php
-<?php
-
-namespace App\Data\Repositories;
-
-use App\Data\Models\Product;
-use App\Data\Contracts\{Cacheable, Deletable};
-use App\Data\Traits\HasSoftDeletes;
-use \Serializable;
-
+/**
+ * User service with modern PHP 8 features
+ */
 #[\Attribute(\Attribute::TARGET_CLASS)]
-class RepositoryConfig
-{
-    public function __construct(public string $model) {}
+class Service {
+    public function __construct(
+        public readonly string $name,
+        public readonly int $version = 1
+    ) {}
 }
 
-interface FindableById
-{
-    public function find(int $id);
+#[Service(name: 'notifications', version: 2)]
+class NotificationService implements Cacheable, Loggable {
+    public function __construct(
+        private readonly DatabaseConnection $db,
+        private readonly CacheInterface $cache,
+        private LoggerInterface $logger,
+        private bool $debug = false
+    ) {}
+    
+    public function send(
+        string|Email $message,
+        User|string $recipient,
+        ?array $options = null
+    ): Result|false {
+        // Implementation
+        return new Result(true);
+    }
+    
+    public function hasPermission(
+        User $user,
+        Permission $permission
+    ): bool {
+        return match($permission) {
+            Permission::READ => true,
+            Permission::WRITE => $user->isAdmin(),
+            Permission::DELETE => $user->isSuperAdmin(),
+        };
+    }
 }
 
-#[RepositoryConfig(model: Product::class)]
-class ProductRepository extends BaseRepository implements FindableById, Cacheable, Deletable, Serializable
-{
-    use HasSoftDeletes;
+enum Permission: string {
+    case READ = 'read';
+    case WRITE = 'write';
+    case DELETE = 'delete';
+}
 
-    private static int $queryCount = 0;
-    protected array $searchableFields = ['name', 'sku'];
-
-    public function __construct()
-    {
-        parent::__construct(Product::class);
-    }
-
-    public function find(int $id): ?Product
-    {
-        self::$queryCount++;
-        if ($id === 1) {
-            return new Product(1, 'Laptop', 1500.00);
-        }
-        return null;
-    }
-
-    /**
-     * @return Product[]
-     */
-    public function findBy(string $field, mixed $value): array
-    {
-        self::$queryCount++;
-        return [new Product(1, 'Laptop', 1500.00)];
-    }
-
-    public function clearCache(): bool { return true; }
-    public function serialize(): string { return ''; }
-    public function unserialize(string $data): void { }
+interface CacheInterface {
+    public function get(string $key): mixed;
+    public function set(string $key, mixed $value, ?int $ttl = null): bool;
 }
 ```
 
@@ -589,34 +332,43 @@ class ProductRepository extends BaseRepository implements FindableById, Cacheabl
 </details>
 
 <details open>
-<summary>Default Output (`default output (public only, no implementation)`)</summary>
+<summary>Default Output (`public only, no implementation`)</summary>
 <blockquote>
 
 ```
-<file path="/home/janreges/ai-distiller/test-data/php/construct5_very_complex.php">
-import App\Data\Models\Product
-import App\Data\Contracts\Cacheable
-import App\Data\Contracts\Deletable
-import App\Data\Traits\HasSoftDeletes
-import \Serializable
+<file path="modern_features.php">
+namespace App\Services;
+use App\Contracts\Cacheable;
+use App\Contracts\Loggable;
+use App\Enums\Permission;
 
-@\Attribute(\Attribute::TARGET_CLASS)
-class RepositoryConfig:
-    +model: string
-    +__construct(model: string)
+/**
+ * User service with modern PHP 8 features
+ */
+#[\Attribute(\Attribute::TARGET_CLASS)]
+class Service {
+    public readonly name: string
+    public readonly version: int
+    public __construct(string $name, int $version = 1)
+}
 
-interface FindableById:
-    +find(id: int) -> object|null
+#[Service(name: 'notifications', version: 2)]
+class NotificationService implements Cacheable, Loggable {
+    public __construct(DatabaseConnection $db, CacheInterface $cache, LoggerInterface $logger, bool $debug = false)
+    public send(string|Email $message, User|string $recipient, ?array $options = null): Result|false
+    public hasPermission(User $user, Permission $permission): bool
+}
 
-@RepositoryConfig(model: Product::class)
-class ProductRepository(BaseRepository) implements FindableById, Cacheable, Deletable, Serializable:
-    # Uses traits: HasSoftDeletes
-    +__construct()
-    +find(id: int) -> ?Product
-    +findBy(field: string, value: mixed) -> Product[]
-    +clearCache() -> bool
-    +serialize() -> string
-    +unserialize(data: string) -> void
+enum Permission: string {
+    case READ = 'read';
+    case WRITE = 'write';
+    case DELETE = 'delete';
+}
+
+interface CacheInterface {
+    public get(string $key): mixed
+    public set(string $key, mixed $value, ?int $ttl = null): bool
+}
 </file>
 ```
 
@@ -626,114 +378,230 @@ class ProductRepository(BaseRepository) implements FindableById, Cacheable, Dele
 </blockquote>
 </details>
 
-## Representation Model and Limitations
+<details>
+<summary>Example: Complex Type Annotations</summary>
+<blockquote>
 
-### Trait Representation
+<details>
+<summary>Input: `complex_types.php`</summary>
+<blockquote>
 
-**Model**: Traits are represented as a distinct entity type marked with a special comment. Classes using traits have a comment indicating trait usage.
+```php
+<?php
 
-**Rationale**: This model captures the composition relationship while maintaining clarity about what is a trait versus a class.
+namespace App\Types;
 
-**Limitations**:
-- Trait conflict resolution (`insteadof`, `as`) is not represented
-- Method visibility changes when using traits are not shown
-- Trait precedence rules are implicit
+/**
+ * Repository with complex type annotations
+ */
+class Repository {
+    /**
+     * Find entities by criteria
+     * 
+     * @param array{
+     *   where?: array<string, mixed>,
+     *   orderBy?: array<string, 'ASC'|'DESC'>,
+     *   limit?: positive-int,
+     *   offset?: non-negative-int
+     * } $criteria
+     * @return list<Entity>
+     */
+    public function findBy(array $criteria): array {
+        // Implementation
+    }
+    
+    /**
+     * @param class-string<T> $className
+     * @param array<string, mixed> $data
+     * @return T
+     * @template T of Entity
+     */
+    public function hydrate(string $className, array $data): object {
+        return new $className($data);
+    }
+    
+    /**
+     * @param callable(Entity): bool $predicate
+     * @return Entity|null
+     */
+    public function findOneBy(callable $predicate): ?Entity {
+        // Implementation
+    }
+    
+    /**
+     * @param non-empty-array<int> $ids
+     * @return array<int, Entity>
+     */
+    public function findByIds(array $ids): array {
+        // Implementation
+    }
+    
+    /**
+     * @param key-of<self::ALLOWED_FIELDS> $field
+     * @param value-of<self::ALLOWED_VALUES> $value
+     */
+    public function validateField(string $field, mixed $value): bool {
+        // Implementation
+    }
+    
+    public const ALLOWED_FIELDS = [
+        'name' => true,
+        'email' => true,
+        'status' => true
+    ];
+    
+    public const ALLOWED_VALUES = [
+        'active',
+        'inactive',
+        'pending'
+    ];
+}
+```
 
-### Dynamic Constructs Not Supported
+</blockquote>
+</details>
 
-AI Distiller performs static analysis and cannot resolve:
-- `eval()` and `create_function()`
-- Variable variables (`$$foo`), variable functions (`$func()`)
-- Variable class instantiation (`new $class()`)
-- Dynamic `include`/`require` paths
-- Runtime-resolved method calls
+<details open>
+<summary>Default Output</summary>
+<blockquote>
 
-### Framework Magic
+```
+<file path="complex_types.php">
+namespace App\Types;
 
-AI Distiller does not execute framework bootstrapping:
-- **Laravel**: Facades and Service Container resolutions are not traced
-- **Symfony**: Dependency Injection container wirings are not resolved
-- **Doctrine**: Entity relationships defined via attributes/annotations are preserved but not interpreted
+/**
+ * Repository with complex type annotations
+ */
+class Repository {
+    public findBy(array $criteria): list<Entity>
+    public hydrate(class-string<T> $className, array<string, mixed> $data): T
+    public findOneBy(callable(Entity): bool $predicate): ?Entity
+    public findByIds(non-empty-array<int> $ids): array<int, Entity>
+    public validateField(key-of<self::ALLOWED_FIELDS> $field, value-of<self::ALLOWED_VALUES> $value): bool
+    
+    public const ALLOWED_FIELDS = [
+        'name' => true,
+        'email' => true,
+        'status' => true
+    ];
+    
+    public const ALLOWED_VALUES = [
+        'active',
+        'inactive',
+        'pending'
+    ];
+}
+</file>
+```
+
+</blockquote>
+</details>
+
+</blockquote>
+</details>
+
+## Known Issues
+
+### Critical Issues
+
+1. **Empty constructors hidden** (🟢 Intentional)
+   - **Behavior**: Constructors without parameters are not shown
+   - **Rationale**: Reduces noise in output
+   - **Impact**: Minimal - empty constructors have no API significance
+
+### Minor Issues
+
+2. **Template annotations excluded** (🟢 Minor)
+   - **Issue**: `@template` tags not in API-defining list
+   - **Impact**: Generic type information in docblock only
+   - **Workaround**: Templates are rarely used in PHP
+
+3. **Complex array shapes in parameters** (🟡 Minor)
+   - **Issue**: Array shape types shown in docblock, not signature
+   - **Example**: `@param array{id: int, name: string} $data`
+   - **Status**: Preserving PHPDoc is sufficient for AI
 
 ## Best Practices
 
-### 1. **Use Strict Types and Type Declarations**
+### 1. **Use PSR-19 Annotations for Virtual APIs**
 
-```php
-<?php
-declare(strict_types=1);
-
-// Good - Full type information preserved
-public function process(array $data, ProcessOptions $options): Result {
-    // ...
-}
-
-// Less optimal - Generic array type
-public function process($data, $options) {
-    // ...
-}
-```
-
-### 2. **Leverage PHPDoc for Array Types**
+Define public APIs through PHPDoc when using magic methods:
 
 ```php
 /**
- * @param Product[] $products Array of products
- * @param array<string, int> $quantities Map of SKU to quantity
- * @return array{total: float, items: Product[]}
+ * @property-read int $id
+ * @property string $name  
+ * @method static self create(array $data)
  */
-public function calculateOrder(array $products, array $quantities): array
+class Model {
+    // Magic methods implementation
+}
 ```
 
-### 3. **Use PHP 8+ Features**
+### 2. **Leverage PHP 8+ Features**
 
-Constructor property promotion and union types provide cleaner, more maintainable code:
+Modern PHP features provide better type safety and cleaner code:
 
 ```php
-// PHP 8+ - Cleaner and fully supported
+// Constructor property promotion
 public function __construct(
-    private readonly int $id,
-    private string $name,
-    private Status $status = Status::ACTIVE
+    private readonly LoggerInterface $logger,
+    private CacheInterface $cache,
+    private bool $debug = false
 ) {}
 
-// Older style - More verbose
-private int $id;
-private string $name;
-private Status $status;
+// Union types instead of mixed
+public function process(string|array $data): Result|false
 
-public function __construct(int $id, string $name, Status $status = Status::ACTIVE) {
-    $this->id = $id;
-    $this->name = $name;
-    $this->status = $status;
+// Enums with backed values
+enum Status: string {
+    case ACTIVE = 'active';
+    case INACTIVE = 'inactive';
 }
+```
+
+### 3. **Document Array Types Precisely**
+
+Use PHPDoc to specify array structures:
+
+```php
+/**
+ * @param Product[] $products Simple array of products
+ * @param array<string, Product> $indexed Associative array
+ * @param list<string> $tags Non-empty list
+ * @param array{id: int, name: string} $user Shape definition
+ */
 ```
 
 ### 4. **Structure for AI Consumption**
 
-- Keep classes focused (under 500 lines)
-- Use meaningful names (they're preserved!)
+- Keep classes under 500 lines
+- Use meaningful names (preserved in output!)
 - Group related functionality in namespaces
-- Prefer composition over deep inheritance
+- Document complex types in PHPDoc
+- Hide implementation details with `--implementation=0`
 
 ## Integration Examples
 
-### CLI Usage
+### Direct CLI Usage
 
 ```bash
-# Generate optimal context for AI assistants
-aid ./src --format text \
-    --strip "non-public,implementation,comments" \
-    --output context.txt
+# Extract public API for AI context
+aid ./src --format text --implementation=0 --output api.txt
 
-# Extract public API only
-aid ./src --strip "non-public" --format text > public-api.txt
+# Include all members but no implementation
+aid ./src --private=1 --protected=1 --implementation=0
 
-# Full structure with implementations
-aid ./src --format text > full-structure.txt
+# Full extraction with implementations
+aid ./src --private=1 --protected=1 --implementation=1
+
+# Extract specific directory
+aid ./src/Models --format text > models.txt
 ```
 
-### MCP Integration with Claude
+### MCP Integration with Claude Desktop
+
+When using AI Distiller through MCP, Claude can directly access your PHP codebase:
 
 **Setup** (in Claude Desktop config.json):
 ```json
@@ -752,184 +620,181 @@ aid ./src --format text > full-structure.txt
 
 **Example Conversation:**
 
-> **You**: Show me the structure of our authentication system and identify where we could add two-factor authentication.
+> **You**: Analyze our user authentication system and suggest improvements for adding OAuth support.
 
-> **Claude**: I'll analyze your authentication system structure.
+> **Claude**: I'll analyze your authentication system structure using AI Distiller.
 
 *Claude automatically calls:*
 ```
-distillDirectory("src/Auth", strip_implementation=true)
-search("class.*Auth.*", is_regex=true)
+distillDirectory("src/Auth", include_private=false, include_implementation=false)
+search("OAuth|oauth", is_regex=true)
+distillFile("src/Auth/AuthManager.php")
 ```
 
-> Based on the distilled structure, I can see your authentication system has:
+*Claude receives the distilled structure and responds:*
+
+> Based on the analysis, your authentication system has:
 >
+> **Current Structure:**
 > ```
-> AuthenticationService:
->   + __construct(UserRepository $users, TokenGenerator $tokens)
+> AuthManager:
 >   + authenticate(string $username, string $password): ?User
 >   + createSession(User $user): Session
->   + validateSession(string $token): ?Session
+>   + validateToken(string $token): bool
 >   
 > User:
+>   @property-read int $id
+>   @property string $email
+>   @property-write string $password
 >   + verifyPassword(string $password): bool
->   + updateLastLogin(): void
 > ```
 >
-> For two-factor authentication, I recommend:
-> 1. Add a `TwoFactorProvider` interface
-> 2. Extend `AuthenticationService::authenticate()` to return an intermediate state
-> 3. Add fields to the `User` entity for 2FA configuration
+> **OAuth Integration Recommendations:**
+>
+> 1. Create an `AuthProvider` interface:
+> ```php
+> interface AuthProvider {
+>     public function authenticate(array $credentials): ?User;
+>     public function getUserInfo(string $token): array;
+> }
+> ```
+>
+> 2. Implement OAuth providers:
+> ```php
+> class GoogleOAuthProvider implements AuthProvider { }
+> class GitHubOAuthProvider implements AuthProvider { }
+> ```
+>
+> 3. Extend `AuthManager` to support multiple providers...
 
-### Composer Integration
+### With Laravel/Symfony
+
+```bash
+# Extract Laravel models structure
+aid app/Models --format text --implementation=0 > models-api.txt
+
+# Symfony entities with full details  
+aid src/Entity --private=1 --protected=1 > entities-full.txt
+
+# Controllers public API only
+aid src/Controller --implementation=0 > controllers-api.txt
+```
+
+### CI/CD Integration
+
+```yaml
+# .github/workflows/api-check.yml
+- name: Check API Surface
+  run: |
+    aid src/ --implementation=0 --format text > api-current.txt
+    diff api-baseline.txt api-current.txt || {
+      echo "API surface changed! Review the differences:"
+      diff -u api-baseline.txt api-current.txt
+      exit 1
+    }
+```
+
+### Composer Scripts
 
 ```json
 {
   "scripts": {
-    "analyze:structure": "aid src/ --format json > structure.json",
-    "analyze:api": "aid src/ --private=0 --protected=0 --internal=0,implementation --format text > api.txt",
-    "pre-commit": [
-      "@analyze:api",
-      "git diff --quiet api.txt || echo 'API surface changed!'"
-    ]
+    "analyze": "aid src/ --format text > structure.txt",
+    "analyze:api": "aid src/ --implementation=0 > api.txt",
+    "analyze:full": "aid src/ --private=1 --protected=1 --implementation=1 > full.txt"
   }
 }
 ```
 
-### PHPStan/Psalm Complementary Usage
+## Language-Specific Tips
 
-AI Distiller complements static analyzers:
+1. **Magic Properties Best Practices**:
+   ```php
+   /**
+    * Always document magic properties
+    * @property-read int $computed This is computed dynamically
+    * @property-write array $bulk Write-only for bulk updates
+    */
+   ```
 
-```bash
-# First, ensure code quality
-vendor/bin/phpstan analyze
-vendor/bin/psalm
+2. **Enum Usage**:
+   ```php
+   // Backed enums are fully supported
+   enum Status: string {
+       case ACTIVE = 'active';
+   }
+   
+   // Use match expressions with enums
+   return match($status) {
+       Status::ACTIVE => 'Running',
+   };
+   ```
 
-# Then extract structure for AI
-aid src/ --format text --private=0 --protected=0 --internal=0,implementation > structure.txt
-
-# Use both for comprehensive analysis
-echo "Code quality checked. Structure extracted for AI analysis."
-```
-
-## Framework-Specific Considerations
-
-### Laravel
-
-```php
-// Routes, middleware, and service providers need manual documentation
-// AI Distiller sees the structure but not the wiring
-
-// Add explicit type hints for better extraction
-public function handle(Request $request, Closure $next): Response
-{
-    // ...
-}
-```
-
-### Symfony
-
-```php
-// Use constructor injection over property injection
-public function __construct(
-    private LoggerInterface $logger,
-    private EntityManagerInterface $em
-) {}
-
-// Attributes are preserved
-#[Route('/api/products', methods: ['GET'])]
-public function list(): JsonResponse
-```
-
-### WordPress
-
-```php
-// Use modern PHP features where possible
-class CustomPostType 
-{
-    public function __construct(
-        private string $postType,
-        private array $args = []
-    ) {
-        add_action('init', [$this, 'register']);
-    }
-}
-```
-
-## Troubleshooting
-
-### "Parser failed" errors
-
-Ensure your PHP syntax is valid:
-```bash
-php -l yourfile.php
-```
-
-### Missing type information
-
-1. Add explicit type declarations
-2. Use PHPDoc for array types
-3. Upgrade to PHP 7.4+ for property types
-
-### Trait methods not showing
-
-Traits are shown separately. Look for:
-- `# PHP Trait` marker
-- `# Uses traits: TraitName` in classes
-
-### Large files timing out
-
-Split large files or increase timeout:
-```bash
-aid large-file.php --timeout 60000
-```
-
-## Performance Considerations
-
-- Files are processed in parallel
-- Large codebases (10k+ files) process in seconds
-- Memory usage is proportional to file count, not size
-- Tree-sitter parsing is highly optimized
-
-## Security and Safety
-
-AI Distiller never executes code:
-- Safe to run on any codebase
-- No risk of side effects
-- Credentials in code are preserved (sanitize before sharing!)
+3. **Type Documentation**:
+   ```php
+   /**
+    * Document complex types in PHPDoc
+    * @param array{
+    *   id: int,
+    *   items: list<Product>,
+    *   total: float
+    * } $order
+    */
+   ```
 
 ## Comparison with Other Tools
 
 | Tool | Purpose | PHP Support | AI-Optimized |
 |------|---------|-------------|--------------|
-| **AI Distiller** | Structure extraction | Full 7.4-8.3 | ✅ Yes |
+| **AI Distiller** | Code structure extraction | Full 7.4-8.3 | ✅ Yes |
 | PHPStan | Static analysis | Full | ❌ No |
-| Psalm | Static analysis | Full | ❌ No |
 | PHP-Parser | AST generation | Full | ❌ No |
-| phpDocumentor | Documentation | Full | ❌ No |
+| phpDocumentor | Documentation | Partial | ❌ No |
+| PHP CS Fixer | Code formatting | N/A | ❌ No |
 
-## Contributing
+## Troubleshooting
 
-Help improve PHP support! Key areas:
+### "Magic properties not showing"
 
-1. **Trait conflict resolution** - Implement `insteadof`/`as` support
-2. **Anonymous classes** - Add full support
-3. **Enum methods** - Enhance enum parsing
-4. **Performance optimizations** - Large file handling
-5. **Framework patterns** - Recognize common patterns
+Ensure your class has @property annotations in its docblock:
+```php
+/**
+ * @property-read int $id
+ */
+class Model { }
+```
 
-See [CONTRIBUTING.md](../../CONTRIBUTING.md) for guidelines.
+### "Enum showing as class"
+
+Update to latest version. Enums now display with proper `enum` keyword.
+
+### "Missing parameter defaults"
+
+Default values are now preserved. Update if seeing issues.
+
+### "Complex types not preserved"
+
+PHPDoc types like `array<K,V>`, `class-string<T>` are fully supported in latest version.
 
 ## Future Enhancements
 
-- [ ] Full trait conflict resolution support
-- [ ] Anonymous class extraction
-- [ ] Closure and arrow function analysis
-- [ ] `@template` PHPDoc support for generics
-- [ ] Framework-specific adapters
-- [ ] PHP 8.3 typed class constants
-- [ ] `.phpstorm.meta.php` integration
+- [ ] Capture `@param` array shapes in method signatures
+- [ ] Anonymous class support
+- [ ] Closure and arrow function type extraction
+- [ ] `@template` as API-defining tag
+- [ ] Trait conflict resolution (`as`, `insteadof`)
+- [ ] Property hooks (PHP 8.4+)
+
+## Contributing
+
+Help improve PHP support! See [CONTRIBUTING.md](../../CONTRIBUTING.md) for guidelines.
+
+Key areas needing help:
+- Complex PHPDoc patterns
+- Framework-specific patterns
+- Performance optimizations
+- Real-world test cases
 
 ---
 
-<sub>Documentation generated for AI Distiller v0.2.0 - PHP Support</sub>
+<sub>Documentation generated for AI Distiller v0.2.0</sub>
