@@ -9,8 +9,5 @@ public class Basic {
      * Standard Java entry point. @param args Command line arguments (unused).
      */
     public static void main(String[] args);
-    /**
-     * A private helper method to test visibility and method invocation.
-     */
 }
 </file>

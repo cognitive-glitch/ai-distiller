@@ -18,8 +18,5 @@ public class Basic {
                 }
             }
     }
-    /**
-     * A private helper method to test visibility and method invocation.
-     */
 }
 </file>
