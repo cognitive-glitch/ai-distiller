@@ -11,7 +11,5 @@ pub mod settings {
     // This function is public and can be called from outside `settings`.
 
     pub fn get_version() -> String
-    // Internal utility for debug builds
-    // Private helper for version validation
 }
 </file>

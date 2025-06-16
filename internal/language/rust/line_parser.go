@@ -899,8 +899,8 @@ func (p *LineParser) parseParameters(params string) []ir.Parameter {
 			continue
 		}
 		
-		// Handle self parameters - exact match check
-		if part == "self" || part == "&self" || part == "&mut self" {
+		// Handle self parameters - including lifetime parameters
+		if p.isSelfParameter(part) {
 			parameters = append(parameters, ir.Parameter{
 				Name: part,
 			})
@@ -962,6 +962,35 @@ func (p *LineParser) splitParameterList(params string) []string {
 	}
 	
 	return parts
+}
+
+// isSelfParameter checks if a parameter is a self parameter (including lifetime params)
+func (p *LineParser) isSelfParameter(param string) bool {
+	param = strings.TrimSpace(param)
+	
+	// Exact matches for common patterns
+	if param == "self" || param == "&self" || param == "&mut self" {
+		return true
+	}
+	
+	// Handle lifetime parameters like &'a self, &'a mut self
+	if strings.HasPrefix(param, "&") {
+		// Remove the & and check if it ends with "self" or "mut self"
+		rest := strings.TrimSpace(param[1:])
+		if rest == "self" {
+			return true
+		}
+		
+		// Handle &'lifetime self or &'lifetime mut self
+		if strings.Contains(rest, "'") && strings.HasSuffix(rest, " self") {
+			return true
+		}
+		if strings.Contains(rest, "'") && strings.HasSuffix(rest, " mut self") {
+			return true
+		}
+	}
+	
+	return false
 }
 
 // skipBlock skips over a code block by counting braces

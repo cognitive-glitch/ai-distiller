@@ -50,18 +50,12 @@ impl AnalysisService {
                 Ok(is_valid)
             }
     }
-    // Internal unsafe method for advanced operations
-    // Private async method
 }
 // Advanced trait with async methods
 
 pub trait AsyncProcessor {
     type Item;
     type Error;
-
-    pub async fn process_async(&self, item: Self::Item) -> Result<String, Self::Error>
-
-    pub async fn batch_process(&self, items: Vec<Self::Item>) -> Vec<Result<String, Self::Error>>
 }
 // Implementation for the analysis service
 
@@ -84,6 +78,5 @@ impl FFIData {
                 self.integer
             }
     }
-    // Private unsafe method
 }
 </file>

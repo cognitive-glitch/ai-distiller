@@ -8,7 +8,7 @@ pub struct SourceFile {
 
 pub trait Summarizable {
 
-    pub fn summary(&self) -> String
+    fn summary(&self) -> String
 
     pub fn short_summary(&self) -> String
 }
@@ -33,8 +33,6 @@ impl SourceFile {
                 self.lines_of_code
             }
     }
-    // Internal method for processing
-    // Private validation method
 }
 
 impl Summarizable for SourceFile {
@@ -44,9 +42,9 @@ impl Summarizable for SourceFile {
 pub trait FileOperations {
     type Error;
 
-    pub fn read_content(&self) -> Result<&str, Self::Error>
+    fn read_content(&self) -> Result<&str, Self::Error>
 
-    pub fn write_content(&mut self, content: String) -> Result<(), Self::Error>
+    fn write_content(&mut self, content: String) -> Result<(), Self::Error>
 }
 // Error type for file operations
 

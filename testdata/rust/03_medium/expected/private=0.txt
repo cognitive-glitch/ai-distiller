@@ -13,9 +13,9 @@ pub enum AnalysisError {
 pub trait DataSource {
     type Content: AsRef<[u8]>;
 
-    pub fn get_content(&self) -> Result<Self::Content, AnalysisError>
+    fn get_content(&self) -> Result<Self::Content, AnalysisError>
 
-    pub fn content_slice<'a>() -> Option<&'a [u8]> where Self::Content: 'a
+    pub fn content_slice<'a>(&'a self) -> Option<&'a [u8]> where Self::Content: 'a
 }
 // A generic container for an analysis result.
 // It's generic over the type `T` which must implement `Display`.
@@ -26,8 +26,6 @@ impl AnalysisResult<T> {
     // Create new analysis result
 
     pub fn new(source_id: String, result: T) -> Self
-    // Private validation method
-    // Internal metadata setter
 }
 // A generic function with a lifetime `'a` and trait bounds.
 // It analyzes a data source and returns a result.

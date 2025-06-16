@@ -43,10 +43,6 @@ impl AnalysisService {
 pub trait AsyncProcessor {
     type Item;
     type Error;
-
-    pub async fn process_async(&self, item: Self::Item) -> Result<String, Self::Error>
-
-    pub async fn batch_process(&self, items: Vec<Self::Item>) -> Vec<Result<String, Self::Error>>
 }
 // Implementation for the analysis service
 

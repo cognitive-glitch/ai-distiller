@@ -20,7 +20,5 @@ pub mod settings {
                 }
             }
     }
-    // Internal utility for debug builds
-    // Private helper for version validation
 }
 </file>

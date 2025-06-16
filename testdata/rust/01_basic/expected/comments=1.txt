@@ -16,7 +16,5 @@ pub mod settings {
     pub fn get_version() -> String
     // A private function, only callable within the `settings` module.
     // The parser should correctly identify its scope and visibility.
-    // Internal utility for debug builds
-    // Private helper for version validation
 }
 </file>
