@@ -406,7 +406,13 @@ func (p *TreeSitterProcessor) processMethodDeclaration(node *sitter.Node, source
 		case "throws":
 			p.extractThrows(child, source, method)
 		case "block":
-			method.Implementation = string(source[child.StartByte():child.EndByte()])
+			// Extract block content without the outer braces
+			blockText := string(source[child.StartByte():child.EndByte()])
+			if strings.HasPrefix(blockText, "{") && strings.HasSuffix(blockText, "}") {
+				// Remove outer braces and trim whitespace
+				blockText = strings.TrimSpace(blockText[1 : len(blockText)-1])
+			}
+			method.Implementation = blockText
 		}
 	}
 
@@ -447,7 +453,13 @@ func (p *TreeSitterProcessor) processConstructorDeclaration(node *sitter.Node, s
 		case "throws":
 			p.extractThrows(child, source, constructor)
 		case "constructor_body":
-			constructor.Implementation = string(source[child.StartByte():child.EndByte()])
+			// Extract constructor body content without the outer braces
+			bodyText := string(source[child.StartByte():child.EndByte()])
+			if strings.HasPrefix(bodyText, "{") && strings.HasSuffix(bodyText, "}") {
+				// Remove outer braces and trim whitespace
+				bodyText = strings.TrimSpace(bodyText[1 : len(bodyText)-1])
+			}
+			constructor.Implementation = bodyText
 		}
 	}
 
