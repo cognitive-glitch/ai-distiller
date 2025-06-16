@@ -209,7 +209,7 @@ func (p BaseProcessor) CanProcess(filename string) bool {
 // ToStripperOptions converts ProcessOptions to stripper.Options
 func (opts ProcessOptions) ToStripperOptions() stripper.Options {
 	return stripper.Options{
-		RemovePrivate:         !opts.IncludePrivate && !opts.RemovePrivateOnly && !opts.RemoveProtectedOnly && !opts.RemoveInternalOnly,
+		RemovePrivate:         !opts.IncludePrivate,
 		RemovePrivateOnly:     opts.RemovePrivateOnly,
 		RemoveProtectedOnly:   opts.RemoveProtectedOnly,
 		RemoveInternalOnly:    opts.RemoveInternalOnly,

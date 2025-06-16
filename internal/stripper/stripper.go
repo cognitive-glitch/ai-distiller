@@ -120,6 +120,9 @@ func (s *Stripper) visitFile(n *ir.DistilledFile) *ir.DistilledFile {
 		}
 	}
 	
+	// Post-process to remove orphaned docstrings
+	result.Children = s.removeOrphanedDocstrings(result.Children)
+	
 	return result
 }
 
@@ -180,6 +183,9 @@ func (s *Stripper) visitClass(n *ir.DistilledClass) ir.DistilledNode {
 			result.Children = append(result.Children, visited)
 		}
 	}
+	
+	// Post-process to remove orphaned docstrings
+	result.Children = s.removeOrphanedDocstrings(result.Children)
 	
 	return result
 }
@@ -363,4 +369,48 @@ func (s *Stripper) shouldRemoveByVisibility(name string, visibility ir.Visibilit
 	
 	// Default to not removing
 	return false
+}
+
+// removeOrphanedDocstrings removes docstring comments that appear to be orphaned
+// (i.e., not followed by any declaration they could be documenting)
+func (s *Stripper) removeOrphanedDocstrings(children []ir.DistilledNode) []ir.DistilledNode {
+	if len(children) == 0 {
+		return children
+	}
+	
+	result := make([]ir.DistilledNode, 0, len(children))
+	
+	for i, child := range children {
+		// Check if this is a docstring comment
+		if comment, ok := child.(*ir.DistilledComment); ok && comment.Format == "doc" {
+			// Check if this docstring is followed by a declaration
+			hasFollowingDeclaration := false
+			for j := i + 1; j < len(children); j++ {
+				next := children[j]
+				switch next.(type) {
+				case *ir.DistilledFunction, *ir.DistilledField, *ir.DistilledClass, 
+					 *ir.DistilledInterface, *ir.DistilledStruct, *ir.DistilledEnum:
+					hasFollowingDeclaration = true
+					break
+				case *ir.DistilledComment:
+					// Skip other comments
+					continue
+				default:
+					// Stop at first non-comment
+					break
+				}
+			}
+			
+			// If it's the last element and it's a docstring, it's likely orphaned
+			// OR if there's no following declaration, it's orphaned
+			if !hasFollowingDeclaration {
+				// Skip this orphaned docstring
+				continue
+			}
+		}
+		
+		result = append(result, child)
+	}
+	
+	return result
 }

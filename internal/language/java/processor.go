@@ -53,7 +53,6 @@ func (p *Processor) ProcessWithOptions(ctx context.Context, reader io.Reader, fi
 
 	// Only strip if there's something to strip
 	if stripperOpts.HasAnyOption() {
-
 		s := stripper.New(stripperOpts)
 		stripped := result.Accept(s)
 		if strippedFile, ok := stripped.(*ir.DistilledFile); ok {
