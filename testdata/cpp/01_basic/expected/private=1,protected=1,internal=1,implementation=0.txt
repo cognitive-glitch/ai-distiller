@@ -5,40 +5,40 @@
 class Point {
     void Point()
     void Point(double x, double y)
-    void Point(Point& other)
+    void Point(const Point& other)
     virtual void ~Point()
-    double getX()
-    double getY()
+    double getX() const
+    double getY() const
     void setX(double x)
     void setY(double y)
-    virtual double distanceFromOrigin()
-    bool validateCoordinates()
+    virtual double distanceFromOrigin() const
+    bool validateCoordinates() const
     double x_;
     double y_;
     void internalCalculation()
 };
 class Point3D : public Point {
     void Point3D(double x, double y, double z)
-    double getZ()
+    double getZ() const
     void setZ(double z)
-    double distanceFromOrigin()
+    double distanceFromOrigin() const
     double z_;
 };
 template<typename T>
 class Container {
-    void Container(T& value)
-    T () const
-    void setValue(T& value)
+    void Container(const T& value)
+    const T& getValue() const
+    void setValue(const T& value)
     T value_;
 };
 template<typename T>
-T max(T& a, T& b) {
+T max(const T& a, const T& b) {
     {
             return (a > b) ? a : b;
         }
 }
 template<typename T>
-T min(T& a, T& b) {
+T min(const T& a, const T& b) {
     {
             return (a < b) ? a : b;
         }

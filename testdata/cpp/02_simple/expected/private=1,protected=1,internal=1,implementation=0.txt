@@ -11,19 +11,19 @@
 class Employee {
 };
 class LibraryItem {
-    void LibraryItem(& id, & title) {
+    void LibraryItem(const & id, const & title) {
         {}
     }
     virtual void ~LibraryItem() {
         = default
     }
-    void () const {
+    const & getId() const {
         { return id_; }
     }
-    void () const {
+    const & getTitle() const {
         { return title_; }
     }
-    bool isAvailable() {
+    bool isAvailable() const {
         { return isAvailable_; }
     }
     virtual bool borrow() {
@@ -40,7 +40,7 @@ class LibraryItem {
                 isAvailable_ = true;
             }
     }
-    virtual void getDetails() = 0
+    virtual void getDetails() const = 0
     void setAvailability(bool status) {
         { isAvailable_ = status; }
     }
@@ -49,16 +49,16 @@ class LibraryItem {
     bool isAvailable_;
 };
 class Book : public LibraryItem {
-    void Book(& id, & title, & author, & isbn) {
+    void Book(const & id, const & title, const & author, const & isbn) {
         {}
     }
-    void () const {
+    const & getAuthor() const {
         { return author_; }
     }
-    void () const {
+    const & getISBN() const {
         { return isbn_; }
     }
-    void getDetails() {
+    void getDetails() const {
         {
                 return "Book: " + getTitle() + " by " + author_ + " (ISBN: " + isbn_ + ")";
             }
@@ -67,16 +67,16 @@ class Book : public LibraryItem {
     auto isbn_;
 };
 class Magazine : public LibraryItem {
-    void Magazine(& id, & title, int issueNumber, & publisher) {
+    void Magazine(const & id, const & title, int issueNumber, const & publisher) {
         {}
     }
-    int getIssueNumber() {
+    int getIssueNumber() const {
         { return issueNumber_; }
     }
-    void () const {
+    const & getPublisher() const {
         { return publisher_; }
     }
-    void getDetails() {
+    void getDetails() const {
         {
                 return "Magazine: " + getTitle() + " Issue #" + 
                        std::to_string(issueNumber_) + " (" + publisher_ + ")";
@@ -91,13 +91,13 @@ class LibraryCatalog {
                 items_[item->getId()] = std::move(item);
             }
     }
-    LibraryItem () {
+    LibraryItem* findItem(const & id) {
         {
                 auto it = items_.find(id);
                 return (it != items_.end()) ? it->second.get() : nullptr;
             }
     }
-    void getAvailableItems() {
+    void getAvailableItems() const {
         {
                 std::vector<LibraryItem*> available;
                 for (const auto& pair : items_) {
@@ -108,7 +108,7 @@ class LibraryCatalog {
                 return available;
             }
     }
-    void searchByTitle(& searchTerm) {
+    void searchByTitle(const & searchTerm) const {
         {
                 std::vector<LibraryItem*> results;
                 
@@ -130,13 +130,13 @@ class LibraryCatalog {
                 return results;
             }
     }
-    size_t getItemCount() {
+    size_t getItemCount() const {
         { return items_.size(); }
     }
     auto items_;
 };
 struct TitleComparator {
-    bool operator()(LibraryItem* a, LibraryItem* b) {
+    bool operator()(const LibraryItem* a, const LibraryItem* b) const {
         {
                 return a->getTitle() < b->getTitle();
             }
@@ -149,7 +149,7 @@ class LibraryUtils {
             }
     }
     template<typename Predicate>
-    static void filterItems(& items, Predicate pred) {
+    static void filterItems(const & items, Predicate pred) {
         {
                 std::vector<LibraryItem*> filtered;
                 std::copy_if(items.begin(), items.end(), 
@@ -158,7 +158,7 @@ class LibraryUtils {
             }
     }
     template<typename ItemType>
-    static size_t countItemsByType(& items) {
+    static size_t countItemsByType(const & items) {
         {
                 return std::count_if(items.begin(), items.end(),
                                    [](const LibraryItem* item) {
@@ -171,13 +171,13 @@ class LibraryUtils {
     }
 };
 class FileManager {
-    void FileManager(& filename)
+    void FileManager(const & filename)
     void ~FileManager()
-    void FileManager(FileManager )
-    FileManager ()
+    void FileManager(const FileManager )
+    FileManager& operator=(const FileManager )
     bool open()
     void close()
-    bool isOpen()
+    bool isOpen() const
     auto filename_;
     bool isOpen_;
 };

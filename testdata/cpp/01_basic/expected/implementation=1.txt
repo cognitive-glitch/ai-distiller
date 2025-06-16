@@ -9,16 +9,16 @@ class Point {
     void Point(double x, double y) {
         {}
     }
-    void Point(Point& other) {
+    void Point(const Point& other) {
         {}
     }
     virtual void ~Point() {
         = default
     }
-    double getX() {
+    double getX() const {
         { return x_; }
     }
-    double getY() {
+    double getY() const {
         { return y_; }
     }
     void setX(double x) {
@@ -27,7 +27,7 @@ class Point {
     void setY(double y) {
         { y_ = y; }
     }
-    virtual double distanceFromOrigin() {
+    virtual double distanceFromOrigin() const {
         {
                 return std::sqrt(x_ * x_ + y_ * y_);
             }
@@ -37,13 +37,13 @@ class Point3D : public Point {
     void Point3D(double x, double y, double z) {
         {}
     }
-    double getZ() {
+    double getZ() const {
         { return z_; }
     }
     void setZ(double z) {
         { z_ = z; }
     }
-    double distanceFromOrigin() {
+    double distanceFromOrigin() const {
         {
                 return std::sqrt(getX() * getX() + getY() * getY() + z_ * z_);
             }
@@ -51,24 +51,24 @@ class Point3D : public Point {
 };
 template<typename T>
 class Container {
-    void Container(T& value) {
+    void Container(const T& value) {
         {}
     }
-    T () const {
+    const T& getValue() const {
         { return value_; }
     }
-    void setValue(T& value) {
+    void setValue(const T& value) {
         { value_ = value; }
     }
 };
 template<typename T>
-T max(T& a, T& b) {
+T max(const T& a, const T& b) {
     {
             return (a > b) ? a : b;
         }
 }
 template<typename T>
-T min(T& a, T& b) {
+T min(const T& a, const T& b) {
     {
             return (a < b) ? a : b;
         }

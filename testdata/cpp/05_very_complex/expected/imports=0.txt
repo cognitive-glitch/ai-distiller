@@ -3,9 +3,9 @@ struct SimpleTask {
     void SimpleTask(auto h)
     void ~SimpleTask()
     void SimpleTask(SimpleTask& other)
-    SimpleTask ()
-    void SimpleTask(SimpleTask )
-    SimpleTask ()
+    SimpleTask& operator=(SimpleTask& other)
+    void SimpleTask(const SimpleTask )
+    SimpleTask& operator=(const SimpleTask )
 };
 template<typename T>
 class HasAdvancedMethods {
@@ -22,22 +22,22 @@ class HasAdvancedMethods {
 };
 template<typename AdvancedNumeric>
 class AdvancedProcessor {
-    void AdvancedProcessor(& name)
-    T process(T& data)
+    void AdvancedProcessor(const & name)
+    T process(const T& data)
     template<typename Container>
-    void processContainer(Container& container)
+    void processContainer(const Container& container)
     void generateSequence(T start, size_t count)
-    SimpleTask processAsync(T& data)
+    SimpleTask processAsync(const T& data)
 };
 class TypeErasedContainer {
     template<typename T>
     void store(T& value)
-    void processAll(F& f)
+    void processAll(F& f) const
     template<typename T>
-    void get()
-    size_t size()
+    void get() const
+    size_t size() const
 };
-size_t processString(char* str) {
+size_t processString(const char* str) {
     {
             size_t len = 0;
             while (str[len] != '\0') {

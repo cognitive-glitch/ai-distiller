@@ -22,22 +22,22 @@ void factorial(int n) const {
 bool is_callable_v;
 template<typename Derived>
 class Comparable {
-    bool operator!=(Derived& other) {
+    bool operator!=(const Derived& other) const {
         {
                 return !static_cast<const Derived*>(this)->operator==(other);
             }
     }
-    bool operator>(Derived& other) {
+    bool operator>(const Derived& other) const {
         {
                 return other < static_cast<const Derived&>(*this);
             }
     }
-    bool operator<=(Derived& other) {
+    bool operator<=(const Derived& other) const {
         {
                 return !(static_cast<const Derived&>(*this) > other);
             }
     }
-    bool operator>=(Derived& other) {
+    bool operator>=(const Derived& other) const {
         {
                 return !(static_cast<const Derived&>(*this) < other);
             }
@@ -47,17 +47,17 @@ class Point {
     void Point(double x, double y) {
         {}
     }
-    bool operator==(Point& other) {
+    bool operator==(const Point& other) const {
         {
                 return std::abs(x_ - other.x_) < 1e-9 && std::abs(y_ - other.y_) < 1e-9;
             }
     }
-    bool operator<(Point& other) {
+    bool operator<(const Point& other) const {
         {
                 return (x_ < other.x_) || (x_ == other.x_ && y_ < other.y_);
             }
     }
-    double distance() {
+    double distance() const {
         {
                 return std::sqrt(x_ * x_ + y_ * y_);
             }
@@ -102,7 +102,7 @@ void insert_if_possible(Container& container, T& value) {
         container.push_back(std::forward<T>(value));
     }
 }
-void CompileTimeString(char );
+void CompileTimeString(const char );
 template<typename T>
 class Factory {
     static void create() {
@@ -125,17 +125,17 @@ class Factory {
     }
 };
 struct DataVisitor {
-    void operator()(int value) {
+    void operator()(int value) const {
         {
                 return "Integer: " + std::to_string(value);
             }
     }
-    void operator()(double value) {
+    void operator()(double value) const {
         {
                 return "Double: " + std::to_string(value);
             }
     }
-    void operator()(& value) {
+    void operator()(const & value) const {
         {
                 return "String: " + value;
             }
@@ -143,10 +143,10 @@ struct DataVisitor {
 };
 template<typename T>
 class AdvancedContainer {
-    void AdvancedContainer(Compare& comp, Allocator& alloc) {
+    void AdvancedContainer(const Compare& comp, const Allocator& alloc) {
         {}
     }
-    void insert(T& value) {
+    void insert(const T& value) {
         {
                 auto it = std::lower_bound(data_.begin(), data_.end(), value, compare_);
                 data_.insert(it, value);
@@ -158,19 +158,19 @@ class AdvancedContainer {
                 insert(value);
             }
     }
-    void find(T& value) {
+    void find(const T& value) const {
         {
                 auto it = std::lower_bound(data_.begin(), data_.end(), value, compare_);
                 return (it != data_.end() && !compare_(value, *it)) ? it : data_.end();
             }
     }
-    size_t size() {
+    size_t size() const {
         { return data_.size(); }
     }
-    void begin() {
+    void begin() const {
         { return data_.begin(); }
     }
-    void end() {
+    void end() const {
         { return data_.end(); }
     }
 };
@@ -186,13 +186,13 @@ class  {
                 }
             }
     }
-    size_t size() {
+    size_t size() const {
         { return pointers_.size(); }
     }
 };
 class AsyncProcessor {
     template<typename T>
-    void processWithTimeout(T& data, int timeoutMs) {
+    void processWithTimeout(const T& data, int timeoutMs) {
         {
                 auto future = std::async(std::launch::async, [data]() {
                     std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -207,7 +207,7 @@ class AsyncProcessor {
             }
     }
     template<typename Container>
-    void processParallel(Container& items) {
+    void processParallel(const Container& items) {
         {
                 std::vector<std::future<std::string>> futures;
                 
@@ -226,7 +226,7 @@ class AsyncProcessor {
             }
     }
     template<typename T>
-    static void processData(T& data) {
+    static void processData(const T& data) {
         {
                 return "Processed: " + std::to_string(data);
             }

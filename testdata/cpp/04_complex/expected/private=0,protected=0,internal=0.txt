@@ -18,16 +18,16 @@ void factorial(int n) const;
 bool is_callable_v;
 template<typename Derived>
 class Comparable {
-    bool operator!=(Derived& other)
-    bool operator>(Derived& other)
-    bool operator<=(Derived& other)
-    bool operator>=(Derived& other)
+    bool operator!=(const Derived& other) const
+    bool operator>(const Derived& other) const
+    bool operator<=(const Derived& other) const
+    bool operator>=(const Derived& other) const
 };
 class Point {
     void Point(double x, double y)
-    bool operator==(Point& other)
-    bool operator<(Point& other)
-    double distance()
+    bool operator==(const Point& other) const
+    bool operator<(const Point& other) const
+    double distance() const
 };
 class VariadicProcessor {
     void VariadicProcessor()
@@ -42,7 +42,7 @@ template<typename Container, typename T>
 void insert_if_possible(Container& container, T& value);
 template<typename Container, typename T>
 void insert_if_possible(Container& container, T& value);
-void CompileTimeString(char );
+void CompileTimeString(const char );
 template<typename T>
 class Factory {
     static void create()
@@ -52,33 +52,33 @@ class Factory {
     static void createFromTupleImpl(Tuple& tuple, auto )
 };
 struct DataVisitor {
-    void operator()(int value)
-    void operator()(double value)
-    void operator()(& value)
+    void operator()(int value) const
+    void operator()(double value) const
+    void operator()(const & value) const
 };
 template<typename T>
 class AdvancedContainer {
-    void AdvancedContainer(Compare& comp, Allocator& alloc)
-    void insert(T& value)
+    void AdvancedContainer(const Compare& comp, const Allocator& alloc)
+    void insert(const T& value)
     void emplace()
-    void find(T& value)
-    size_t size()
-    void begin()
-    void end()
+    void find(const T& value) const
+    size_t size() const
+    void begin() const
+    void end() const
 };
 template<typename T, typename Allocator, typename Compare>
 class  {
     void AdvancedContainer()
     void insert(T* ptr)
-    size_t size()
+    size_t size() const
 };
 class AsyncProcessor {
     template<typename T>
-    void processWithTimeout(T& data, int timeoutMs)
+    void processWithTimeout(const T& data, int timeoutMs)
     template<typename Container>
-    void processParallel(Container& items)
+    void processParallel(const Container& items)
     template<typename T>
-    static void processData(T& data)
+    static void processData(const T& data)
 };
 void demonstrateComplexFeatures();
 </file>

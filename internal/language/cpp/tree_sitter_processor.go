@@ -399,17 +399,36 @@ func (p *TreeSitterProcessor) processMethodDefinition(node *sitter.Node, source 
 		Modifiers:  []ir.Modifier{},
 	}
 
-	// Extract method details
+	// Extract method details - build return type first, then function declarator
+	var returnTypeStr string
+	var foundDeclarator bool
+	
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		switch child.Type() {
 		case "function_declarator":
 			p.extractFunctionDeclarator(child, source, method)
-		case "type_identifier", "primitive_type", "auto":
-			if method.Returns == nil {
-				method.Returns = &ir.TypeRef{
-					Name: p.nodeText(child, source),
+			foundDeclarator = true
+		case "reference_declarator", "pointer_declarator":
+			// For return types with references/pointers, we need to process them differently
+			if !foundDeclarator {
+				if child.Type() == "reference_declarator" {
+					returnTypeStr += "&"
+				} else {
+					returnTypeStr += "*"
 				}
+			}
+			p.extractFunctionDeclarator(child, source, method)
+			foundDeclarator = true
+		case "type_identifier", "primitive_type", "auto":
+			if !foundDeclarator {
+				returnTypeStr += p.nodeText(child, source)
+			}
+		case "type_qualifier":
+			qualifier := p.nodeText(child, source)
+			if qualifier == "const" && !foundDeclarator {
+				// This is a const qualifier for the return type
+				returnTypeStr = "const " + returnTypeStr
 			}
 		case "virtual":
 			method.Modifiers = append(method.Modifiers, ir.ModifierVirtual)
@@ -419,11 +438,6 @@ func (p *TreeSitterProcessor) processMethodDefinition(node *sitter.Node, source 
 			if p.nodeText(child, source) == "static" {
 				method.Modifiers = append(method.Modifiers, ir.ModifierStatic)
 			}
-		case "type_qualifier":
-			qualifier := p.nodeText(child, source)
-			if qualifier == "const" {
-				method.Modifiers = append(method.Modifiers, ir.ModifierConst)
-			}
 		case "compound_statement":
 			method.Implementation = p.nodeText(child, source)
 		case "default_method_clause":
@@ -432,9 +446,22 @@ func (p *TreeSitterProcessor) processMethodDefinition(node *sitter.Node, source 
 			method.Implementation = "= delete"
 		}
 	}
+	
+	// Set return type if we found one
+	if returnTypeStr != "" {
+		method.Returns = &ir.TypeRef{
+			Name: strings.TrimSpace(returnTypeStr),
+		}
+	}
 
 	// In C++, constructors and destructors should keep their original names
 	// No need to rename them
+	
+	// Check if this is a constructor or destructor and fix return type
+	if method.Name == class.Name || (strings.HasPrefix(method.Name, "~") && strings.TrimPrefix(method.Name, "~") == class.Name) {
+		// Constructor or destructor, no return type
+		method.Returns = nil
+	}
 
 	class.Children = append(class.Children, method)
 }
@@ -454,7 +481,7 @@ func (p *TreeSitterProcessor) processStructMethodDefinition(node *sitter.Node, s
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		switch child.Type() {
-		case "function_declarator":
+		case "function_declarator", "reference_declarator", "pointer_declarator":
 			p.extractFunctionDeclarator(child, source, method)
 		case "type_identifier", "primitive_type", "auto":
 			if method.Returns == nil {
@@ -526,15 +553,38 @@ func (p *TreeSitterProcessor) processFunctionDefinition(node *sitter.Node, sourc
 
 // extractFunctionDeclarator extracts function name and parameters
 func (p *TreeSitterProcessor) extractFunctionDeclarator(node *sitter.Node, source []byte, function *ir.DistilledFunction) {
+	// Handle functions returning references or pointers
+	if node.Type() == "reference_declarator" || node.Type() == "pointer_declarator" {
+		if function.Returns != nil {
+			if node.Type() == "reference_declarator" {
+				function.Returns.Name += "&"
+			} else {
+				function.Returns.Name += "*"
+			}
+		}
+		// Recurse on the wrapped declarator, which is typically the last child
+		if node.ChildCount() > 0 {
+			p.extractFunctionDeclarator(node.Child(int(node.ChildCount())-1), source, function)
+		}
+		return
+	}
+
+	// Handle plain function_declarator and others
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		switch child.Type() {
-		case "identifier", "field_identifier", "destructor_name", "operator_name":
-			function.Name = p.nodeText(child, source)
+		case "identifier", "field_identifier", "destructor_name", "operator_name", "type_identifier":
+			if function.Name == "" { // Avoid overwriting name from parenthesized declarators
+				function.Name = p.nodeText(child, source)
+			}
 		case "parameter_list":
 			p.extractParameters(child, source, function)
-		case "reference_declarator", "pointer_declarator":
-			// Handle function pointers/references
+		case "type_qualifier":
+			if p.nodeText(child, source) == "const" {
+				function.Modifiers = append(function.Modifiers, ir.ModifierConst)
+			}
+		case "reference_declarator", "pointer_declarator", "parenthesized_declarator":
+			// Recurse for function pointers or complex declarators
 			p.extractFunctionDeclarator(child, source, function)
 		}
 	}
@@ -552,21 +602,29 @@ func (p *TreeSitterProcessor) extractParameters(node *sitter.Node, source []byte
 
 			// Extract parameter type and name
 			var typeStr string
+			var foundType bool
 			for j := 0; j < int(child.ChildCount()); j++ {
 				paramChild := child.Child(j)
 				switch paramChild.Type() {
+				case "type_qualifier":
+					if p.nodeText(paramChild, source) == "const" && !foundType {
+						typeStr = "const " + typeStr
+					}
 				case "type_identifier", "primitive_type":
-					typeStr = p.nodeText(paramChild, source)
+					typeStr += p.nodeText(paramChild, source)
+					foundType = true
 				case "identifier":
 					param.Name = p.nodeText(paramChild, source)
 				case "reference_declarator", "pointer_declarator":
-					// Handle references and pointers
+					// Handle references and pointers - append declarator symbol to type
+					declaratorPrefix := p.extractDeclaratorPrefix(paramChild, source)
+					typeStr += declaratorPrefix
+					// Extract name from within the declarator
 					for k := 0; k < int(paramChild.ChildCount()); k++ {
 						if paramChild.Child(k).Type() == "identifier" {
 							param.Name = p.nodeText(paramChild.Child(k), source)
 						}
 					}
-					typeStr = typeStr + p.extractDeclaratorPrefix(paramChild, source)
 				case "optional_parameter_declaration":
 					param.DefaultValue = "..." // Indicate it has a default
 				}
@@ -664,7 +722,7 @@ func (p *TreeSitterProcessor) processMethodDeclaration(node *sitter.Node, source
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		switch child.Type() {
-		case "function_declarator":
+		case "function_declarator", "reference_declarator", "pointer_declarator":
 			p.extractFunctionDeclarator(child, source, method)
 		case "type_identifier", "primitive_type", "auto":
 			if method.Returns == nil {
@@ -700,6 +758,12 @@ func (p *TreeSitterProcessor) processMethodDeclaration(node *sitter.Node, source
 
 	// In C++, constructors and destructors should keep their original names
 	// No need to rename them
+	
+	// Check if this is a constructor or destructor and fix return type
+	if method.Name == class.Name || (strings.HasPrefix(method.Name, "~") && strings.TrimPrefix(method.Name, "~") == class.Name) {
+		// Constructor or destructor, no return type
+		method.Returns = nil
+	}
 
 	class.Children = append(class.Children, method)
 }
@@ -719,7 +783,7 @@ func (p *TreeSitterProcessor) processStructMethodDeclaration(node *sitter.Node, 
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		switch child.Type() {
-		case "function_declarator":
+		case "function_declarator", "reference_declarator", "pointer_declarator":
 			p.extractFunctionDeclarator(child, source, method)
 		case "type_identifier", "primitive_type", "auto":
 			if method.Returns == nil {
