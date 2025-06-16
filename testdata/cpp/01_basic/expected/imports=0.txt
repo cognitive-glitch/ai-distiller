@@ -23,16 +23,8 @@ class Container {
     void setValue(const T& value)
 };
 template<typename T>
-T max(const T& a, const T& b) {
-    {
-            return (a > b) ? a : b;
-        }
-}
+T max(const T& a, const T& b);
 template<typename T>
-T min(const T& a, const T& b) {
-    {
-            return (a < b) ? a : b;
-        }
-}
+T min(const T& a, const T& b);
 int main();
 </file>

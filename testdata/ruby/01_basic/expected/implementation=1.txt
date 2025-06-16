@@ -1,48 +1,48 @@
 <file path="source.rb">
 
-module UserUtils:
+module UserUtils
     MIN_PASSWORD_LENGTH
     EMAIL_REGEX
-    self.valid_email?(email)
+    def self.valid_email?(email)
         return false unless email.is_a?(String)
             email.match?(EMAIL_REGEX)
-    self.strong_password?(password)
+    def self.strong_password?(password)
         return false unless password.is_a?(String)
             return false if password.length < MIN_PASSWORD_LENGTH
             
             has_letter = password.match?(/[a-zA-Z]/)
             has_digit = password.match?(/\d/)
             has_letter && has_digit
-    self.internal_helper
+    def self.internal_helper
         "This is a private module method"
 
-class User:
+class User
     @@user_count
-    self.count
+    def self.count
         @@user_count
-    initialize(name, email)
+    def initialize(name, email)
         @id = generate_id
             @name = name
             @email = email
             @created_at = Time.now
             @@user_count += 1
-    to_s
+    def to_s
         "User(#{@id}): #{@name} <#{@email}>"
-    valid?
+    def valid?
         UserUtils.valid_email?(@email) && !@name.empty?
-    compare_creation_time(other_user)
+    def compare_creation_time(other_user)
         @created_at <=> other_user.created_at
-    generate_id
+    def generate_id
         "user_#{Time.now.to_i}_#{rand(1000)}"
 
-class AdminUser < User:
-    initialize(name, email, permissions = ...)
+class AdminUser < User
+    def initialize(name, email, permissions = ...)
         super(name, email)
             @permissions = permissions || []
-    to_s
+    def to_s
         "#{super} [Admin]"
-    has_permission?(permission)
+    def has_permission?(permission)
         @permissions.include?(permission)
-    validate_permissions
+    def validate_permissions
         @permissions.all? { |p| p.is_a?(String) }
 </file>

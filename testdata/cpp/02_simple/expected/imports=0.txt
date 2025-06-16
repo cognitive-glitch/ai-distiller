@@ -2,164 +2,53 @@
 class Employee {
 };
 class LibraryItem {
-    LibraryItem(const & id, const & title) {
-        {}
-    }
-    virtual ~LibraryItem() {
-        = default
-    }
-    const & getId() const {
-        { return id_; }
-    }
-    const & getTitle() const {
-        { return title_; }
-    }
-    bool isAvailable() const {
-        { return isAvailable_; }
-    }
-    virtual bool borrow() {
-        {
-                if (isAvailable_) {
-                    isAvailable_ = false;
-                    return true;
-                }
-                return false;
-            }
-    }
-    virtual void returnItem() {
-        {
-                isAvailable_ = true;
-            }
-    }
+    LibraryItem(const & id, const & title)
+    virtual ~LibraryItem()
+    const & getId() const
+    const & getTitle() const
+    bool isAvailable() const
+    virtual bool borrow()
+    virtual void returnItem()
     virtual getDetails() const = 0
-    void setAvailability(bool status) {
-        { isAvailable_ = status; }
-    }
+    void setAvailability(bool status)
     auto id_;
     auto title_;
     bool isAvailable_;
 };
 class Book : public LibraryItem {
-    Book(const & id, const & title, const & author, const & isbn) {
-        {}
-    }
-    const & getAuthor() const {
-        { return author_; }
-    }
-    const & getISBN() const {
-        { return isbn_; }
-    }
-    getDetails() const {
-        {
-                return "Book: " + getTitle() + " by " + author_ + " (ISBN: " + isbn_ + ")";
-            }
-    }
+    Book(const & id, const & title, const & author, const & isbn)
+    const & getAuthor() const
+    const & getISBN() const
+    getDetails() const
     auto author_;
     auto isbn_;
 };
 class Magazine : public LibraryItem {
-    Magazine(const & id, const & title, int issueNumber, const & publisher) {
-        {}
-    }
-    int getIssueNumber() const {
-        { return issueNumber_; }
-    }
-    const & getPublisher() const {
-        { return publisher_; }
-    }
-    getDetails() const {
-        {
-                return "Magazine: " + getTitle() + " Issue #" + 
-                       std::to_string(issueNumber_) + " (" + publisher_ + ")";
-            }
-    }
+    Magazine(const & id, const & title, int issueNumber, const & publisher)
+    int getIssueNumber() const
+    const & getPublisher() const
+    getDetails() const
     int issueNumber_;
     auto publisher_;
 };
 class LibraryCatalog {
-    void addItem(auto item) {
-        {
-                items_[item->getId()] = std::move(item);
-            }
-    }
-    LibraryItem* findItem(const & id) {
-        {
-                auto it = items_.find(id);
-                return (it != items_.end()) ? it->second.get() : nullptr;
-            }
-    }
-    getAvailableItems() const {
-        {
-                std::vector<LibraryItem*> available;
-                for (const auto& pair : items_) {
-                    if (pair.second->isAvailable()) {
-                        available.push_back(pair.second.get());
-                    }
-                }
-                return available;
-            }
-    }
-    searchByTitle(const & searchTerm) const {
-        {
-                std::vector<LibraryItem*> results;
-                
-                // Convert search term to lowercase
-                std::string lowerSearchTerm = searchTerm;
-                std::transform(lowerSearchTerm.begin(), lowerSearchTerm.end(),
-                              lowerSearchTerm.begin(), ::tolower);
-                
-                for (const auto& pair : items_) {
-                    std::string lowerTitle = pair.second->getTitle();
-                    std::transform(lowerTitle.begin(), lowerTitle.end(),
-                                  lowerTitle.begin(), ::tolower);
-                    
-                    if (lowerTitle.find(lowerSearchTerm) != std::string::npos) {
-                        results.push_back(pair.second.get());
-                    }
-                }
-                
-                return results;
-            }
-    }
-    size_t getItemCount() const {
-        { return items_.size(); }
-    }
+    void addItem(auto item)
+    LibraryItem* findItem(const & id)
+    getAvailableItems() const
+    searchByTitle(const & searchTerm) const
+    size_t getItemCount() const
     auto items_;
 };
 struct TitleComparator {
-    bool operator()(const LibraryItem* a, const LibraryItem* b) const {
-        {
-                return a->getTitle() < b->getTitle();
-            }
-    }
+    bool operator()(const LibraryItem* a, const LibraryItem* b) const
 };
 class LibraryUtils {
-    static void sortByTitle(& items) {
-        {
-                std::sort(items.begin(), items.end(), TitleComparator{});
-            }
-    }
+    static void sortByTitle(& items)
     template<typename Predicate>
-    static filterItems(const & items, Predicate pred) {
-        {
-                std::vector<LibraryItem*> filtered;
-                std::copy_if(items.begin(), items.end(), 
-                            std::back_inserter(filtered), pred);
-                return filtered;
-            }
-    }
+    static filterItems(const & items, Predicate pred)
     template<typename ItemType>
-    static size_t countItemsByType(const & items) {
-        {
-                return std::count_if(items.begin(), items.end(),
-                                   [](const LibraryItem* item) {
-                                       return dynamic_cast<const ItemType*>(item) != nullptr;
-                                   });
-            }
-    }
-    LibraryUtils() {
-        = delete
-    }
+    static size_t countItemsByType(const & items)
+    LibraryUtils()
 };
 class FileManager {
     FileManager(const & filename)

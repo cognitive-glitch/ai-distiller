@@ -1,15 +1,15 @@
 <file path="source.rb">
 
-module AdvancedMetaprogramming:
-    self.included(base)
+module AdvancedMetaprogramming
+    def self.included(base)
         base.extend(ClassMethods)
             base.class_eval do
               @method_chains = {}
               @intercepted_methods = {}
             end
 
-    module ClassMethods:
-        intercept_method_chain(*method_names*, &interceptor)
+    module ClassMethods
+        def intercept_method_chain(*method_names*, &interceptor)
             method_names.each do |method_name|
                     @intercepted_methods[method_name] = interceptor
                     
@@ -31,7 +31,7 @@ module AdvancedMetaprogramming:
                       end
                     end
                   end
-        method_chain(name, &definition)
+        def method_chain(name, &definition)
             @method_chains[name] = definition
                   
                   define_method(name) do |*args, &block|
@@ -40,15 +40,15 @@ module AdvancedMetaprogramming:
                     chain_context.execute(&block)
                   end
 
-    class MethodChainContext:
-        initialize(target, chain_name)
+    class MethodChainContext
+        def initialize(target, chain_name)
             @target = target
                   @chain_name = chain_name
                   @steps = []
-        step(name, &block)
+        def step(name, &block)
             @steps << { name: name, block: block }
                   self
-        execute(&final_block)
+        def execute(&final_block)
             result = nil
                   
                   @steps.each do |step|
@@ -58,8 +58,8 @@ module AdvancedMetaprogramming:
                   @target.instance_eval(&final_block) if final_block
                   result
 
-module CodeGenerator:
-    self.generate_crud_methods(class_name, table_name)
+module CodeGenerator
+    def self.generate_crud_methods(class_name, table_name)
         crud_template = <<~RUBY
               class #{class_name}
                 TABLE_NAME = '#{table_name}'
@@ -109,12 +109,12 @@ module CodeGenerator:
             
             # Use eval to create the class dynamically
             eval(crud_template)
-    self.generate_validators(target_class, validations)
+    def self.generate_validators(target_class, validations)
         validations.each do |field, rules|
               validation_code = build_validation_code(field, rules)
               target_class.class_eval(validation_code)
             end
-    self.build_validation_code(field, rules)
+    def self.build_validation_code(field, rules)
         validations = []
             
             rules.each do |rule, value|
@@ -147,11 +147,11 @@ module CodeGenerator:
               end
             RUBY
 
-class RuntimeCodeModifier:
-    initialize
+class RuntimeCodeModifier
+    def initialize
         @original_methods = {}
             @modified_methods = {}
-    modify_method(target, method_name, &new_implementation)
+    def modify_method(target, method_name, &new_implementation)
         if target.respond_to?(method_name)
               original_method = target.method(method_name)
               @original_methods["#{target.class}##{method_name}"] = original_method
@@ -165,7 +165,7 @@ class RuntimeCodeModifier:
             end
             
             @modified_methods["#{target.class}##{method_name}"] = new_implementation
-    restore_method(target, method_name)
+    def restore_method(target, method_name)
         key = "#{target.class}##{method_name}"
             original_method = @original_methods[key]
             
@@ -173,7 +173,7 @@ class RuntimeCodeModifier:
               target.define_method(method_name, original_method)
               @modified_methods.delete(key)
             end
-    create_method_proxy(target)
+    def create_method_proxy(target)
         proxy_class = Class.new do
               def initialize(target, modifier)
                 @target = target
@@ -208,9 +208,9 @@ class RuntimeCodeModifier:
             end
             
             proxy_class.new(target, self)
-    should_intercept?(method_name)
+    def should_intercept?(method_name)
         method_name.to_s.start_with?('get_', 'set_', 'find_')
-    intercept_call(target, method_name, args, block)
+    def intercept_call(target, method_name, args, block)
         puts "Intercepting call to #{method_name} with args: #{args.inspect}"
             
             # Custom handling based on method name pattern
@@ -229,25 +229,25 @@ class RuntimeCodeModifier:
               target.send(method_name, *args, &block)
             end
 
-class QueryDSL:
-    initialize
+class QueryDSL
+    def initialize
         @conditions = []
             @joins = []
             @order_by = []
             @limit_value = nil
-    where(condition)
+    def where(condition)
         @conditions << condition
             self
-    join(table, on:)
+    def join(table, on:)
         @joins << { table: table, on: on }
             self
-    order(field, direction:)
+    def order(field, direction:)
         @order_by << { field: field, direction: direction }
             self
-    limit(count)
+    def limit(count)
         @limit_value = count
             self
-    compile_to_ruby
+    def compile_to_ruby
         code_parts = []
             
             # Start with basic query structure
@@ -282,7 +282,7 @@ class QueryDSL:
             code_parts << "end"
             
             code_parts.join("\n")
-    execute
+    def execute
         compiled_code = compile_to_ruby
             
             # Create a context for execution
@@ -290,16 +290,16 @@ class QueryDSL:
             execution_context.instance_eval(compiled_code)
             execution_context.execute_query
 
-class SelfModifyingClass:
+class SelfModifyingClass
     @modifications
-    self.add_modification(&block)
+    def self.add_modification(&block)
         @modifications << block
             apply_modifications
-    self.apply_modifications
+    def self.apply_modifications
         @modifications.each do |modification|
               class_eval(&modification)
             end
-    self.evolve(&evolution_block)
+    def self.evolve(&evolution_block)
         new_class = Class.new(self) do
               class_eval(&evolution_block)
             end
@@ -312,13 +312,13 @@ class SelfModifyingClass:
             parent_module.const_set(class_name, new_class)
             
             new_class
-    modify_self_class(&block)
+    def modify_self_class(&block)
         self.class.class_eval(&block)
-    inspect_modifications
+    def inspect_modifications
         self.class.instance_variable_get(:@modifications)
 
-class CustomDispatchFactory:
-    self.create_class_with_dispatch(class_name, &dispatch_logic)
+class CustomDispatchFactory
+    def self.create_class_with_dispatch(class_name, &dispatch_logic)
         new_class = Class.new do
               define_method(:method_missing) do |method_name, *args, &block|
                 # Use custom dispatch logic

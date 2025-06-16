@@ -531,17 +531,43 @@ func (p *TreeSitterProcessor) processFunctionDefinition(node *sitter.Node, sourc
 		Modifiers:  []ir.Modifier{},
 	}
 
-	// Extract function details
+	// Extract function details - build return type first, then function declarator
+	var returnTypeStr string
+	var foundDeclarator bool
+	
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		switch child.Type() {
 		case "function_declarator":
 			p.extractFunctionDeclarator(child, source, function)
-		case "type_identifier", "primitive_type", "auto":
-			if function.Returns == nil {
-				function.Returns = &ir.TypeRef{
-					Name: p.nodeText(child, source),
+			foundDeclarator = true
+		case "reference_declarator", "pointer_declarator":
+			// For return types with references/pointers, we need to process them differently
+			if !foundDeclarator {
+				if child.Type() == "reference_declarator" {
+					returnTypeStr += "&"
+				} else {
+					returnTypeStr += "*"
 				}
+			}
+			p.extractFunctionDeclarator(child, source, function)
+			foundDeclarator = true
+		case "type_identifier", "primitive_type", "auto":
+			if !foundDeclarator {
+				if returnTypeStr != "" && !strings.HasSuffix(returnTypeStr, " ") {
+					returnTypeStr += " "
+				}
+				returnTypeStr += p.nodeText(child, source)
+			}
+		case "type_qualifier":
+			qualifier := p.nodeText(child, source)
+			if qualifier == "const" && !foundDeclarator {
+				// This is a const qualifier for the return type
+				returnTypeStr = "const " + returnTypeStr
+			}
+			if qualifier == "constexpr" {
+				// Add constexpr as a const modifier
+				function.Modifiers = append(function.Modifiers, ir.ModifierConst)
 			}
 		case "storage_class_specifier":
 			spec := p.nodeText(child, source)
@@ -549,11 +575,6 @@ func (p *TreeSitterProcessor) processFunctionDefinition(node *sitter.Node, sourc
 				function.Modifiers = append(function.Modifiers, ir.ModifierStatic)
 			} else if spec == "inline" {
 				function.Modifiers = append(function.Modifiers, ir.ModifierInline)
-			}
-		case "type_qualifier":
-			if p.nodeText(child, source) == "constexpr" {
-				// Add constexpr as a const modifier
-				function.Modifiers = append(function.Modifiers, ir.ModifierConst)
 			}
 		case "compound_statement":
 			// Don't include implementation - it will be stripped if needed
@@ -563,6 +584,13 @@ func (p *TreeSitterProcessor) processFunctionDefinition(node *sitter.Node, sourc
 			}
 		case "noexcept":
 			// Could add as extension attribute if needed
+		}
+	}
+
+	// Set return type if we found one
+	if returnTypeStr != "" {
+		function.Returns = &ir.TypeRef{
+			Name: strings.TrimSpace(returnTypeStr),
 		}
 	}
 
@@ -659,36 +687,68 @@ func (p *TreeSitterProcessor) extractParameters(node *sitter.Node, source []byte
 
 // processDeclaration handles general declarations
 func (p *TreeSitterProcessor) processDeclaration(node *sitter.Node, source []byte, file *ir.DistilledFile, parent ir.DistilledNode) {
-	// Check if this is a function declaration
+	// Build return type while looking for function declarator
+	var returnTypeStr string
+	var foundDeclarator bool
+	var functionDeclaratorIdx int
+	
+	// First pass: find function declarator and build return type
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
-		if child.Type() == "function_declarator" {
-			// This is a function declaration
-			function := &ir.DistilledFunction{
-				BaseNode: ir.BaseNode{
-					Location: p.nodeLocation(node),
-				},
-				Visibility: ir.VisibilityPublic, // Top-level functions are public
-				Parameters: []ir.Parameter{},
-				Modifiers:  []ir.Modifier{},
-			}
+		if child.Type() == "function_declarator" || child.Type() == "reference_declarator" || child.Type() == "pointer_declarator" {
+			foundDeclarator = true
+			functionDeclaratorIdx = i
+			break
+		}
+	}
+	
+	if foundDeclarator {
+		// This is a function declaration
+		function := &ir.DistilledFunction{
+			BaseNode: ir.BaseNode{
+				Location: p.nodeLocation(node),
+			},
+			Visibility: ir.VisibilityPublic, // Top-level functions are public
+			Parameters: []ir.Parameter{},
+			Modifiers:  []ir.Modifier{},
+		}
 
-			// Extract return type
-			for j := 0; j < i; j++ {
-				typeChild := node.Child(j)
-				if typeChild.Type() == "type_identifier" || typeChild.Type() == "primitive_type" {
-					function.Returns = &ir.TypeRef{
-						Name: p.nodeText(typeChild, source),
-					}
-					break
+		// Extract return type from nodes before the declarator
+		for j := 0; j < functionDeclaratorIdx; j++ {
+			typeChild := node.Child(j)
+			switch typeChild.Type() {
+			case "type_identifier", "primitive_type", "auto":
+				if returnTypeStr != "" && !strings.HasSuffix(returnTypeStr, " ") {
+					returnTypeStr += " "
+				}
+				returnTypeStr += p.nodeText(typeChild, source)
+			case "type_qualifier":
+				qualifier := p.nodeText(typeChild, source)
+				if qualifier == "const" {
+					returnTypeStr = "const " + returnTypeStr
+				}
+			case "storage_class_specifier":
+				spec := p.nodeText(typeChild, source)
+				if spec == "static" {
+					function.Modifiers = append(function.Modifiers, ir.ModifierStatic)
+				} else if spec == "inline" {
+					function.Modifiers = append(function.Modifiers, ir.ModifierInline)
 				}
 			}
-
-			// Extract function details
-			p.extractFunctionDeclarator(child, source, function)
-			p.addChild(file, parent, function)
-			return
 		}
+
+		// Set return type if we found one
+		if returnTypeStr != "" {
+			function.Returns = &ir.TypeRef{
+				Name: strings.TrimSpace(returnTypeStr),
+			}
+		}
+
+		// Extract function details
+		declarator := node.Child(functionDeclaratorIdx)
+		p.extractFunctionDeclarator(declarator, source, function)
+		p.addChild(file, parent, function)
+		return
 	}
 
 	// Otherwise, it might be a variable declaration
@@ -736,17 +796,39 @@ func (p *TreeSitterProcessor) processMethodDeclaration(node *sitter.Node, source
 		Modifiers:  []ir.Modifier{},
 	}
 
-	// Extract method details
+	// Extract method details - build return type first, then function declarator
+	var returnTypeStr string
+	var foundDeclarator bool
+	
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		switch child.Type() {
-		case "function_declarator", "reference_declarator", "pointer_declarator":
+		case "function_declarator":
 			p.extractFunctionDeclarator(child, source, method)
-		case "type_identifier", "primitive_type", "auto":
-			if method.Returns == nil {
-				method.Returns = &ir.TypeRef{
-					Name: p.nodeText(child, source),
+			foundDeclarator = true
+		case "reference_declarator", "pointer_declarator":
+			// For return types with references/pointers, we need to process them differently
+			if !foundDeclarator {
+				if child.Type() == "reference_declarator" {
+					returnTypeStr += "&"
+				} else {
+					returnTypeStr += "*"
 				}
+			}
+			p.extractFunctionDeclarator(child, source, method)
+			foundDeclarator = true
+		case "type_identifier", "primitive_type", "auto":
+			if !foundDeclarator {
+				if returnTypeStr != "" && !strings.HasSuffix(returnTypeStr, " ") {
+					returnTypeStr += " "
+				}
+				returnTypeStr += p.nodeText(child, source)
+			}
+		case "type_qualifier":
+			qualifier := p.nodeText(child, source)
+			if qualifier == "const" && !foundDeclarator {
+				// This is a const qualifier for the return type
+				returnTypeStr = "const " + returnTypeStr
 			}
 		case "virtual":
 			method.Modifiers = append(method.Modifiers, ir.ModifierVirtual)
@@ -754,14 +836,16 @@ func (p *TreeSitterProcessor) processMethodDeclaration(node *sitter.Node, source
 			if p.nodeText(child, source) == "static" {
 				method.Modifiers = append(method.Modifiers, ir.ModifierStatic)
 			}
-		case "type_qualifier":
-			qualifier := p.nodeText(child, source)
-			if qualifier == "const" {
-				method.Modifiers = append(method.Modifiers, ir.ModifierConst)
-			}
 		case "abstract_function_declarator":
 			// Pure virtual function
 			method.Modifiers = append(method.Modifiers, ir.ModifierVirtual, ir.ModifierAbstract)
+		}
+	}
+
+	// Set return type if we found one
+	if returnTypeStr != "" {
+		method.Returns = &ir.TypeRef{
+			Name: strings.TrimSpace(returnTypeStr),
 		}
 	}
 
@@ -797,26 +881,51 @@ func (p *TreeSitterProcessor) processStructMethodDeclaration(node *sitter.Node, 
 		Modifiers:  []ir.Modifier{},
 	}
 
-	// Extract method details (similar to class methods)
+	// Extract method details - build return type first, then function declarator
+	var returnTypeStr string
+	var foundDeclarator bool
+	
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		switch child.Type() {
-		case "function_declarator", "reference_declarator", "pointer_declarator":
+		case "function_declarator":
 			p.extractFunctionDeclarator(child, source, method)
-		case "type_identifier", "primitive_type", "auto":
-			if method.Returns == nil {
-				method.Returns = &ir.TypeRef{
-					Name: p.nodeText(child, source),
+			foundDeclarator = true
+		case "reference_declarator", "pointer_declarator":
+			// For return types with references/pointers, we need to process them differently
+			if !foundDeclarator {
+				if child.Type() == "reference_declarator" {
+					returnTypeStr += "&"
+				} else {
+					returnTypeStr += "*"
 				}
+			}
+			p.extractFunctionDeclarator(child, source, method)
+			foundDeclarator = true
+		case "type_identifier", "primitive_type", "auto":
+			if !foundDeclarator {
+				if returnTypeStr != "" && !strings.HasSuffix(returnTypeStr, " ") {
+					returnTypeStr += " "
+				}
+				returnTypeStr += p.nodeText(child, source)
+			}
+		case "type_qualifier":
+			qualifier := p.nodeText(child, source)
+			if qualifier == "const" && !foundDeclarator {
+				// This is a const qualifier for the return type
+				returnTypeStr = "const " + returnTypeStr
 			}
 		case "storage_class_specifier":
 			if p.nodeText(child, source) == "static" {
 				method.Modifiers = append(method.Modifiers, ir.ModifierStatic)
 			}
-		case "type_qualifier":
-			if p.nodeText(child, source) == "const" {
-				method.Modifiers = append(method.Modifiers, ir.ModifierConst)
-			}
+		}
+	}
+
+	// Set return type if we found one
+	if returnTypeStr != "" {
+		method.Returns = &ir.TypeRef{
+			Name: strings.TrimSpace(returnTypeStr),
 		}
 	}
 

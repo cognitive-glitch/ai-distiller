@@ -1,7 +1,7 @@
 <file path="source.rb">
 
-module MetaProgrammingUtils:
-    self.included(base)
+module MetaProgrammingUtils
+    def self.included(base)
         base.extend(ClassMethods)
             base.class_eval do
               # Dynamically add instance variables and accessors
@@ -11,8 +11,8 @@ module MetaProgrammingUtils:
               @dynamic_methods = []
             end
 
-    module ClassMethods:
-        add_dynamic_accessor(name, default_value = ...)
+    module ClassMethods
+        def add_dynamic_accessor(name, default_value = ...)
             @dynamic_methods ||= []
                   @dynamic_methods << name
                   
@@ -30,25 +30,25 @@ module MetaProgrammingUtils:
                   define_method("#{name}?") do
                     !!instance_variable_get("@#{name}")
                   end
-        delegate_to(target, *methods*)
+        def delegate_to(target, *methods*)
             methods.each do |method|
                     define_method(method) do |*args, &block|
                       target_obj = instance_variable_get("@#{target}")
                       target_obj.send(method, *args, &block)
                     end
                   end
-        dynamic_methods
+        def dynamic_methods
             @dynamic_methods || []
 
-module EigenclassDemo:
-    self.extended(base)
+module EigenclassDemo
+    def self.extended(base)
         base.instance_eval do
               def singleton_method_added(method_name)
                 puts "Singleton method '#{method_name}' added to #{self}"
                 super
               end
             end
-    custom_new(*args*, &block)
+    def custom_new(*args*, &block)
         instance = allocate
             instance.send(:initialize, *args, &block) if instance.respond_to?(:initialize, true)
             
@@ -57,15 +57,15 @@ module EigenclassDemo:
             
             instance
 
-module Trackable:
-    self.included(base)
+module Trackable
+    def self.included(base)
         base.extend(ClassMethods)
             base.class_eval do
               @tracked_methods = []
             end
 
-    module ClassMethods:
-        track_method(method_name)
+    module ClassMethods
+        def track_method(method_name)
             @tracked_methods ||= []
                   @tracked_methods << method_name
                   
@@ -75,20 +75,20 @@ module Trackable:
                     track_method_call(method_name, args)
                     original_method.bind(self).call(*args, &block)
                   end
-        tracked_methods
+        def tracked_methods
             @tracked_methods || []
-    track_method_call(method_name, args)
+    def track_method_call(method_name, args)
         @method_calls ||= []
             @method_calls << {
               method: method_name,
               args: args,
               timestamp: Time.now
             }
-    method_call_history
+    def method_call_history
         @method_calls || []
 
-class ConfigurableModel:
-    initialize(initial_config = ...)
+class ConfigurableModel
+    def initialize(initial_config = ...)
         @config = initial_config
             @metadata = {}
             
@@ -97,7 +97,7 @@ class ConfigurableModel:
               self.class.add_dynamic_accessor(key, value)
               instance_variable_set("@#{key}", value)
             end
-    self.add_validation(field, &validation_block)
+    def self.add_validation(field, &validation_block)
         class_eval do
               define_method("validate_#{field}") do
                 value = send(field)
@@ -106,7 +106,7 @@ class ConfigurableModel:
               
               alias_method "#{field}_valid?", "validate_#{field}"
             end
-    evaluate_expression(expression, context = ...)
+    def evaluate_expression(expression, context = ...)
         binding_context = binding
             context.each do |key, value|
               binding_context.local_variable_set(key, value)
@@ -118,22 +118,22 @@ class ConfigurableModel:
             else
               raise ArgumentError, "Invalid expression"
             end
-    add_instance_method(method_name, &block)
+    def add_instance_method(method_name, &block)
         define_singleton_method(method_name, &block)
-    self.method_added(method_name)
+    def self.method_added(method_name)
         puts "Method '#{method_name}' added to class #{self}"
             super
-    invoke_if_exists(method_name, *args*)
+    def invoke_if_exists(method_name, *args*)
         if respond_to?(method_name, true)
               send(method_name, *args)
             else
               nil
             end
-    configure(&block)
+    def configure(&block)
         instance_eval(&block) if block_given?
 
-class DynamicConstants:
-    self.const_missing(const_name)
+class DynamicConstants
+    def self.const_missing(const_name)
         if const_name.to_s.start_with?('DYNAMIC_')
               # Dynamically create constants
               const_value = const_name.to_s.gsub('DYNAMIC_', '').downcase
@@ -141,16 +141,16 @@ class DynamicConstants:
             else
               super
             end
-    self.create_constant(name, value)
+    def self.create_constant(name, value)
         const_set(name.to_s.upcase, value)
-    self.list_constants
+    def self.list_constants
         constants.map { |const| [const, const_get(const)] }.to_h
 
-class SmartDocument < ConfigurableModel:
-    initialize(config = ...)
+class SmartDocument < ConfigurableModel
+    def initialize(config = ...)
         super(config)
             configure_smart_features
-    configure_smart_features
+    def configure_smart_features
         configure do
               def word_count
                 content.split.length

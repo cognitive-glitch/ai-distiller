@@ -1,52 +1,52 @@
 <file path="source.rb">
 
-module Loggable:
-    log(message, level:)
+module Loggable
+    def log(message, level:)
         timestamp = Time.now.iso8601
             puts "[#{timestamp}] #{level.upcase}: #{message}"
-    self.included(base)
+    def self.included(base)
         base.extend(ClassMethods)
             base.class_eval do
               attr_accessor :logger_enabled
             end
 
-    module ClassMethods:
-        enable_logging
+    module ClassMethods
+        def enable_logging
             define_method(:log_enabled?) { @logger_enabled || false }
 
-module Serializable:
-    to_json(*args*)
+module Serializable
+    def to_json(*args*)
         JSON.generate(serializable_hash, *args)
-    from_json(json_string)
+    def from_json(json_string)
         data = JSON.parse(json_string)
             load_from_hash(data)
-    serializable_hash
+    def serializable_hash
         raise NotImplementedError, "Must implement serializable_hash"
-    load_from_hash(hash)
+    def load_from_hash(hash)
         raise NotImplementedError, "Must implement load_from_hash"
 
-module RoleManager:
+module RoleManager
     VALID_ROLES
-    self.each_role
+    def self.each_role
         return enum_for(:each_role) unless block_given?
             
             VALID_ROLES.each do |role|
               yield role, role.upcase
             end
-    self.find_role(pattern)
+    def self.find_role(pattern)
         VALID_ROLES.find { |role| role.match?(pattern) }
-    self.role_stats
+    def self.role_stats
         roles_with_lengths = VALID_ROLES.map { |role| [role, role.length] }
             roles_with_lengths.select { |_, length| length > 4 }
 
-class Document:
-    initialize(title, content, author)
+class Document
+    def initialize(title, content, author)
         @title = title
             @content = content
             @author = author
             @created_at = Time.now
             @logger_enabled = true
-    process_content
+    def process_content
         return enum_for(:process_content) unless block_given?
             
             log("Processing content for: #{@title}")
@@ -58,7 +58,7 @@ class Document:
             end
             
             @content = lines.join("\n")
-    find_sections(pattern = ...)
+    def find_sections(pattern = ...)
         sections = []
             @content.each_line.with_index do |line, index|
               sections << { line: index + 1, content: line.strip } if line.match?(pattern)
@@ -69,7 +69,7 @@ class Document:
             else
               sections
             end
-    method_missing(method_name, *args*, &block)
+    def method_missing(method_name, *args*, &block)
         if method_name.to_s.start_with?('find_by_')
               attribute = method_name.to_s.sub('find_by_', '')
               search_value = args.first
@@ -85,35 +85,35 @@ class Document:
             else
               super
             end
-    respond_to_missing?(method_name, include_private = ...)
+    def respond_to_missing?(method_name, include_private = ...)
         method_name.to_s.start_with?('find_by_') || super
-    serializable_hash
+    def serializable_hash
         {
               title: @title,
               content: @content,
               author: @author,
               created_at: @created_at.iso8601
             }
-    load_from_hash(hash)
+    def load_from_hash(hash)
         @title = hash['title']
             @content = hash['content']
             @author = hash['author']
             @created_at = Time.parse(hash['created_at']) if hash['created_at']
 
-class DocumentRepository:
-    initialize
+class DocumentRepository
+    def initialize
         @documents = []
-    add_document(document)
+    def add_document(document)
         @documents << document
             log_action("Added document: #{document.title}")
-    filter_documents(&block)
+    def filter_documents(&block)
         return @documents.dup unless block_given?
             @documents.select(&block)
-    sort_documents(sort_proc = ...)
+    def sort_documents(sort_proc = ...)
         sort_logic = sort_proc || lambda { |a, b| a.created_at <=> b.created_at }
             @documents.sort(&sort_logic)
-    log_action(message)
+    def log_action(message)
         puts "[DocumentRepository] #{message}"
-    validate_document(document)
+    def validate_document(document)
         document.is_a?(Document) && !document.title.empty?
 </file>

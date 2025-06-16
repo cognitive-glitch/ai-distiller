@@ -1,38 +1,38 @@
 <file path="source.rb">
 
-module Loggable:
-    log(message, level:)
-    self.included(base)
+module Loggable
+    def log(message, level:)
+    def self.included(base)
 
-    module ClassMethods:
-        enable_logging
+    module ClassMethods
+        def enable_logging
 
-module Serializable:
-    to_json(*args*)
-    from_json(json_string)
-    serializable_hash
-    load_from_hash(hash)
+module Serializable
+    def to_json(*args*)
+    def from_json(json_string)
+    def serializable_hash
+    def load_from_hash(hash)
 
-module RoleManager:
+module RoleManager
     VALID_ROLES
-    self.each_role
-    self.find_role(pattern)
-    self.role_stats
+    def self.each_role
+    def self.find_role(pattern)
+    def self.role_stats
 
-class Document:
-    initialize(title, content, author)
-    process_content
-    find_sections(pattern = ...)
-    method_missing(method_name, *args*, &block)
-    respond_to_missing?(method_name, include_private = ...)
-    serializable_hash
-    load_from_hash(hash)
+class Document
+    def initialize(title, content, author)
+    def process_content
+    def find_sections(pattern = ...)
+    def method_missing(method_name, *args*, &block)
+    def respond_to_missing?(method_name, include_private = ...)
+    def serializable_hash
+    def load_from_hash(hash)
 
-class DocumentRepository:
-    initialize
-    add_document(document)
-    filter_documents(&block)
-    sort_documents(sort_proc = ...)
-    log_action(message)
-    validate_document(document)
+class DocumentRepository
+    def initialize
+    def add_document(document)
+    def filter_documents(&block)
+    def sort_documents(sort_proc = ...)
+    def log_action(message)
+    def validate_document(document)
 </file>

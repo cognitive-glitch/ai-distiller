@@ -1,24 +1,24 @@
 <file path="source.rb">
 
-module UserUtils:
+module UserUtils
     MIN_PASSWORD_LENGTH
     EMAIL_REGEX
-    self.valid_email?(email)
-    self.strong_password?(password)
-    self.internal_helper
+    def self.valid_email?(email)
+    def self.strong_password?(password)
+    def self.internal_helper
 
-class User:
+class User
     @@user_count
-    self.count
-    initialize(name, email)
-    to_s
-    valid?
-    compare_creation_time(other_user)
-    generate_id
+    def self.count
+    def initialize(name, email)
+    def to_s
+    def valid?
+    def compare_creation_time(other_user)
+    def generate_id
 
-class AdminUser < User:
-    initialize(name, email, permissions = ...)
-    to_s
-    has_permission?(permission)
-    validate_permissions
+class AdminUser < User
+    def initialize(name, email, permissions = ...)
+    def to_s
+    def has_permission?(permission)
+    def validate_permissions
 </file>

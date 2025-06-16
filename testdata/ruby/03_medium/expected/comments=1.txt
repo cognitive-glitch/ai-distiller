@@ -1,41 +1,41 @@
 <file path="source.rb">
 
-module MetaProgrammingUtils:
-    self.included(base)
+module MetaProgrammingUtils
+    def self.included(base)
 
-    module ClassMethods:
-        add_dynamic_accessor(name, default_value = ...)
-        delegate_to(target, *methods*)
-        dynamic_methods
+    module ClassMethods
+        def add_dynamic_accessor(name, default_value = ...)
+        def delegate_to(target, *methods*)
+        def dynamic_methods
 
-module EigenclassDemo:
-    self.extended(base)
-    custom_new(*args*, &block)
+module EigenclassDemo
+    def self.extended(base)
+    def custom_new(*args*, &block)
 
-module Trackable:
-    self.included(base)
+module Trackable
+    def self.included(base)
 
-    module ClassMethods:
-        track_method(method_name)
-        tracked_methods
-    track_method_call(method_name, args)
-    method_call_history
+    module ClassMethods
+        def track_method(method_name)
+        def tracked_methods
+    def track_method_call(method_name, args)
+    def method_call_history
 
-class ConfigurableModel:
-    initialize(initial_config = ...)
-    self.add_validation(field, &validation_block)
-    evaluate_expression(expression, context = ...)
-    add_instance_method(method_name, &block)
-    self.method_added(method_name)
-    invoke_if_exists(method_name, *args*)
-    configure(&block)
+class ConfigurableModel
+    def initialize(initial_config = ...)
+    def self.add_validation(field, &validation_block)
+    def evaluate_expression(expression, context = ...)
+    def add_instance_method(method_name, &block)
+    def self.method_added(method_name)
+    def invoke_if_exists(method_name, *args*)
+    def configure(&block)
 
-class DynamicConstants:
-    self.const_missing(const_name)
-    self.create_constant(name, value)
-    self.list_constants
+class DynamicConstants
+    def self.const_missing(const_name)
+    def self.create_constant(name, value)
+    def self.list_constants
 
-class SmartDocument < ConfigurableModel:
-    initialize(config = ...)
-    configure_smart_features
+class SmartDocument < ConfigurableModel
+    def initialize(config = ...)
+    def configure_smart_features
 </file>

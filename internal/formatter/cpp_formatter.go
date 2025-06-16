@@ -281,18 +281,10 @@ func (f *CppFormatter) formatFunction(fn *ir.DistilledFunction, indent int) stri
 		}
 	}
 
-	// Add implementation if present
-	if fn.Implementation != "" {
-		signature += " {\n"
-		lines := strings.Split(strings.TrimSpace(fn.Implementation), "\n")
-		for _, line := range lines {
-			if line != "" {
-				signature += indentStr + "    " + line + "\n"
-			}
-		}
-		signature += indentStr + "}"
-	} else if indent == 0 {
-		// Top-level function declaration without implementation
+	// Note: Implementation is not shown in text format
+	// The stripper should have already removed it if --implementation=0
+	// Only show semicolon for top-level declarations
+	if indent == 0 {
 		signature += ";"
 	}
 

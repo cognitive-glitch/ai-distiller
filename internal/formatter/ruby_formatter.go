@@ -75,7 +75,7 @@ func (f *RubyFormatter) formatClass(w io.Writer, class *ir.DistilledClass, inden
 		fmt.Fprintf(w, " < %s", class.Extends[0].Name)
 	}
 	
-	fmt.Fprintln(w, ":")
+	fmt.Fprintln(w)
 	
 	// Format class members
 	for _, child := range class.Children {
@@ -94,7 +94,7 @@ func (f *RubyFormatter) formatModule(w io.Writer, mod *ir.DistilledInterface, in
 	fmt.Fprintln(w)
 	
 	// Format module declaration
-	fmt.Fprintf(w, "%smodule %s:\n", indentStr, mod.Name)
+	fmt.Fprintf(w, "%smodule %s\n", indentStr, mod.Name)
 	
 	// Format module members
 	for _, child := range mod.Children {
@@ -127,9 +127,9 @@ func (f *RubyFormatter) formatMethod(w io.Writer, fn *ir.DistilledFunction, inde
 	
 	// Format method declaration
 	if isClassMethod {
-		fmt.Fprintf(w, "%sself.%s", indent, fn.Name)
+		fmt.Fprintf(w, "%sdef self.%s", indent, fn.Name)
 	} else {
-		fmt.Fprintf(w, "%s%s", indent, fn.Name)
+		fmt.Fprintf(w, "%sdef %s", indent, fn.Name)
 	}
 	
 	// Parameters
