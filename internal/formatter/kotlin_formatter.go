@@ -87,6 +87,8 @@ func (f *KotlinFormatter) formatClass(class *ir.DistilledClass, indent int) stri
 			modifiers = append(modifiers, "data")
 		} else if mod == ir.ModifierSealed {
 			modifiers = append(modifiers, "sealed")
+		} else if mod == ir.ModifierAnnotation {
+			modifiers = append(modifiers, "annotation")
 		}
 		// Skip static modifier as it's used internally to mark objects
 	}

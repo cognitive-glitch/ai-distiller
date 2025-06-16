@@ -94,6 +94,7 @@ const (
 	ModifierNonMutating  Modifier = "nonmutating"
 	ModifierClass        Modifier = "class"
 	ModifierExport       Modifier = "export"
+	ModifierAnnotation   Modifier = "annotation"
 )
 
 // DistilledNode is the base interface for all IR nodes

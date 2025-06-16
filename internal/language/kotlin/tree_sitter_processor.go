@@ -195,16 +195,25 @@ func (p *TreeSitterProcessor) processImport(node *sitter.Node, source []byte, fi
 func (p *TreeSitterProcessor) processClassDeclaration(node *sitter.Node, source []byte, file *ir.DistilledFile, parent ir.DistilledNode) {
 	// Check if this is actually an enum class
 	isEnum := false
+	isInterface := false
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		if child.Type() == "enum" {
 			isEnum = true
+			break
+		} else if child.Type() == "interface" {
+			isInterface = true
 			break
 		}
 	}
 	
 	if isEnum {
 		p.processEnumDeclaration(node, source, file, parent)
+		return
+	}
+	
+	if isInterface {
+		p.processInterfaceDeclaration(node, source, file, parent)
 		return
 	}
 	
@@ -637,6 +646,8 @@ func (p *TreeSitterProcessor) extractModifiers(node *sitter.Node, source []byte,
 			class.Modifiers = append(class.Modifiers, ir.ModifierSealed)
 		case "data":
 			class.Modifiers = append(class.Modifiers, ir.ModifierData)
+		case "annotation":
+			class.Modifiers = append(class.Modifiers, ir.ModifierAnnotation)
 		case "inner":
 			// Inner classes - add as decorator
 			class.Decorators = append(class.Decorators, "@inner")
