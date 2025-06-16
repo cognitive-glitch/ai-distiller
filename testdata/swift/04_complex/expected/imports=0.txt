@@ -1,21 +1,43 @@
 <file path="source.swift">
+// /// A property wrapper that clamps a numeric value within a given range
+// /// and publishes changes via a Combine publisher.
 
-class Clamped:
-    var wrappedValue: Value
-    var projectedValue: AnyPublisher<Value, Never>
+public class Clamped {
+    public var wrappedValue: Value
+    // /// The projected value is a Combine publisher that emits new values.
+    public var projectedValue: AnyPublisher<Value, Never>
+    // /// Private helper for validation
+}
+// /// A simple validation result type.
 
-class ValidationResult:
+public class ValidationResult {
+}
+// /// A result builder for creating an array of `ValidationResult` declaratively.
 
-class ConfigurationBuilder:
-    func buildBlock(_: ValidationResult) -> [ValidationResult]
-    func buildExpression(_: String) -> ValidationResult
-    func buildEither(first: [ValidationResult]) -> [ValidationResult]
-    func buildEither(second: [ValidationResult]) -> [ValidationResult]
+public class ConfigurationBuilder {
+    public buildBlock(_: ValidationResult) -> [ValidationResult]
+    public buildExpression(_: String) -> ValidationResult
+    public buildEither(first: [ValidationResult]) -> [ValidationResult]
+    public buildEither(second: [ValidationResult]) -> [ValidationResult]
+    // /// Private helper for building optional components
+}
+// /// A protocol for items that can be described.
 
-protocol Describable:
+public protocol Describable {
+    // /// A textual description of the instance.
+    // /// Resets to a default state.
+}
+// /// A read-only proxy for accessing UserSettings.
 
-class SettingsProxy:
+public class SettingsProxy {
+    // /// Private helper for proxy validation
+}
+// /// Main settings structure for a user.
 
-class UserSettings:
-    func asProxy() -> SettingsProxy
+public class UserSettings {
+    // /// Creates a read-only proxy for these settings.
+    public asProxy() -> SettingsProxy
+    // /// Private validation method
+    // /// Internal method for settings synchronization
+}
 </file>

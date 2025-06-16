@@ -70,11 +70,14 @@ func (f *SwiftFormatter) formatClass(w io.Writer, class *ir.DistilledClass, inde
 	// Add blank line before class
 	fmt.Fprintln(w)
 	
-	// Get visibility prefix
-	visPrefix := f.getVisibilityPrefix(class.Visibility)
+	// Get visibility keyword
+	visKeyword := f.getSwiftVisibilityKeyword(class.Visibility)
 	
 	// Format modifiers
 	modifiers := ""
+	if visKeyword != "" {
+		modifiers = visKeyword + " "
+	}
 	for _, mod := range class.Modifiers {
 		switch mod {
 		case ir.ModifierFinal:
@@ -85,7 +88,7 @@ func (f *SwiftFormatter) formatClass(w io.Writer, class *ir.DistilledClass, inde
 	}
 	
 	// Format class declaration
-	fmt.Fprintf(w, "%s%s%sclass %s", indentStr, visPrefix, modifiers, class.Name)
+	fmt.Fprintf(w, "%s%sclass %s", indentStr, modifiers, class.Name)
 	
 	// Add generic type parameters
 	if len(class.TypeParams) > 0 {
@@ -116,12 +119,15 @@ func (f *SwiftFormatter) formatClass(w io.Writer, class *ir.DistilledClass, inde
 		fmt.Fprintf(w, ": %s", strings.Join(inheritance, ", "))
 	}
 	
-	fmt.Fprintln(w, ":")
+	fmt.Fprintln(w, " {")
 	
 	// Format class members
 	for _, child := range class.Children {
 		f.FormatNode(w, child, indent+1)
 	}
+	
+	// Closing brace
+	fmt.Fprintf(w, "%s}\n", indentStr)
 	
 	return nil
 }
@@ -132,11 +138,15 @@ func (f *SwiftFormatter) formatProtocol(w io.Writer, intf *ir.DistilledInterface
 	// Add blank line before protocol
 	fmt.Fprintln(w)
 	
-	// Get visibility prefix
-	visPrefix := f.getVisibilityPrefix(intf.Visibility)
+	// Get visibility keyword
+	visKeyword := f.getSwiftVisibilityKeyword(intf.Visibility)
 	
 	// Format protocol declaration
-	fmt.Fprintf(w, "%s%sprotocol %s", indentStr, visPrefix, intf.Name)
+	if visKeyword != "" {
+		fmt.Fprintf(w, "%s%s protocol %s", indentStr, visKeyword, intf.Name)
+	} else {
+		fmt.Fprintf(w, "%sprotocol %s", indentStr, intf.Name)
+	}
 	
 	// Add generic type parameters
 	if len(intf.TypeParams) > 0 {
@@ -159,22 +169,28 @@ func (f *SwiftFormatter) formatProtocol(w io.Writer, intf *ir.DistilledInterface
 		fmt.Fprintf(w, ": %s", strings.Join(extends, ", "))
 	}
 	
-	fmt.Fprintln(w, ":")
+	fmt.Fprintln(w, " {")
 	
 	// Format protocol members
 	for _, child := range intf.Children {
 		f.FormatNode(w, child, indent+1)
 	}
 	
+	// Closing brace
+	fmt.Fprintf(w, "%s}\n", indentStr)
+	
 	return nil
 }
 
 func (f *SwiftFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, indent string) error {
-	// Get visibility prefix
-	visPrefix := f.getVisibilityPrefix(fn.Visibility)
+	// Get visibility keyword
+	visKeyword := f.getSwiftVisibilityKeyword(fn.Visibility)
 	
 	// Format modifiers
 	modifiers := ""
+	if visKeyword != "" {
+		modifiers = visKeyword + " "
+	}
 	for _, mod := range fn.Modifiers {
 		switch mod {
 		case ir.ModifierStatic:
@@ -187,16 +203,14 @@ func (f *SwiftFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, i
 			modifiers += "final "
 		case ir.ModifierAsync:
 			modifiers += "async "
-		// case ir.ModifierThrows:
-		//	modifiers += "throws "
 		}
 	}
 	
 	// Check if it's an initializer
 	if fn.Name == "init" {
-		fmt.Fprintf(w, "%s%s%sinit", indent, visPrefix, modifiers)
+		fmt.Fprintf(w, "%s%sinit", indent, modifiers)
 	} else {
-		fmt.Fprintf(w, "%s%s%s%s", indent, visPrefix, modifiers, fn.Name)
+		fmt.Fprintf(w, "%s%s%s", indent, modifiers, fn.Name)
 	}
 	
 	// Add generic type parameters
@@ -216,6 +230,16 @@ func (f *SwiftFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, i
 	f.formatParameters(w, fn.Parameters)
 	fmt.Fprintf(w, ")")
 	
+	// Add throws/rethrows after parameters
+	for _, mod := range fn.Modifiers {
+		switch mod {
+		case ir.ModifierThrows:
+			fmt.Fprintf(w, " throws")
+		case ir.ModifierRethrows:
+			fmt.Fprintf(w, " rethrows")
+		}
+	}
+	
 	// Return type
 	if fn.Returns != nil && fn.Returns.Name != "" && fn.Returns.Name != "Void" {
 		fmt.Fprintf(w, " -> %s", fn.Returns.Name)
@@ -223,7 +247,7 @@ func (f *SwiftFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, i
 	
 	// Implementation
 	if fn.Implementation != "" {
-		fmt.Fprintln(w, ":")
+		fmt.Fprintln(w, " {")
 		impl := strings.TrimSpace(fn.Implementation)
 		for _, line := range strings.Split(impl, "\n") {
 			fmt.Fprintf(w, "%s    %s\n", indent, line)
@@ -236,8 +260,8 @@ func (f *SwiftFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, i
 }
 
 func (f *SwiftFormatter) formatField(w io.Writer, field *ir.DistilledField, indent string) error {
-	// Get visibility prefix
-	visPrefix := f.getVisibilityPrefix(field.Visibility)
+	// Get visibility keyword
+	visKeyword := f.getSwiftVisibilityKeyword(field.Visibility)
 	
 	// Determine var/let
 	varType := "var"
@@ -258,11 +282,14 @@ func (f *SwiftFormatter) formatField(w io.Writer, field *ir.DistilledField, inde
 	}
 	
 	// Format field
-	if isStatic {
-		fmt.Fprintf(w, "%s%sstatic %s %s", indent, visPrefix, varType, field.Name)
-	} else {
-		fmt.Fprintf(w, "%s%s%s %s", indent, visPrefix, varType, field.Name)
+	modifiers := ""
+	if visKeyword != "" {
+		modifiers = visKeyword + " "
 	}
+	if isStatic {
+		modifiers += "static "
+	}
+	fmt.Fprintf(w, "%s%s%s %s", indent, modifiers, varType, field.Name)
 	
 	// Add type if specified
 	if field.Type != nil && field.Type.Name != "" {
@@ -274,15 +301,32 @@ func (f *SwiftFormatter) formatField(w io.Writer, field *ir.DistilledField, inde
 		fmt.Fprintf(w, " = %s", field.DefaultValue)
 	}
 	
+	// Add computed property accessors if present
+	if field.IsProperty && (field.HasGetter || field.HasSetter) {
+		fmt.Fprintf(w, " {")
+		if field.HasGetter && field.HasSetter {
+			fmt.Fprintf(w, " get set")
+		} else if field.HasGetter {
+			fmt.Fprintf(w, " get")
+		} else if field.HasSetter {
+			fmt.Fprintf(w, " set")
+		}
+		fmt.Fprintf(w, " }")
+	}
+	
 	fmt.Fprintln(w)
 	return nil
 }
 
 func (f *SwiftFormatter) formatTypeAlias(w io.Writer, alias *ir.DistilledTypeAlias, indent string) error {
-	// Get visibility prefix
-	visPrefix := f.getVisibilityPrefix(alias.Visibility)
+	// Get visibility keyword
+	visKeyword := f.getSwiftVisibilityKeyword(alias.Visibility)
 	
-	fmt.Fprintf(w, "\n%s%stypealias %s", indent, visPrefix, alias.Name)
+	if visKeyword != "" {
+		fmt.Fprintf(w, "\n%s%s typealias %s", indent, visKeyword, alias.Name)
+	} else {
+		fmt.Fprintf(w, "\n%stypealias %s", indent, alias.Name)
+	}
 	
 	// Add generic type parameters
 	if len(alias.TypeParams) > 0 {
@@ -342,18 +386,22 @@ func (f *SwiftFormatter) formatEnum(w io.Writer, enum *ir.DistilledEnum, indent 
 	// Add blank line before enum
 	fmt.Fprintln(w)
 	
-	// Get visibility prefix
-	visPrefix := f.getVisibilityPrefix(enum.Visibility)
+	// Get visibility keyword
+	visKeyword := f.getSwiftVisibilityKeyword(enum.Visibility)
 	
 	// Format enum declaration
-	fmt.Fprintf(w, "%s%senum %s", indentStr, visPrefix, enum.Name)
+	if visKeyword != "" {
+		fmt.Fprintf(w, "%s%s enum %s", indentStr, visKeyword, enum.Name)
+	} else {
+		fmt.Fprintf(w, "%senum %s", indentStr, enum.Name)
+	}
 	
 	// Check if enum has a raw value type
 	if enum.Type != nil && enum.Type.Name != "" {
 		fmt.Fprintf(w, ": %s", enum.Type.Name)
 	}
 	
-	fmt.Fprintln(w, ":")
+	fmt.Fprintln(w, " {")
 	
 	// Format enum cases
 	for _, child := range enum.Children {
@@ -374,23 +422,27 @@ func (f *SwiftFormatter) formatEnum(w io.Writer, enum *ir.DistilledEnum, indent 
 		}
 	}
 	
+	// Closing brace
+	fmt.Fprintf(w, "%s}\n", indentStr)
+	
 	return nil
 }
 
-func (f *SwiftFormatter) getVisibilityPrefix(visibility ir.Visibility) string {
+func (f *SwiftFormatter) getSwiftVisibilityKeyword(visibility ir.Visibility) string {
 	switch visibility {
 	case ir.VisibilityPrivate:
-		return "-"
+		return "private"
 	case ir.VisibilityProtected:
-		return "*"
+		// Swift doesn't have protected, use internal
+		return "internal"
 	case ir.VisibilityPublic:
-		return "" // No prefix for public
+		return "public"
 	case ir.VisibilityInternal:
-		return "~"
+		return "internal"
 	case ir.VisibilityFilePrivate:
-		return "-" // File-private is similar to private
+		return "fileprivate"
 	case ir.VisibilityOpen:
-		return "" // Open is similar to public
+		return "open"
 	default:
 		return ""
 	}

@@ -1,3 +1,20 @@
 <file path="source.swift">
 import Foundation
+// /// Temperature‐related helper utilities.
+// /// An error that can occur while converting temperatures.
+// ///
+// /// Even though errors are introduced later in depth,
+// /// having a minimal `Error` here provides optional handling practice.
+// /// Converts a temperature value from one scale to another.
+// ///
+// /// - Parameters:
+// ///   - value: The numeric temperature to convert.
+// ///   - from:  Original scale.
+// ///   - to:    Desired scale.
+// /// - Returns: The converted value, or `nil` if conversion is impossible (e.g. below absolute zero).
+// /// Entry-point for quick playground testing.
+// ///
+// /// Not marked `public` to keep visibility minimal for a basic example.
+// /// Private helper for validation
+// /// Internal constant for configuration
 </file>

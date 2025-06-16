@@ -10,39 +10,43 @@ import Foundation
 // // MARK: - Protocols
 // /// Something that can provide a textual description of itself.
 
-protocol Describable:
+public protocol Describable {
+}
 // /// Two-dimensional, integer-backed positioning.
 
-class Point:
-    var x: Int
-    var y: Int
+public class Point {
+    public var x: Int
+    public var y: Int
     // /// Euclidean distance from origin (0,0).
-    var magnitude: Double
-    var description: String
+    public var magnitude: Double
+    public var description: String
     // /// Private helper for coordinate validation
     // /// Internal method for coordinate transformation
+}
 // /// Models an axis-aligned rectangle.
 
-class Rectangle:
+open class Rectangle {
     // // Stored properties
-    var origin: Point
-    var size: (width: Int, height: Int)
+    public var origin: Point
+    public var size: (width: Int, height: Int)
     // // Lazy-calculated property cached for performance
     // /// Designated initializer.
     // /// Area is recomputed only when cache invalidated.
-    var area: Int
-    var description: String
+    public var area: Int
+    open var description: String
     // /// Private method for bounds checking
     // /// Protected method for subclasses
+}
 // /// Specialized rectangle for UI elements
 
-class UIRectangle:
+public class UIRectangle {
     // /// Override with additional behavior
-    var description: String
+    public var description: String
     // /// Public method specific to UI rectangles
-    func show()
+    public show()
     // /// Public method to hide rectangle
-    func hide()
+    public hide()
     // /// Private UI-specific validation
+}
 // // MARK: - Demo
 </file>

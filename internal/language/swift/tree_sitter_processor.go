@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	sitter "github.com/smacker/go-tree-sitter"
-	swift "tree-sitter-swift"
 	"github.com/janreges/ai-distiller/internal/ir"
+	swift "tree-sitter-swift"
 )
 
 // TreeSitterProcessor processes Swift using tree-sitter
@@ -83,6 +83,7 @@ func (p *TreeSitterProcessor) processNode(node *sitter.Node, file *ir.DistilledF
 	
 	nodeType := node.Type()
 	
+	
 	// Skip non-named nodes except comments
 	if !node.IsNamed() && nodeType != "comment" && nodeType != "multiline_comment" {
 		// Process children for anonymous nodes
@@ -103,20 +104,31 @@ func (p *TreeSitterProcessor) processNode(node *sitter.Node, file *ir.DistilledF
 		p.processImport(node, file, parent)
 		
 	case "class_declaration":
-		// Check the first child to determine if it's a class, struct, or enum
-		if node.ChildCount() > 0 {
-			firstChild := node.Child(0)
-			switch firstChild.Type() {
-			case "struct":
-				p.processStruct(node, file, parent)
-			case "enum":
+		// Swift tree-sitter uses class_declaration for enum/struct/class
+		// We need to check the source text to determine the actual type
+		text := strings.TrimSpace(p.getNodeText(node))
+		
+		// Remove visibility modifiers to check the actual type
+		// Common patterns: "public enum", "private struct", "final class", etc.
+		words := strings.Fields(text)
+		for _, word := range words {
+			if word == "enum" {
 				p.processEnum(node, file, parent)
-			default:
+				return
+			} else if word == "struct" {
+				p.processStruct(node, file, parent)
+				return
+			} else if word == "class" {
 				p.processClass(node, file, parent)
+				return
 			}
-		} else {
-			p.processClass(node, file, parent)
 		}
+		
+	case "struct_declaration":
+		p.processStruct(node, file, parent)
+		
+	case "enum_declaration":
+		p.processEnum(node, file, parent)
 		
 	case "protocol_declaration":
 		p.processProtocol(node, file, parent)
@@ -127,7 +139,21 @@ func (p *TreeSitterProcessor) processNode(node *sitter.Node, file *ir.DistilledF
 	case "function_declaration":
 		p.processFunction(node, file, parent)
 		
+	case "init_declaration":
+		p.processInit(node, file, parent)
+		
+	case "deinit_declaration":
+		p.processDeinit(node, file, parent)
+		
+	case "variable_declaration":
+		// Handle top-level let/var declarations
+		p.processProperty(node, file, parent)
+		
 	case "property_declaration":
+		p.processProperty(node, file, parent)
+		
+	case "constant_declaration":
+		// Handle let declarations
 		p.processProperty(node, file, parent)
 		
 	case "actor_declaration":
@@ -194,13 +220,48 @@ func (p *TreeSitterProcessor) processClass(node *sitter.Node, file *ir.Distilled
 func (p *TreeSitterProcessor) processFunction(node *sitter.Node, file *ir.DistilledFile, parent ir.DistilledNode) {
 	fn := &ir.DistilledFunction{
 		BaseNode:    p.nodeLocation(node),
-		Name:        p.getFunctionName(node),
+		Name:        p.getNodeName(node),
 		Visibility:  p.getVisibility(node),
 		Modifiers:   p.getFunctionModifiers(node),
 		Parameters:  p.getParameters(node),
 		Returns:     p.getReturnType(node),
 		Decorators:  p.getAttributes(node),
 		TypeParams:  p.getGenericParameters(node),
+	}
+	
+	// Get implementation if present
+	if body := p.findChildByType(node, "function_body"); body != nil {
+		fn.Implementation = p.getNodeText(body)
+	}
+	
+	p.addNode(file, parent, fn)
+}
+
+func (p *TreeSitterProcessor) processInit(node *sitter.Node, file *ir.DistilledFile, parent ir.DistilledNode) {
+	fn := &ir.DistilledFunction{
+		BaseNode:    p.nodeLocation(node),
+		Name:        "init",
+		Visibility:  p.getVisibility(node),
+		Modifiers:   p.getFunctionModifiers(node),
+		Parameters:  p.getParameters(node),
+		Decorators:  p.getAttributes(node),
+	}
+	
+	// Get implementation if present
+	if body := p.findChildByType(node, "function_body"); body != nil {
+		fn.Implementation = p.getNodeText(body)
+	}
+	
+	p.addNode(file, parent, fn)
+}
+
+func (p *TreeSitterProcessor) processDeinit(node *sitter.Node, file *ir.DistilledFile, parent ir.DistilledNode) {
+	fn := &ir.DistilledFunction{
+		BaseNode:    p.nodeLocation(node),
+		Name:        "deinit",
+		Visibility:  p.getVisibility(node),
+		Modifiers:   p.getFunctionModifiers(node),
+		Decorators:  p.getAttributes(node),
 	}
 	
 	// Get implementation if present
@@ -314,24 +375,6 @@ func (p *TreeSitterProcessor) getModifiers(node *sitter.Node) []ir.Modifier {
 	return modifiers
 }
 
-func (p *TreeSitterProcessor) getFunctionModifiers(node *sitter.Node) []ir.Modifier {
-	modifiers := p.getModifiers(node)
-	
-	// Check for async
-	if p.findChildByType(node, "async_keyword") != nil {
-		modifiers = append(modifiers, ir.ModifierAsync)
-	}
-	
-	// Check for mutating
-	for i := 0; i < int(node.ChildCount()); i++ {
-		child := node.Child(i)
-		if child.Type() == "mutation_modifier" && p.getNodeText(child) == "mutating" {
-			modifiers = append(modifiers, ir.ModifierMutating)
-		}
-	}
-	
-	return modifiers
-}
 
 // Stub implementations for remaining helper methods
 func (p *TreeSitterProcessor) getImportPath(node *sitter.Node) string {
@@ -374,6 +417,74 @@ func (p *TreeSitterProcessor) getProtocols(node *sitter.Node) []ir.TypeRef {
 	return p.getSuperclasses(node)
 }
 
+func (p *TreeSitterProcessor) getFunctionModifiers(node *sitter.Node) []ir.Modifier {
+	modifiers := []ir.Modifier{}
+	
+	// Look for modifiers child node
+	if modifiersNode := p.findChildByType(node, "modifiers"); modifiersNode != nil {
+		for i := 0; i < int(modifiersNode.ChildCount()); i++ {
+			child := modifiersNode.Child(i)
+			switch child.Type() {
+			case "async_modifier":
+				modifiers = append(modifiers, ir.ModifierAsync)
+			case "throws_keyword":
+				modifiers = append(modifiers, ir.ModifierThrows)
+			case "rethrows_keyword":
+				modifiers = append(modifiers, ir.ModifierRethrows)
+			case "mutation_modifier":
+				text := p.getNodeText(child)
+				if text == "mutating" {
+					modifiers = append(modifiers, ir.ModifierMutating)
+				} else if text == "nonmutating" {
+					modifiers = append(modifiers, ir.ModifierNonMutating)
+				}
+			case "static_modifier":
+				modifiers = append(modifiers, ir.ModifierStatic)
+			case "class_modifier":
+				modifiers = append(modifiers, ir.ModifierClass)
+			case "final_modifier":
+				modifiers = append(modifiers, ir.ModifierFinal)
+			}
+		}
+	}
+	
+	// Also check for async/throws as direct children of function node
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		switch child.Type() {
+		case "async_keyword":
+			modifiers = append(modifiers, ir.ModifierAsync)
+		case "throws_keyword":
+			modifiers = append(modifiers, ir.ModifierThrows)
+		case "rethrows_keyword":
+			modifiers = append(modifiers, ir.ModifierRethrows)
+		}
+	}
+	
+	return modifiers
+}
+
+func (p *TreeSitterProcessor) getGenericParameters(node *sitter.Node) []ir.TypeParam {
+	params := []ir.TypeParam{}
+	
+	// Look for type_parameters
+	if typeParams := p.findChildByType(node, "type_parameters"); typeParams != nil {
+		for i := 0; i < int(typeParams.ChildCount()); i++ {
+			child := typeParams.Child(i)
+			if child.Type() == "type_parameter" {
+				param := ir.TypeParam{
+					Name: p.getNodeName(child),
+				}
+				
+				// TODO: Add constraint parsing
+				params = append(params, param)
+			}
+		}
+	}
+	
+	return params
+}
+
 func (p *TreeSitterProcessor) getAttributes(node *sitter.Node) []string {
 	// TODO: Implement attribute extraction
 	return nil
@@ -383,42 +494,69 @@ func (p *TreeSitterProcessor) getFunctionName(node *sitter.Node) string {
 	return p.getNodeName(node)
 }
 
+
 func (p *TreeSitterProcessor) getParameters(node *sitter.Node) []ir.Parameter {
-	var params []ir.Parameter
+	params := []ir.Parameter{}
 	
-	for i := 0; i < int(node.ChildCount()); i++ {
-		child := node.Child(i)
+	// Find parameter clause
+	paramClause := p.findChildByType(node, "parameter_clause")
+	if paramClause == nil {
+		return params
+	}
+	
+	// Process each parameter
+	for i := 0; i < int(paramClause.ChildCount()); i++ {
+		child := paramClause.Child(i)
 		if child.Type() == "parameter" {
-			param := p.extractParameter(child)
-			if param.Name != "" {
-				params = append(params, param)
+			param := ir.Parameter{
+				Name: p.getParameterName(child),
 			}
+			
+			// Get parameter type
+			if typeAnnotation := p.findChildByType(child, "type_annotation"); typeAnnotation != nil {
+				param.Type = p.parseType(typeAnnotation)
+			}
+			
+			// Get default value
+			if defaultValue := p.findChildByType(child, "parameter_default_value"); defaultValue != nil {
+				param.DefaultValue = p.getNodeText(defaultValue)
+			}
+			
+			params = append(params, param)
 		}
 	}
 	
 	return params
 }
 
-func (p *TreeSitterProcessor) extractParameter(node *sitter.Node) ir.Parameter {
-	param := ir.Parameter{}
-	
+func (p *TreeSitterProcessor) getParameterName(node *sitter.Node) string {
+	// Swift parameters can have external and internal names
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
-		
-		switch child.Type() {
-		case "simple_identifier":
-			if param.Name == "" {
-				// First identifier is external name or parameter name
-				param.Name = p.getNodeText(child)
-			}
-		case "user_type", "optional_type", "array_type":
-			param.Type = ir.TypeRef{
+		if child.Type() == "simple_identifier" {
+			return p.getNodeText(child)
+		}
+	}
+	return ""
+}
+
+func (p *TreeSitterProcessor) parseType(node *sitter.Node) ir.TypeRef {
+	// Skip the type_annotation node and get the actual type
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		if child.Type() == "user_type" || child.Type() == "some_type" || 
+		   child.Type() == "any_type" || child.Type() == "opaque_type" ||
+		   child.Type() == "tuple_type" || child.Type() == "array_type" ||
+		   child.Type() == "dictionary_type" || child.Type() == "optional_type" {
+			return ir.TypeRef{
 				Name: p.getNodeText(child),
 			}
 		}
 	}
 	
-	return param
+	return ir.TypeRef{
+		Name: p.getNodeText(node),
+	}
 }
 
 func (p *TreeSitterProcessor) getReturnType(node *sitter.Node) *ir.TypeRef {
@@ -444,10 +582,6 @@ func (p *TreeSitterProcessor) getReturnType(node *sitter.Node) *ir.TypeRef {
 	return nil
 }
 
-func (p *TreeSitterProcessor) getGenericParameters(node *sitter.Node) []ir.TypeParam {
-	// TODO: Implement generic parameter extraction
-	return nil
-}
 
 func (p *TreeSitterProcessor) processStruct(node *sitter.Node, file *ir.DistilledFile, parent ir.DistilledNode) {
 	// Structs are similar to classes but value types
@@ -530,18 +664,34 @@ func (p *TreeSitterProcessor) processEnum(node *sitter.Node, file *ir.DistilledF
 					
 					// Process enum entry children
 					hasEquals := false
+					var associatedTypes []string
+					
 					for k := 0; k < int(bodyChild.ChildCount()); k++ {
 						caseChild := bodyChild.Child(k)
-						if caseChild.Type() == "simple_identifier" && enumCase.Name == "" {
-							enumCase.Name = p.getNodeText(caseChild)
-						} else if caseChild.Type() == "=" {
+						
+						switch caseChild.Type() {
+						case "simple_identifier":
+							if enumCase.Name == "" {
+								enumCase.Name = p.getNodeText(caseChild)
+							}
+						case "=":
 							hasEquals = true
-						} else if hasEquals && (caseChild.Type() == "line_string_literal" || 
-							caseChild.Type() == "integer_literal" || 
-							caseChild.Type() == "real_literal") {
-							// Raw value
-							enumCase.DefaultValue = p.getNodeText(caseChild)
+						case "line_string_literal", "integer_literal", "real_literal":
+							if hasEquals {
+								// Raw value
+								enumCase.DefaultValue = p.getNodeText(caseChild)
+							}
+						case "tuple_type":
+							// Associated values in tuple form
+							tupleText := p.getNodeText(caseChild)
+							// Extract types from tuple
+							associatedTypes = append(associatedTypes, tupleText)
 						}
+					}
+					
+					// If we have associated types, add them to the enum case name
+					if len(associatedTypes) > 0 && enumCase.Name != "" {
+						enumCase.Name = enumCase.Name + associatedTypes[0]
 					}
 					
 					if enumCase.Name != "" {
@@ -636,6 +786,39 @@ func (p *TreeSitterProcessor) processProperty(node *sitter.Node, file *ir.Distil
 	// Check for default value
 	if init := p.findChildByType(node, "property_initializer"); init != nil {
 		field.DefaultValue = p.getNodeText(init)
+	}
+	
+	// Check for computed property accessors
+	hasAccessors := false
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		switch child.Type() {
+		case "computed_property":
+			hasAccessors = true
+			field.IsProperty = true
+			// Look for get/set blocks within computed_property
+			for j := 0; j < int(child.ChildCount()); j++ {
+				accessor := child.Child(j)
+				if accessor.Type() == "computed_getter" || p.getNodeText(accessor) == "get" {
+					field.HasGetter = true
+				} else if accessor.Type() == "computed_setter" || p.getNodeText(accessor) == "set" {
+					field.HasSetter = true
+				}
+			}
+		case "willSet", "didSet":
+			// Property observers indicate this is a stored property with observers
+			hasAccessors = true
+		}
+	}
+	
+	// If we found accessors, mark it as a property
+	if hasAccessors {
+		field.IsProperty = true
+		// If only observers, it's a stored property that can be read and written
+		if !field.HasGetter && !field.HasSetter {
+			field.HasGetter = true
+			field.HasSetter = true
+		}
 	}
 	
 	p.addNode(file, parent, field)

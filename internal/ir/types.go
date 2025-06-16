@@ -86,9 +86,13 @@ const (
 	ModifierEmbedded  Modifier = "embedded"
 	ModifierActor     Modifier = "actor"
 	ModifierMutating  Modifier = "mutating"
-	ModifierStruct    Modifier = "struct"
-	ModifierEnum      Modifier = "enum"
-	ModifierTypeAlias Modifier = "type_alias"
+	ModifierStruct       Modifier = "struct"
+	ModifierEnum         Modifier = "enum"
+	ModifierTypeAlias    Modifier = "type_alias"
+	ModifierThrows       Modifier = "throws"
+	ModifierRethrows     Modifier = "rethrows"
+	ModifierNonMutating  Modifier = "nonmutating"
+	ModifierClass        Modifier = "class"
 )
 
 // DistilledNode is the base interface for all IR nodes

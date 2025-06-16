@@ -1,37 +1,51 @@
 <file path="source.swift">
 import Foundation
+// /// A simple LIFO stack.
 
-class Stack:
-    -var storage: [Element]
-    func push(_: Element)
-    func peek() -> Element?
-    func pop() -> Element?
-    -func isValid() -> Bool
-    ~var count: Int
+public class Stack {
+    private var storage: [Element]
+    public init()
+    // /// Pushes a new element.
+    public mutating push()
+    // /// Returns the top element without removing it.
+    public peek() -> Element?
+    // /// Removes and returns the top element.
+    public mutating pop() -> Element?
+    // /// Private helper for validation
+    private isValid() -> Bool
+    // /// Internal method for debugging
+    internal var count: Int { get set }
+}
+// /// Errors for math-centric operations.
 
-class :
-    ~func average() -> Double
-    -func validateNumericElements() -> Bool
+public enum MathError {
+    case emptyStack
+    case divideByZero
+    case negativeValue
+}
+// /// Describes a cache that stores key/value pairs.
 
-class MathError:
+public protocol Cacheable {
+}
+// /// Dictionary already satisfies `Cacheable` when paired properly.
+// /// Generic cache with expiration
 
-protocol Cacheable:
+public class ExpiringCache {
 
-~class :
-    func insert(_: Value, for: Key)
-    func contains(key: Key) -> Bool
-
-class ExpiringCache:
-
-    -class CacheEntry:
-        ~var value: Value
-        ~var expiration: Date
-    -var storage: [Key: CacheEntry]
-    -var timeToLive: TimeInterval
-    func insert(_: Value, for: Key)
-    func value(for: Key) -> Value?
-    func contains(key: Key) -> Bool
-    -func removeExpiredEntries()
-    ~var cacheSize: Int
--func mediumDemo()
+    private class CacheEntry {
+        internal var value: Value
+        internal var expiration: Date
+    }
+    private var storage: [Key: CacheEntry]
+    private var timeToLive: TimeInterval
+    public init()
+    public mutating insert()
+    public value() -> Value?
+    public contains() -> Bool
+    // /// Private cleanup method
+    private mutating removeExpiredEntries()
+    // /// Internal method for cache statistics
+    internal var cacheSize: Int { get set }
+}
+fileprivate mediumDemo()
 </file>

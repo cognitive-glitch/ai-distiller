@@ -1,38 +1,71 @@
 <file path="source.swift">
 import Foundation
 import Combine
+// /// A property wrapper that clamps a numeric value within a given range
+// /// and publishes changes via a Combine publisher.
 
-class Clamped:
-    var wrappedValue: Value
-    var projectedValue: AnyPublisher<Value, Never>
+public class Clamped {
+    public var wrappedValue: Value { get set }
+    // /// The projected value is a Combine publisher that emits new values.
+    public var projectedValue: AnyPublisher<Value, Never> { get set }
+    public init() {
+        {
+                self.range = range
+                self.value = max(range.lowerBound, min(wrappedValue, range.upperBound))
+            }
+    // /// Private helper for validation
+}
+// /// A simple validation result type.
 
-class ValidationResult:
+public enum ValidationResult {
+    case success
+    case failure
+}
+// /// A result builder for creating an array of `ValidationResult` declaratively.
 
-class ConfigurationBuilder:
-    func buildBlock(_: ValidationResult) -> [ValidationResult]:
+public class ConfigurationBuilder {
+    public buildBlock() -> [ValidationResult] {
         {
                 components
             }
-    func buildExpression(_: String) -> ValidationResult:
+    public buildExpression() -> ValidationResult {
         {
                 .success(expression)
             }
-    func buildEither(first: [ValidationResult]) -> [ValidationResult]:
+    public buildEither() -> [ValidationResult] {
         {
                 component
             }
-    func buildEither(second: [ValidationResult]) -> [ValidationResult]:
+    public buildEither() -> [ValidationResult] {
         {
                 component
             }
+    // /// Private helper for building optional components
+}
+// /// A protocol for items that can be described.
 
-protocol Describable:
+public protocol Describable {
+    // /// A textual description of the instance.
+    // /// Resets to a default state.
+}
+// /// A read-only proxy for accessing UserSettings.
 
-class SettingsProxy:
+public class SettingsProxy {
+    // /// Private helper for proxy validation
+}
+// /// Main settings structure for a user.
 
-class UserSettings:
-    func asProxy() -> SettingsProxy:
+public class UserSettings {
+    public init() {
+        {
+                self.username = username
+            }
+    // /// Creates a read-only proxy for these settings.
+    public asProxy() -> SettingsProxy {
         {
                 SettingsProxy(self)
             }
+    // /// Private validation method
+    // /// Internal method for settings synchronization
+}
 </file>

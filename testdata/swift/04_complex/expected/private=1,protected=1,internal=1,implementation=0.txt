@@ -1,56 +1,85 @@
 <file path="source.swift">
 import Foundation
 import Combine
+// /// A property wrapper that clamps a numeric value within a given range
+// /// and publishes changes via a Combine publisher.
 
-class Clamped:
-    -var value: Value
-    -var range: ClosedRange<Value>
-    -var subject
-    var wrappedValue: Value
-    var projectedValue: AnyPublisher<Value, Never>
-    -func isInRange(_: Value) -> Bool
+public class Clamped {
+    private var value: Value
+    private var range: ClosedRange<Value>
+    private var subject
+    public var wrappedValue: Value { get set }
+    // /// The projected value is a Combine publisher that emits new values.
+    public var projectedValue: AnyPublisher<Value, Never> { get set }
+    public init()
+    // /// Private helper for validation
+    private isInRange() -> Bool
+}
+// /// A simple validation result type.
 
-class ValidationResult:
+public enum ValidationResult {
+    case success
+    case failure
+}
+// /// A result builder for creating an array of `ValidationResult` declaratively.
 
-class ConfigurationBuilder:
-    func buildBlock(_: ValidationResult) -> [ValidationResult]
-    func buildExpression(_: String) -> ValidationResult
-    func buildEither(first: [ValidationResult]) -> [ValidationResult]
-    func buildEither(second: [ValidationResult]) -> [ValidationResult]
-    -func buildOptional(_: [ValidationResult]?) -> [ValidationResult]
+public class ConfigurationBuilder {
+    public buildBlock() -> [ValidationResult]
+    public buildExpression() -> ValidationResult
+    public buildEither() -> [ValidationResult]
+    public buildEither() -> [ValidationResult]
+    // /// Private helper for building optional components
+    private buildOptional() -> [ValidationResult]
+}
+// /// A protocol for items that can be described.
 
-protocol Describable:
+public protocol Describable {
+    // /// A textual description of the instance.
+    // /// Resets to a default state.
+}
 
-~class :
-    var description: String
-    -func validateDescription() -> Bool
+fileprivate class AudioSettings {
+    internal var volume: Int
+    internal var isMuted: Bool
+    internal var description: String { get set }
+    internal reset()
+    // /// Private validation method
+    private validateAudioSettings() -> Bool
+}
+// /// A read-only proxy for accessing UserSettings.
 
--class AudioSettings:
-    ~var volume: Int
-    ~var isMuted: Bool
-    ~var description: String
-    ~func reset()
-    -func validateAudioSettings() -> Bool
+public class SettingsProxy {
+    private var settings: UserSettings
+    fileprivate init()
+    // /// Private helper for proxy validation
+    private isValidProxy() -> Bool
+}
+// /// Main settings structure for a user.
 
-class SettingsProxy:
-    -var settings: UserSettings
-    -func isValidProxy() -> Bool
+public class UserSettings {
+    internal var username: String
+    internal var userAge: Int
+    fileprivate var audio
+    public init()
+    // /// Creates a read-only proxy for these settings.
+    public asProxy() -> SettingsProxy
+    // /// Private validation method
+    private validateSettings() -> Bool
+    // /// Internal method for settings synchronization
+    internal mutating syncWithRemote()
+}
 
-class UserSettings:
-    ~var username: String
-    ~var userAge: Int
-    -var audio
-    func asProxy() -> SettingsProxy
-    -func validateSettings() -> Bool
-    ~func syncWithRemote()
-
-~class SettingsViewModel:
-    -var settings: UserSettings
-    -var cancellables
-    -var ageDescription: String
-    ~func getAudioConfiguration()
-    ~func validate(isPremiumUser: Bool) -> [ValidationResult]
-    func serialize(_: T) -> Data?
-    -func cleanupConfiguration()
--func complexDemo()
+internal class SettingsViewModel {
+    private var settings: UserSettings
+    private var cancellables
+    private var ageDescription: String
+    internal init()
+    internal getAudioConfiguration()
+    internal validate() -> [ValidationResult]
+    // /// Serializes items that are both Identifiable and Codable.
+    public serialize<T>() -> Data?
+    // /// Private method for configuration cleanup
+    private cleanupConfiguration()
+}
+fileprivate complexDemo()
 </file>

@@ -1,48 +1,72 @@
 <file path="source.swift">
 import Foundation
+// /// A protocol defining a generic event with a specific payload.
 
-protocol Event:
+public protocol Event {
+}
+// /// A protocol for a type that can handle a specific kind of event.
 
-protocol EventHandler:
+public protocol EventHandler {
+}
+// /// A weak reference wrapper to prevent retain cycles in the subscriber list.
+// /// A type-erased wrapper for any `EventHandler`.
+// /// This allows storing handlers for different event types in the same collection.
+// /// An actor that manages event subscriptions and dispatches events concurrently.
+// /// Custom operator for subscribing an EventHandler to an EventBus.
+public <H>()
+public <T, U>() -> (T, U)
+// /// Uses Mirror to generate a debug description of any event payload.
+public detailedDebugLog<T>() -> String
+// /// Advanced reflection utility
 
-class EventBus:
-    subscribe(_: H)
-    post(_: E)
-(handler: H, bus: EventBus)
-(lhs: T, rhs: U) -> (T, U)
-detailedDebugLog(_: T) -> String
+public class ReflectionAnalyzer {
+    // /// Analyzes any object and returns its structure
+    public analyze<T>() -> StructureInfo
+    // /// Private helper for type analysis
+}
 
-class ReflectionAnalyzer:
-    analyze(_: T) -> StructureInfo
+public class StructureInfo {
+    public var typeName: String
+    public var properties: [PropertyInfo]
+    public var childCount: Int
+    // /// Private validation method
+}
 
-class StructureInfo:
-    var typeName: String
-    var properties: [PropertyInfo]
-    var childCount: Int
+public class PropertyInfo {
+    public var name: String
+    public var type: String
+    // /// Private helper for property validation
+}
+// /// A basic thread-safe queue implementing Sequence.
 
-class PropertyInfo:
-    var name: String
-    var type: String
+public class ThreadSafeQueue {
+    public enqueue()
+    public dequeue() -> T?
+    public makeIterator() -> IndexingIterator<[T]>
+    // /// Private helper for queue validation
+    // /// Internal method for queue statistics
+}
 
-class ThreadSafeQueue:
-    enqueue(_: T)
-    dequeue() -> T?
-    makeIterator() -> IndexingIterator<[T]>
+public class CircularBuffer {
+    public var startIndex: Int { get set }
+    public var endIndex: Int { get set }
+    public init()
+    public index() -> Int
+    public var count: Int { get set }
+    // /// Private helper for buffer validation
+    // /// Internal method for buffer manipulation
+}
+// /// A service that demonstrates complex memory management patterns.
 
-class CircularBuffer:
-    var startIndex: Int
-    var endIndex: Int
-    index(after: Int) -> Int
-    var count: Int
+public class ConcurrentEventLogger {
+    public var monitor: ActivityMonitor
+    public var delegate: EventLoggerDelegate?
+    public init()
+    public logEvent<E>()
+    // /// Private cleanup method
+}
+// /// Protocol for event logger delegation
 
-class ConcurrentEventLogger:
-    var monitor: ActivityMonitor
-    var delegate: EventLoggerDelegate?
-    logEvent(_: E)
-
-protocol EventLoggerDelegate:
-
-class ActivityMonitor:
-    record(_: String)
-    analyze(_: T) -> StructureInfo
+public protocol EventLoggerDelegate {
+}
 </file>

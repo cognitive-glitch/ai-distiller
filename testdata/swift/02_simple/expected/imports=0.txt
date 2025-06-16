@@ -1,21 +1,40 @@
 <file path="source.swift">
+// /// Something that can provide a textual description of itself.
 
-protocol Describable:
+public protocol Describable {
+}
+// /// Two-dimensional, integer-backed positioning.
 
-class Point:
-    var x: Int
-    var y: Int
-    var magnitude: Double
-    var description: String
+public class Point {
+    public var x: Int
+    public var y: Int
+    // /// Euclidean distance from origin (0,0).
+    public var magnitude: Double
+    public var description: String
+    // /// Private helper for coordinate validation
+    // /// Internal method for coordinate transformation
+}
+// /// Models an axis-aligned rectangle.
 
-class Rectangle:
-    var origin: Point
-    var size: (width: Int, height: Int)
-    var area: Int
-    var description: String
+open class Rectangle {
+    public var origin: Point
+    public var size: (width: Int, height: Int)
+    // /// Designated initializer.
+    // /// Area is recomputed only when cache invalidated.
+    public var area: Int
+    open var description: String
+    // /// Private method for bounds checking
+    // /// Protected method for subclasses
+}
+// /// Specialized rectangle for UI elements
 
-class UIRectangle:
-    var description: String
-    func show()
-    func hide()
+public class UIRectangle {
+    // /// Override with additional behavior
+    public var description: String
+    // /// Public method specific to UI rectangles
+    public show()
+    // /// Public method to hide rectangle
+    public hide()
+    // /// Private UI-specific validation
+}
 </file>

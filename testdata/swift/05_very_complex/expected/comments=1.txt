@@ -11,10 +11,12 @@ import Foundation
 // // MARK: - Core Protocols with Associated Types
 // /// A protocol defining a generic event with a specific payload.
 
-protocol Event:
+public protocol Event {
+}
 // /// A protocol for a type that can handle a specific kind of event.
 
-protocol EventHandler:
+public protocol EventHandler {
+}
 // // MARK: - Type Erasure for Heterogeneous Storage
 // /// A weak reference wrapper to prevent retain cycles in the subscriber list.
 // /// A type-erased wrapper for any `EventHandler`.
@@ -22,74 +24,83 @@ protocol EventHandler:
 // // MARK: - The Core Concurrent Component: The Actor
 // /// An actor that manages event subscriptions and dispatches events concurrently.
 
-class EventBus:
-    func subscribe(_: H)
-    func post(_: E)
+public class EventBus {
+    public subscribe(_: H)
+    public post(_: E)
     // /// Private method for handler cleanup
     // /// Internal method for bus statistics
+}
 // // MARK: - Custom Operators and Precedence
 // /// Custom operator for subscribing an EventHandler to an EventBus.
-func (handler: H, bus: EventBus)
+public (handler: H, bus: EventBus)
 // // Custom operator for event composition
-func (lhs: T, rhs: U) -> (T, U)
+public (lhs: T, rhs: U) -> (T, U)
 // // MARK: - Metaprogramming with Mirror
 // /// Uses Mirror to generate a debug description of any event payload.
-func detailedDebugLog(_: T) -> String
+public detailedDebugLog(_: T) -> String
 // /// Advanced reflection utility
 
-class ReflectionAnalyzer:
+public class ReflectionAnalyzer {
     // /// Analyzes any object and returns its structure
-    func analyze(_: T) -> StructureInfo
+    public analyze(_: T) -> StructureInfo
     // /// Private helper for type analysis
+}
 
-class StructureInfo:
-    var typeName: String
-    var properties: [PropertyInfo]
-    var childCount: Int
+public class StructureInfo {
+    public var typeName: String
+    public var properties: [PropertyInfo]
+    public var childCount: Int
     // /// Private validation method
+}
 
-class PropertyInfo:
-    var name: String
-    var type: String
+public class PropertyInfo {
+    public var name: String
+    public var type: String
     // /// Private helper for property validation
+}
 // // MARK: - Custom Collection Type
 // /// A basic thread-safe queue implementing Sequence.
 
-class ThreadSafeQueue:
-    func enqueue(_: T)
-    func dequeue() -> T?
-    func makeIterator() -> IndexingIterator<[T]>
+public class ThreadSafeQueue {
+    public enqueue(_: T)
+    public dequeue() -> T?
+    public makeIterator() -> IndexingIterator<[T]>
     // /// Private helper for queue validation
     // /// Internal method for queue statistics
+}
 // // Advanced collection with custom indexing
 
-class CircularBuffer:
-    var startIndex: Int
-    var endIndex: Int
-    func index(after: Int) -> Int
-    var count: Int
+public class CircularBuffer {
+    public var startIndex: Int
+    public var endIndex: Int
+    public index(after: Int) -> Int
+    public var count: Int
     // /// Private helper for buffer validation
     // /// Internal method for buffer manipulation
+}
 // // MARK: - Advanced Memory Management and Concurrent Types
 // /// A service that demonstrates complex memory management patterns.
 
-class ConcurrentEventLogger:
+public class ConcurrentEventLogger {
     // // Strong reference to monitor
-    var monitor: ActivityMonitor
+    public var monitor: ActivityMonitor
     // // Weak reference to prevent cycles
-    var delegate: EventLoggerDelegate?
+    public var delegate: EventLoggerDelegate?
     // // Unowned reference (careful usage required)
-    func logEvent(_: E)
+    public logEvent(_: E)
     // /// Private cleanup method
+}
 // /// Protocol for event logger delegation
 
-protocol EventLoggerDelegate:
+public protocol EventLoggerDelegate {
+}
 
-class ActivityMonitor:
-    func record(_: String)
-    func analyze(_: T) -> StructureInfo
+public class ActivityMonitor {
+    public record(_: String)
+    public analyze(_: T) -> StructureInfo
     // /// Private method for cache management
     // /// Internal method for monitoring statistics
+}
 // // MARK: - Example Usage
 // // Define some concrete events
 // // Define some concrete handlers

@@ -27,10 +27,10 @@ When running `aid` on Swift files without any `--strip` options, you get the com
 
 The `--strip` flag allows you to control what gets removed:
 
-- `--strip non-public`: Removes private, fileprivate, and internal declarations
-- `--strip implementation`: Removes function/method bodies, keeping only signatures
-- `--strip comments`: Removes all comments including documentation comments
-- `--strip imports`: Removes import statements
+- `--private=0 --protected=0 --internal=0`: Removes private, fileprivate, and internal declarations
+- `--implementation=0`: Removes function/method bodies, keeping only signatures
+- `--comments=0`: Removes all comments including documentation comments
+- `--imports=0`: Removes import statements
 
 ## Key Features
 
@@ -62,35 +62,43 @@ Swift emphasizes protocol-oriented programming. AI Distiller recognizes:
 
 ### Current Implementation Status
 
-⚠️ **Important**: Swift support uses a tree-sitter parser with basic functionality implemented. The following features are currently supported:
+⚠️ **Important**: Swift support uses a tree-sitter parser with significant functionality implemented. The following features are currently supported:
 
 **Supported Features:**
-- Function declarations with parameters and return types
-- Class and struct declarations
-- Property declarations (with limited type inference)
-- Basic visibility modifiers (public, internal, private, fileprivate)
+- Enum declarations with raw values (String, Int)
+- Basic enum cases (associated values not fully supported)
+- Class, struct, and enum type detection
+- Property declarations with type annotations
+- Computed properties with get/set accessors
+- Basic visibility modifiers (open, public, internal, fileprivate, private)
 - Comments and documentation
-- Basic protocol declarations
-- Extensions (with limited type resolution)
+- Protocol declarations (requirements extraction limited)
+- Extensions with naming
+- Import statements
+- Actor declarations
 
-**Not Yet Implemented:**
-1. **Advanced Type Features**
-   - Generic parameters and constraints
-   - Associated types in protocols
-   - Type aliases with complex types
-   - Opaque return types (some keyword)
+**Known Issues:**
+1. **Critical Issues**
+   - Function/method parameters are not extracted
+   - Protocol requirements are not parsed
+   - Enum associated values not shown
+   - Generic parameters and constraints missing
+   - Static modifiers not detected
 
-2. **Swift-Specific Features**
+2. **Not Yet Implemented**
    - Property wrappers (@State, @Published, etc.)
    - Result builders (@ViewBuilder, etc.)
-   - Actor isolation annotations
-   - Async/await throws annotations
-   - Enum associated values
-
-3. **Complex Syntax**
+   - Async/await/throws modifiers
    - Where clauses in extensions and generics
    - Conditional compilation blocks (#if/#endif)
    - Attributes beyond basic visibility
+   - Subscripts
+   - Type aliases
+
+3. **Formatting Issues**
+   - Missing `func` keyword in text output
+   - Constants (`let`) shown as variables (`var`)
+   - Some struct types misidentified as classes
 
 ### Fallback Mechanism
 
@@ -116,33 +124,26 @@ private func helperFunction() {
     
 ```
 <file path="input.swift">
-+calculateSum(a: Int, b: Int) -> Int {
-    return a + b
-}
--helperFunction() {
-    print("Helper")
-}
+public calculateSum() -> Int
 </file>
 ```
     
   </blockquote></details>
-  <details><summary>With `--strip non-public`</summary><blockquote>
+  <details><summary>With `--private=0 --protected=0 --internal=0`</summary><blockquote>
     
 ```
 <file path="input.swift">
-+calculateSum(a: Int, b: Int) -> Int {
-    return a + b
-}
+public calculateSum() -> Int
 </file>
 ```
     
   </blockquote></details>
-  <details><summary>With `--strip implementation`</summary><blockquote>
+  <details><summary>With `--implementation=0`</summary><blockquote>
     
 ```
 <file path="input.swift">
-+calculateSum(a: Int, b: Int) -> Int
--helperFunction()
+public calculateSum() -> Int
+private helperFunction()
 </file>
 ```
     
@@ -200,7 +201,7 @@ public class User {
 ```
     
   </blockquote></details>
-  <details><summary>With `--strip non-public,implementation`</summary><blockquote>
+  <details><summary>With `--private=0 --protected=0 --internal=0,implementation`</summary><blockquote>
     
 ```
 <file path="User.swift">
@@ -270,14 +271,15 @@ public struct Circle: Drawable {
 
 When using AI Distiller output with LLMs:
 
-1. **Use `--strip non-public,implementation`** for API overview
+1. **Use `--private=0 --protected=0 --internal=0,implementation`** for API overview
 2. **Include full output** when debugging implementation details
 3. **Consider file size** - Swift files can be large, especially with generics
 
 ## Future Roadmap
 
-1. **Tree-sitter Integration**: Full AST-based parsing for accurate code analysis
+1. **Fix Critical Issues**: Function parameters, protocol requirements, generic constraints
 2. **Swift 6 Support**: Including new concurrency features and strict checking
-3. **SwiftUI Support**: Better handling of property wrappers and result builders
-4. **Type Resolution**: Inferring types from context where not explicitly stated
+3. **SwiftUI Support**: Property wrappers, result builders, and view modifiers
+4. **Type Resolution**: Better handling of type inference and associated types
 5. **Cross-file Analysis**: Understanding extensions and protocol conformances across files
+6. **Complete Async Support**: Full async/await/throws modifier support

@@ -1,18 +1,38 @@
 <file path="source.swift">
+// /// A simple LIFO stack.
 
-class Stack:
-    func push(_: Element)
-    func peek() -> Element?
-    func pop() -> Element?
+public class Stack {
+    // /// Pushes a new element.
+    public push(_: Element)
+    // /// Returns the top element without removing it.
+    public peek() -> Element?
+    // /// Removes and returns the top element.
+    public pop() -> Element?
+    // /// Private helper for validation
+    // /// Internal method for debugging
+}
 
-class :
+public class  {
+    // /// Computes the arithmetic mean of all integers in the stack.
+    // /// - Throws: `MathError.emptyStack` if there are no elements.
+    // /// Private helper for numeric validation
+}
+// /// Errors for math-centric operations.
 
-class MathError:
+public class MathError {
+}
+// /// Describes a cache that stores key/value pairs.
 
-protocol Cacheable:
+public protocol Cacheable {
+}
+// /// Dictionary already satisfies `Cacheable` when paired properly.
+// /// Generic cache with expiration
 
-class ExpiringCache:
-    func insert(_: Value, for: Key)
-    func value(for: Key) -> Value?
-    func contains(key: Key) -> Bool
+public class ExpiringCache {
+    public insert(_: Value, for: Key)
+    public value(for: Key) -> Value?
+    public contains(key: Key) -> Bool
+    // /// Private cleanup method
+    // /// Internal method for cache statistics
+}
 </file>
