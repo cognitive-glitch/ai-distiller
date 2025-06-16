@@ -1,4 +1,4 @@
-.PHONY: all build test bench lint clean install cross-compile test-parser test-performance
+.PHONY: all build test bench lint clean install cross-compile test-parser test-performance aid
 
 # Variables
 BINARY_NAME = aid
@@ -46,6 +46,12 @@ test-update:
 test-regenerate:
 	@echo "==> Regenerating all expected test files"
 	@./scripts/regenerate-expected.sh
+
+# Generate expected test data for all languages (includes building aid)
+generate-expected-testdata: build
+	@echo "==> Building aid and regenerating all expected test files"
+	@chmod +x regenerate_expected.sh
+	@./regenerate_expected.sh
 
 # Audit test structure for consistency issues
 test-audit:
@@ -124,6 +130,17 @@ dev-init:
 run: build
 	@echo "==> Running $(BINARY_NAME)"
 	@$(BUILD_DIR)/$(BINARY_NAME) $(ARGS)
+
+# Quick build and run for development
+aid:
+	@if $(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/aid 2>&1 | grep -E "(error|cannot|undefined)" >&2; then \
+		exit 1; \
+	fi
+	@$(BUILD_DIR)/$(BINARY_NAME) $(filter-out $@,$(MAKECMDGOALS))
+
+# Catch-all target to allow passing arguments to aid
+%:
+	@:
 
 # Test parser functionality
 test-parser:
@@ -234,6 +251,7 @@ help:
 	@echo "  test-performance- Run performance tests"
 	@echo "  test-semantic   - Run semantic analysis tests"
 	@echo "  test-resolver   - Run semantic resolver tests"
+	@echo "  generate-expected-testdata - Build aid and regenerate all expected test files"
 	@echo "  perf-compare    - Compare performance modes"
 	@echo "  perf-optimize   - Find optimal configuration"
 	@echo ""
