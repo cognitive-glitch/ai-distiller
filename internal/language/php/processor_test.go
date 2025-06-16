@@ -254,15 +254,18 @@ class User
 	// Should have parsed traits and class
 	assert.GreaterOrEqual(t, len(file.Children), 3, "Expected at least 3 top-level nodes")
 	
-	// Check for trait markers
-	hasTraitMarker := false
+	// Check for Timestampable trait
+	var timestampableTrait *ir.DistilledClass
 	for _, child := range file.Children {
-		if comment, ok := child.(*ir.DistilledComment); ok && comment.Text == "PHP Trait" {
-			hasTraitMarker = true
-			break
+		if class, ok := child.(*ir.DistilledClass); ok && class.Name == "Timestampable" {
+			// Verify it's marked as a trait
+			if class.Extensions != nil && class.Extensions.PHP != nil && class.Extensions.PHP.IsTrait {
+				timestampableTrait = class
+				break
+			}
 		}
 	}
-	assert.True(t, hasTraitMarker, "PHP Trait marker not found")
+	assert.NotNil(t, timestampableTrait, "Timestampable trait not found or not marked as trait")
 	
 	// Check for User class with trait use comment
 	var userClass *ir.DistilledClass
@@ -274,18 +277,11 @@ class User
 	}
 	require.NotNil(t, userClass, "User class not found")
 	
-	// NOTE: Current PHP parser doesn't generate trait use comments
-	// This is a known limitation - traits are parsed but not shown in output
-	// TODO: Implement trait use tracking in PHP parser
-	// Commenting out this assertion until trait support is implemented
-	// hasTraitUse := false
-	// for _, child := range userClass.Children {
-	// 	if comment, ok := child.(*ir.DistilledComment); ok && strings.Contains(comment.Text, "Uses traits:") {
-	// 		hasTraitUse = true
-	// 		break
-	// 	}
-	// }
-	// assert.True(t, hasTraitUse, "Trait use comment not found in User class")
+	// Check that User class uses traits
+	assert.NotEmpty(t, userClass.Mixins, "User class should have mixins (traits)")
+	assert.Len(t, userClass.Mixins, 2, "User class should use 2 traits")
+	assert.Equal(t, "Loggable", userClass.Mixins[0].Name, "First trait should be Loggable")
+	assert.Equal(t, "Timestampable", userClass.Mixins[1].Name, "Second trait should be Timestampable")
 }
 
 func TestProcessorInterfaces(t *testing.T) {

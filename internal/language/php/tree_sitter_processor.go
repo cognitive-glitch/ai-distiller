@@ -398,6 +398,12 @@ func (p *TreeSitterProcessor) processNode(node *sitter.Node, file *ir.DistilledF
 		// fmt.Printf("DEBUG: Found comment: %s\n", p.getNodeText(node))
 		p.processComment(node, file, parent)
 		
+	case "use_declaration":
+		// Check if we're inside a class (trait usage)
+		if class, ok := parent.(*ir.DistilledClass); ok {
+			p.processTraitUse(node, file, class)
+		}
+		
 	default:
 		// Process children for other node types
 		for i := 0; i < int(node.ChildCount()); i++ {
@@ -1229,15 +1235,7 @@ func (p *TreeSitterProcessor) processInterface(node *sitter.Node, file *ir.Disti
 
 // processTrait processes trait declarations
 func (p *TreeSitterProcessor) processTrait(node *sitter.Node, file *ir.DistilledFile, parent ir.DistilledNode) {
-	// Create a special comment to indicate this is a trait
-	comment := &ir.DistilledComment{
-		BaseNode: p.nodeLocation(node),
-		Text:     "PHP Trait",
-		Format:   "line",
-	}
-	p.addNode(file, parent, comment)
-	
-	// Process trait as a class but with a special indicator
+	// Process trait as a class with PHP extension flag
 	class := &ir.DistilledClass{
 		BaseNode:   p.nodeLocation(node),
 		Visibility: ir.VisibilityPublic,
@@ -1246,13 +1244,21 @@ func (p *TreeSitterProcessor) processTrait(node *sitter.Node, file *ir.Distilled
 		Decorators: []string{},
 	}
 	
+	// Mark as trait in PHP extensions
+	if class.Extensions == nil {
+		class.Extensions = &ir.NodeExtensions{}
+	}
+	if class.Extensions.PHP == nil {
+		class.Extensions.PHP = &ir.PHPExtensions{}
+	}
+	class.Extensions.PHP.IsTrait = true
+	
 	// Process trait parts
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		switch child.Type() {
 		case "name":
-			// Prefix with "trait " to distinguish from classes
-			class.Name = "trait " + p.getNodeText(child)
+			class.Name = p.getNodeText(child)
 			
 		case "declaration_list":
 			// Trait body
@@ -1391,24 +1397,15 @@ func (p *TreeSitterProcessor) processConstant(node *sitter.Node, file *ir.Distil
 
 // processTraitUse processes trait usage in a class
 func (p *TreeSitterProcessor) processTraitUse(node *sitter.Node, file *ir.DistilledFile, class *ir.DistilledClass) {
-	// For now, we'll add a comment indicating trait usage
-	comment := &ir.DistilledComment{
-		BaseNode: p.nodeLocation(node),
-		Format:   "trait_use",
-	}
-	
-	var traits []string
+	// Add traits to the class's Mixins field
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		if child.Type() == "qualified_name" || child.Type() == "name" {
-			// Don't resolve the full name, just use the short name or alias
-			traits = append(traits, p.getNodeText(child))
+			traitName := p.getNodeText(child)
+			class.Mixins = append(class.Mixins, ir.TypeRef{
+				Name: traitName,
+			})
 		}
-	}
-	
-	if len(traits) > 0 {
-		comment.Text = fmt.Sprintf("Uses traits: %s", strings.Join(traits, ", "))
-		p.addNode(file, class, comment)
 	}
 }
 

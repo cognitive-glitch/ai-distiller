@@ -100,12 +100,13 @@ func (f *PHPFormatter) formatClass(class *ir.DistilledClass, indent int) string 
 		}
 	}
 
-	// Check if this is an enum
+	// Check if this is an enum or trait
 	isEnum := class.Extensions != nil && class.Extensions.PHP != nil && class.Extensions.PHP.IsEnum
+	isTrait := class.Extensions != nil && class.Extensions.PHP != nil && class.Extensions.PHP.IsTrait
 	
-	// Class modifiers (but not for enums)
+	// Class modifiers (but not for enums or traits)
 	modifiers := []string{}
-	if !isEnum {
+	if !isEnum && !isTrait {
 		for _, mod := range class.Modifiers {
 			if mod == ir.ModifierAbstract {
 				modifiers = append(modifiers, "abstract")
@@ -119,6 +120,8 @@ func (f *PHPFormatter) formatClass(class *ir.DistilledClass, indent int) string 
 	classType := "class"
 	if isEnum {
 		classType = "enum"
+	} else if isTrait {
+		classType = "trait"
 	}
 
 	// Class declaration
@@ -149,6 +152,13 @@ func (f *PHPFormatter) formatClass(class *ir.DistilledClass, indent int) string 
 	}
 
 	parts = append(parts, indentStr+classDecl+" {")
+
+	// Format trait usage
+	if len(class.Mixins) > 0 && !isTrait {
+		for _, trait := range class.Mixins {
+			parts = append(parts, fmt.Sprintf("%s    use %s;", indentStr, trait.Name))
+		}
+	}
 
 	// Format children (methods, properties, etc.)
 	for _, child := range class.Children {

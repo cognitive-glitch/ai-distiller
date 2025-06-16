@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 	
+	"github.com/stretchr/testify/assert"
 	"github.com/janreges/ai-distiller/internal/processor"
 	"github.com/janreges/ai-distiller/internal/ir"
 )
@@ -484,9 +485,12 @@ trait Timestampable
 		t.Fatal("Class EmailPayload not found")
 	}
 	
-	// NOTE: Current PHP parser doesn't generate trait use comments
-	// This is a known limitation - traits are parsed but not shown in output
-	// TODO: Implement trait use tracking in PHP parser
+	// Check that EmailPayload uses traits
+	if len(emailPayload.Mixins) == 0 {
+		t.Error("EmailPayload should use Timestampable trait")
+	} else {
+		assert.Equal(t, "Timestampable", emailPayload.Mixins[0].Name, "EmailPayload should use Timestampable trait")
+	}
 	
 	// Check union type
 	var notifier *ir.DistilledClass
@@ -523,25 +527,16 @@ trait Timestampable
 	// Check trait definition
 	var trait *ir.DistilledClass
 	for _, child := range file.Children {
-		if c, ok := child.(*ir.DistilledClass); ok && strings.HasPrefix(c.Name, "trait ") {
-			trait = c
-			break
+		if c, ok := child.(*ir.DistilledClass); ok && c.Name == "Timestampable" {
+			// Verify it's marked as a trait
+			if c.Extensions != nil && c.Extensions.PHP != nil && c.Extensions.PHP.IsTrait {
+				trait = c
+				break
+			}
 		}
 	}
 	if trait == nil {
-		t.Fatal("Trait Timestampable not found")
-	}
-	
-	// Should have trait marker comment before it
-	hasTraitMarker := false
-	for _, child := range file.Children {
-		if c, ok := child.(*ir.DistilledComment); ok && c.Text == "PHP Trait" {
-			hasTraitMarker = true
-			break
-		}
-	}
-	if !hasTraitMarker {
-		t.Error("Trait marker comment not found")
+		t.Fatal("Trait Timestampable not found or not marked as trait")
 	}
 }
 

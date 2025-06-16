@@ -24,16 +24,16 @@ abstract class BaseEntity implements PersistableInterface, JsonSerializable {
     public jsonSerialize(): array
 }
 /** Trait for timestampable entities */
-// PHP Trait
-class trait TimestampableTrait {
+trait TimestampableTrait {
 }
 /** Trait for validation functionality */
-// PHP Trait
-class trait ValidatableTrait {
+trait ValidatableTrait {
     public getValidationErrors(): array<string, string>
     public hasValidationErrors(): bool
 }
 class Product extends BaseEntity implements CacheableInterface {
+    use TimestampableTrait;
+    use ValidatableTrait;
     public const CACHE_TTL = 3600;
     public __construct(string $name, float $price, string $description = '')
     public getName(): string

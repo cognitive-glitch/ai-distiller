@@ -208,6 +208,8 @@ type PHPExtensions struct {
 	EnumBackingType string `json:"enum_backing_type,omitempty"`
 	// Indicates if this field is an enum case
 	IsEnumCase bool `json:"is_enum_case,omitempty"`
+	// Indicates if this class is actually a trait
+	IsTrait bool `json:"is_trait,omitempty"`
 }
 
 // FieldOrigin indicates where a field/method was defined

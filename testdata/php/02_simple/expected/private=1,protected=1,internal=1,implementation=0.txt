@@ -28,11 +28,11 @@ abstract class BaseEntity implements PersistableInterface, JsonSerializable {
     public jsonSerialize(): array
 }
 /** Trait for timestampable entities */
-class trait TimestampableTrait {
+trait TimestampableTrait {
     protected updateTimestamps(): void
 }
 /** Trait for validation functionality */
-class trait ValidatableTrait {
+trait ValidatableTrait {
     private array<string, string> Validation errors $validationErrors;
     protected addValidationError(string $field, string $message): void
     public getValidationErrors(): array<string, string>
@@ -40,6 +40,8 @@ class trait ValidatableTrait {
     public hasValidationErrors(): bool
 }
 class Product extends BaseEntity implements CacheableInterface {
+    use TimestampableTrait;
+    use ValidatableTrait;
     private string $name;
     private float $price;
     private string $description;
