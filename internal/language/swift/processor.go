@@ -55,7 +55,19 @@ func (p *Processor) ProcessWithOptions(ctx context.Context, reader io.Reader, fi
 			// Fall back to line-based parser on error
 			fmt.Fprintf(os.Stderr, "warning: Swift tree-sitter for %s failed with error: %v. Falling back to line parser.\n", filename, err)
 			parser := NewLineParser(source, filename)
-			return parser.Parse(), nil
+			file := parser.Parse()
+			
+			// Apply standardized stripper for filtering
+			stripperOpts := opts.ToStripperOptions()
+			
+			// Only apply stripper if we need to remove something
+			if stripperOpts.HasAnyOption() {
+				s := stripper.New(stripperOpts)
+				stripped := file.Accept(s)
+				return stripped.(*ir.DistilledFile), nil
+			}
+			
+			return file, nil
 		}
 		
 		// Apply standardized stripper for filtering
@@ -72,6 +84,19 @@ func (p *Processor) ProcessWithOptions(ctx context.Context, reader io.Reader, fi
 	}
 
 	// Fall back to line-based parser
+	fmt.Fprintf(os.Stderr, "warning: Swift tree-sitter creation failed. Falling back to line parser.\n")
 	parser := NewLineParser(source, filename)
-	return parser.Parse(), nil
+	file := parser.Parse()
+	
+	// Apply standardized stripper for filtering
+	stripperOpts := opts.ToStripperOptions()
+	
+	// Only apply stripper if we need to remove something
+	if stripperOpts.HasAnyOption() {
+		s := stripper.New(stripperOpts)
+		stripped := file.Accept(s)
+		return stripped.(*ir.DistilledFile), nil
+	}
+	
+	return file, nil
 }
