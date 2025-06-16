@@ -7,11 +7,6 @@ import java.lang.annotation.RetentionPolicy
 import java.lang.annotation.Target
 import java.nio.file.Files
 import java.nio.file.Path
-@Target(ElementType.PARAMETER)
-@Retention(RetentionPolicy.RUNTIME)
-
-public @interface NotNull {
-}
 
 public class Advanced<T extends Number & Runnable & Serializable> {
     public <U extends T> U process(@NotNull U input);

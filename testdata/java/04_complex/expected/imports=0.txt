@@ -1,10 +1,5 @@
 <file path="source.java">
 package com.aidi.test.advanced
-@Target(ElementType.PARAMETER)
-@Retention(RetentionPolicy.RUNTIME)
-
-public @interface NotNull {
-}
 
 public class Advanced<T extends Number & Runnable & Serializable> {
     public <U extends T> U process(@NotNull U input);

@@ -1,10 +1,6 @@
 <file path="source.java">
 package com.aidi.test.modern
 
-public sealed interface Shape permits Circle, Rectangle {
-    public double area();
-}
-
 public class ModernJava {
     public static void main(String[] args);
 }
