@@ -150,6 +150,11 @@ func (s *Stripper) visitFunction(n *ir.DistilledFunction) ir.DistilledNode {
 		result.Implementation = ""
 	}
 	
+	// Strip decorators/annotations if requested
+	if s.options.RemoveAnnotations {
+		result.Decorators = nil
+	}
+	
 	// Functions don't have children in our IR
 	
 	return result
@@ -186,6 +191,11 @@ func (s *Stripper) visitClass(n *ir.DistilledClass) ir.DistilledNode {
 	
 	// Post-process to remove orphaned docstrings
 	result.Children = s.removeOrphanedDocstrings(result.Children)
+	
+	// Strip decorators/annotations if requested
+	if s.options.RemoveAnnotations {
+		result.Decorators = nil
+	}
 	
 	return result
 }
@@ -276,6 +286,12 @@ func (s *Stripper) visitField(n *ir.DistilledField) ir.DistilledNode {
 	// For enum cases, always show values regardless of implementation flag
 	// Enum values are part of the API definition, not implementation
 	
+	// Determine decorators
+	decorators := n.Decorators
+	if s.options.RemoveAnnotations {
+		decorators = nil
+	}
+	
 	// Return copy
 	return &ir.DistilledField{
 		BaseNode:     n.BaseNode,
@@ -284,7 +300,7 @@ func (s *Stripper) visitField(n *ir.DistilledField) ir.DistilledNode {
 		Modifiers:    n.Modifiers,
 		Type:         n.Type,
 		DefaultValue: defaultValue,
-		Decorators:   n.Decorators,
+		Decorators:   decorators,
 		// Property-specific fields
 		IsProperty:       n.IsProperty,
 		HasGetter:        n.HasGetter,

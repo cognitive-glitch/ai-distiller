@@ -72,7 +72,7 @@ func (p *Processor) ProcessFile(filename string, opts processor.ProcessOptions) 
 		stripperOpts := opts.ToStripperOptions()
 		
 		// Debug
-		// fmt.Printf("DEBUG: IncludeComments=%v, RemoveComments=%v\n", opts.IncludeComments, stripperOpts.RemoveComments)
+		// fmt.Printf("DEBUG: IncludeAnnotations=%v, RemoveAnnotations=%v\n", opts.IncludeAnnotations, stripperOpts.RemoveAnnotations)
 		
 		// Only apply stripper if we need to remove something
 		if stripperOpts.HasAnyOption() {
@@ -116,7 +116,7 @@ func (p *Processor) ProcessWithOptions(ctx context.Context, reader io.Reader, fi
 		stripperOpts := opts.ToStripperOptions()
 		
 		// Debug
-		// fmt.Printf("DEBUG: IncludeComments=%v, RemoveComments=%v\n", opts.IncludeComments, stripperOpts.RemoveComments)
+		// fmt.Printf("DEBUG: IncludeAnnotations=%v, RemoveAnnotations=%v\n", opts.IncludeAnnotations, stripperOpts.RemoveAnnotations)
 		
 		// Only apply stripper if we need to remove something
 		if stripperOpts.HasAnyOption() {

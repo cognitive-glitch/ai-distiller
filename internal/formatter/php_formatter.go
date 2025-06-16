@@ -265,6 +265,12 @@ func (f *PHPFormatter) formatEnum(enum *ir.DistilledEnum, indent int) string {
 
 func (f *PHPFormatter) formatFunction(fn *ir.DistilledFunction, indent int) string {
 	indentStr := strings.Repeat("    ", indent)
+	result := ""
+
+	// Format decorators/attributes first
+	for _, dec := range fn.Decorators {
+		result += fmt.Sprintf("%s#[%s]\n", indentStr, dec)
+	}
 
 	// Check modifiers (but not visibility - that's handled by visibility prefix)
 	modifiers := []string{}
@@ -377,14 +383,14 @@ func (f *PHPFormatter) formatFunction(fn *ir.DistilledFunction, indent int) stri
 
 	// Global functions (indent == 0) don't have visibility prefix
 	if indent == 0 {
-		return signature
+		return result + signature
 	}
 	// Add visibility keyword
 	visKeyword := f.getPHPVisibilityKeyword(fn.Visibility)
 	if visKeyword != "" {
-		return indentStr + visKeyword + " " + signature
+		return result + indentStr + visKeyword + " " + signature
 	}
-	return indentStr + signature
+	return result + indentStr + signature
 }
 
 func (f *PHPFormatter) formatField(field *ir.DistilledField, indent int) string {

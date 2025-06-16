@@ -23,6 +23,7 @@ type TreeSitterProcessor struct {
 	useAliases      map[string]string
 	currentClass    string
 	currentClassDocblock string
+	pendingAttributes []string
 	
 	// PHPDoc information by line number
 	docblocks map[int]*PHPDocInfo
@@ -57,6 +58,7 @@ func (p *TreeSitterProcessor) ProcessSource(ctx context.Context, source []byte, 
 	p.useAliases = make(map[string]string)
 	p.currentClass = ""
 	p.docblocks = make(map[int]*PHPDocInfo)
+	p.pendingAttributes = nil
 	
 	// Parse with tree-sitter
 	tree, err := p.parser.ParseCtx(ctx, nil, source)
@@ -356,6 +358,11 @@ func (p *TreeSitterProcessor) processNode(node *sitter.Node, file *ir.DistilledF
 			p.processNode(child, file, parent)
 		}
 		
+	case "attribute_list":
+		// This node precedes the actual declaration (class, method, etc.)
+		// We process it and store the results to be attached to the next node.
+		p.processAttributes(node, &p.pendingAttributes)
+
 	case "namespace_definition":
 		p.processNamespace(node, file, parent)
 		
@@ -608,8 +615,9 @@ func (p *TreeSitterProcessor) processClass(node *sitter.Node, file *ir.Distilled
 		Extends:    []ir.TypeRef{},
 		Implements: []ir.TypeRef{},
 		Children:   []ir.DistilledNode{},
-		Decorators: []string{},
+		Decorators: p.pendingAttributes,
 	}
+	p.pendingAttributes = nil // Clear after use
 	
 	// Try multiple ways to find the docblock
 	docblockFound := false
@@ -716,10 +724,6 @@ func (p *TreeSitterProcessor) processClass(node *sitter.Node, file *ir.Distilled
 				}
 			}
 			
-		case "attribute_list":
-			// PHP 8 attributes
-			p.processAttributes(child, &class.Decorators)
-			
 		case "declaration_list":
 			// Class body
 			p.processClassBody(child, file, class)
@@ -740,21 +744,7 @@ func (p *TreeSitterProcessor) processClass(node *sitter.Node, file *ir.Distilled
 // processClassBody processes the body of a class
 func (p *TreeSitterProcessor) processClassBody(node *sitter.Node, file *ir.DistilledFile, class *ir.DistilledClass) {
 	for i := 0; i < int(node.ChildCount()); i++ {
-		child := node.Child(i)
-		switch child.Type() {
-		case "method_declaration":
-			p.processMethod(child, file, class)
-			
-		case "property_declaration":
-			p.processProperty(child, file, class)
-			
-		case "const_declaration":
-			p.processConstant(child, file, class)
-			
-		case "use_declaration":
-			// Trait use
-			p.processTraitUse(child, file, class)
-		}
+		p.processNode(node.Child(i), file, class)
 	}
 }
 
@@ -764,8 +754,9 @@ func (p *TreeSitterProcessor) processMethod(node *sitter.Node, file *ir.Distille
 		BaseNode:   p.nodeLocation(node),
 		Modifiers:  []ir.Modifier{},
 		Parameters: []ir.Parameter{},
-		Decorators: []string{},
+		Decorators: p.pendingAttributes,
 	}
+	p.pendingAttributes = nil // Clear after use
 	
 	var hasVisibility bool
 	
@@ -794,9 +785,6 @@ func (p *TreeSitterProcessor) processMethod(node *sitter.Node, file *ir.Distille
 			
 		case "final_modifier":
 			fn.Modifiers = append(fn.Modifiers, ir.ModifierFinal)
-			
-		case "attribute_list":
-			p.processAttributes(child, &fn.Decorators)
 			
 		case "name":
 			fn.Name = p.getNodeText(child)
@@ -967,8 +955,9 @@ func (p *TreeSitterProcessor) processFunction(node *sitter.Node, file *ir.Distil
 		Visibility: ir.VisibilityPublic, // Functions are always public
 		Modifiers:  []ir.Modifier{},
 		Parameters: []ir.Parameter{},
-		Decorators: []string{},
+		Decorators: p.pendingAttributes, // Use pending attributes
 	}
+	p.pendingAttributes = nil // Clear after use
 	
 	if isAsync {
 		fn.Modifiers = append(fn.Modifiers, ir.ModifierAsync)
@@ -1451,24 +1440,6 @@ func (p *TreeSitterProcessor) extractPHPDocTypes(docText string, node ir.Distill
 	// in the collectPHPDocComments and parsePHPDoc methods
 }
 
-// processAttributes processes PHP 8 attributes
-func (p *TreeSitterProcessor) processAttributes(node *sitter.Node, decorators *[]string) {
-	for i := 0; i < int(node.ChildCount()); i++ {
-		child := node.Child(i)
-		if child.Type() == "attribute_group" {
-			// Process each attribute in the group
-			for j := 0; j < int(child.ChildCount()); j++ {
-				grandchild := child.Child(j)
-				if grandchild.Type() == "attribute" {
-					// Get attribute text
-					text := p.getNodeText(grandchild)
-					*decorators = append(*decorators, text)
-				}
-			}
-		}
-	}
-}
-
 // resolveTypeName resolves a type name using current namespace and use statements
 func (p *TreeSitterProcessor) resolveTypeName(name string) string {
 	// If already fully qualified, return as is
@@ -1537,6 +1508,23 @@ func (p *TreeSitterProcessor) addNode(file *ir.DistilledFile, parent ir.Distille
 		}
 	} else {
 		file.Children = append(file.Children, node)
+	}
+}
+
+// processAttributes processes PHP 8 attributes
+func (p *TreeSitterProcessor) processAttributes(node *sitter.Node, attributes *[]string) {
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		if child.Type() == "attribute_group" {
+			// Process each attribute in the group
+			for j := 0; j < int(child.ChildCount()); j++ {
+				attr := child.Child(j)
+				if attr.Type() == "attribute" {
+					attributeText := p.getNodeText(attr)
+					*attributes = append(*attributes, attributeText)
+				}
+			}
+		}
 	}
 }
 
