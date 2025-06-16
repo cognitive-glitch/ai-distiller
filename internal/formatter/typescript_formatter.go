@@ -59,13 +59,20 @@ func (f *TypeScriptFormatter) formatImport(w io.Writer, imp *ir.DistilledImport)
 func (f *TypeScriptFormatter) formatClass(w io.Writer, class *ir.DistilledClass, indent int) error {
 	// Format class declaration
 	modifiers := ""
+	hasExport := false
 	for _, mod := range class.Modifiers {
-		if mod == ir.ModifierAbstract {
+		if mod == ir.ModifierExport {
+			hasExport = true
+		} else if mod == ir.ModifierAbstract {
 			modifiers += "abstract "
 		}
 	}
 	
-	fmt.Fprintf(w, "\n%sclass %s", modifiers, class.Name)
+	if hasExport {
+		fmt.Fprintf(w, "\nexport %sclass %s", modifiers, class.Name)
+	} else {
+		fmt.Fprintf(w, "\n%sclass %s", modifiers, class.Name)
+	}
 	
 	// Add generic type parameters
 	if len(class.TypeParams) > 0 {
@@ -97,18 +104,32 @@ func (f *TypeScriptFormatter) formatClass(w io.Writer, class *ir.DistilledClass,
 		fmt.Fprintf(w, " implements %s", strings.Join(implements, ", "))
 	}
 	
-	fmt.Fprintln(w, ":")
+	fmt.Fprintln(w, " {")
 	
 	// Format class members
 	for _, child := range class.Children {
 		f.FormatNode(w, child, indent+1)
 	}
 	
+	fmt.Fprintln(w, "}")
+	
 	return nil
 }
 
 func (f *TypeScriptFormatter) formatInterface(w io.Writer, intf *ir.DistilledInterface, indent int) error {
-	fmt.Fprintf(w, "\ninterface %s", intf.Name)
+	hasExport := false
+	for _, mod := range intf.Modifiers {
+		if mod == ir.ModifierExport {
+			hasExport = true
+			break
+		}
+	}
+	
+	if hasExport {
+		fmt.Fprintf(w, "\nexport interface %s", intf.Name)
+	} else {
+		fmt.Fprintf(w, "\ninterface %s", intf.Name)
+	}
 	
 	// Add generic type parameters
 	if len(intf.TypeParams) > 0 {
@@ -131,7 +152,7 @@ func (f *TypeScriptFormatter) formatInterface(w io.Writer, intf *ir.DistilledInt
 		fmt.Fprintf(w, " extends %s", strings.Join(extends, ", "))
 	}
 	
-	fmt.Fprintln(w, ":")
+	fmt.Fprintln(w, " {")
 	
 	// Format interface members
 	for _, child := range intf.Children {
@@ -182,6 +203,8 @@ func (f *TypeScriptFormatter) formatInterface(w io.Writer, intf *ir.DistilledInt
 		}
 	}
 	
+	fmt.Fprintln(w, "}")
+	
 	return nil
 }
 
@@ -195,6 +218,7 @@ func (f *TypeScriptFormatter) formatFunction(w io.Writer, fn *ir.DistilledFuncti
 	
 	modifiers := ""
 	isConst := false
+	hasExport := false
 	
 	// Format visibility keyword (only for class methods, not top-level functions)
 	if indent > 0 {
@@ -204,7 +228,9 @@ func (f *TypeScriptFormatter) formatFunction(w io.Writer, fn *ir.DistilledFuncti
 		}
 	}
 	for _, mod := range fn.Modifiers {
-		if mod == ir.ModifierAbstract {
+		if mod == ir.ModifierExport {
+			hasExport = true
+		} else if mod == ir.ModifierAbstract {
 			modifiers += "abstract "
 		} else if mod == ir.ModifierAsync {
 			modifiers += "async "
@@ -218,11 +244,15 @@ func (f *TypeScriptFormatter) formatFunction(w io.Writer, fn *ir.DistilledFuncti
 	// Top-level functions don't have indentation
 	if indent == 0 {
 		indentStr = ""
+		exportPrefix := ""
+		if hasExport {
+			exportPrefix = "export "
+		}
 		// Top-level const arrow functions should be formatted as "const Name"
 		if isConst {
-			fmt.Fprintf(w, "%sconst %s", indentStr, fn.Name)
+			fmt.Fprintf(w, "%s%sconst %s", indentStr, exportPrefix, fn.Name)
 		} else {
-			fmt.Fprintf(w, "%s%sfunction %s", indentStr, modifiers, fn.Name)
+			fmt.Fprintf(w, "%s%s%sfunction %s", indentStr, exportPrefix, modifiers, fn.Name)
 		}
 	} else {
 		// Methods inside classes/interfaces - no "function" keyword needed
@@ -261,7 +291,7 @@ func (f *TypeScriptFormatter) formatFunction(w io.Writer, fn *ir.DistilledFuncti
 	
 	// Return type
 	if fn.Returns != nil && fn.Returns.Name != "" {
-		fmt.Fprintf(w, " -> %s", fn.Returns.Name)
+		fmt.Fprintf(w, ": %s", fn.Returns.Name)
 	}
 	
 	fmt.Fprintln(w)
@@ -279,14 +309,21 @@ func (f *TypeScriptFormatter) formatField(w io.Writer, field *ir.DistilledField,
 	if indent == 0 {
 		// Top-level variable declaration
 		varType := "let"
+		hasExport := false
 		for _, mod := range field.Modifiers {
 			if mod == ir.ModifierFinal {
 				varType = "const"
-				break
+			} else if mod == ir.ModifierExport {
+				hasExport = true
 			}
 		}
 		
-		fmt.Fprintf(w, "%s %s", varType, field.Name)
+		exportPrefix := ""
+		if hasExport {
+			exportPrefix = "export "
+		}
+		
+		fmt.Fprintf(w, "%s%s %s", exportPrefix, varType, field.Name)
 		if field.Type != nil && field.Type.Name != "" {
 			fmt.Fprintf(w, ": %s", field.Type.Name)
 		}
@@ -324,7 +361,19 @@ func (f *TypeScriptFormatter) formatField(w io.Writer, field *ir.DistilledField,
 }
 
 func (f *TypeScriptFormatter) formatTypeAlias(w io.Writer, alias *ir.DistilledTypeAlias) error {
-	fmt.Fprintf(w, "type %s", alias.Name)
+	hasExport := false
+	for _, mod := range alias.Modifiers {
+		if mod == ir.ModifierExport {
+			hasExport = true
+			break
+		}
+	}
+	
+	if hasExport {
+		fmt.Fprintf(w, "export type %s", alias.Name)
+	} else {
+		fmt.Fprintf(w, "type %s", alias.Name)
+	}
 	
 	// Add generic type parameters
 	if len(alias.TypeParams) > 0 {

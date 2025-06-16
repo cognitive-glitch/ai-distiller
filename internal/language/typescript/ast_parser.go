@@ -226,6 +226,15 @@ func (p *ASTParser) parseNamedImports(node *sitter.Node, imp *ir.DistilledImport
 func (p *ASTParser) parseExport(node *sitter.Node) []ir.DistilledNode {
 	var nodes []ir.DistilledNode
 	
+	// Debug: print export node structure
+	// fmt.Printf("Export node has %d children\n", node.ChildCount())
+	// for i := 0; i < int(node.ChildCount()); i++ {
+	// 	child := node.Child(i)
+	// 	if child != nil {
+	// 		fmt.Printf("  Child %d: type=%s, text=%q\n", i, child.Type(), p.nodeText(child))
+	// 	}
+	// }
+	
 	// Find the exported declaration
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
@@ -284,6 +293,9 @@ func (p *ASTParser) parseClass(node *sitter.Node, isExported bool) *ir.Distilled
 	// Parse modifiers
 	if p.hasModifier(node, "abstract") {
 		class.Modifiers = append(class.Modifiers, ir.ModifierAbstract)
+	}
+	if isExported {
+		class.Modifiers = append(class.Modifiers, ir.ModifierExport)
 	}
 	
 	// Parse type parameters
@@ -708,7 +720,12 @@ func (p *ASTParser) parseInterface(node *sitter.Node, isExported bool) *ir.Disti
 			Location: p.nodeToLocation(node),
 		},
 		Visibility: p.getVisibility(isExported),
+		Modifiers:  []ir.Modifier{},
 		Children:   []ir.DistilledNode{},
+	}
+	
+	if isExported {
+		intf.Modifiers = append(intf.Modifiers, ir.ModifierExport)
 	}
 	
 	// Debug: print interface AST structure
@@ -834,6 +851,11 @@ func (p *ASTParser) parseTypeAlias(node *sitter.Node, isExported bool) *ir.Disti
 			Location: p.nodeToLocation(node),
 		},
 		Visibility: p.getVisibility(isExported),
+		Modifiers:  []ir.Modifier{},
+	}
+	
+	if isExported {
+		alias.Modifiers = append(alias.Modifiers, ir.ModifierExport)
 	}
 	
 	// Parse type alias name
@@ -957,6 +979,10 @@ func (p *ASTParser) parseFunction(node *sitter.Node, isExported bool) *ir.Distil
 		Parameters: []ir.Parameter{},
 	}
 	
+	if isExported {
+		fn.Modifiers = append(fn.Modifiers, ir.ModifierExport)
+	}
+	
 	// Parse function components
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
@@ -1022,6 +1048,11 @@ func (p *ASTParser) parseVariableDeclaration(node *sitter.Node, isExported bool)
 					fn.Modifiers = append(fn.Modifiers, ir.ModifierFinal)
 				}
 				
+				// Add export modifier if needed
+				if isExported {
+					fn.Modifiers = append(fn.Modifiers, ir.ModifierExport)
+				}
+				
 				nodes = append(nodes, fn)
 			}
 		} else {
@@ -1037,6 +1068,11 @@ func (p *ASTParser) parseVariableDeclaration(node *sitter.Node, isExported bool)
 			// Check if it's const
 			if p.hasToken(node, "const") {
 				field.Modifiers = append(field.Modifiers, ir.ModifierFinal)
+			}
+			
+			// Add export modifier if needed
+			if isExported {
+				field.Modifiers = append(field.Modifiers, ir.ModifierExport)
 			}
 			
 			// Parse variable declarator

@@ -359,7 +359,22 @@ func (f *TextFormatter) formatInterface(w io.Writer, intf *ir.DistilledInterface
 
 func (f *TextFormatter) formatTypeAlias(w io.Writer, alias *ir.DistilledTypeAlias, indent string) error {
 	visPrefix := getVisibilityPrefix(alias.Visibility)
-	fmt.Fprintf(w, "%s%stype %s = %s\n", indent, visPrefix, alias.Name, alias.Type.Name)
+	modifiers := formatModifiers(alias.Modifiers)
+	
+	// Check for export modifier
+	hasExport := false
+	for _, mod := range alias.Modifiers {
+		if mod == ir.ModifierExport {
+			hasExport = true
+			break
+		}
+	}
+	
+	if hasExport {
+		fmt.Fprintf(w, "%sexport %s%stype %s = %s\n", indent, visPrefix, modifiers, alias.Name, alias.Type.Name)
+	} else {
+		fmt.Fprintf(w, "%s%s%stype %s = %s\n", indent, visPrefix, modifiers, alias.Name, alias.Type.Name)
+	}
 	return nil
 }
 

@@ -170,6 +170,7 @@ type DistilledTypeAlias struct {
 	BaseNode
 	Name       string      `json:"name"`
 	Visibility Visibility  `json:"visibility"`
+	Modifiers  []Modifier  `json:"modifiers,omitempty"`
 	TypeParams []TypeParam `json:"type_params,omitempty"`
 	Type       TypeRef     `json:"type"`
 }

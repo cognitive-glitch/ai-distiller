@@ -919,6 +919,22 @@ func (p *ASTParser) processFunction(fn *ast.FuncDecl) *ir.DistilledFunction {
 		distilledFn.Modifiers = append(distilledFn.Modifiers, ir.ModifierAbstract) // Using Abstract as "method" marker
 	}
 
+	// Process type parameters (generics)
+	if fn.Type.TypeParams != nil {
+		for _, field := range fn.Type.TypeParams.List {
+			for _, name := range field.Names {
+				param := ir.TypeParam{
+					Name: name.Name,
+				}
+				// Add constraint if present
+				if field.Type != nil {
+					param.Constraints = []ir.TypeRef{{Name: p.typeToString(field.Type)}}
+				}
+				distilledFn.TypeParams = append(distilledFn.TypeParams, param)
+			}
+		}
+	}
+
 	// Process parameters
 	if fn.Type.Params != nil {
 		for _, param := range fn.Type.Params.List {
