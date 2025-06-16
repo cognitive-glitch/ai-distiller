@@ -97,11 +97,11 @@ func (f *JavaScriptFormatter) formatImport(w io.Writer, imp *ir.DistilledImport)
 func (f *JavaScriptFormatter) formatClass(w io.Writer, class *ir.DistilledClass, indent int) error {
 	indentStr := strings.Repeat("    ", indent)
 	
-	// Format visibility prefix
-	visPrefix := f.getVisibilityPrefix(class.Visibility)
+	// JavaScript classes don't have visibility keywords (ES6)
+	// Private fields use # prefix which is handled at field level
 	
 	// Format class declaration
-	fmt.Fprintf(w, "\n%s%sclass %s", indentStr, visPrefix, class.Name)
+	fmt.Fprintf(w, "\n%sclass %s", indentStr, class.Name)
 	
 	// Add extends clause
 	if len(class.Extends) > 0 {
@@ -125,13 +125,13 @@ func (f *JavaScriptFormatter) formatClass(w io.Writer, class *ir.DistilledClass,
 func (f *JavaScriptFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, indent int) error {
 	indentStr := strings.Repeat("    ", indent)
 	
-	// Format visibility prefix
-	visPrefix := f.getVisibilityPrefix(fn.Visibility)
+	// JavaScript methods don't have visibility keywords (except # for private)
+	// The # prefix is part of the method name itself
 	
 	// Handle different function types
 	if strings.HasPrefix(fn.Name, "get ") {
 		// Getter
-		fmt.Fprintf(w, "%s%sget %s()", indentStr, visPrefix, strings.TrimPrefix(fn.Name, "get "))
+		fmt.Fprintf(w, "%sget %s()", indentStr, strings.TrimPrefix(fn.Name, "get "))
 	} else if strings.HasPrefix(fn.Name, "set ") {
 		// Setter
 		setterName := strings.TrimPrefix(fn.Name, "set ")
@@ -139,10 +139,10 @@ func (f *JavaScriptFormatter) formatFunction(w io.Writer, fn *ir.DistilledFuncti
 		if params == "" {
 			params = "value" // Default parameter for setter
 		}
-		fmt.Fprintf(w, "%s%sset %s(%s)", indentStr, visPrefix, setterName, params)
+		fmt.Fprintf(w, "%sset %s(%s)", indentStr, setterName, params)
 	} else if fn.Name == "constructor" {
 		// Constructor
-		fmt.Fprintf(w, "%s%sconstructor(%s)", indentStr, visPrefix, f.formatParameters(fn.Parameters))
+		fmt.Fprintf(w, "%sconstructor(%s)", indentStr, f.formatParameters(fn.Parameters))
 	} else {
 		// Regular function or method
 		// modifiers := ""
@@ -175,13 +175,10 @@ func (f *JavaScriptFormatter) formatFunction(w io.Writer, fn *ir.DistilledFuncti
 		// Format based on context
 		if indent == 0 && isConst {
 			// Top-level const arrow function
-			fmt.Fprintf(w, "%s%sconst %s = (%s)", indentStr, visPrefix, functionName, f.formatParameters(fn.Parameters))
+			fmt.Fprintf(w, "%sconst %s = (%s)", indentStr, functionName, f.formatParameters(fn.Parameters))
 		} else if indent == 0 {
 			// Top-level function declaration
 			prefixParts := []string{}
-			if visPrefix != "" {
-				prefixParts = append(prefixParts, strings.TrimSpace(visPrefix))
-			}
 			if isAsync {
 				prefixParts = append(prefixParts, "async")
 			}
@@ -196,9 +193,6 @@ func (f *JavaScriptFormatter) formatFunction(w io.Writer, fn *ir.DistilledFuncti
 		} else {
 			// Method inside a class
 			prefixParts := []string{}
-			if visPrefix != "" {
-				prefixParts = append(prefixParts, strings.TrimSpace(visPrefix))
-			}
 			if isStatic {
 				prefixParts = append(prefixParts, "static")
 			}
@@ -234,8 +228,8 @@ func (f *JavaScriptFormatter) formatFunction(w io.Writer, fn *ir.DistilledFuncti
 func (f *JavaScriptFormatter) formatField(w io.Writer, field *ir.DistilledField, indent int) error {
 	indentStr := strings.Repeat("    ", indent)
 	
-	// Format visibility prefix
-	visPrefix := f.getVisibilityPrefix(field.Visibility)
+	// JavaScript uses # prefix for private fields (part of the name)
+	// No visibility keywords in JavaScript
 	
 	// Check for modifiers
 	isStatic := false
@@ -255,7 +249,7 @@ func (f *JavaScriptFormatter) formatField(w io.Writer, field *ir.DistilledField,
 			varType = "const"
 		}
 		
-		fmt.Fprintf(w, "%s%s %s", visPrefix, varType, field.Name)
+		fmt.Fprintf(w, "%s %s", varType, field.Name)
 		
 		// Add type annotation if available (from JSDoc)
 		if field.Type != nil && field.Type.Name != "" {
@@ -271,9 +265,6 @@ func (f *JavaScriptFormatter) formatField(w io.Writer, field *ir.DistilledField,
 	} else {
 		// Class field
 		prefixParts := []string{}
-		if visPrefix != "" {
-			prefixParts = append(prefixParts, strings.TrimSpace(visPrefix))
-		}
 		if isStatic {
 			prefixParts = append(prefixParts, "static")
 		}
@@ -328,21 +319,6 @@ func (f *JavaScriptFormatter) formatComment(w io.Writer, comment *ir.DistilledCo
 }
 
 // Helper methods
-
-func (f *JavaScriptFormatter) getVisibilityPrefix(visibility ir.Visibility) string {
-	switch visibility {
-	case ir.VisibilityPrivate:
-		return "-" // Private methods/fields (# prefix or _convention)
-	case ir.VisibilityProtected:
-		return "*" // Protected (convention-based)
-	case ir.VisibilityPublic:
-		return "" // No prefix for public
-	case ir.VisibilityInternal:
-		return "~" // Internal/package-private
-	default:
-		return "" // Default visibility (implicitly public)
-	}
-}
 
 func (f *JavaScriptFormatter) formatParameters(params []ir.Parameter) string {
 	if len(params) == 0 {

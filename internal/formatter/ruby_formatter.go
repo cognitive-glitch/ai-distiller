@@ -107,8 +107,9 @@ func (f *RubyFormatter) formatModule(w io.Writer, mod *ir.DistilledInterface, in
 }
 
 func (f *RubyFormatter) formatMethod(w io.Writer, fn *ir.DistilledFunction, indent string) error {
-	// Get visibility prefix
-	visPrefix := f.getVisibilityPrefix(fn.Visibility)
+	// Ruby uses visibility method calls (private, protected, public)
+	// For text format, we'll show visibility as a comment
+	visComment := f.getRubyVisibilityComment(fn.Visibility)
 	
 	// Check for special method types
 	isClassMethod := false
@@ -119,11 +120,16 @@ func (f *RubyFormatter) formatMethod(w io.Writer, fn *ir.DistilledFunction, inde
 		}
 	}
 	
+	// Add visibility comment if not public
+	if visComment != "" {
+		fmt.Fprintf(w, "%s# %s\n", indent, visComment)
+	}
+	
 	// Format method declaration
 	if isClassMethod {
-		fmt.Fprintf(w, "%s%sself.%s", indent, visPrefix, fn.Name)
+		fmt.Fprintf(w, "%sself.%s", indent, fn.Name)
 	} else {
-		fmt.Fprintf(w, "%s%s%s", indent, visPrefix, fn.Name)
+		fmt.Fprintf(w, "%s%s", indent, fn.Name)
 	}
 	
 	// Parameters
@@ -150,8 +156,8 @@ func (f *RubyFormatter) formatMethod(w io.Writer, fn *ir.DistilledFunction, inde
 }
 
 func (f *RubyFormatter) formatField(w io.Writer, field *ir.DistilledField, indent string) error {
-	// Get visibility prefix
-	visPrefix := f.getVisibilityPrefix(field.Visibility)
+	// Ruby doesn't have visibility keywords for fields
+	// Instance/class variables are always private
 	
 	// Check if it's a constant
 	isConstant := false
@@ -164,18 +170,18 @@ func (f *RubyFormatter) formatField(w io.Writer, field *ir.DistilledField, inden
 	
 	if isConstant {
 		// Ruby constants are uppercase
-		fmt.Fprintf(w, "%s%s%s", indent, visPrefix, strings.ToUpper(field.Name))
+		fmt.Fprintf(w, "%s%s", indent, strings.ToUpper(field.Name))
 	} else {
 		// Instance or class variables
 		if strings.HasPrefix(field.Name, "@@") {
 			// Class variable
-			fmt.Fprintf(w, "%s%s%s", indent, visPrefix, field.Name)
+			fmt.Fprintf(w, "%s%s", indent, field.Name)
 		} else if strings.HasPrefix(field.Name, "@") {
 			// Instance variable
-			fmt.Fprintf(w, "%s%s%s", indent, visPrefix, field.Name)
+			fmt.Fprintf(w, "%s%s", indent, field.Name)
 		} else {
 			// Add @ prefix for instance variables
-			fmt.Fprintf(w, "%s%s@%s", indent, visPrefix, field.Name)
+			fmt.Fprintf(w, "%s@%s", indent, field.Name)
 		}
 	}
 	
@@ -214,16 +220,16 @@ func (f *RubyFormatter) formatParameters(w io.Writer, params []ir.Parameter) {
 	}
 }
 
-func (f *RubyFormatter) getVisibilityPrefix(visibility ir.Visibility) string {
+func (f *RubyFormatter) getRubyVisibilityComment(visibility ir.Visibility) string {
 	switch visibility {
 	case ir.VisibilityPrivate:
-		return "-"
+		return "private"
 	case ir.VisibilityProtected:
-		return "*"
+		return "protected"
 	case ir.VisibilityPublic:
-		return "" // No prefix for public
+		return "" // No comment for public
 	case ir.VisibilityInternal:
-		return "~"
+		return "private" // Ruby doesn't have internal
 	default:
 		return ""
 	}

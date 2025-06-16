@@ -90,8 +90,8 @@ func (f *RustFormatter) formatStruct(w io.Writer, class *ir.DistilledClass, inde
 	// Add blank line before struct
 	fmt.Fprintln(w)
 	
-	// Get visibility prefix
-	visPrefix := f.getVisibilityPrefix(class.Visibility)
+	// Get visibility keyword
+	visKeyword := f.getRustVisibilityKeyword(class.Visibility)
 	
 	// Determine the type of declaration based on modifiers and name
 	declarationType := "mod" // default
@@ -148,7 +148,11 @@ func (f *RustFormatter) formatStruct(w io.Writer, class *ir.DistilledClass, inde
 	if isImpl {
 		fmt.Fprintf(w, "%s%s", indentStr, class.Name) // impl blocks already have "impl" in name
 	} else if declarationType != "" {
-		fmt.Fprintf(w, "%s%s%s %s", indentStr, visPrefix, declarationType, class.Name)
+		if visKeyword != "" {
+			fmt.Fprintf(w, "%s%s %s %s", indentStr, visKeyword, declarationType, class.Name)
+		} else {
+			fmt.Fprintf(w, "%s%s %s", indentStr, declarationType, class.Name)
+		}
 	}
 	
 	// Add generic type parameters
@@ -289,14 +293,18 @@ func (f *RustFormatter) formatStruct(w io.Writer, class *ir.DistilledClass, inde
 func (f *RustFormatter) formatStructField(w io.Writer, field *ir.DistilledField, indent int) error {
 	indentStr := strings.Repeat("    ", indent)
 	
-	// Get visibility prefix
-	visPrefix := f.getVisibilityPrefix(field.Visibility)
+	// Get visibility keyword
+	visKeyword := f.getRustVisibilityKeyword(field.Visibility)
 	
 	typeName := ""
 	if field.Type != nil {
 		typeName = field.Type.Name
 	}
-	fmt.Fprintf(w, "%s%s%s: %s,\n", indentStr, visPrefix, field.Name, typeName)
+	if visKeyword != "" {
+		fmt.Fprintf(w, "%s%s %s: %s,\n", indentStr, visKeyword, field.Name, typeName)
+	} else {
+		fmt.Fprintf(w, "%s%s: %s,\n", indentStr, field.Name, typeName)
+	}
 	return nil
 }
 
@@ -306,11 +314,15 @@ func (f *RustFormatter) formatTrait(w io.Writer, trait *ir.DistilledInterface, i
 	// Add blank line before trait
 	fmt.Fprintln(w)
 	
-	// Get visibility prefix
-	visPrefix := f.getVisibilityPrefix(trait.Visibility)
+	// Get visibility keyword
+	visKeyword := f.getRustVisibilityKeyword(trait.Visibility)
 	
 	// Format trait declaration
-	fmt.Fprintf(w, "%s%strait %s", indentStr, visPrefix, trait.Name)
+	if visKeyword != "" {
+		fmt.Fprintf(w, "%s%s trait %s", indentStr, visKeyword, trait.Name)
+	} else {
+		fmt.Fprintf(w, "%strait %s", indentStr, trait.Name)
+	}
 	
 	// Add generic type parameters
 	if len(trait.TypeParams) > 0 {
@@ -348,8 +360,8 @@ func (f *RustFormatter) formatTrait(w io.Writer, trait *ir.DistilledInterface, i
 }
 
 func (f *RustFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, indent string) error {
-	// Get visibility prefix
-	visPrefix := f.getVisibilityPrefix(fn.Visibility)
+	// Get visibility keyword
+	visKeyword := f.getRustVisibilityKeyword(fn.Visibility)
 	
 	// Check for async
 	isAsync := false
@@ -361,10 +373,18 @@ func (f *RustFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, in
 	}
 	
 	// Format function signature
-	if isAsync {
-		fmt.Fprintf(w, "\n%s%sasync %s", indent, visPrefix, fn.Name)
+	if visKeyword != "" {
+		if isAsync {
+			fmt.Fprintf(w, "\n%s%s async fn %s", indent, visKeyword, fn.Name)
+		} else {
+			fmt.Fprintf(w, "\n%s%s fn %s", indent, visKeyword, fn.Name)
+		}
 	} else {
-		fmt.Fprintf(w, "\n%s%s%s", indent, visPrefix, fn.Name)
+		if isAsync {
+			fmt.Fprintf(w, "\n%sasync fn %s", indent, fn.Name)
+		} else {
+			fmt.Fprintf(w, "\n%sfn %s", indent, fn.Name)
+		}
 	}
 	
 	// Add generic type parameters
@@ -412,8 +432,8 @@ func (f *RustFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, in
 func (f *RustFormatter) formatImplMethod(w io.Writer, fn *ir.DistilledFunction, indent int) error {
 	indentStr := strings.Repeat("    ", indent)
 	
-	// Get visibility prefix
-	visPrefix := f.getVisibilityPrefix(fn.Visibility)
+	// Get visibility keyword
+	visKeyword := f.getRustVisibilityKeyword(fn.Visibility)
 	
 	// Check for async
 	isAsync := false
@@ -425,10 +445,18 @@ func (f *RustFormatter) formatImplMethod(w io.Writer, fn *ir.DistilledFunction, 
 	}
 	
 	// Format method signature
-	if isAsync {
-		fmt.Fprintf(w, "%s%sasync %s", indentStr, visPrefix, fn.Name)
+	if visKeyword != "" {
+		if isAsync {
+			fmt.Fprintf(w, "%s%s async fn %s", indentStr, visKeyword, fn.Name)
+		} else {
+			fmt.Fprintf(w, "%s%s fn %s", indentStr, visKeyword, fn.Name)
+		}
 	} else {
-		fmt.Fprintf(w, "%s%s%s", indentStr, visPrefix, fn.Name)
+		if isAsync {
+			fmt.Fprintf(w, "%sasync fn %s", indentStr, fn.Name)
+		} else {
+			fmt.Fprintf(w, "%sfn %s", indentStr, fn.Name)
+		}
 	}
 	
 	// Add generic type parameters
@@ -487,9 +515,9 @@ func (f *RustFormatter) formatTraitMethod(w io.Writer, fn *ir.DistilledFunction,
 	
 	// Format method signature
 	if isAsync {
-		fmt.Fprintf(w, "%sasync %s", indentStr, fn.Name)
+		fmt.Fprintf(w, "%sasync fn %s", indentStr, fn.Name)
 	} else {
-		fmt.Fprintf(w, "%s%s", indentStr, fn.Name)
+		fmt.Fprintf(w, "%sfn %s", indentStr, fn.Name)
 	}
 	
 	// Add generic type parameters
@@ -535,8 +563,8 @@ func (f *RustFormatter) formatTraitMethod(w io.Writer, fn *ir.DistilledFunction,
 }
 
 func (f *RustFormatter) formatField(w io.Writer, field *ir.DistilledField, indent string) error {
-	// Get visibility prefix
-	visPrefix := f.getVisibilityPrefix(field.Visibility)
+	// Get visibility keyword
+	visKeyword := f.getRustVisibilityKeyword(field.Visibility)
 	
 	// Check if it's a constant, static, or type alias
 	isConst := false
@@ -560,17 +588,33 @@ func (f *RustFormatter) formatField(w io.Writer, field *ir.DistilledField, inden
 		typeName = field.Type.Name
 	}
 	if isTypeAlias {
-		fmt.Fprintf(w, "\n%s%stype %s", indent, visPrefix, field.Name)
+		if visKeyword != "" {
+			fmt.Fprintf(w, "\n%s%s type %s", indent, visKeyword, field.Name)
+		} else {
+			fmt.Fprintf(w, "\n%stype %s", indent, field.Name)
+		}
 		if field.Type != nil && field.Type.Name != "" {
 			fmt.Fprintf(w, " = %s", field.Type.Name)
 		}
 	} else if isConst {
-		fmt.Fprintf(w, "\n%s%sconst %s: %s", indent, visPrefix, strings.ToUpper(field.Name), typeName)
+		if visKeyword != "" {
+			fmt.Fprintf(w, "\n%s%s const %s: %s", indent, visKeyword, strings.ToUpper(field.Name), typeName)
+		} else {
+			fmt.Fprintf(w, "\n%sconst %s: %s", indent, strings.ToUpper(field.Name), typeName)
+		}
 	} else if isStatic {
-		fmt.Fprintf(w, "\n%s%sstatic %s: %s", indent, visPrefix, field.Name, typeName)
+		if visKeyword != "" {
+			fmt.Fprintf(w, "\n%s%s static %s: %s", indent, visKeyword, field.Name, typeName)
+		} else {
+			fmt.Fprintf(w, "\n%sstatic %s: %s", indent, field.Name, typeName)
+		}
 	} else {
 		// Regular field (shouldn't appear at top level in Rust)
-		fmt.Fprintf(w, "%s%slet %s", indent, visPrefix, field.Name)
+		if visKeyword != "" {
+			fmt.Fprintf(w, "%s%s let %s", indent, visKeyword, field.Name)
+		} else {
+			fmt.Fprintf(w, "%slet %s", indent, field.Name)
+		}
 		if field.Type != nil && field.Type.Name != "" {
 			fmt.Fprintf(w, ": %s", field.Type.Name)
 		}
@@ -586,10 +630,14 @@ func (f *RustFormatter) formatField(w io.Writer, field *ir.DistilledField, inden
 }
 
 func (f *RustFormatter) formatTypeAlias(w io.Writer, alias *ir.DistilledTypeAlias, indent string) error {
-	// Get visibility prefix
-	visPrefix := f.getVisibilityPrefix(alias.Visibility)
+	// Get visibility keyword
+	visKeyword := f.getRustVisibilityKeyword(alias.Visibility)
 	
-	fmt.Fprintf(w, "\n%s%stype %s", indent, visPrefix, alias.Name)
+	if visKeyword != "" {
+		fmt.Fprintf(w, "\n%s%s type %s", indent, visKeyword, alias.Name)
+	} else {
+		fmt.Fprintf(w, "\n%stype %s", indent, alias.Name)
+	}
 	
 	// Add generic type parameters
 	if len(alias.TypeParams) > 0 {
@@ -630,16 +678,16 @@ func (f *RustFormatter) formatParameters(w io.Writer, params []ir.Parameter) {
 	}
 }
 
-func (f *RustFormatter) getVisibilityPrefix(visibility ir.Visibility) string {
+func (f *RustFormatter) getRustVisibilityKeyword(visibility ir.Visibility) string {
 	switch visibility {
 	case ir.VisibilityPrivate:
-		return "-"
+		return "" // No keyword for private in Rust
 	case ir.VisibilityProtected:
-		return "*"
+		return "pub(super)"
 	case ir.VisibilityPublic:
-		return "" // No prefix for public
+		return "pub"
 	case ir.VisibilityInternal:
-		return "~"
+		return "pub(crate)"
 	default:
 		return ""
 	}
