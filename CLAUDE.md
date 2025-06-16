@@ -285,6 +285,24 @@ type Options struct {
 
 ## Development Workflow for AI Assistants
 
+### Quick Development Testing
+
+For rapid development and testing, use the `make aid` command which automatically builds and runs the aid command with any arguments:
+
+```bash
+# Instead of:
+make && ./aid test.php --stdout
+
+# Use:
+make aid test.php --stdout
+
+# Works with all parameters:
+make aid testdata/php/06_edge_cases/source.php -vvv
+make aid --help
+```
+
+This saves time during development by combining the build and run steps.
+
 ### CRITICAL: No Mocks or Simulated Functions
 
 **NEVER create mock implementations or simulated functions.** All code must be real, working implementations. This includes:

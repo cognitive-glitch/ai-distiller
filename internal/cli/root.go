@@ -578,6 +578,7 @@ func processStdinWithContext(ctx context.Context) error {
 // parseBoolFlag parses a string flag as boolean (0/1)
 func parseBoolFlag(cmd *cobra.Command, name string, target **bool) {
 	if val, err := cmd.Flags().GetString(name); err == nil && val != "" {
+		// fmt.Printf("DEBUG parseBoolFlag: %s = %s\n", name, val)
 		b, err := strconv.ParseBool(val)
 		if err != nil {
 			// Try parsing as 0/1
@@ -630,6 +631,7 @@ func createProcessOptionsFromFlags() processor.ProcessOptions {
 	}
 	
 	// Use individual flags with defaults
+	// fmt.Printf("DEBUG: includeComments=%v\n", includeComments)
 	opts.IncludeComments = getBoolFlag(includeComments, false)
 	opts.IncludeImports = getBoolFlag(includeImports, true)
 	opts.IncludeImplementation = getBoolFlag(includeImplementation, false)
