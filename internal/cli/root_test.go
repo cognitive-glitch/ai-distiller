@@ -168,8 +168,8 @@ func TestCLIFlags(t *testing.T) {
 		stripOptions = nil
 		includeGlob = ""
 		excludeGlob = ""
-		recursive = true
-		absolutePaths = false
+		recursiveStr = "1"
+		filePathType = "relative"
 		strict = false
 		verbosity = 0
 		includePublic = nil
@@ -188,7 +188,7 @@ func TestCLIFlags(t *testing.T) {
 		assert.Equal(t, "", outputFile)
 		assert.False(t, outputToStdout)
 		assert.Equal(t, "text", outputFormat)
-		assert.True(t, recursive)
+		assert.Equal(t, "1", recursiveStr)
 		assert.False(t, strict)
 	})
 
