@@ -1,14 +1,35 @@
 #!/bin/bash
 
-# Regenerate all expected test files for all languages
+# Regenerate expected test files for a specific language
 # This script should be run from the project root
+#
+# Usage: ./scripts/regenerate-expected.sh <language>
+# Example: ./scripts/regenerate-expected.sh java
 
 set -e
 
 # Colors for output
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+RED='\033[0;31m'
 NC='\033[0m' # No Color
+
+# Check if language argument is provided
+if [ $# -eq 0 ]; then
+    echo -e "${RED}Error: Language argument is required${NC}"
+    echo ""
+    echo "Usage: $0 <language>"
+    echo ""
+    echo "Supported languages:"
+    echo "  python, typescript, go, javascript, php, ruby"
+    echo "  swift, rust, java, csharp, kotlin, cpp"
+    echo ""
+    echo "Special option:"
+    echo "  really-all  - Regenerate ALL languages (use with caution)"
+    exit 1
+fi
+
+LANGUAGE_ARG="$1"
 
 # Ensure we're in the project root
 if [ ! -f "go.mod" ] || [ ! -d "testdata" ]; then
@@ -124,9 +145,32 @@ languages=(
     "cpp"
 )
 
-# Process each language
-for lang in "${languages[@]}"; do
-    regenerate_language "$lang"
-done
-
-echo -e "${GREEN}All expected files regenerated successfully!${NC}"
+# Validate language argument
+if [ "$LANGUAGE_ARG" = "really-all" ]; then
+    echo -e "${YELLOW}WARNING: Regenerating ALL languages - this may overwrite many files!${NC}"
+    echo "Press Ctrl+C within 3 seconds to cancel..."
+    sleep 3
+    
+    # Process all languages
+    for lang in "${languages[@]}"; do
+        regenerate_language "$lang"
+    done
+    echo -e "${GREEN}All expected files regenerated successfully!${NC}"
+    
+elif [[ " ${languages[@]} " =~ " ${LANGUAGE_ARG} " ]]; then
+    # Process single language
+    regenerate_language "$LANGUAGE_ARG"
+    echo -e "${GREEN}Expected files for ${LANGUAGE_ARG} regenerated successfully!${NC}"
+    
+else
+    echo -e "${RED}Error: Unsupported language '${LANGUAGE_ARG}'${NC}"
+    echo ""
+    echo "Supported languages:"
+    for lang in "${languages[@]}"; do
+        echo "  $lang"
+    done
+    echo ""
+    echo "Special option:"
+    echo "  really-all  - Regenerate ALL languages (use with caution)"
+    exit 1
+fi
