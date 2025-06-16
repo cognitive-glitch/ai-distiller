@@ -90,6 +90,12 @@ func (p *TreeSitterProcessor) processNode(node *sitter.Node, source []byte, file
 		p.processFriendDeclaration(node, source, file, parent)
 	case "comment":
 		p.processComment(node, source, file, parent)
+	case "concept_definition":
+		// C++20 concepts - parse as special comment for now
+		p.processConceptAsComment(node, source, file, parent)
+	case "requires_clause", "requires_expression":
+		// C++20 requires clauses - skip for now
+		// TODO: Add proper support for C++20 concepts
 	default:
 		// Recursively process children
 		for i := 0; i < int(node.ChildCount()); i++ {
@@ -439,7 +445,11 @@ func (p *TreeSitterProcessor) processMethodDefinition(node *sitter.Node, source 
 				method.Modifiers = append(method.Modifiers, ir.ModifierStatic)
 			}
 		case "compound_statement":
-			method.Implementation = p.nodeText(child, source)
+			// Don't include implementation - it will be stripped if needed
+			implementation := p.nodeText(child, source)
+			if implementation != "" {
+				method.Implementation = implementation
+			}
 		case "default_method_clause":
 			method.Implementation = "= default"
 		case "delete_method_clause":
@@ -499,7 +509,11 @@ func (p *TreeSitterProcessor) processStructMethodDefinition(node *sitter.Node, s
 				method.Modifiers = append(method.Modifiers, ir.ModifierConst)
 			}
 		case "compound_statement":
-			method.Implementation = p.nodeText(child, source)
+			// Don't include implementation - it will be stripped if needed
+			implementation := p.nodeText(child, source)
+			if implementation != "" {
+				method.Implementation = implementation
+			}
 		}
 	}
 
@@ -542,7 +556,11 @@ func (p *TreeSitterProcessor) processFunctionDefinition(node *sitter.Node, sourc
 				function.Modifiers = append(function.Modifiers, ir.ModifierConst)
 			}
 		case "compound_statement":
-			function.Implementation = p.nodeText(child, source)
+			// Don't include implementation - it will be stripped if needed
+			implementation := p.nodeText(child, source)
+			if implementation != "" {
+				function.Implementation = implementation
+			}
 		case "noexcept":
 			// Could add as extension attribute if needed
 		}
@@ -1061,6 +1079,22 @@ func (p *TreeSitterProcessor) processFriendDeclaration(node *sitter.Node, source
 		},
 		Text:   "friend " + strings.TrimSpace(p.nodeText(node, source)),
 		Format: "line",
+	}
+	p.addChild(file, parent, comment)
+}
+
+// processConceptAsComment handles C++20 concepts as special comments
+func (p *TreeSitterProcessor) processConceptAsComment(node *sitter.Node, source []byte, file *ir.DistilledFile, parent ir.DistilledNode) {
+	// Extract the full concept definition
+	conceptText := p.nodeText(node, source)
+	
+	// Create a special comment to preserve the concept
+	comment := &ir.DistilledComment{
+		BaseNode: ir.BaseNode{
+			Location: p.nodeLocation(node),
+		},
+		Text:   "C++20 Concept: " + conceptText,
+		Format: "doc",
 	}
 	p.addChild(file, parent, comment)
 }
