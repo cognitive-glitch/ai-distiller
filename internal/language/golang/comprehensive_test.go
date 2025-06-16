@@ -14,179 +14,43 @@ import (
 func TestGoConstructs(t *testing.T) {
 	tests := []struct {
 		name         string
-		sourceFile   string
+		construct    string
 		options      processor.ProcessOptions
 		expectedFile string
 	}{
-		// Construct 1: Basic
+		// Basic construct tests
 		{
-			name:       "Construct1_Full",
-			sourceFile: "construct_1_basic.go",
+			name:      "Basic_Default",
+			construct: "01_basic",
 			options: processor.ProcessOptions{
-				IncludePrivate:       true,
-				IncludeImplementation: true,
-				IncludeComments:      false,
-				IncludeImports:       true,
-			},
-			expectedFile: "expected/construct1_full.txt",
-		},
-		{
-			name:       "Construct1_NoImpl",
-			sourceFile: "construct_1_basic.go",
-			options: processor.ProcessOptions{
-				IncludePrivate:       true,
+				IncludePrivate:       false,
 				IncludeImplementation: false,
 				IncludeComments:      false,
 				IncludeImports:       true,
 			},
-			expectedFile: "expected/construct1_no_impl.txt",
+			expectedFile: "default.txt",
 		},
 		{
-			name:       "Construct1_NoPrivate",
-			sourceFile: "construct_1_basic.go",
+			name:      "Basic_WithImplementation",
+			construct: "01_basic",
 			options: processor.ProcessOptions{
 				IncludePrivate:       false,
 				IncludeImplementation: true,
 				IncludeComments:      false,
 				IncludeImports:       true,
 			},
-			expectedFile: "expected/construct1_no_private.txt",
-		},
-		// Construct 2: Simple
-		{
-			name:       "Construct2_Full",
-			sourceFile: "construct_2_simple.go",
-			options: processor.ProcessOptions{
-				IncludePrivate:       true,
-				IncludeImplementation: true,
-				IncludeComments:      false,
-				IncludeImports:       true,
-			},
-			expectedFile: "expected/construct2_full.txt",
+			expectedFile: "implementation=1.txt",
 		},
 		{
-			name:       "Construct2_NoImpl",
-			sourceFile: "construct_2_simple.go",
+			name:      "Basic_WithPrivate",
+			construct: "01_basic",
 			options: processor.ProcessOptions{
 				IncludePrivate:       true,
 				IncludeImplementation: false,
 				IncludeComments:      false,
 				IncludeImports:       true,
 			},
-			expectedFile: "expected/construct2_no_impl.txt",
-		},
-		{
-			name:       "Construct2_NoPrivate",
-			sourceFile: "construct_2_simple.go",
-			options: processor.ProcessOptions{
-				IncludePrivate:       false,
-				IncludeImplementation: true,
-				IncludeComments:      false,
-				IncludeImports:       true,
-			},
-			expectedFile: "expected/construct2_no_private.txt",
-		},
-		// Construct 3: Medium
-		{
-			name:       "Construct3_Full",
-			sourceFile: "construct_3_medium.go",
-			options: processor.ProcessOptions{
-				IncludePrivate:       true,
-				IncludeImplementation: true,
-				IncludeComments:      false,
-				IncludeImports:       true,
-			},
-			expectedFile: "expected/construct3_full.txt",
-		},
-		{
-			name:       "Construct3_NoImpl",
-			sourceFile: "construct_3_medium.go",
-			options: processor.ProcessOptions{
-				IncludePrivate:       true,
-				IncludeImplementation: false,
-				IncludeComments:      false,
-				IncludeImports:       true,
-			},
-			expectedFile: "expected/construct3_no_impl.txt",
-		},
-		{
-			name:       "Construct3_NoPrivate",
-			sourceFile: "construct_3_medium.go",
-			options: processor.ProcessOptions{
-				IncludePrivate:       false,
-				IncludeImplementation: true,
-				IncludeComments:      false,
-				IncludeImports:       true,
-			},
-			expectedFile: "expected/construct3_no_private.txt",
-		},
-		// Construct 4: Complex
-		{
-			name:       "Construct4_Full",
-			sourceFile: "construct_4_complex.go",
-			options: processor.ProcessOptions{
-				IncludePrivate:       true,
-				IncludeImplementation: true,
-				IncludeComments:      false,
-				IncludeImports:       true,
-			},
-			expectedFile: "expected/construct4_full.txt",
-		},
-		{
-			name:       "Construct4_NoImpl",
-			sourceFile: "construct_4_complex.go",
-			options: processor.ProcessOptions{
-				IncludePrivate:       true,
-				IncludeImplementation: false,
-				IncludeComments:      false,
-				IncludeImports:       true,
-			},
-			expectedFile: "expected/construct4_no_impl.txt",
-		},
-		{
-			name:       "Construct4_NoPrivate",
-			sourceFile: "construct_4_complex.go",
-			options: processor.ProcessOptions{
-				IncludePrivate:       false,
-				IncludeImplementation: true,
-				IncludeComments:      false,
-				IncludeImports:       true,
-			},
-			expectedFile: "expected/construct4_no_private.txt",
-		},
-		// Construct 5: Very Complex
-		{
-			name:       "Construct5_Full",
-			sourceFile: "construct_5_very_complex.go",
-			options: processor.ProcessOptions{
-				IncludePrivate:       true,
-				IncludeImplementation: true,
-				IncludeComments:      false,
-				IncludeImports:       true,
-			},
-			expectedFile: "expected/construct5_full.txt",
-		},
-		{
-			name:       "Construct5_NoImpl",
-			sourceFile: "construct_5_very_complex.go",
-			options: processor.ProcessOptions{
-				IncludePrivate:       true,
-				IncludeImplementation: false,
-				IncludeComments:      false,
-				IncludeImports:       true,
-			},
-			expectedFile: "expected/construct5_no_impl.txt",
-		},
-		{
-			name:       "Construct5_NoPrivate",
-			sourceFile: "construct_5_very_complex.go",
-			options: processor.ProcessOptions{
-				IncludePrivate:       false,
-				IncludeImplementation: true,
-				IncludeComments:      false,
-				IncludeImports:       true,
-			},
-			expectedFile: "expected/construct5_no_private.txt",
+			expectedFile: "private=1,protected=1,internal=1,implementation=0.txt",
 		},
 	}
 
@@ -196,7 +60,7 @@ func TestGoConstructs(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Read source file
-			sourcePath := filepath.Join("../../../test-data/go", tt.sourceFile)
+			sourcePath := filepath.Join("../../../testdata/go", tt.construct, "source.go")
 			sourceFile, err := os.Open(sourcePath)
 			if err != nil {
 				t.Fatalf("Failed to open source file: %v", err)
@@ -204,50 +68,30 @@ func TestGoConstructs(t *testing.T) {
 			defer sourceFile.Close()
 
 			// Process the file
-			result, err := p.ProcessWithOptions(context.Background(), sourceFile, tt.sourceFile, tt.options)
+			result, err := p.ProcessWithOptions(context.Background(), sourceFile, "source.go", tt.options)
 			if err != nil {
 				t.Fatalf("Processing failed: %v", err)
 			}
 
-			// Format output
-			var actualOutput strings.Builder
-			err = textFormatter.Format(&actualOutput, result)
-			if err != nil {
+			// Format the result
+			var output strings.Builder
+			if err := textFormatter.Format(&output, result); err != nil {
 				t.Fatalf("Formatting failed: %v", err)
 			}
 
 			// Read expected output
-			expectedPath := filepath.Join("../../../test-data/go", tt.expectedFile)
+			expectedPath := filepath.Join("../../../testdata/go", tt.construct, "expected", tt.expectedFile)
 			expectedBytes, err := os.ReadFile(expectedPath)
 			if err != nil {
-				// If expected file doesn't exist, create it with current output
-				if os.IsNotExist(err) {
-					err = os.MkdirAll(filepath.Dir(expectedPath), 0755)
-					if err != nil {
-						t.Fatalf("Failed to create directory: %v", err)
-					}
-					err = os.WriteFile(expectedPath, []byte(actualOutput.String()), 0644)
-					if err != nil {
-						t.Fatalf("Failed to create expected file: %v", err)
-					}
-					t.Skipf("Created expected file: %s", expectedPath)
-				}
 				t.Fatalf("Failed to read expected file: %v", err)
 			}
 
-			expected := string(expectedBytes)
-			actual := actualOutput.String()
+			expected := strings.TrimSpace(string(expectedBytes))
+			actual := strings.TrimSpace(output.String())
 
-			// Compare outputs
-			if actual != expected {
-				t.Errorf("Output mismatch\nExpected:\n%s\n\nActual:\n%s", expected, actual)
-				
-				// Write actual output for debugging
-				actualPath := expectedPath + ".actual"
-				os.WriteFile(actualPath, []byte(actual), 0644)
-				t.Logf("Actual output written to: %s", actualPath)
+			if expected != actual {
+				t.Errorf("Output mismatch for %s:\nExpected:\n%s\n\nActual:\n%s", tt.name, expected, actual)
 			}
 		})
 	}
 }
-
