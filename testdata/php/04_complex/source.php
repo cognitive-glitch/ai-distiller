@@ -25,7 +25,7 @@ class Route
      * 
      * @param string $path Route path
      * @param string $method HTTP method
-     * @param array $middleware Route middleware
+     * @param list<string> $middleware Route middleware
      */
     public function __construct(
         public readonly string $path,
@@ -87,7 +87,7 @@ class AttributeProcessor
      * Process attributes for a class
      * 
      * @param object $instance Object instance
-     * @return array Processed attributes
+     * @return array{class: list<array{name: string, arguments: array<mixed>, instance: object}>, methods: array<string, list<array{name: string, arguments: array<mixed>, instance: object}>>, properties: array<string, list<array{name: string, arguments: array<mixed>, instance: object}>>} Processed attributes
      */
     public function processAttributes(object $instance): array
     {
@@ -231,6 +231,10 @@ class ApiController
 
     /**
      * Update user profile
+     * 
+     * @param int $id User ID
+     * @param array<string, mixed> $data User data
+     * @return array{id: int, updated: bool, data: array<string, mixed>}
      */
     #[Route('/api/users/{id}', 'PUT', ['auth', 'validate'])]
     public function updateUserProfile(int $id, array $data): array
@@ -299,14 +303,14 @@ class UserCreateDto
     public int $age;
 
     /**
-     * @var array User preferences
+     * @var array<string, mixed> User preferences
      */
     public array $preferences = [];
 
     /**
      * Create DTO from array
      * 
-     * @param array $data Input data
+     * @param array{name?: string, email?: string, age?: int, preferences?: array<string, mixed>} $data Input data
      * @return self
      */
     public static function fromArray(array $data): self
@@ -398,7 +402,7 @@ class UserCreateDto
 class ServiceLocator
 {
     /**
-     * @var array Service factories
+     * @var array<string, callable> Service factories
      */
     private array $factories = [];
     
@@ -408,7 +412,7 @@ class ServiceLocator
     private SplObjectStorage $singletons;
     
     /**
-     * @var array Service metadata
+     * @var array<string, array{singleton: bool}> Service metadata
      */
     private array $metadata = [];
 
@@ -423,7 +427,7 @@ class ServiceLocator
      * @param string $id Service identifier
      * @param Closure $factory Service factory
      * @param bool $singleton Whether to create as singleton
-     * @param array $metadata Service metadata
+     * @param array<string, mixed> $metadata Service metadata
      */
     public function register(string $id, Closure $factory, bool $singleton = false, array $metadata = []): void
     {

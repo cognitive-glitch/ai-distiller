@@ -87,6 +87,8 @@ const (
 	ModifierActor     Modifier = "actor"
 	ModifierMutating  Modifier = "mutating"
 	ModifierStruct    Modifier = "struct"
+	ModifierEnum      Modifier = "enum"
+	ModifierTypeAlias Modifier = "type_alias"
 )
 
 // DistilledNode is the base interface for all IR nodes
@@ -133,6 +135,7 @@ type NodeExtensions struct {
 	Java       *JavaExtensions       `json:"java,omitempty"`
 	CSharp     *CSharpExtensions     `json:"csharp,omitempty"`
 	Rust       *RustExtensions       `json:"rust,omitempty"`
+	PHP        *PHPExtensions        `json:"php,omitempty"`
 	Attributes map[string]any        `json:"attributes,omitempty"`
 }
 
@@ -180,6 +183,53 @@ type CSharpExtensions struct {
 type RustExtensions struct {
 	IsUnsafe bool   `json:"is_unsafe,omitempty"`
 	Lifetime string `json:"lifetime,omitempty"`
+}
+
+// PHPExtensions provides PHP-specific metadata
+type PHPExtensions struct {
+	// Field origin (code or docblock)
+	Origin FieldOrigin `json:"origin,omitempty"`
+	// Access mode for properties (read-write, read-only, write-only)
+	AccessMode FieldAccessMode `json:"access_mode,omitempty"`
+	// Original docblock annotation
+	SourceAnnotation string `json:"source_annotation,omitempty"`
+	// Indicates if this comment is an API-defining docblock
+	IsAPIDocblock bool `json:"is_api_docblock,omitempty"`
+	// Indicates if this class is actually an enum
+	IsEnum bool `json:"is_enum,omitempty"`
+	// Backing type for enum (int, string)
+	EnumBackingType string `json:"enum_backing_type,omitempty"`
+	// Indicates if this field is an enum case
+	IsEnumCase bool `json:"is_enum_case,omitempty"`
+}
+
+// FieldOrigin indicates where a field/method was defined
+type FieldOrigin string
+
+const (
+	FieldOriginCode     FieldOrigin = "code"
+	FieldOriginDocblock FieldOrigin = "docblock"
+)
+
+// FieldAccessMode indicates access permissions for properties
+type FieldAccessMode string
+
+const (
+	FieldAccessReadWrite FieldAccessMode = "read-write"
+	FieldAccessReadOnly  FieldAccessMode = "read-only"  
+	FieldAccessWriteOnly FieldAccessMode = "write-only"
+)
+
+// DeprecationInfo contains deprecation metadata
+type DeprecationInfo struct {
+	Version     string `json:"version,omitempty"`
+	Description string `json:"description,omitempty"`
+}
+
+// ThrowsInfo contains exception information
+type ThrowsInfo struct {
+	Exception   string `json:"exception"`
+	Description string `json:"description,omitempty"`
 }
 
 // File-level nodes

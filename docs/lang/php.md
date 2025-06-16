@@ -199,7 +199,7 @@ echo "Final price: " . $finalPrice;
 </details>
 
 <details open>
-<summary>Default Output (`--strip 'non-public,comments,implementation'`)</summary>
+<summary>Default Output (`default output (public only, no implementation)`)</summary>
 <blockquote>
 
 ```
@@ -293,7 +293,7 @@ class User
 </details>
 
 <details open>
-<summary>Default Output (`--strip 'non-public,comments,implementation'`)</summary>
+<summary>Default Output (`default output (public only, no implementation)`)</summary>
 <blockquote>
 
 ```
@@ -393,7 +393,7 @@ class FileLogger extends AbstractStorage implements Loggable
 </details>
 
 <details open>
-<summary>Default Output (`--strip 'non-public,comments,implementation'`)</summary>
+<summary>Default Output (`default output (public only, no implementation)`)</summary>
 <blockquote>
 
 ```
@@ -487,7 +487,7 @@ trait Timestampable
 </details>
 
 <details open>
-<summary>Default Output (`--strip 'non-public,comments,implementation'`)</summary>
+<summary>Default Output (`default output (public only, no implementation)`)</summary>
 <blockquote>
 
 ```
@@ -589,7 +589,7 @@ class ProductRepository extends BaseRepository implements FindableById, Cacheabl
 </details>
 
 <details open>
-<summary>Default Output (`--strip 'non-public,comments,implementation'`)</summary>
+<summary>Default Output (`default output (public only, no implementation)`)</summary>
 <blockquote>
 
 ```
@@ -787,7 +787,7 @@ search("class.*Auth.*", is_regex=true)
 {
   "scripts": {
     "analyze:structure": "aid src/ --format json > structure.json",
-    "analyze:api": "aid src/ --strip non-public,implementation --format text > api.txt",
+    "analyze:api": "aid src/ --private=0 --protected=0 --internal=0,implementation --format text > api.txt",
     "pre-commit": [
       "@analyze:api",
       "git diff --quiet api.txt || echo 'API surface changed!'"
@@ -806,7 +806,7 @@ vendor/bin/phpstan analyze
 vendor/bin/psalm
 
 # Then extract structure for AI
-aid src/ --format text --strip non-public,implementation > structure.txt
+aid src/ --format text --private=0 --protected=0 --internal=0,implementation > structure.txt
 
 # Use both for comprehensive analysis
 echo "Code quality checked. Structure extracted for AI analysis."

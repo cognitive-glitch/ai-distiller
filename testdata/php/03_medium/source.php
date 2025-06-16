@@ -46,12 +46,12 @@ interface ContainerInterface
 class Container implements ContainerInterface
 {
     /**
-     * @var array Service definitions
+     * @var array<string, callable|object> Service definitions
      */
     private array $services = [];
     
     /**
-     * @var array Resolved instances
+     * @var array<string, object> Resolved instances
      */
     private array $instances = [];
 
@@ -145,7 +145,7 @@ interface RepositoryInterface
     /**
      * Find all entities
      * 
-     * @return array<T>
+     * @return list<T>
      */
     public function findAll(): array;
     
@@ -301,7 +301,7 @@ interface EventListenerInterface
 class EventDispatcher
 {
     /**
-     * @var array<string, array<EventListenerInterface>> Event listeners
+     * @var array<string, list<EventListenerInterface>> Event listeners
      */
     private array $listeners = [];
 
@@ -362,7 +362,7 @@ class Event implements EventInterface
      * Create new event
      * 
      * @param string $name Event name
-     * @param array $data Event data
+     * @param array<string, mixed> $data Event data
      */
     public function __construct(
         private string $name,

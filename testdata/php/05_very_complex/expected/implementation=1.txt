@@ -1,26 +1,36 @@
 <file path="source.php">
+namespace App\VeryComplex;
+use Attribute;
+use ReflectionClass;
+use ReflectionMethod;
+use ReflectionProperty;
+use ReflectionFunction;
+use ReflectionAttribute;
+use Generator;
+use Closure;
+use WeakMap;
+use WeakReference;
+use SplObjectStorage;
+use Fiber;
+use FiberError;
 class ProxyTarget {
-    readonly array $interceptMethods;
-    readonly string $proxyClass;
-    __construct(array $interceptMethods, string $proxyClass)
+    public readonly array $interceptMethods;
+    public readonly string $proxyClass;
+    public __construct(string[] $interceptMethods = [], string $proxyClass = '')
 }
 class Intercept {
-    readonly string $before;
-    readonly string $after;
-    readonly bool $cache;
-    __construct(string $before, string $after, bool $cache)
+    public readonly string $before;
+    public readonly string $after;
+    public readonly bool $cache;
+    public __construct(string $before = '', string $after = '', bool $cache = false)
 }
 class Memoize {
-    readonly int $ttl;
-    readonly string $keyGenerator;
-    __construct(int $ttl, string $keyGenerator)
+    public readonly int $ttl;
+    public readonly string $keyGenerator;
+    public __construct(int $ttl = 3600, string $keyGenerator = '')
 }
 class DynamicProxyFactory {
-    __construct() {
-$this->proxyCache = new WeakMap();
-        $this->memoCache = new SplObjectStorage();
-    }
-    createProxy(object $target): object {
+    public createProxy(object $target): object Proxy object {
 $reflection = new ReflectionClass($target);
         $proxyAttributes = $reflection->getAttributes(ProxyTarget::class);
         
@@ -40,7 +50,7 @@ $reflection = new ReflectionClass($target);
         
         return $proxy;
     }
-    interceptMethod(object $target, string $methodName, array $arguments): mixed {
+    public interceptMethod(object $target, string $methodName, array<int, mixed> $arguments): mixed {
 $reflection = new ReflectionClass($target);
         $method = $reflection->getMethod($methodName);
         
@@ -87,15 +97,16 @@ $reflection = new ReflectionClass($target);
         return $result;
     }
 }
+/** Proxy interface */
 interface ProxyInterface {
-    __getTarget(): object
+    public __getTarget(): object
 }
 class AsyncOperationManager {
-    execute(string $id, Closure $operation): void {
+    public execute(string $id, Closure $operation): void {
 $this->fibers[$id] = new Fiber($operation);
         $this->fibers[$id]->start();
     }
-    resume(string $id, mixed $value): void {
+    public resume(string $id, mixed $value = null): void {
 if (isset($this->fibers[$id]) && $this->fibers[$id]->isSuspended()) {
             try {
                 $result = $this->fibers[$id]->resume($value);
@@ -109,13 +120,13 @@ if (isset($this->fibers[$id]) && $this->fibers[$id]->isSuspended()) {
             }
         }
     }
-    getResult(string $id): mixed {
+    public getResult(string $id): mixed {
 return $this->results[$id] ?? null;
     }
-    isComplete(string $id): bool {
+    public isComplete(string $id): bool {
 return isset($this->results[$id]);
     }
-    waitAll(): Generator {
+    public waitAll(): Generator {
 while (!empty($this->fibers)) {
             foreach (array_keys($this->fibers) as $id) {
                 $this->resume($id);
@@ -130,10 +141,7 @@ while (!empty($this->fibers)) {
     }
 }
 class OrderService {
-    __construct() {
-$this->asyncManager = new AsyncOperationManager();
-    }
-    calculatePrice(array $items, string $currency): float {
+    public calculatePrice(list<array{id: int, quantity: int, price: float}> $items, string $currency = 'USD'): float {
 $total = 0.0;
         
         foreach ($items as $item) {
@@ -145,7 +153,7 @@ $total = 0.0;
         
         return $total * $this->getCurrencyMultiplier($currency);
     }
-    processOrder(array $orderData): string {
+    public processOrder(array{customer_id: int, items: list<array{id: int, quantity: int}>, payment_method: string} $orderData): string Order ID {
 $orderId = uniqid('order_');
         
         $this->asyncManager->execute($orderId, function() use ($orderData, $orderId) {
@@ -168,11 +176,11 @@ $orderId = uniqid('order_');
         
         return $orderId;
     }
-    generatePriceKey(string $methodName, array $arguments): string {
+    public generatePriceKey(string $methodName, array $arguments): string Cache key {
 [$items, $currency] = $arguments;
         return md5($methodName . serialize($items) . $currency);
     }
-    getOrderStatus(string $orderId): array Status information {
+    public getOrderStatus(string $orderId): array Status information {
 if ($this->asyncManager->isComplete($orderId)) {
             return $this->asyncManager->getResult($orderId);
         }
@@ -181,7 +189,7 @@ if ($this->asyncManager->isComplete($orderId)) {
     }
 }
 class MetaProgrammingDemo {
-    createDynamicClass(string $className, array $properties, array $methods): string {
+    public createDynamicClass(string $className, array $properties, array $methods): string Generated class name {
 $classCode = "class {$className} {\n";
         
         // Add properties
@@ -202,11 +210,11 @@ $classCode = "class {$className} {\n";
         
         return $className;
     }
-    addMethod(object $object, string $methodName, Closure $implementation): void {
+    public addMethod(object $object, string $methodName, Closure $implementation): void {
 $boundClosure = $implementation->bindTo($object, $object);
         $object->$methodName = $boundClosure;
     }
-    analyzeObject(object $object): array Analysis result {
+    public analyzeObject(object $object): array Analysis result {
 $reflection = new ReflectionClass($object);
         
         return [

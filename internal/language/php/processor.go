@@ -71,6 +71,9 @@ func (p *Processor) ProcessFile(filename string, opts processor.ProcessOptions) 
 		// Apply standardized stripper for filtering
 		stripperOpts := opts.ToStripperOptions()
 		
+		// Debug
+		// fmt.Printf("DEBUG: IncludeComments=%v, RemoveComments=%v\n", opts.IncludeComments, stripperOpts.RemoveComments)
+		
 		// Only apply stripper if we need to remove something
 		if stripperOpts.HasAnyOption() {
 			s := stripper.New(stripperOpts)
@@ -111,6 +114,9 @@ func (p *Processor) ProcessWithOptions(ctx context.Context, reader io.Reader, fi
 		
 		// Apply standardized stripper for filtering
 		stripperOpts := opts.ToStripperOptions()
+		
+		// Debug
+		// fmt.Printf("DEBUG: IncludeComments=%v, RemoveComments=%v\n", opts.IncludeComments, stripperOpts.RemoveComments)
 		
 		// Only apply stripper if we need to remove something
 		if stripperOpts.HasAnyOption() {

@@ -50,7 +50,18 @@ func (s *Stripper) Visit(node ir.DistilledNode) ir.DistilledNode {
 		return s.visitFile(n)
 		
 	case *ir.DistilledComment:
-		if s.options.RemoveComments {
+		// Always preserve API docblocks (containing @property, @method, etc.)
+		if n.Extensions != nil && n.Extensions.PHP != nil && n.Extensions.PHP.IsAPIDocblock {
+			return n
+		}
+		// Check if it's a docstring/docblock
+		isDocstring := n.Format == "docblock" || n.Format == "doc"
+		
+		// Handle based on type
+		if isDocstring && s.options.RemoveDocstrings {
+			return nil
+		}
+		if !isDocstring && s.options.RemoveComments {
 			return nil
 		}
 		return n
@@ -149,15 +160,18 @@ func (s *Stripper) visitClass(n *ir.DistilledClass) ir.DistilledNode {
 	
 	// Create copy
 	result := &ir.DistilledClass{
-		BaseNode:   n.BaseNode,
-		Name:       n.Name,
-		Visibility: n.Visibility,
-		Modifiers:  n.Modifiers,
-		Decorators: n.Decorators,
-		TypeParams: n.TypeParams,
-		Extends:    n.Extends,
-		Implements: n.Implements,
-		Mixins:     n.Mixins,
+		BaseNode:    n.BaseNode,
+		Name:        n.Name,
+		Visibility:  n.Visibility,
+		Modifiers:   n.Modifiers,
+		Decorators:  n.Decorators,
+		TypeParams:  n.TypeParams,
+		Extends:     n.Extends,
+		Implements:  n.Implements,
+		Mixins:      n.Mixins,
+		Deprecated:  n.Deprecated,
+		Description: n.Description,
+		APIDocblock: n.APIDocblock,
 	}
 	
 	// Visit children
@@ -248,6 +262,12 @@ func (s *Stripper) visitField(n *ir.DistilledField) ir.DistilledNode {
 		return nil
 	}
 	
+	// Determine if we should strip the default value
+	defaultValue := n.DefaultValue
+	
+	// For enum cases, always show values regardless of implementation flag
+	// Enum values are part of the API definition, not implementation
+	
 	// Return copy
 	return &ir.DistilledField{
 		BaseNode:     n.BaseNode,
@@ -255,7 +275,7 @@ func (s *Stripper) visitField(n *ir.DistilledField) ir.DistilledNode {
 		Visibility:   n.Visibility,
 		Modifiers:    n.Modifiers,
 		Type:         n.Type,
-		DefaultValue: n.DefaultValue,
+		DefaultValue: defaultValue,
 		Decorators:   n.Decorators,
 		// Property-specific fields
 		IsProperty:       n.IsProperty,
@@ -263,6 +283,8 @@ func (s *Stripper) visitField(n *ir.DistilledField) ir.DistilledNode {
 		HasSetter:        n.HasSetter,
 		GetterVisibility: n.GetterVisibility,
 		SetterVisibility: n.SetterVisibility,
+		Description:      n.Description,
+		Deprecated:       n.Deprecated,
 	}
 }
 

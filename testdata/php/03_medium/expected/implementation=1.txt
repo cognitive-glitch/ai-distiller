@@ -1,15 +1,22 @@
 <file path="source.php">
+namespace App\Medium;
+use Generator;
+use Closure;
+use ReflectionClass;
+use ReflectionException;
+use InvalidArgumentException;
+/** Interface for dependency injection container */
 interface ContainerInterface {
-    register(string $id, callable|object $service): void
-    resolve(string $id): mixed
-    has(string $id): bool
+    public register(string $id, callable|object $service): void
+    public resolve(string $id): mixed
+    public has(string $id): bool
 }
 class Container implements ContainerInterface {
-    register(string $id, callable|object $service): void {
+    public register(string $id, callable|object $service): void {
 $this->services[$id] = $service;
         unset($this->instances[$id]); // Clear cached instance
     }
-    resolve(string $id): mixed {
+    public resolve(string $id): mixed {
 if (isset($this->instances[$id])) {
             return $this->instances[$id];
         }
@@ -25,10 +32,10 @@ if (isset($this->instances[$id])) {
         
         return $instance;
     }
-    has(string $id): bool {
+    public has(string $id): bool {
 return isset($this->services[$id]);
     }
-    autowire(string $className): object {
+    public autowire(string $className): object {
 $reflection = new ReflectionClass($className);
         
         if (!$reflection->isInstantiable()) {
@@ -53,20 +60,25 @@ $reflection = new ReflectionClass($className);
         return $reflection->newInstanceArgs($dependencies);
     }
 }
+/**
+ * Generic repository interface
+ *
+ * @template T
+ */
 interface RepositoryInterface {
-    find(int $id): ?object
-    findAll(): T[]
-    save(object $entity): object
-    delete(object $entity): void
+    public find(int $id): ?object
+    public findAll(): T[]
+    public save(T $entity): T
+    public delete(T $entity): void
 }
 abstract class AbstractRepository implements RepositoryInterface {
-    find(int $id): ?object {
+    public find(int $id): ?object {
 return $this->entities[$id] ?? null;
     }
-    findAll(): array {
+    public findAll(): array {
 return array_values($this->entities);
     }
-    save(object $entity): object {
+    public save(object $entity): object {
 $reflection = new ReflectionClass($entity);
         
         if ($reflection->hasMethod('getId') && $reflection->hasMethod('setId')) {
@@ -80,7 +92,7 @@ $reflection = new ReflectionClass($entity);
         
         return $entity;
     }
-    delete(object $entity): void {
+    public delete(object $entity): void {
 $reflection = new ReflectionClass($entity);
         
         if ($reflection->hasMethod('getId')) {
@@ -90,7 +102,7 @@ $reflection = new ReflectionClass($entity);
             }
         }
     }
-    findBy(Closure $criteria): Generator {
+    public findBy(Closure $criteria): Generator {
 foreach ($this->entities as $entity) {
             if ($criteria($entity)) {
                 yield $entity;
@@ -98,18 +110,20 @@ foreach ($this->entities as $entity) {
         }
     }
 }
+/** Event interface */
 interface EventInterface {
-    getName(): string
-    getData(): array
+    public getName(): string
+    public getData(): array
 }
+/** Event listener interface */
 interface EventListenerInterface {
-    handle(EventInterface $event): void
+    public handle(EventInterface $event): void
 }
 class EventDispatcher {
-    subscribe(string $eventName, EventListenerInterface $listener): void {
+    public subscribe(string $eventName, EventListenerInterface $listener): void {
 $this->listeners[$eventName][] = $listener;
     }
-    dispatch(EventInterface $event): void {
+    public dispatch(EventInterface $event): void {
 $eventName = $event->getName();
         
         if (!isset($this->listeners[$eventName])) {
@@ -120,7 +134,7 @@ $eventName = $event->getName();
             $listener->handle($event);
         }
     }
-    listen(string $eventName, Closure $handler): void {
+    public listen(string $eventName, Closure $handler): void {
 $this->subscribe($eventName, new class($handler) implements EventListenerInterface {
             public function __construct(private Closure $handler) {}
             
@@ -132,34 +146,34 @@ $this->subscribe($eventName, new class($handler) implements EventListenerInterfa
     }
 }
 class Event implements EventInterface {
-    __construct(string $name, array $data)
-    getName(): string {
+    public __construct(string $name, array<string, mixed> $data = [])
+    public getName(): string {
 return $this->name;
     }
-    getData(): array {
+    public getData(): array {
 return $this->data;
     }
 }
 class User {
-    __construct(?int $id, string $name, string $email)
-    getId(): ?int {
+    public __construct(?int $id, string $name, string $email)
+    public getId(): ?int {
 { return $this->id; }
     }
-    setId(int $id): void {
+    public setId(int $id): void {
 { $this->id = $id; }
     }
-    getName(): string {
+    public getName(): string {
 { return $this->name; }
     }
-    getEmail(): string {
+    public getEmail(): string {
 { return $this->email; }
     }
 }
 class UserRepository extends AbstractRepository {
-    findByEmailDomain(string $domain): Generator {
+    public findByEmailDomain(string $domain): Generator {
 return $this->findBy(fn(User $user) => str_ends_with($user->getEmail(), "@{$domain}"));
     }
-    getStatistics(): array {
+    public getStatistics(): array {
 $total = count($this->entities);
         $domains = [];
         
@@ -175,8 +189,8 @@ $total = count($this->entities);
     }
 }
 class UserService {
-    __construct(UserRepository $repository, EventDispatcher $dispatcher)
-    createUser(string $name, string $email): User {
+    public __construct(UserRepository $repository, EventDispatcher $dispatcher)
+    public createUser(string $name, string $email): User {
 $user = new User(null, $name, $email);
         $savedUser = $this->repository->save($user);
         
@@ -188,7 +202,7 @@ $user = new User(null, $name, $email);
         
         return $savedUser;
     }
-    getUserStatistics(): Generator {
+    public getUserStatistics(): Generator {
 yield 'total' => count($this->repository->findAll());
         yield 'by_domain' => $this->repository->getStatistics()['domains'];
         yield 'recent' => iterator_to_array($this->repository->findBy(

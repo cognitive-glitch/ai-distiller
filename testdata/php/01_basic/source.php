@@ -33,7 +33,7 @@ class User
     protected ?DateTime $createdAt;
     
     /**
-     * @var array User preferences
+     * @var array<string, mixed> User preferences
      */
     private array $preferences = [];
 
@@ -127,7 +127,7 @@ class User
     /**
      * Convert to array representation
      * 
-     * @return array
+     * @return array{id: int, name: string, email: string, created_at: string|null, is_active: bool}
      */
     public function toArray(): array
     {
@@ -147,7 +147,7 @@ class User
 class UserManager
 {
     /**
-     * @var array<int, User> Users storage
+     * @var array<int, User> Users storage indexed by user ID
      */
     private array $users = [];
 
@@ -175,7 +175,7 @@ class UserManager
     /**
      * Get all active users
      * 
-     * @return array<User>
+     * @return list<User>
      */
     public function getActiveUsers(): array
     {
@@ -204,7 +204,7 @@ function validateEmail(string $email): bool
 /**
  * Create user from array data
  * 
- * @param array $data User data
+ * @param array{id: int, name: string, email: string} $data User data
  * @return User
  * @throws InvalidArgumentException
  */

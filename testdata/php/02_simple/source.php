@@ -182,7 +182,7 @@ trait TimestampableTrait
 trait ValidatableTrait
 {
     /**
-     * @var array Validation errors
+     * @var array<string, string> Validation errors
      */
     private array $validationErrors = [];
 
@@ -200,7 +200,7 @@ trait ValidatableTrait
     /**
      * Get validation errors
      * 
-     * @return array
+     * @return array<string, string>
      */
     public function getValidationErrors(): array
     {
@@ -255,7 +255,7 @@ class Product extends BaseEntity implements CacheableInterface
     private bool $isAvailable = true;
     
     /**
-     * @var array Product categories
+     * @var list<string> Product categories
      */
     private array $categories = [];
 

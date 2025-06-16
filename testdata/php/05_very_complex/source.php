@@ -27,7 +27,7 @@ class ProxyTarget
     /**
      * Create proxy target attribute
      * 
-     * @param array $interceptMethods Methods to intercept
+     * @param list<string> $interceptMethods Methods to intercept
      * @param string $proxyClass Proxy class name
      */
     public function __construct(
@@ -85,7 +85,7 @@ class DynamicProxyFactory
     private WeakMap $proxyCache;
     
     /**
-     * @var array<string, WeakReference> Method interceptors
+     * @var array<string, WeakReference<callable>> Method interceptors
      */
     private array $interceptors = [];
     
@@ -288,7 +288,7 @@ class {$proxyClassName} implements ProxyInterface
      * 
      * @param object $target Target object
      * @param string $methodName Method name
-     * @param array $arguments Method arguments
+     * @param array<int, mixed> $arguments Method arguments
      * @return mixed
      */
     public function interceptMethod(object $target, string $methodName, array $arguments): mixed
@@ -391,7 +391,7 @@ interface ProxyInterface
 class AsyncOperationManager
 {
     /**
-     * @var array<string, Fiber> Active fibers
+     * @var array<string, Fiber<mixed, mixed, mixed, mixed>> Active fibers
      */
     private array $fibers = [];
     
@@ -496,7 +496,7 @@ class OrderService
     /**
      * Calculate order price with memoization
      * 
-     * @param array $items Order items
+     * @param list<array{id: int, quantity: int, price: float}> $items Order items
      * @param string $currency Currency code
      * @return float
      */
@@ -519,7 +519,7 @@ class OrderService
     /**
      * Process order asynchronously
      * 
-     * @param array $orderData Order data
+     * @param array{customer_id: int, items: list<array{id: int, quantity: int}>, payment_method: string} $orderData Order data
      * @return string Order ID
      */
     #[Intercept(before: 'validateOrder', after: 'notifyOrderProcessed')]

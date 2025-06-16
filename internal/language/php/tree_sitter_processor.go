@@ -3,6 +3,7 @@ package php
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 	"unicode"
 
@@ -21,6 +22,7 @@ type TreeSitterProcessor struct {
 	currentNamespace string
 	useAliases      map[string]string
 	currentClass    string
+	currentClassDocblock string
 	
 	// PHPDoc information by line number
 	docblocks map[int]*PHPDocInfo
@@ -63,6 +65,7 @@ func (p *TreeSitterProcessor) ProcessSource(ctx context.Context, source []byte, 
 	}
 	defer tree.Close()
 	
+	
 	// Create IR file
 	file := &ir.DistilledFile{
 		BaseNode: ir.BaseNode{
@@ -81,6 +84,16 @@ func (p *TreeSitterProcessor) ProcessSource(ctx context.Context, source []byte, 
 	// First pass: collect all PHPDoc comments
 	p.collectPHPDocComments(tree.RootNode())
 	
+	// Debug: print all top-level nodes
+	// fmt.Printf("DEBUG: Root node has %d children\n", tree.RootNode().ChildCount())
+	// for i := 0; i < int(tree.RootNode().ChildCount()); i++ {
+	// 	child := tree.RootNode().Child(i)
+	// 	fmt.Printf("DEBUG: Child %d: type=%s, named=%v\n", i, child.Type(), child.IsNamed())
+	// 	if child.Type() == "comment" {
+	// 		fmt.Printf("  Comment text: %s\n", p.getNodeText(child))
+	// 	}
+	// }
+	
 	// Second pass: process nodes with PHPDoc info available
 	p.processNode(tree.RootNode(), file, nil)
 	
@@ -98,6 +111,7 @@ func (p *TreeSitterProcessor) collectPHPDocComments(node *sitter.Node) {
 	// Check if this is a PHPDoc comment
 	if nodeType == "comment" {
 		text := p.getNodeText(node)
+		// fmt.Printf("DEBUG collectPHPDocComments: found comment: %s\n", text)
 		if strings.HasPrefix(text, "/**") {
 			// Parse PHPDoc
 			info := p.parsePHPDoc(text)
@@ -253,11 +267,48 @@ func (p *TreeSitterProcessor) processNode(node *sitter.Node, file *ir.DistilledF
 	}
 	
 	nodeType := node.Type()
-	// Debug output
-	// fmt.Printf("Node: %s, Text: %s\n", nodeType, p.getNodeText(node))
+	// if nodeType == "comment" || strings.Contains(p.getNodeText(node), "Constants") {
+	// 	fmt.Printf("DEBUG processNode: type=%s, text=%s\n", nodeType, p.getNodeText(node))
+	// }
 	
-	// Skip non-named nodes except comments
-	if !node.IsNamed() && nodeType != "comment" && nodeType != "php_tag" {
+	// Process comments even if they're not named
+	if nodeType == "comment" {
+		text := p.getNodeText(node)
+		if strings.HasPrefix(text, "/**") && node.Parent() != nil {
+			// This is a docblock, check if next sibling is a class
+			parent := node.Parent()
+			var nodeIndex int = -1
+			for i := 0; i < int(parent.ChildCount()); i++ {
+				if parent.Child(i) == node {
+					nodeIndex = i
+					break
+				}
+			}
+			
+			if nodeIndex >= 0 && nodeIndex+1 < int(parent.ChildCount()) {
+				nextNode := parent.Child(nodeIndex + 1)
+				// Skip whitespace
+				for j := nodeIndex + 1; j < int(parent.ChildCount()); j++ {
+					nextNode = parent.Child(j)
+					if nextNode.IsNamed() || nextNode.Type() == "comment" {
+						break
+					}
+				}
+				
+				if nextNode.Type() == "class_declaration" {
+					// Store docblock for the class
+					p.currentClassDocblock = text
+				}
+			}
+		}
+		// Don't create comment nodes for class docblocks that will be attached to classes
+		if p.currentClassDocblock == text {
+			return
+		}
+	}
+	
+	// Skip other non-named nodes
+	if !node.IsNamed() && nodeType != "php_tag" {
 		// Process children for anonymous nodes
 		for i := 0; i < int(node.ChildCount()); i++ {
 			p.processNode(node.Child(i), file, parent)
@@ -266,16 +317,50 @@ func (p *TreeSitterProcessor) processNode(node *sitter.Node, file *ir.DistilledF
 	}
 	
 	switch nodeType {
-	case "program", "php":
+	case "program":
 		// Process all children at top level
 		for i := 0; i < int(node.ChildCount()); i++ {
-			p.processNode(node.Child(i), file, parent)
+			child := node.Child(i)
+			// Check for PHP tag containing the actual content
+			if child.Type() == "text" || child.Type() == "php_tag" {
+				// PHP content is nested inside php_tag
+				p.processNode(child, file, parent)
+			} else {
+				p.processNode(child, file, parent)
+			}
+		}
+		
+	case "php_tag", "text":
+		// Process PHP content inside the tag
+		for i := 0; i < int(node.ChildCount()); i++ {
+			child := node.Child(i)
+			// fmt.Printf("php_tag child %d: %s\n", i, child.Type())
+			// Check if this is a docblock followed by a class
+			if child.Type() == "comment" {
+				text := p.getNodeText(child)
+				if strings.HasPrefix(text, "/**") {
+					// Look ahead to find the next non-comment node
+					for j := i + 1; j < int(node.ChildCount()); j++ {
+						nextChild := node.Child(j)
+						if nextChild.Type() == "class_declaration" {
+							// This is a class docblock, store it temporarily
+							p.currentClassDocblock = text
+							break
+						} else if nextChild.IsNamed() && nextChild.Type() != "comment" {
+							// Found a different named node, stop looking
+							break
+						}
+					}
+				}
+			}
+			p.processNode(child, file, parent)
 		}
 		
 	case "namespace_definition":
 		p.processNamespace(node, file, parent)
 		
 	case "namespace_use_declaration":
+		// fmt.Printf("DEBUG: Found namespace_use_declaration\n")
 		p.processUseDeclaration(node, file, parent)
 		
 	case "class_declaration":
@@ -303,6 +388,7 @@ func (p *TreeSitterProcessor) processNode(node *sitter.Node, file *ir.DistilledF
 		p.processConstant(node, file, parent)
 		
 	case "comment":
+		// fmt.Printf("DEBUG: Found comment: %s\n", p.getNodeText(node))
 		p.processComment(node, file, parent)
 		
 	default:
@@ -328,6 +414,17 @@ func (p *TreeSitterProcessor) processNamespace(node *sitter.Node, file *ir.Disti
 	// Update current namespace
 	p.currentNamespace = namespaceName
 	
+	// Add namespace as an import node so it's visible in the output
+	if namespaceName != "" {
+		imp := &ir.DistilledImport{
+			BaseNode:   p.nodeLocation(node),
+			ImportType: "namespace",
+			Module:     namespaceName,
+			Symbols:    []ir.ImportedSymbol{},
+		}
+		p.addNode(file, parent, imp)
+	}
+	
 	// Process namespace body
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
@@ -344,6 +441,13 @@ func (p *TreeSitterProcessor) processNamespace(node *sitter.Node, file *ir.Disti
 func (p *TreeSitterProcessor) processUseDeclaration(node *sitter.Node, file *ir.DistilledFile, parent ir.DistilledNode) {
 	// PHP use statements can import classes, functions, or constants
 	var importType string = "class" // default
+	
+	// Debug logging
+	// fmt.Printf("DEBUG processUseDeclaration: node type=%s, child count=%d\n", node.Type(), node.ChildCount())
+	// for i := 0; i < int(node.ChildCount()); i++ {
+	// 	child := node.Child(i)
+	// 	fmt.Printf("  Child %d: type=%s, text=%s\n", i, child.Type(), p.getNodeText(child))
+	// }
 	
 	// Check for function or const use
 	for i := 0; i < int(node.ChildCount()); i++ {
@@ -383,14 +487,16 @@ func (p *TreeSitterProcessor) processUseDeclaration(node *sitter.Node, file *ir.
 
 // processUseClause processes individual use clauses
 func (p *TreeSitterProcessor) processUseClause(node *sitter.Node, file *ir.DistilledFile, parent ir.DistilledNode, importType string) {
+	// fmt.Printf("DEBUG processUseClause: node type=%s\n", node.Type())
 	var fullName string
 	var alias string
 	
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		switch child.Type() {
-		case "qualified_name", "namespace_name":
+		case "qualified_name", "namespace_name", "name":
 			fullName = p.getNodeText(child)
+			// fmt.Printf("  Found name: %s (type: %s)\n", fullName, child.Type())
 		case "namespace_aliasing_clause":
 			// Get the alias
 			for j := 0; j < int(child.ChildCount()); j++ {
@@ -427,7 +533,10 @@ func (p *TreeSitterProcessor) processUseClause(node *sitter.Node, file *ir.Disti
 			},
 		}
 		
+		// fmt.Printf("  Creating import node: %s (alias: %s)\n", fullName, alias)
 		p.addNode(file, parent, imp)
+	} else {
+		// fmt.Printf("  WARNING: No fullName found\n")
 	}
 }
 
@@ -500,6 +609,44 @@ func (p *TreeSitterProcessor) processClass(node *sitter.Node, file *ir.Distilled
 		Implements: []ir.TypeRef{},
 		Children:   []ir.DistilledNode{},
 		Decorators: []string{},
+	}
+	
+	// Try multiple ways to find the docblock
+	docblockFound := false
+	
+	// Method 1: Check for stored docblock comment from program level
+	if p.currentClassDocblock != "" {
+		// Parse PSR-19 tags from docblock
+		p.parseClassDocblock(p.currentClassDocblock, class)
+		p.currentClassDocblock = "" // Clear after use
+		docblockFound = true
+	}
+	
+	// Method 2: Check parent's children for preceding comment
+	if !docblockFound && node.Parent() != nil {
+		parent := node.Parent()
+		for i := 0; i < int(parent.ChildCount()); i++ {
+			child := parent.Child(i)
+			if child == node && i > 0 {
+				// Check previous sibling
+				prev := parent.Child(i - 1)
+				if prev.Type() == "comment" {
+					text := p.getNodeText(prev)
+					if strings.HasPrefix(text, "/**") {
+						p.parseClassDocblock(text, class)
+						docblockFound = true
+						break
+					}
+				}
+			}
+		}
+	}
+	
+	// Method 3: Original getPrecedingDocComment
+	if !docblockFound {
+		if docComment := p.getPrecedingDocComment(node); docComment != "" {
+			p.parseClassDocblock(docComment, class)
+		}
 	}
 	
 	// Track current class
@@ -696,10 +843,15 @@ func (p *TreeSitterProcessor) processMethod(node *sitter.Node, file *ir.Distille
 	if docInfo, exists := p.docblocks[nodeLine]; exists {
 		// Apply return type
 		if docInfo.returnType != "" {
-			if fn.Returns == nil || fn.Returns.Name == "" {
-				fn.Returns = &ir.TypeRef{Name: docInfo.returnType}
-			} else if fn.Returns.Name == "array" {
-				// PHPDoc has more specific array type
+			// Always prefer docblock type if it's more specific
+			if fn.Returns == nil || fn.Returns.Name == "" ||
+			   fn.Returns.Name == "array" ||
+			   fn.Returns.Name == "mixed" ||
+			   fn.Returns.Name == "object" ||
+			   fn.Returns.Name == "callable" ||
+			   fn.Returns.Name == "string" ||
+			   fn.Returns.Name == "int" ||
+			   fn.Returns.Name == "bool" {
 				fn.Returns = &ir.TypeRef{Name: docInfo.returnType}
 			}
 		}
@@ -707,10 +859,15 @@ func (p *TreeSitterProcessor) processMethod(node *sitter.Node, file *ir.Distille
 		// Apply param types
 		for i := range fn.Parameters {
 			if docType, exists := docInfo.paramTypes[fn.Parameters[i].Name]; exists {
-				if fn.Parameters[i].Type.Name == "" {
-					fn.Parameters[i].Type = ir.TypeRef{Name: docType}
-				} else if fn.Parameters[i].Type.Name == "array" {
-					// PHPDoc has more specific array type
+				// Always prefer docblock type if it's more specific
+				// This includes class-string<T>, callable():object, int-mask-of<>, etc.
+				if fn.Parameters[i].Type.Name == "" || 
+				   fn.Parameters[i].Type.Name == "array" ||
+				   fn.Parameters[i].Type.Name == "mixed" ||
+				   fn.Parameters[i].Type.Name == "object" ||
+				   fn.Parameters[i].Type.Name == "callable" ||
+				   fn.Parameters[i].Type.Name == "string" ||
+				   fn.Parameters[i].Type.Name == "int" {
 					fn.Parameters[i].Type = ir.TypeRef{Name: docType}
 				}
 			}
@@ -858,10 +1015,15 @@ func (p *TreeSitterProcessor) processFunction(node *sitter.Node, file *ir.Distil
 	if docInfo, exists := p.docblocks[nodeLine]; exists {
 		// Apply return type
 		if docInfo.returnType != "" {
-			if fn.Returns == nil || fn.Returns.Name == "" {
-				fn.Returns = &ir.TypeRef{Name: docInfo.returnType}
-			} else if fn.Returns.Name == "array" {
-				// PHPDoc has more specific array type
+			// Always prefer docblock type if it's more specific
+			if fn.Returns == nil || fn.Returns.Name == "" ||
+			   fn.Returns.Name == "array" ||
+			   fn.Returns.Name == "mixed" ||
+			   fn.Returns.Name == "object" ||
+			   fn.Returns.Name == "callable" ||
+			   fn.Returns.Name == "string" ||
+			   fn.Returns.Name == "int" ||
+			   fn.Returns.Name == "bool" {
 				fn.Returns = &ir.TypeRef{Name: docInfo.returnType}
 			}
 		}
@@ -869,10 +1031,15 @@ func (p *TreeSitterProcessor) processFunction(node *sitter.Node, file *ir.Distil
 		// Apply param types
 		for i := range fn.Parameters {
 			if docType, exists := docInfo.paramTypes[fn.Parameters[i].Name]; exists {
-				if fn.Parameters[i].Type.Name == "" {
-					fn.Parameters[i].Type = ir.TypeRef{Name: docType}
-				} else if fn.Parameters[i].Type.Name == "array" {
-					// PHPDoc has more specific array type
+				// Always prefer docblock type if it's more specific
+				// This includes class-string<T>, callable():object, int-mask-of<>, etc.
+				if fn.Parameters[i].Type.Name == "" || 
+				   fn.Parameters[i].Type.Name == "array" ||
+				   fn.Parameters[i].Type.Name == "mixed" ||
+				   fn.Parameters[i].Type.Name == "object" ||
+				   fn.Parameters[i].Type.Name == "callable" ||
+				   fn.Parameters[i].Type.Name == "string" ||
+				   fn.Parameters[i].Type.Name == "int" {
 					fn.Parameters[i].Type = ir.TypeRef{Name: docType}
 				}
 			}
@@ -900,6 +1067,13 @@ func (p *TreeSitterProcessor) processParameters(node *sitter.Node, fn *ir.Distil
 func (p *TreeSitterProcessor) processParameter(node *sitter.Node) ir.Parameter {
 	param := ir.Parameter{}
 	
+	// Debug: print parameter structure
+	// fmt.Printf("DEBUG processParameter: node type=%s, has %d children\n", node.Type(), node.ChildCount())
+	// for i := 0; i < int(node.ChildCount()); i++ {
+	// 	child := node.Child(i)
+	// 	fmt.Printf("  Child %d: type=%s, text=%s\n", i, child.Type(), p.getNodeText(child))
+	// }
+	
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		switch child.Type() {
@@ -926,9 +1100,24 @@ func (p *TreeSitterProcessor) processParameter(node *sitter.Node) ir.Parameter {
 		case "variable_name":
 			param.Name = strings.TrimPrefix(p.getNodeText(child), "$")
 			
+		case "=":
+			// Default value follows the = sign
+			if i+1 < int(node.ChildCount()) {
+				nextChild := node.Child(i + 1)
+				param.DefaultValue = p.getNodeText(nextChild)
+			}
+			
 		case "default_value":
-			// Get default value
-			param.DefaultValue = p.getNodeText(child)
+			// Get default value - skip the = sign
+			// fmt.Printf("DEBUG: default_value node has %d children\n", child.ChildCount())
+			for j := 0; j < int(child.ChildCount()); j++ {
+				grandchild := child.Child(j)
+				// fmt.Printf("  Child %d: type=%s, text=%s\n", j, grandchild.Type(), p.getNodeText(grandchild))
+				if grandchild.Type() != "=" {
+					param.DefaultValue = p.getNodeText(grandchild)
+					break
+				}
+			}
 		}
 	}
 	
@@ -1068,7 +1257,7 @@ func (p *TreeSitterProcessor) processTrait(node *sitter.Node, file *ir.Distilled
 
 // processEnum processes enum declarations (PHP 8.1+)
 func (p *TreeSitterProcessor) processEnum(node *sitter.Node, file *ir.DistilledFile, parent ir.DistilledNode) {
-	// For now, treat enums as classes
+	// For now, treat enums as classes with special marker
 	class := &ir.DistilledClass{
 		BaseNode:   p.nodeLocation(node),
 		Visibility: ir.VisibilityPublic,
@@ -1077,6 +1266,15 @@ func (p *TreeSitterProcessor) processEnum(node *sitter.Node, file *ir.DistilledF
 		Decorators: []string{},
 	}
 	
+	// Mark this as an enum
+	if class.Extensions == nil {
+		class.Extensions = &ir.NodeExtensions{}
+	}
+	if class.Extensions.PHP == nil {
+		class.Extensions.PHP = &ir.PHPExtensions{}
+	}
+	class.Extensions.PHP.IsEnum = true
+	
 	// Process enum parts
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
@@ -1084,8 +1282,12 @@ func (p *TreeSitterProcessor) processEnum(node *sitter.Node, file *ir.DistilledF
 		case "name":
 			class.Name = p.getNodeText(child)
 			
-		case "enum_backing_type":
-			// : string or : int
+		case "primitive_type":
+			// Backing type (int or string)
+			if i > 0 && node.Child(i-1).Type() == ":" {
+				// This is the backing type
+				class.Extensions.PHP.EnumBackingType = p.getNodeText(child)
+			}
 			
 		case "enum_declaration_list":
 			// Enum cases
@@ -1115,19 +1317,33 @@ func (p *TreeSitterProcessor) processEnumCase(node *sitter.Node, file *ir.Distil
 		Modifiers:  []ir.Modifier{ir.ModifierStatic, ir.ModifierFinal},
 	}
 	
+	// Mark this as an enum case
+	if field.Extensions == nil {
+		field.Extensions = &ir.NodeExtensions{}
+	}
+	if field.Extensions.PHP == nil {
+		field.Extensions.PHP = &ir.PHPExtensions{}
+	}
+	field.Extensions.PHP.IsEnumCase = true
+	
+	// Debug: print node structure
+	// fmt.Printf("DEBUG processEnumCase: node has %d children\n", node.ChildCount())
+	// for i := 0; i < int(node.ChildCount()); i++ {
+	// 	child := node.Child(i)
+	// 	fmt.Printf("  Child %d: type=%s, text=%s\n", i, child.Type(), p.getNodeText(child))
+	// }
+	
+	// Look for name and value directly as siblings
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		switch child.Type() {
 		case "name":
 			field.Name = p.getNodeText(child)
-			
-		case "enum_case_expression":
-			// Case value
-			for j := 0; j < int(child.ChildCount()); j++ {
-				if child.Child(j).Type() != "=" {
-					field.DefaultValue = p.getNodeText(child.Child(j))
-					break
-				}
+		case "=":
+			// Next sibling should be the value
+			if i+1 < int(node.ChildCount()) {
+				nextChild := node.Child(i + 1)
+				field.DefaultValue = p.getNodeText(nextChild)
 			}
 		}
 	}
@@ -1330,4 +1546,340 @@ func (p *TreeSitterProcessor) Close() error {
 		p.parser.Close()
 	}
 	return nil
+}
+
+// getPrecedingDocComment gets the docblock comment immediately preceding a node
+func (p *TreeSitterProcessor) getPrecedingDocComment(node *sitter.Node) string {
+	if node == nil || node.Parent() == nil {
+		return ""
+	}
+	
+	// Find the index of current node in parent
+	parent := node.Parent()
+	var nodeIndex int = -1
+	for i := 0; i < int(parent.ChildCount()); i++ {
+		if parent.Child(i) == node {
+			nodeIndex = i
+			break
+		}
+	}
+	
+	if nodeIndex <= 0 {
+		return ""
+	}
+	
+	// Check the previous sibling
+	for i := nodeIndex - 1; i >= 0; i-- {
+		prevNode := parent.Child(i)
+		if prevNode == nil {
+			continue
+		}
+		
+		nodeType := prevNode.Type()
+		
+		// Skip whitespace nodes
+		if !prevNode.IsNamed() && strings.TrimSpace(p.getNodeText(prevNode)) == "" {
+			continue
+		}
+		
+		// Found a comment
+		if nodeType == "comment" {
+			text := p.getNodeText(prevNode)
+			if strings.HasPrefix(text, "/**") {
+				return text
+			}
+		}
+		
+		// Found something else, stop looking
+		break
+	}
+	
+	return ""
+}
+
+// parseClassDocblock parses PSR-19 tags from class docblock
+func (p *TreeSitterProcessor) parseClassDocblock(docComment string, class *ir.DistilledClass) {
+	lines := strings.Split(docComment, "\n")
+	
+	// Track if we're in description
+	inDescription := false
+	description := []string{}
+	hasAPITags := false
+	
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		
+		// Skip comment markers
+		if line == "/**" || line == "*/" || line == "*" {
+			continue
+		}
+		
+		// Remove leading asterisk
+		line = strings.TrimPrefix(line, "* ")
+		line = strings.TrimPrefix(line, "*")
+		
+		// Check for tags
+		if strings.HasPrefix(line, "@") {
+			inDescription = false
+			p.parseDocblockTag(line, class)
+			
+			// Check if this is an API-defining tag
+			tag := strings.Split(line, " ")[0]
+			if tag == "@property" || tag == "@property-read" || tag == "@property-write" ||
+				tag == "@method" || tag == "@deprecated" || tag == "@api" || tag == "@internal" ||
+				tag == "@throws" || tag == "@psalm-" || tag == "@phpstan-" {
+				hasAPITags = true
+			}
+		} else if line != "" {
+			// This is part of description
+			if !inDescription && len(description) == 0 {
+				inDescription = true
+			}
+			if inDescription {
+				description = append(description, line)
+			}
+		}
+	}
+	
+	// Set description if found
+	if len(description) > 0 {
+		class.Description = strings.Join(description, " ")
+	}
+	
+	// Store the docblock text in the class if it contains API-defining tags
+	if hasAPITags {
+		// Store the docblock directly in the class's Description field
+		// This way it will be available for formatters to display
+		if class.Description == "" && len(description) == 0 {
+			// No description was parsed, use the full docblock
+			class.APIDocblock = docComment
+		} else {
+			// We have a description, store the docblock separately
+			class.APIDocblock = docComment
+		}
+	}
+}
+
+// parseDocblockTag parses a single docblock tag and applies it to the class
+func (p *TreeSitterProcessor) parseDocblockTag(line string, class *ir.DistilledClass) {
+	// Split tag and content
+	parts := strings.SplitN(line, " ", 2)
+	if len(parts) == 0 {
+		return
+	}
+	
+	tag := parts[0]
+	content := ""
+	if len(parts) > 1 {
+		content = strings.TrimSpace(parts[1])
+	}
+	
+	switch tag {
+	case "@property", "@property-read", "@property-write":
+		p.parsePropertyTag(tag, content, class)
+	case "@method":
+		p.parseMethodTag(content, class)
+	case "@deprecated":
+		p.parseDeprecatedTag(content, class)
+	case "@api":
+		// Mark class as part of public API
+		// No ModifierPublic, just ensure it's public visibility
+		class.Visibility = ir.VisibilityPublic
+	case "@internal":
+		// Mark class as internal
+		class.Visibility = ir.VisibilityInternal
+	}
+}
+
+// parsePropertyTag parses @property* tags and creates virtual fields
+func (p *TreeSitterProcessor) parsePropertyTag(tag, content string, class *ir.DistilledClass) {
+	// Parse: [Type] $propertyName [Description]
+	// Example: @property string $name User's full name
+	
+	// Debug - removed, use -vvv instead
+	
+	parts := strings.Fields(content)
+	if len(parts) < 1 {
+		return
+	}
+	
+	var typeName, propertyName, description string
+	var typeIndex, nameIndex int
+	
+	// Find the property name (starts with $)
+	for i, part := range parts {
+		if strings.HasPrefix(part, "$") {
+			propertyName = strings.TrimPrefix(part, "$")
+			nameIndex = i
+			break
+		}
+	}
+	
+	if propertyName == "" {
+		return
+	}
+	
+	// Type is everything before the property name
+	if nameIndex > 0 {
+		typeName = strings.Join(parts[0:nameIndex], " ")
+		typeIndex = nameIndex
+	}
+	
+	// Description is everything after the property name
+	if len(parts) > typeIndex+1 {
+		description = strings.Join(parts[typeIndex+1:], " ")
+	}
+	
+	// Create virtual field
+	field := &ir.DistilledField{
+		BaseNode:    ir.BaseNode{},
+		Name:        propertyName,
+		Visibility:  ir.VisibilityPublic, // Magic properties are always public
+		Description: description,
+	}
+	
+	// Set type if found
+	if typeName != "" {
+		field.Type = &ir.TypeRef{Name: p.normalizeArrayType(typeName)}
+	}
+	
+	// Set PHP extensions
+	phpExt := &ir.PHPExtensions{
+		Origin:           ir.FieldOriginDocblock,
+		SourceAnnotation: strings.TrimSpace(tag + " " + content),
+	}
+	
+	// Set access mode based on tag
+	switch tag {
+	case "@property":
+		phpExt.AccessMode = ir.FieldAccessReadWrite
+	case "@property-read":
+		phpExt.AccessMode = ir.FieldAccessReadOnly
+		field.HasGetter = true
+		field.HasSetter = false
+	case "@property-write":
+		phpExt.AccessMode = ir.FieldAccessWriteOnly
+		field.HasGetter = false
+		field.HasSetter = true
+	}
+	
+	// Create NodeExtensions if needed
+	if field.Extensions == nil {
+		field.Extensions = &ir.NodeExtensions{}
+	}
+	field.Extensions.PHP = phpExt
+	
+	// Add to class children
+	class.Children = append(class.Children, field)
+}
+
+// parseMethodTag parses @method tags and creates virtual methods
+func (p *TreeSitterProcessor) parseMethodTag(content string, class *ir.DistilledClass) {
+	// Parse: [static] [Type] methodName([params]) [Description]
+	// Example: @method static User|null find(int $id) Find user by ID
+	
+	// Basic regex to extract method signature
+	// This is simplified - a full parser would be more complex
+	methodRegex := regexp.MustCompile(`^(\s*static\s+)?(?:([^\s(]+)\s+)?(\w+)\s*\(([^)]*)\)(.*)$`)
+	matches := methodRegex.FindStringSubmatch(content)
+	
+	if len(matches) < 4 {
+		return
+	}
+	
+	isStatic := strings.TrimSpace(matches[1]) != ""
+	returnType := strings.TrimSpace(matches[2])
+	methodName := matches[3]
+	paramsStr := matches[4]
+	description := strings.TrimSpace(matches[5])
+	
+	// Create virtual method
+	method := &ir.DistilledFunction{
+		BaseNode:    ir.BaseNode{},
+		Name:        methodName,
+		Visibility:  ir.VisibilityPublic, // Magic methods are always public
+		Parameters:  []ir.Parameter{},
+		Description: description,
+	}
+	
+	// Add static modifier if needed
+	if isStatic {
+		method.Modifiers = append(method.Modifiers, ir.ModifierStatic)
+	}
+	
+	// Set return type if found
+	if returnType != "" {
+		method.Returns = &ir.TypeRef{Name: p.normalizeArrayType(returnType)}
+	}
+	
+	// Parse parameters (simplified)
+	if paramsStr != "" {
+		params := strings.Split(paramsStr, ",")
+		for _, param := range params {
+			param = strings.TrimSpace(param)
+			if param == "" {
+				continue
+			}
+			
+			// Simple parameter parsing - just extract type and name
+			paramParts := strings.Fields(param)
+			if len(paramParts) >= 2 {
+				// Last part is parameter name (may start with $)
+				paramName := paramParts[len(paramParts)-1]
+				paramName = strings.TrimPrefix(paramName, "$")
+				
+				// Everything else is the type
+				paramType := strings.Join(paramParts[:len(paramParts)-1], " ")
+				
+				method.Parameters = append(method.Parameters, ir.Parameter{
+					Name: paramName,
+					Type: ir.TypeRef{Name: p.normalizeArrayType(paramType)},
+				})
+			} else if len(paramParts) == 1 {
+				// Just parameter name
+				paramName := strings.TrimPrefix(paramParts[0], "$")
+				method.Parameters = append(method.Parameters, ir.Parameter{
+					Name: paramName,
+				})
+			}
+		}
+	}
+	
+	// Set PHP extensions
+	phpExt := &ir.PHPExtensions{
+		Origin:           ir.FieldOriginDocblock,
+		SourceAnnotation: strings.TrimSpace("@method " + content),
+	}
+	
+	// Create NodeExtensions if needed
+	if method.Extensions == nil {
+		method.Extensions = &ir.NodeExtensions{}
+	}
+	method.Extensions.PHP = phpExt
+	
+	// Add to class children
+	class.Children = append(class.Children, method)
+}
+
+// parseDeprecatedTag parses @deprecated tag
+func (p *TreeSitterProcessor) parseDeprecatedTag(content string, class *ir.DistilledClass) {
+	// Parse: [@deprecated] [version] [description]
+	parts := strings.SplitN(content, " ", 2)
+	
+	deprecated := &ir.DeprecationInfo{}
+	
+	if len(parts) > 0 && parts[0] != "" {
+		// Check if first part looks like a version
+		if strings.ContainsAny(parts[0], "0123456789.") {
+			deprecated.Version = parts[0]
+			if len(parts) > 1 {
+				deprecated.Description = parts[1]
+			}
+		} else {
+			// No version, everything is description
+			deprecated.Description = content
+		}
+	}
+	
+	class.Deprecated = deprecated
 }

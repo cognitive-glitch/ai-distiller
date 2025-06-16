@@ -1,71 +1,84 @@
 <file path="source.php">
+namespace App\VeryComplex;
+use Attribute;
+use ReflectionClass;
+use ReflectionMethod;
+use ReflectionProperty;
+use ReflectionFunction;
+use ReflectionAttribute;
+use Generator;
+use Closure;
+use WeakMap;
+use WeakReference;
+use SplObjectStorage;
+use Fiber;
+use FiberError;
 class ProxyTarget {
-    readonly array $interceptMethods;
-    readonly string $proxyClass;
-    __construct(array $interceptMethods, string $proxyClass)
+    public readonly array $interceptMethods;
+    public readonly string $proxyClass;
+    public __construct(string[] $interceptMethods = [], string $proxyClass = '')
 }
 class Intercept {
-    readonly string $before;
-    readonly string $after;
-    readonly bool $cache;
-    __construct(string $before, string $after, bool $cache)
+    public readonly string $before;
+    public readonly string $after;
+    public readonly bool $cache;
+    public __construct(string $before = '', string $after = '', bool $cache = false)
 }
 class Memoize {
-    readonly int $ttl;
-    readonly string $keyGenerator;
-    __construct(int $ttl, string $keyGenerator)
+    public readonly int $ttl;
+    public readonly string $keyGenerator;
+    public __construct(int $ttl = 3600, string $keyGenerator = '')
 }
 class DynamicProxyFactory {
-    -WeakMap $proxyCache;
-    -array<string, WeakReference> Method interceptors $interceptors;
-    -SplObjectStorage $memoCache;
-    __construct()
-    createProxy(object $target): object
-    -generateProxy(object $target, ReflectionClass $reflection, ProxyTarget $config): object
-    -generateProxyClass(ReflectionClass $reflection, ProxyTarget $config): string
-    -buildProxyClassCode(ReflectionClass $reflection, string $proxyClassName, ProxyTarget $config): string
-    -generateProxyMethod(ReflectionMethod $method): string
-    -buildParameterList(ReflectionMethod $method): string
-    -buildParameterNames(ReflectionMethod $method): string
-    interceptMethod(object $target, string $methodName, array $arguments): mixed
-    -generateCacheKey(object $target, string $methodName, array $arguments, Memoize $config): string
-    -callInterceptor(object $target, string $interceptorMethod, array $arguments): void
+    private WeakMap $proxyCache;
+    private array<string, WeakReference<callable>> Method interceptors $interceptors;
+    private SplObjectStorage $memoCache;
+    public createProxy(object $target): object Proxy object
+    private generateProxy(object $target, ReflectionClass $reflection, ProxyTarget $config): object
+    private generateProxyClass(ReflectionClass $reflection, ProxyTarget $config): string Generated proxy class name
+    private buildProxyClassCode(ReflectionClass $reflection, string $proxyClassName, ProxyTarget $config): string Generated class code
+    private generateProxyMethod(ReflectionMethod $method): string Generated method code
+    private buildParameterList(ReflectionMethod $method): string Parameter list
+    private buildParameterNames(ReflectionMethod $method): string Parameter names
+    public interceptMethod(object $target, string $methodName, array<int, mixed> $arguments): mixed
+    private generateCacheKey(object $target, string $methodName, array $arguments, Memoize $config): string Cache key
+    private callInterceptor(object $target, string $interceptorMethod, array $arguments): void
 }
+/** Proxy interface */
 interface ProxyInterface {
-    __getTarget(): object
+    public __getTarget(): object
 }
 class AsyncOperationManager {
-    -array<string, Fiber> Active fibers $fibers;
-    -array<string, mixed> Fiber results $results;
-    execute(string $id, Closure $operation): void
-    resume(string $id, mixed $value): void
-    getResult(string $id): mixed
-    isComplete(string $id): bool
-    waitAll(): Generator
+    private array<string, Fiber<mixed, mixed, mixed, mixed>> Active fibers $fibers;
+    private array<string, mixed> Fiber results $results;
+    public execute(string $id, Closure $operation): void
+    public resume(string $id, mixed $value = null): void
+    public getResult(string $id): mixed
+    public isComplete(string $id): bool
+    public waitAll(): Generator
 }
 class OrderService {
-    -AsyncOperationManager $asyncManager;
-    __construct()
-    calculatePrice(array $items, string $currency): float
-    processOrder(array $orderData): string
-    generatePriceKey(string $methodName, array $arguments): string
-    *logPriceCalculation(array $items, string $currency): void
-    *validatePriceResult(float $result): void
-    *validateOrder(array $orderData): void
-    *notifyOrderProcessed(string $orderId): void
-    -getCurrencyMultiplier(string $currency): float
-    -processPayment(array $paymentData): void
-    -updateInventory(array $items): void
-    -sendConfirmation(array $customerData): void
-    getOrderStatus(string $orderId): array Status information
+    private AsyncOperationManager $asyncManager;
+    public calculatePrice(list<array{id: int, quantity: int, price: float}> $items, string $currency = 'USD'): float
+    public processOrder(array{customer_id: int, items: list<array{id: int, quantity: int}>, payment_method: string} $orderData): string Order ID
+    public generatePriceKey(string $methodName, array $arguments): string Cache key
+    protected logPriceCalculation(array $items, string $currency): void
+    protected validatePriceResult(float $result): void
+    protected validateOrder(array $orderData): void
+    protected notifyOrderProcessed(string $orderId): void
+    private getCurrencyMultiplier(string $currency): float
+    private processPayment(array $paymentData): void
+    private updateInventory(array $items): void
+    private sendConfirmation(array $customerData): void
+    public getOrderStatus(string $orderId): array Status information
 }
 class MetaProgrammingDemo {
-    createDynamicClass(string $className, array $properties, array $methods): string
-    addMethod(object $object, string $methodName, Closure $implementation): void
-    analyzeObject(object $object): array Analysis result
-    -analyzeProperties(ReflectionClass $reflection): array Properties analysis
-    -analyzeMethods(ReflectionClass $reflection): array Methods analysis
-    -analyzeAttributes(ReflectionClass $reflection): array Attributes analysis
-    -getVisibility(ReflectionProperty|ReflectionMethod $member): string
+    public createDynamicClass(string $className, array $properties, array $methods): string Generated class name
+    public addMethod(object $object, string $methodName, Closure $implementation): void
+    public analyzeObject(object $object): array Analysis result
+    private analyzeProperties(ReflectionClass $reflection): array Properties analysis
+    private analyzeMethods(ReflectionClass $reflection): array Methods analysis
+    private analyzeAttributes(ReflectionClass $reflection): array Attributes analysis
+    private getVisibility(ReflectionProperty|ReflectionMethod $member): string Visibility
 }
 </file>

@@ -1,0 +1,220 @@
+<file path="source.php">
+namespace App\EdgeCases;
+use Closure;
+use Generator;
+use Countable;
+use Iterator;
+/**
+ * Edge case demonstrations for PHP docblock annotations
+ * Testing advanced type annotations used in real-world PHP projects
+ */
+/**
+ * Class demonstrating magic properties and complex array shapes
+ * 
+ * @property-read int $id Auto-generated ID
+ * @property string $name Mutable name property
+ * @property-write array<string, mixed> $metadata Write-only metadata
+ */
+class MagicModel {
+}
+class ContainerService {
+    public make(class-string<T> $className, array<string, mixed> $parameters = []): T {
+return new $className(...$parameters);
+    }
+    public register(literal-string $id, callable(): object $factory): void {
+// Registration logic
+    }
+}
+class ComplexDto {
+    public process(array $payload): array{success: bool, data?: array<string, mixed>, errors?: list<string>} {
+// Processing logic
+        return ['success' => true];
+    }
+    public const STATUS_MAP = [
+        'draft' => 0,
+        'published' => 1,
+        'archived' => 2
+    ];
+    public getRandomStatus(): key-of<self::STATUS_MAP> {
+$keys = array_keys(self::STATUS_MAP);
+        return $keys[array_rand($keys)];
+    }
+    public getStatusValue(key-of<self::STATUS_MAP> $status): value-of<self::STATUS_MAP> {
+return self::STATUS_MAP[$status];
+    }
+}
+class TypedCollection {
+    public firstWhere(callable(mixed): bool $predicate, callable(mixed): T $mapper): T|null {
+foreach ($this->items as $item) {
+            if ($predicate($item)) {
+                return $mapper($item);
+            }
+        }
+        return null;
+    }
+    public mapToAssoc(callable(mixed): array{0: TKey, 1: TValue} $mapper): array<TKey, TValue> {
+$result = [];
+        foreach ($this->items as $item) {
+            [$key, $value] = $mapper($item);
+            $result[$key] = $value;
+        }
+        return $result;
+    }
+}
+class CallableTypes {
+    public setValidator(callable(int, string=): bool $validator): void {
+$this->validator = $validator;
+    }
+    public execute(callable-string $callback, array<int, mixed> $args = []): mixed {
+return $callback(...$args);
+    }
+    public createProcessor(): Closure {
+return function (array $numbers): array {
+            return [
+                'min' => min($numbers),
+                'max' => max($numbers),
+                'avg' => array_sum($numbers) / count($numbers)
+            ];
+        };
+    }
+}
+/** Intersection and union type demonstrations */
+interface Timestampable {
+    public getTimestamp(): int
+}
+interface Identifiable {
+    public getId(): int
+}
+class IntersectionHandler {
+    public process(array<int, (Timestampable&Identifiable)> $items): list<array{id: int, timestamp: int}> {
+$result = [];
+        foreach ($items as $item) {
+            $result[] = [
+                'id' => $item->getId(),
+                'timestamp' => $item->getTimestamp()
+            ];
+        }
+        return $result;
+    }
+    public categorize(array<int, (Countable|Iterator)> $items): array{countables: list<Countable>, iterators: list<Iterator>} {
+$countables = [];
+        $iterators = [];
+        
+        foreach ($items as $item) {
+            if ($item instanceof Countable) {
+                $countables[] = $item;
+            }
+            if ($item instanceof Iterator) {
+                $iterators[] = $item;
+            }
+        }
+        
+        return [
+            'countables' => $countables,
+            'iterators' => $iterators
+        ];
+    }
+}
+/** Enum and int-mask demonstrations */
+enum Permission: int {
+    case READ = 1;
+    case WRITE = 2;
+    case DELETE = 4;
+    case ADMIN = 8;
+}
+class PermissionChecker {
+    public hasPermission(int-mask-of<Permission::*> $userPermissions, int-mask<1, 2, 4, 8> $requiredPermissions): bool {
+return ($userPermissions & $requiredPermissions) === $requiredPermissions;
+    }
+    public getAllPermissionValues(): value-of<Permission>[] {
+return array_map(fn($case) => $case->value, Permission::cases());
+    }
+}
+class ValidationService {
+    public isNonEmpty(?string $value): bool {
+return $value !== null && $value !== '';
+    }
+    public parseJsonOrDefault(string $json, T $default = null): mixed {
+$result = json_decode($json, true);
+        return $result !== null ? $result : $default;
+    }
+    public ensureArray(T $value): array {
+return is_array($value) ? $value : [$value];
+    }
+}
+class GeneratorTypes {
+    public generatePairs(array<TKey, TValue> $data): Generator {
+foreach ($data as $key => $value) {
+            yield ['key' => $key, 'value' => $value];
+        }
+    }
+    public bidirectionalGenerator(): Generator {
+$count = 0;
+        $continue = true;
+        
+        while ($continue) {
+            $continue = yield "Item $count";
+            $count++;
+        }
+        
+        return $count;
+    }
+}
+class TypeAliasDemo {
+    public getUser(UserId $id): UserData|ErrorResponse {
+if ($id <= 0) {
+            return ['error' => true, 'message' => 'Invalid ID'];
+        }
+        
+        return [
+            'id' => $id,
+            'email' => 'user@example.com',
+            'roles' => ['user']
+        ];
+    }
+    public batchGet(UserId[] $ids): array<UserId, UserData|ErrorResponse> {
+$result = [];
+        foreach ($ids as $id) {
+            $result[$id] = $this->getUser($id);
+        }
+        return $result;
+    }
+}
+class NumericKeyArrays {
+    public processTuple(array{0: string, 1: int, 2?: bool} $tuple): array{name: string, age: int, active: bool} {
+return [
+            'name' => $tuple[0],
+            'age' => $tuple[1],
+            'active' => $tuple[2] ?? true
+        ];
+    }
+    public analyzeMatrix(non-empty-array<int<0, 10>, non-empty-array<int<0, 10>, float>> $matrix): array{rows: int<1, 11>, cols: int<1, 11>, sum: float} {
+$sum = 0.0;
+        $rows = count($matrix);
+        $cols = count(reset($matrix));
+        
+        foreach ($matrix as $row) {
+            $sum += array_sum($row);
+        }
+        
+        return [
+            'rows' => $rows,
+            'cols' => $cols,
+            'sum' => $sum
+        ];
+    }
+}
+/**
+ * Global function with type imports
+ *
+ * @param \App\EdgeCases\TypeAliasDemo::UserId $userId
+ * @return \App\EdgeCases\TypeAliasDemo::UserData
+ */
+getUserGlobal(\App\EdgeCases\TypeAliasDemo::UserId $userId): \App\EdgeCases\TypeAliasDemo::UserData {
+return [
+        'id' => $userId,
+        'email' => 'global@example.com',
+        'roles' => ['admin']
+    ];
+}
+</file>

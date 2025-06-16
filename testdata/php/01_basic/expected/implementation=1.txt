@@ -1,29 +1,32 @@
 <file path="source.php">
+namespace App\Basic;
+use DateTime;
+use InvalidArgumentException;
 class User {
-    int $id;
-    string $name;
-    __construct(int $id, string $name, string $email) {
+    public int $id;
+    public string $name;
+    public __construct(int $id, string $name, string $email) {
 $this->id = $id;
         $this->name = $name;
         $this->setEmail($email);
         $this->createdAt = new DateTime();
     }
-    getEmail(): string {
+    public getEmail(): string {
 return $this->email;
     }
-    setEmail(string $email): void {
+    public setEmail(string $email): void {
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             throw new InvalidArgumentException("Invalid email format");
         }
         $this->email = $email;
     }
-    getPreference(string $key, mixed $default): mixed {
+    public getPreference(string $key, mixed $default = null): mixed {
 return $this->preferences[$key] ?? $default;
     }
-    setPreference(string $key, mixed $value): void {
+    public setPreference(string $key, mixed $value): void {
 $this->preferences[$key] = $value;
     }
-    isActive(): bool {
+    public isActive(): bool {
 if ($this->createdAt === null) {
             return false;
         }
@@ -31,7 +34,7 @@ if ($this->createdAt === null) {
         $thirtyDaysAgo = new DateTime('-30 days');
         return $this->createdAt > $thirtyDaysAgo;
     }
-    toArray(): array {
+    public toArray(): array{id: int, name: string, email: string, created_at: string|null, is_active: bool} {
 return [
             'id' => $this->id,
             'name' => $this->name,
@@ -42,23 +45,31 @@ return [
     }
 }
 class UserManager {
-    addUser(User $user): void {
+    public addUser(User $user): void {
 $this->users[$user->id] = $user;
     }
-    findUser(int $id): ?User {
+    public findUser(int $id): ?User {
 return $this->users[$id] ?? null;
     }
-    getActiveUsers(): User[] {
+    public getActiveUsers(): User[] {
 return array_filter($this->users, fn(User $user) => $user->isActive());
     }
-    getUserCount(): int {
+    public getUserCount(): int {
 return count($this->users);
     }
 }
+/** Utility functions for user operations */
 validateEmail(string $email): bool {
 return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
 }
-createUserFromArray(array $data): User {
+/**
+ * Create user from array data
+ *
+ * @param array{id: int, name: string, email: string} $data User data
+ * @return User
+ * @throws InvalidArgumentException
+ */
+createUserFromArray(array{id: int, name: string, email: string} $data): User {
 if (!isset($data['id'], $data['name'], $data['email'])) {
         throw new InvalidArgumentException("Missing required user data");
     }

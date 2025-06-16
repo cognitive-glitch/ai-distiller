@@ -1,51 +1,58 @@
 <file path="source.php">
+namespace App\Complex;
+use Attribute;
+use ReflectionClass;
+use ReflectionMethod;
+use ReflectionProperty;
+use ReflectionAttribute;
+use Generator;
+use Closure;
+use WeakMap;
+use SplObjectStorage;
 class Route {
-    readonly string $path;
-    readonly string $method;
-    readonly array $middleware;
-    __construct(string $path, string $method, array $middleware)
+    public readonly string $path;
+    public readonly string $method;
+    public readonly array $middleware;
+    public __construct(string $path, string $method = 'GET', string[] $middleware = [])
 }
 class Validate {
-    readonly string $rule;
-    readonly string $message;
-    __construct(string $rule, string $message)
+    public readonly string $rule;
+    public readonly string $message;
+    public __construct(string $rule, string $message = '')
 }
 class Inject {
-    readonly ?string $service;
-    __construct(?string $service)
+    public readonly ?string $service;
+    public __construct(?string $service = null)
 }
 class AttributeProcessor {
-    __construct()
-    processAttributes(object $instance): array Processed attributes
-    findMethodsWithAttribute(ReflectionClass $reflection, string $attributeClass): Generator
+    public processAttributes(object $instance): array{class: list<array{name: string, arguments: array<mixed>, instance: object}>, methods: array<string, list<array{name: string, arguments: array<mixed>, instance: object}>>, properties: array<string, list<array{name: string, arguments: array<mixed>, instance: object}>>} Processed attributes
+    public findMethodsWithAttribute(ReflectionClass $reflection, string $attributeClass): Generator
 }
 class ApiController {
-    __construct()
-    getUserProfile(int $id): array
-    updateUserProfile(int $id, array $data): array
-    deleteUser(int $id): array
-    getRoutes(): array
+    public getUserProfile(int $id): array
+    public updateUserProfile(int $id, array<string, mixed> $data): array{id: int, updated: bool, data: array<string, mixed>}
+    public deleteUser(int $id): array
+    public getRoutes(): array
 }
 class UserCreateDto {
-    string $name;
-    string $email;
-    int $age;
-    array User preferences $preferences;
-    static fromArray(array $data): self
-    validate(): array Validation errors
+    public string $name;
+    public string $email;
+    public int $age;
+    public array<string, mixed> User preferences $preferences;
+    public static fromArray(array{name?: string, email?: string, age?: int, preferences?: array<string, mixed>} $data): self
+    public validate(): array Validation errors
 }
 class ServiceLocator {
-    __construct()
-    register(string $id, Closure $factory, bool $singleton, array $metadata): void
-    resolve(string $id): mixed
-    createWithDependencies(string $className): object
-    has(string $id): bool
-    getMetadata(string $id): array
-    getServiceIds(): array
+    public register(string $id, Closure $factory, bool $singleton = false, array<string, mixed> $metadata = []): void
+    public resolve(string $id): mixed
+    public createWithDependencies(string $className): object
+    public has(string $id): bool
+    public getMetadata(string $id): array
+    public getServiceIds(): array
 }
 class ComplexUserService {
-    __construct(UserRepository $repository, EventDispatcher $dispatcher, AttributeProcessor $processor)
-    createUser(UserCreateDto $dto): array
-    processUsers(array $users): Generator
+    public __construct(UserRepository $repository, EventDispatcher $dispatcher, AttributeProcessor $processor)
+    public createUser(UserCreateDto $dto): array
+    public processUsers(array $users): Generator
 }
 </file>

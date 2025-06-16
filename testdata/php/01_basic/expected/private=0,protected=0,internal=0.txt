@@ -1,23 +1,34 @@
 <file path="source.php">
+namespace App\Basic;
+use DateTime;
+use InvalidArgumentException;
 class User {
-    int $id;
-    string $name;
-    __construct(int $id, string $name, string $email)
-    getEmail(): string
-    setEmail(string $email): void
-    getPreference(string $key, mixed $default): mixed
-    setPreference(string $key, mixed $value): void
-    isActive(): bool
-    toArray(): array
+    public int $id;
+    public string $name;
+    public __construct(int $id, string $name, string $email)
+    public getEmail(): string
+    public setEmail(string $email): void
+    public getPreference(string $key, mixed $default = null): mixed
+    public setPreference(string $key, mixed $value): void
+    public isActive(): bool
+    public toArray(): array{id: int, name: string, email: string, created_at: string|null, is_active: bool}
 }
 class UserManager {
-    addUser(User $user): void
-    findUser(int $id): ?User
-    getActiveUsers(): User[]
-    getUserCount(): int
+    public addUser(User $user): void
+    public findUser(int $id): ?User
+    public getActiveUsers(): User[]
+    public getUserCount(): int
 }
+/** Utility functions for user operations */
 validateEmail(string $email): bool
-createUserFromArray(array $data): User
+/**
+ * Create user from array data
+ *
+ * @param array{id: int, name: string, email: string} $data User data
+ * @return User
+ * @throws InvalidArgumentException
+ */
+createUserFromArray(array{id: int, name: string, email: string} $data): User
 const USER_STATUS_ACTIVE = 'active'
 const USER_STATUS_INACTIVE = 'inactive'
 const MAX_USERS_PER_PAGE = 25

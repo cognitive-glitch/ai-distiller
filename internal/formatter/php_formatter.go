@@ -23,6 +23,9 @@ func NewPHPFormatter() *PHPFormatter {
 // FormatNode formats an IR node as PHP code
 func (f *PHPFormatter) FormatNode(w io.Writer, node ir.DistilledNode, indent int) error {
 	switch n := node.(type) {
+	case *ir.DistilledComment:
+		_, err := fmt.Fprintln(w, f.formatComment(n, indent))
+		return err
 	case *ir.DistilledImport:
 		_, err := fmt.Fprintln(w, f.formatImport(n))
 		return err
@@ -83,18 +86,35 @@ func (f *PHPFormatter) formatClass(class *ir.DistilledClass, indent int) string 
 	indentStr := strings.Repeat("    ", indent)
 	var parts []string
 
-	// Class modifiers
-	modifiers := []string{}
-	for _, mod := range class.Modifiers {
-		if mod == ir.ModifierAbstract {
-			modifiers = append(modifiers, "abstract")
-		} else if mod == ir.ModifierFinal {
-			modifiers = append(modifiers, "final")
+	// Format API docblock if present
+	if class.APIDocblock != "" {
+		// Split and indent each line of the docblock
+		lines := strings.Split(class.APIDocblock, "\n")
+		for _, line := range lines {
+			parts = append(parts, indentStr+line)
 		}
 	}
 
-	// Class type is always "class" for DistilledClass
+	// Check if this is an enum
+	isEnum := class.Extensions != nil && class.Extensions.PHP != nil && class.Extensions.PHP.IsEnum
+	
+	// Class modifiers (but not for enums)
+	modifiers := []string{}
+	if !isEnum {
+		for _, mod := range class.Modifiers {
+			if mod == ir.ModifierAbstract {
+				modifiers = append(modifiers, "abstract")
+			} else if mod == ir.ModifierFinal {
+				modifiers = append(modifiers, "final")
+			}
+		}
+	}
+
+	// Class type
 	classType := "class"
+	if isEnum {
+		classType = "enum"
+	}
 
 	// Class declaration
 	classDecl := ""
@@ -102,6 +122,11 @@ func (f *PHPFormatter) formatClass(class *ir.DistilledClass, indent int) string 
 		classDecl = strings.Join(modifiers, " ") + " "
 	}
 	classDecl += classType + " " + class.Name
+	
+	// Enum backing type
+	if isEnum && class.Extensions.PHP.EnumBackingType != "" {
+		classDecl += ": " + class.Extensions.PHP.EnumBackingType
+	}
 
 	// Inheritance
 	if len(class.Extends) > 0 {
@@ -124,8 +149,43 @@ func (f *PHPFormatter) formatClass(class *ir.DistilledClass, indent int) string 
 	for _, child := range class.Children {
 		switch n := child.(type) {
 		case *ir.DistilledFunction:
+			// Skip common magic methods - they're never called directly
+			// https://www.php.net/manual/en/language.oop5.magic.php
+			magicMethods := map[string]bool{
+				"__construct":   false, // Keep this - constructor is important
+				"__destruct":    true,  // Destructor - rarely needed
+				"__get":         true,  // Property getter
+				"__set":         true,  // Property setter
+				"__isset":       true,  // isset() on inaccessible properties
+				"__unset":       true,  // unset() on inaccessible properties
+				"__call":        true,  // Method calls on inaccessible methods
+				"__callStatic":  true,  // Static method calls on inaccessible methods
+				"__sleep":       true,  // serialize() behavior
+				"__wakeup":      true,  // unserialize() behavior
+				"__serialize":   true,  // serialize() behavior (PHP 7.4+)
+				"__unserialize": true,  // unserialize() behavior (PHP 7.4+)
+				"__toString":    false, // Keep this - it defines string representation
+				"__invoke":      false, // Keep this - makes object callable
+				"__set_state":   true,  // var_export() behavior
+				"__clone":       false, // Keep this - defines cloning behavior
+				"__debugInfo":   true,  // var_dump() behavior
+			}
+			
+			if skip, found := magicMethods[n.Name]; found && skip {
+				continue
+			}
+			
+			// Special case: skip __construct if it has no parameters
+			if n.Name == "__construct" && len(n.Parameters) == 0 {
+				continue
+			}
+			
 			parts = append(parts, f.formatFunction(n, indent+1))
 		case *ir.DistilledField:
+			// Skip virtual fields from docblock - they're already shown in the docblock
+			if n.Extensions != nil && n.Extensions.PHP != nil && n.Extensions.PHP.Origin == ir.FieldOriginDocblock {
+				continue
+			}
 			parts = append(parts, f.formatField(n, indent+1))
 		}
 	}
@@ -319,11 +379,90 @@ func (f *PHPFormatter) formatFunction(fn *ir.DistilledFunction, indent int) stri
 	if indent == 0 {
 		return signature
 	}
-	return indentStr + f.addVisibilityPrefix(fn.Visibility) + signature
+	// Add visibility keyword
+	visKeyword := f.getPHPVisibilityKeyword(fn.Visibility)
+	if visKeyword != "" {
+		return indentStr + visKeyword + " " + signature
+	}
+	return indentStr + signature
 }
 
 func (f *PHPFormatter) formatField(field *ir.DistilledField, indent int) string {
 	indentStr := strings.Repeat("    ", indent)
+	
+	// Check if this is an enum case
+	if field.Extensions != nil && field.Extensions.PHP != nil && field.Extensions.PHP.IsEnumCase {
+		// Format as enum case
+		caseDecl := "case " + field.Name
+		if field.DefaultValue != "" {
+			caseDecl += " = " + field.DefaultValue
+		}
+		return indentStr + caseDecl + ";"
+	}
+
+	// Check if this is a magic property from PHP docblock
+	isPropertyFromDocblock := false
+	var accessMode string
+	if field.Extensions != nil && field.Extensions.PHP != nil {
+		if field.Extensions.PHP.Origin == ir.FieldOriginDocblock {
+			isPropertyFromDocblock = true
+			switch field.Extensions.PHP.AccessMode {
+			case ir.FieldAccessReadOnly:
+				accessMode = "property-read "
+			case ir.FieldAccessWriteOnly:
+				accessMode = "property-write "
+			default:
+				accessMode = "property "
+			}
+		}
+	}
+
+	// For magic properties, return special format
+	if isPropertyFromDocblock {
+		fieldDecl := field.Name
+		if field.Type != nil && field.Type.Name != "" {
+			fieldDecl = field.Type.Name + " $" + field.Name
+		} else {
+			fieldDecl = "$" + field.Name
+		}
+		
+		if field.Description != "" {
+			fieldDecl += " " + field.Description
+		}
+		
+		
+		return indentStr + accessMode + fieldDecl
+	}
+
+	// Check if this is a constant (has both static and final modifiers)
+	isConst := false
+	hasStatic := false
+	hasFinal := false
+	for _, mod := range field.Modifiers {
+		if mod == ir.ModifierStatic {
+			hasStatic = true
+		}
+		if mod == ir.ModifierFinal {
+			hasFinal = true
+		}
+	}
+	isConst = hasStatic && hasFinal
+
+	// For constants, use const syntax
+	if isConst {
+		fieldDecl := "const " + field.Name
+		if field.DefaultValue != "" {
+			fieldDecl += " = " + field.DefaultValue
+		}
+		fieldDecl += ";"
+		
+		// Add visibility keyword
+		visKeyword := f.getPHPVisibilityKeyword(field.Visibility)
+		if visKeyword != "" {
+			return indentStr + visKeyword + " " + fieldDecl
+		}
+		return indentStr + fieldDecl
+	}
 
 	// Check modifiers (but not visibility - that's handled by visibility prefix)
 	modifiers := []string{}
@@ -360,7 +499,12 @@ func (f *PHPFormatter) formatField(field *ir.DistilledField, indent int) string 
 
 	fieldDecl += ";"
 
-	return indentStr + f.addVisibilityPrefix(field.Visibility) + fieldDecl
+	// Add visibility keyword
+	visKeyword := f.getPHPVisibilityKeyword(field.Visibility)
+	if visKeyword != "" {
+		return indentStr + visKeyword + " " + fieldDecl
+	}
+	return indentStr + fieldDecl
 }
 
 func (f *PHPFormatter) formatGlobalField(field *ir.DistilledField) string {
@@ -393,17 +537,68 @@ func (f *PHPFormatter) formatGlobalField(field *ir.DistilledField) string {
 	return fieldDecl
 }
 
-func (f *PHPFormatter) addVisibilityPrefix(visibility ir.Visibility) string {
+func (f *PHPFormatter) getPHPVisibilityKeyword(visibility ir.Visibility) string {
 	switch visibility {
 	case ir.VisibilityPublic:
-		return "" // No prefix for public
+		return "public"
 	case ir.VisibilityPrivate:
-		return "-"
+		return "private"
 	case ir.VisibilityProtected:
-		return "*"
+		return "protected"
 	case ir.VisibilityInternal:
-		return "~"
+		// PHP doesn't have internal, use protected
+		return "protected"
 	default:
-		return "" // Default is public in PHP
+		return "public" // Default is public in PHP
+	}
+}
+
+// formatComment formats a comment node
+func (f *PHPFormatter) formatComment(n *ir.DistilledComment, indent int) string {
+	indentStr := strings.Repeat("    ", indent)
+	
+	switch n.Format {
+	case "docblock", "doc":
+		// Format as docblock
+		lines := strings.Split(n.Text, "\n")
+		if len(lines) == 1 {
+			// Single line docblock
+			return fmt.Sprintf("%s/** %s */", indentStr, lines[0])
+		}
+		// Multi-line docblock
+		result := indentStr + "/**\n"
+		for _, line := range lines {
+			if line == "" {
+				result += indentStr + " *\n"
+			} else {
+				result += fmt.Sprintf("%s * %s\n", indentStr, line)
+			}
+		}
+		result += indentStr + " */"
+		return result
+		
+	case "block":
+		// Format as block comment
+		lines := strings.Split(n.Text, "\n")
+		if len(lines) == 1 {
+			// Single line block comment
+			return fmt.Sprintf("%s/* %s */", indentStr, lines[0])
+		}
+		// Multi-line block comment
+		result := indentStr + "/*\n"
+		for _, line := range lines {
+			result += fmt.Sprintf("%s%s\n", indentStr, line)
+		}
+		result += indentStr + "*/"
+		return result
+		
+	default:
+		// Format as line comment (default)
+		lines := strings.Split(n.Text, "\n")
+		result := make([]string, len(lines))
+		for i, line := range lines {
+			result[i] = fmt.Sprintf("%s// %s", indentStr, line)
+		}
+		return strings.Join(result, "\n")
 	}
 }

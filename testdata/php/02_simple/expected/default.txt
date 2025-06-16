@@ -1,48 +1,55 @@
 <file path="source.php">
+namespace App\Simple;
+use DateTimeInterface;
+use JsonSerializable;
+/** Interface for entities that can be persisted */
 interface PersistableInterface {
-    getId(): ?int
-    setId(int $id): void
-    getCreatedAt(): ?DateTimeInterface
+    public getId(): ?int
+    public setId(int $id): void
+    public getCreatedAt(): ?DateTimeInterface
 }
+/** Interface for cacheable entities */
 interface CacheableInterface {
-    getCacheKey(): string
-    getCacheTtl(): int
+    public getCacheKey(): string
+    public getCacheTtl(): int
 }
 abstract class BaseEntity implements PersistableInterface, JsonSerializable {
-    getId(): ?int
-    setId(int $id): void
-    getCreatedAt(): ?DateTimeInterface
-    setCreatedAt(DateTimeInterface $createdAt): void
-    getUpdatedAt(): ?DateTimeInterface
-    setUpdatedAt(DateTimeInterface $updatedAt): void
-    abstract getEntityName(): string
-    jsonSerialize(): array
+    public getId(): ?int
+    public setId(int $id): void
+    public getCreatedAt(): ?DateTimeInterface
+    public setCreatedAt(DateTimeInterface $createdAt): void
+    public getUpdatedAt(): ?DateTimeInterface
+    public setUpdatedAt(DateTimeInterface $updatedAt): void
+    public abstract getEntityName(): string
+    public jsonSerialize(): array
 }
+/** Trait for timestampable entities */
 class trait TimestampableTrait {
 }
+/** Trait for validation functionality */
 class trait ValidatableTrait {
-    getValidationErrors(): array
-    hasValidationErrors(): bool
+    public getValidationErrors(): array<string, string>
+    public hasValidationErrors(): bool
 }
 class Product extends BaseEntity implements CacheableInterface {
-    static $CACHE_TTL = 3600;
-    __construct(string $name, float $price, string $description)
-    getName(): string
-    setName(string $name): void
-    getPrice(): float
-    setPrice(float $price): void
-    getEntityName(): string
-    getCacheKey(): string
-    getCacheTtl(): int
-    addCategory(string $category): void
-    static createSaleProduct(string $name, float $originalPrice, float $discountPercent): self
+    public const CACHE_TTL = 3600;
+    public __construct(string $name, float $price, string $description = '')
+    public getName(): string
+    public setName(string $name): void
+    public getPrice(): float
+    public setPrice(float $price): void
+    public getEntityName(): string
+    public getCacheKey(): string
+    public getCacheTtl(): int
+    public addCategory(string $category): void
+    public static createSaleProduct(string $name, float $originalPrice, float $discountPercent): self
 }
 class Category extends BaseEntity {
-    readonly string $name;
-    readonly string $slug;
-    __construct(string $name, string $slug)
-    getEntityName(): string
-    setParent(?Category $parent): void
-    getParent(): ?Category
+    public readonly string $name;
+    public readonly string $slug;
+    public __construct(string $name, string $slug)
+    public getEntityName(): string
+    public setParent(?Category $parent): void
+    public getParent(): ?Category
 }
 </file>

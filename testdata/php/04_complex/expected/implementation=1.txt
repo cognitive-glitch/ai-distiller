@@ -1,24 +1,31 @@
 <file path="source.php">
+namespace App\Complex;
+use Attribute;
+use ReflectionClass;
+use ReflectionMethod;
+use ReflectionProperty;
+use ReflectionAttribute;
+use Generator;
+use Closure;
+use WeakMap;
+use SplObjectStorage;
 class Route {
-    readonly string $path;
-    readonly string $method;
-    readonly array $middleware;
-    __construct(string $path, string $method, array $middleware)
+    public readonly string $path;
+    public readonly string $method;
+    public readonly array $middleware;
+    public __construct(string $path, string $method = 'GET', string[] $middleware = [])
 }
 class Validate {
-    readonly string $rule;
-    readonly string $message;
-    __construct(string $rule, string $message)
+    public readonly string $rule;
+    public readonly string $message;
+    public __construct(string $rule, string $message = '')
 }
 class Inject {
-    readonly ?string $service;
-    __construct(?string $service)
+    public readonly ?string $service;
+    public __construct(?string $service = null)
 }
 class AttributeProcessor {
-    __construct() {
-$this->classCache = new WeakMap();
-    }
-    processAttributes(object $instance): array Processed attributes {
+    public processAttributes(object $instance): array{class: list<array{name: string, arguments: array<mixed>, instance: object}>, methods: array<string, list<array{name: string, arguments: array<mixed>, instance: object}>>, properties: array<string, list<array{name: string, arguments: array<mixed>, instance: object}>>} Processed attributes {
 $class = $instance::class;
         $reflection = new ReflectionClass($class);
         
@@ -35,7 +42,7 @@ $class = $instance::class;
         $this->classCache[$instance] = $result;
         return $result;
     }
-    findMethodsWithAttribute(ReflectionClass $reflection, string $attributeClass): Generator {
+    public findMethodsWithAttribute(ReflectionClass $reflection, string $attributeClass): Generator {
 foreach ($reflection->getMethods() as $method) {
             $attributes = $method->getAttributes($attributeClass);
             foreach ($attributes as $attribute) {
@@ -45,19 +52,16 @@ foreach ($reflection->getMethods() as $method) {
     }
 }
 class ApiController {
-    __construct() {
-$this->attributeProcessor = new AttributeProcessor();
-    }
-    getUserProfile(int $id): array {
+    public getUserProfile(int $id): array {
 return ['id' => $id, 'name' => 'John Doe'];
     }
-    updateUserProfile(int $id, array $data): array {
+    public updateUserProfile(int $id, array<string, mixed> $data): array{id: int, updated: bool, data: array<string, mixed>} {
 return ['id' => $id, 'updated' => true, 'data' => $data];
     }
-    deleteUser(int $id): array {
+    public deleteUser(int $id): array {
 return ['id' => $id, 'deleted' => true];
     }
-    getRoutes(): array {
+    public getRoutes(): array {
 $reflection = new ReflectionClass($this);
         $routes = [];
 
@@ -75,11 +79,11 @@ $reflection = new ReflectionClass($this);
     }
 }
 class UserCreateDto {
-    string $name;
-    string $email;
-    int $age;
-    array User preferences $preferences;
-    static fromArray(array $data): self {
+    public string $name;
+    public string $email;
+    public int $age;
+    public array<string, mixed> User preferences $preferences;
+    public static fromArray(array{name?: string, email?: string, age?: int, preferences?: array<string, mixed>} $data): self {
 $dto = new self();
         
         foreach ($data as $key => $value) {
@@ -90,7 +94,7 @@ $dto = new self();
         
         return $dto;
     }
-    validate(): array Validation errors {
+    public validate(): array Validation errors {
 $errors = [];
         $reflection = new ReflectionClass($this);
         
@@ -112,14 +116,11 @@ $errors = [];
     }
 }
 class ServiceLocator {
-    __construct() {
-$this->singletons = new SplObjectStorage();
-    }
-    register(string $id, Closure $factory, bool $singleton, array $metadata): void {
+    public register(string $id, Closure $factory, bool $singleton = false, array<string, mixed> $metadata = []): void {
 $this->factories[$id] = $factory;
         $this->metadata[$id] = $metadata + ['singleton' => $singleton];
     }
-    resolve(string $id): mixed {
+    public resolve(string $id): mixed {
 if (!isset($this->factories[$id])) {
             throw new \InvalidArgumentException("Service '{$id}' not registered");
         }
@@ -142,7 +143,7 @@ if (!isset($this->factories[$id])) {
 
         return $this->factories[$id]($this);
     }
-    createWithDependencies(string $className): object {
+    public createWithDependencies(string $className): object {
 $reflection = new ReflectionClass($className);
         $constructor = $reflection->getConstructor();
         
@@ -176,19 +177,19 @@ $reflection = new ReflectionClass($className);
 
         return $reflection->newInstanceArgs($dependencies);
     }
-    has(string $id): bool {
+    public has(string $id): bool {
 return isset($this->factories[$id]);
     }
-    getMetadata(string $id): array {
+    public getMetadata(string $id): array {
 return $this->metadata[$id] ?? [];
     }
-    getServiceIds(): array {
+    public getServiceIds(): array {
 return array_keys($this->factories);
     }
 }
 class ComplexUserService {
-    __construct(UserRepository $repository, EventDispatcher $dispatcher, AttributeProcessor $processor)
-    createUser(UserCreateDto $dto): array {
+    public __construct(UserRepository $repository, EventDispatcher $dispatcher, AttributeProcessor $processor)
+    public createUser(UserCreateDto $dto): array {
 $errors = $dto->validate();
         
         if (!empty($errors)) {
@@ -198,7 +199,7 @@ $errors = $dto->validate();
         // Create user logic here
         return ['success' => true, 'user_id' => 123];
     }
-    processUsers(array $users): Generator {
+    public processUsers(array $users): Generator {
 foreach ($users as $userData) {
             $dto = UserCreateDto::fromArray($userData);
             $result = $this->createUser($dto);

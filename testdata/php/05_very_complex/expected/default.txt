@@ -1,45 +1,58 @@
 <file path="source.php">
+namespace App\VeryComplex;
+use Attribute;
+use ReflectionClass;
+use ReflectionMethod;
+use ReflectionProperty;
+use ReflectionFunction;
+use ReflectionAttribute;
+use Generator;
+use Closure;
+use WeakMap;
+use WeakReference;
+use SplObjectStorage;
+use Fiber;
+use FiberError;
 class ProxyTarget {
-    readonly array $interceptMethods;
-    readonly string $proxyClass;
-    __construct(array $interceptMethods, string $proxyClass)
+    public readonly array $interceptMethods;
+    public readonly string $proxyClass;
+    public __construct(string[] $interceptMethods = [], string $proxyClass = '')
 }
 class Intercept {
-    readonly string $before;
-    readonly string $after;
-    readonly bool $cache;
-    __construct(string $before, string $after, bool $cache)
+    public readonly string $before;
+    public readonly string $after;
+    public readonly bool $cache;
+    public __construct(string $before = '', string $after = '', bool $cache = false)
 }
 class Memoize {
-    readonly int $ttl;
-    readonly string $keyGenerator;
-    __construct(int $ttl, string $keyGenerator)
+    public readonly int $ttl;
+    public readonly string $keyGenerator;
+    public __construct(int $ttl = 3600, string $keyGenerator = '')
 }
 class DynamicProxyFactory {
-    __construct()
-    createProxy(object $target): object
-    interceptMethod(object $target, string $methodName, array $arguments): mixed
+    public createProxy(object $target): object Proxy object
+    public interceptMethod(object $target, string $methodName, array<int, mixed> $arguments): mixed
 }
+/** Proxy interface */
 interface ProxyInterface {
-    __getTarget(): object
+    public __getTarget(): object
 }
 class AsyncOperationManager {
-    execute(string $id, Closure $operation): void
-    resume(string $id, mixed $value): void
-    getResult(string $id): mixed
-    isComplete(string $id): bool
-    waitAll(): Generator
+    public execute(string $id, Closure $operation): void
+    public resume(string $id, mixed $value = null): void
+    public getResult(string $id): mixed
+    public isComplete(string $id): bool
+    public waitAll(): Generator
 }
 class OrderService {
-    __construct()
-    calculatePrice(array $items, string $currency): float
-    processOrder(array $orderData): string
-    generatePriceKey(string $methodName, array $arguments): string
-    getOrderStatus(string $orderId): array Status information
+    public calculatePrice(list<array{id: int, quantity: int, price: float}> $items, string $currency = 'USD'): float
+    public processOrder(array{customer_id: int, items: list<array{id: int, quantity: int}>, payment_method: string} $orderData): string Order ID
+    public generatePriceKey(string $methodName, array $arguments): string Cache key
+    public getOrderStatus(string $orderId): array Status information
 }
 class MetaProgrammingDemo {
-    createDynamicClass(string $className, array $properties, array $methods): string
-    addMethod(object $object, string $methodName, Closure $implementation): void
-    analyzeObject(object $object): array Analysis result
+    public createDynamicClass(string $className, array $properties, array $methods): string Generated class name
+    public addMethod(object $object, string $methodName, Closure $implementation): void
+    public analyzeObject(object $object): array Analysis result
 }
 </file>
