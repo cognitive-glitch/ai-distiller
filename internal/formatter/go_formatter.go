@@ -33,10 +33,20 @@ func NewGoFormatter() LanguageFormatter {
 func (f *GoFormatter) FormatNode(w io.Writer, node ir.DistilledNode, indent int) error {
 	indentStr := strings.Repeat("    ", indent)
 
-	// Close import block if we're moving to non-import (skip comments)
-	if f.lastWasImport && node.GetNodeKind() != ir.KindImport && node.GetNodeKind() != ir.KindComment {
-		fmt.Fprintln(w, ")")
-		f.lastWasImport = false
+	// Close import block if we're moving to non-import
+	// Close before doc comments that precede type declarations
+	if f.lastWasImport && node.GetNodeKind() != ir.KindImport {
+		// Check if this is a doc comment (not a build constraint or inline comment)
+		if comment, ok := node.(*ir.DistilledComment); ok && comment.Format == "doc" {
+			// This is a doc comment for a type/function - close import block
+			fmt.Fprintln(w, ")")
+			fmt.Fprintln(w, "")
+			f.lastWasImport = false
+		} else if node.GetNodeKind() != ir.KindComment {
+			// Any non-comment, non-import node closes the import block
+			fmt.Fprintln(w, ")")
+			f.lastWasImport = false
+		}
 	}
 
 	switch n := node.(type) {
@@ -54,7 +64,13 @@ func (f *GoFormatter) FormatNode(w io.Writer, node ir.DistilledNode, indent int)
 	case *ir.DistilledInterface:
 		return f.formatInterface(w, n, indent)
 	case *ir.DistilledFunction:
-		return f.formatFunction(w, n, indentStr)
+		// Check if this is a method (has receiver) or regular function
+		if f.isMethod(n) {
+			receiverType := f.getReceiverTypeName(n)
+			return f.formatMethod(w, n, receiverType, indentStr)
+		} else {
+			return f.formatFunction(w, n, indentStr)
+		}
 	case *ir.DistilledTypeAlias:
 		return f.formatTypeAlias(w, n, indentStr)
 	default:
@@ -174,25 +190,21 @@ func (f *GoFormatter) formatStruct(w io.Writer, class *ir.DistilledClass, indent
 	}
 	
 	if hasFields {
-		fmt.Fprintln(w)
+		fmt.Fprintln(w, " {")
 		// Format fields
 		for _, child := range class.Children {
 			if field, ok := child.(*ir.DistilledField); ok {
 				f.formatStructField(w, field, indent+1)
 			}
 		}
+		fmt.Fprintf(w, "%s}\n", indentStr)
 	} else {
-		// Empty struct - no body
-		fmt.Fprintln(w)
+		// Empty struct
+		fmt.Fprintln(w, " {}")
 	}
 	
-	// Format methods
-	for _, child := range class.Children {
-		if fn, ok := child.(*ir.DistilledFunction); ok {
-			fmt.Fprintln(w)
-			f.formatMethod(w, fn, class.Name, indentStr)
-		}
-	}
+	// Methods are now formatted as top-level functions in original order
+	// No need to format them here within the struct
 	
 	return nil
 }
@@ -237,7 +249,7 @@ func (f *GoFormatter) formatInterface(w io.Writer, intf *ir.DistilledInterface, 
 	
 	// Check for type constraints or embedded interfaces
 	if len(intf.Extends) > 0 {
-		fmt.Fprintln(w)
+		fmt.Fprintln(w, " {")
 		// Format type constraints (for generic constraints)
 		for i, ext := range intf.Extends {
 			if i > 0 {
@@ -248,17 +260,19 @@ func (f *GoFormatter) formatInterface(w io.Writer, intf *ir.DistilledInterface, 
 			fmt.Fprintf(w, "%s", ext.Name)
 		}
 		fmt.Fprintln(w)
+		fmt.Fprintf(w, "%s}\n", indentStr)
 	} else if len(intf.Children) > 0 {
-		fmt.Fprintln(w)
+		fmt.Fprintln(w, " {")
 		// Format methods
 		for _, child := range intf.Children {
 			if fn, ok := child.(*ir.DistilledFunction); ok {
 				f.formatInterfaceMethod(w, fn, indent+1)
 			}
 		}
+		fmt.Fprintf(w, "%s}\n", indentStr)
 	} else {
 		// Empty interface
-		fmt.Fprintln(w)
+		fmt.Fprintln(w, " {}")
 	}
 	
 	return nil
@@ -411,4 +425,32 @@ func (f *GoFormatter) formatParameters(w io.Writer, params []ir.Parameter) {
 			fmt.Fprintf(w, "%s", param.Type.Name)
 		}
 	}
+}
+
+// isMethod checks if a function is a method (has receiver)
+func (f *GoFormatter) isMethod(fn *ir.DistilledFunction) bool {
+	// Check if function has AbstractMethod modifier (indicating it has a receiver)
+	for _, mod := range fn.Modifiers {
+		if mod == ir.ModifierAbstract {
+			return true
+		}
+	}
+	return false
+}
+
+// getReceiverTypeName extracts the receiver type name from a method
+func (f *GoFormatter) getReceiverTypeName(fn *ir.DistilledFunction) string {
+	if f.isMethod(fn) && len(fn.Parameters) > 0 {
+		receiverType := fn.Parameters[0].Type.Name
+		// Strip pointer if present (*User -> User)
+		if strings.HasPrefix(receiverType, "*") {
+			receiverType = receiverType[1:]
+		}
+		// Extract base type name for generic types (Cache[K,V] -> Cache)
+		if bracketIndex := strings.Index(receiverType, "["); bracketIndex != -1 {
+			return receiverType[:bracketIndex]
+		}
+		return receiverType
+	}
+	return ""
 }

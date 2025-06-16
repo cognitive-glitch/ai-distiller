@@ -3,30 +3,33 @@ package server
 
 import (
     "fmt"
-// Config holds server configuration.
 )
 
-type Config struct
+// Config holds server configuration.
+
+type Config struct {
     Port int
     Host string
-
+}
+// Validate checks the configuration.
 func (c *Config) Validate() error
     if c.Port <= 0:
     return nil
 // ConfigError is a custom error for configuration issues.
 
-type ConfigError struct
+type ConfigError struct {
     Field string
     Reason string
-
+}
 func (e *ConfigError) Error() string
     return fmt.Sprintf("config error on field '%s': %s", e.Field, e.Reason)
 // Server represents a network server.
 // It embeds Config, promoting its fields.
 
-type Server struct
+type Server struct {
     Config
-
+}
+// Start validates config and starts the server.
 func (s *Server) Start() error
     if err != nil:
     fmt.Printf("Starting server on %s:%d\n", s.Host, s.Port)

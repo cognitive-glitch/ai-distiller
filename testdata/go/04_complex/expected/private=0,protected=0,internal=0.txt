@@ -8,15 +8,16 @@ import (
     "time"
 )
 
-type Job struct
+type Job struct {
     ID int
+}
 
-type Worker struct
+type Worker struct {}
 
-type Dispatcher struct
+type Dispatcher struct {
     JobChannel chan Job
-
-func (d *Dispatcher) Run(ctx context.Context)
+}
 
 func NewDispatcher(maxWorkers int) *Dispatcher
+func (d *Dispatcher) Run(ctx context.Context)
 </file>

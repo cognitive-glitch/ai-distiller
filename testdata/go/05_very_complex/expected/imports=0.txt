@@ -3,14 +3,12 @@ package cache
 // Cache is a generic, thread-safe key-value store.
 // This implementation is specific to Linux.
 
-type Cache[K comparable, V any] struct
+type Cache[K comparable, V any] struct {}
 // New creates a new Cache.
 
 func New() *Cache[K, V]
 // Set adds or updates a value in the cache.
-
-func Set(c *Cache[K, V], key K, value V)
+func (c *Cache[K, V]) Set(key K, value V)
 // Get retrieves a value from the cache.
-
-func Get(c *Cache[K, V], key K) (V, bool)
+func (c *Cache[K, V]) Get(key K) (V, bool)
 </file>

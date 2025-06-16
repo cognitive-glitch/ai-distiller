@@ -106,15 +106,8 @@ func (p *ASTParser) ProcessSource(ctx context.Context, source []byte, filename s
 		}
 	}
 
-	// Two-pass processing to associate methods with their receiver types
-	
-	// First pass: collect types and non-method functions
+	// Single-pass processing to preserve declaration order
 	typeMap := make(map[string]ir.DistilledNode) // Map from type name to the distilled node
-	type functionWithDoc struct {
-		fn *ir.DistilledFunction
-		docComments []ir.DistilledNode
-	}
-	var functions []functionWithDoc
 	
 	for _, decl := range file.Decls {
 		switch d := decl.(type) {
@@ -138,12 +131,17 @@ func (p *ASTParser) ProcessSource(ctx context.Context, source []byte, filename s
 			}
 			fn := p.processFunction(d)
 			if fn != nil {
-				functions = append(functions, functionWithDoc{fn: fn, docComments: docComments})
+				// Add all functions (methods and regular functions) as top-level in original order
+				// The formatter will handle method display correctly
+				for _, doc := range docComments {
+					distilledFile.Children = append(distilledFile.Children, doc)
+				}
+				distilledFile.Children = append(distilledFile.Children, fn)
 			}
 		case *ast.GenDecl:
 			nodes := p.processGenDecl(d)
 			for _, node := range nodes {
-				// Add non-type nodes directly
+				// Add all nodes directly in original order
 				if class, ok := node.(*ir.DistilledClass); ok {
 					typeMap[class.Name] = class
 					distilledFile.Children = append(distilledFile.Children, node)
@@ -155,45 +153,6 @@ func (p *ASTParser) ProcessSource(ctx context.Context, source []byte, filename s
 					distilledFile.Children = append(distilledFile.Children, node)
 				}
 			}
-		}
-	}
-	
-	// Second pass: associate methods with their types
-	for _, fnWithDoc := range functions {
-		fn := fnWithDoc.fn
-		receiverType := p.getReceiverTypeName(fn)
-		if receiverType != "" {
-			// This is a method - add to the appropriate type
-			// Note: We keep the receiver parameter for the formatter to process
-			// p.cleanMethodParameters(fn) // DISABLED: formatter needs receiver info
-			if targetType, exists := typeMap[receiverType]; exists {
-				switch target := targetType.(type) {
-				case *ir.DistilledClass:
-					// Add doc comments before the method
-					for _, doc := range fnWithDoc.docComments {
-						target.Children = append(target.Children, doc)
-					}
-					target.Children = append(target.Children, fn)
-				case *ir.DistilledInterface:
-					// Add doc comments before the method
-					for _, doc := range fnWithDoc.docComments {
-						target.Children = append(target.Children, doc)
-					}
-					target.Children = append(target.Children, fn)
-				}
-			} else {
-				// Receiver type not found - add as top-level function for now
-				for _, doc := range fnWithDoc.docComments {
-					distilledFile.Children = append(distilledFile.Children, doc)
-				}
-				distilledFile.Children = append(distilledFile.Children, fn)
-			}
-		} else {
-			// This is a regular function - add as top-level
-			for _, doc := range fnWithDoc.docComments {
-				distilledFile.Children = append(distilledFile.Children, doc)
-			}
-			distilledFile.Children = append(distilledFile.Children, fn)
 		}
 	}
 	

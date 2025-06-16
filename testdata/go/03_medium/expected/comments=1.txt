@@ -4,27 +4,30 @@ package server
 
 import (
     "fmt"
-// Config holds server configuration.
 )
 
-type Config struct
+// Config holds server configuration.
+
+type Config struct {
     Port int
     Host string
-
+}
+// Validate checks the configuration.
 func (c *Config) Validate() error
 // ConfigError is a custom error for configuration issues.
 
-type ConfigError struct
+type ConfigError struct {
     Field string
     Reason string
-
+}
 func (e *ConfigError) Error() string
 // Server represents a network server.
 // It embeds Config, promoting its fields.
 
-type Server struct
+type Server struct {
     Config
-
+}
+// Start validates config and starts the server.
 func (s *Server) Start() error
 // The AI should understand that s.Validate() is a promoted method from Config.
 // This could be a *ConfigError
