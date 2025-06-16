@@ -615,9 +615,8 @@ func (p *TreeSitterProcessor) processClass(node *sitter.Node, file *ir.Distilled
 		Extends:    []ir.TypeRef{},
 		Implements: []ir.TypeRef{},
 		Children:   []ir.DistilledNode{},
-		Decorators: p.pendingAttributes,
+		Decorators: []string{},
 	}
-	p.pendingAttributes = nil // Clear after use
 	
 	// Try multiple ways to find the docblock
 	docblockFound := false
@@ -676,6 +675,12 @@ func (p *TreeSitterProcessor) processClass(node *sitter.Node, file *ir.Distilled
 		// Debug
 		// fmt.Printf("Class %s child %d: %s = %s\n", class.Name, i, child.Type(), p.getNodeText(child))
 		switch child.Type() {
+		case "attribute_list":
+			// Process attributes directly as children of the class
+			var classAttributes []string
+			p.processAttributes(child, &classAttributes)
+			class.Decorators = append(class.Decorators, classAttributes...)
+			
 		case "visibility_modifier":
 			// Handle visibility
 			visibility := p.getNodeText(child)
@@ -743,6 +748,13 @@ func (p *TreeSitterProcessor) processClass(node *sitter.Node, file *ir.Distilled
 
 // processClassBody processes the body of a class
 func (p *TreeSitterProcessor) processClassBody(node *sitter.Node, file *ir.DistilledFile, class *ir.DistilledClass) {
+	// Debug: dump AST structure for class body
+	// fmt.Fprintf(os.Stderr, "DEBUG: AST for class body (%s):\n", node.Type())
+	// for i := 0; i < int(node.ChildCount()); i++ {
+	// 	child := node.Child(i)
+	// 	fmt.Fprintf(os.Stderr, "  Child %d: type=%s, named=%v, text=%q\n", i, child.Type(), child.IsNamed(), p.getNodeText(child))
+	// }
+	
 	for i := 0; i < int(node.ChildCount()); i++ {
 		p.processNode(node.Child(i), file, class)
 	}
@@ -754,9 +766,8 @@ func (p *TreeSitterProcessor) processMethod(node *sitter.Node, file *ir.Distille
 		BaseNode:   p.nodeLocation(node),
 		Modifiers:  []ir.Modifier{},
 		Parameters: []ir.Parameter{},
-		Decorators: p.pendingAttributes,
+		Decorators: []string{},
 	}
-	p.pendingAttributes = nil // Clear after use
 	
 	var hasVisibility bool
 	
@@ -766,6 +777,12 @@ func (p *TreeSitterProcessor) processMethod(node *sitter.Node, file *ir.Distille
 		// Debug: print all child types
 		//fmt.Printf("Class child %d: %s = %s\n", i, child.Type(), p.getNodeText(child))
 		switch child.Type() {
+		case "attribute_list":
+			// Process attributes directly as children of the method
+			var methodAttributes []string
+			p.processAttributes(child, &methodAttributes)
+			fn.Decorators = append(fn.Decorators, methodAttributes...)
+			
 		case "visibility_modifier":
 			visibility := p.getNodeText(child)
 			if visibility == "private" {
@@ -914,7 +931,9 @@ func (p *TreeSitterProcessor) processPropertyElement(node *sitter.Node, file *ir
 		Visibility: visibility,
 		Modifiers:  modifiers,
 		Type:       propertyType,
+		Decorators: attributes,
 	}
+	
 	
 	// Get property name and default value
 	for i := 0; i < int(node.ChildCount()); i++ {

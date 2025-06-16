@@ -13,17 +13,20 @@ use WeakReference;
 use SplObjectStorage;
 use Fiber;
 use FiberError;
+#[Attribute(Attribute::TARGET_CLASS)]
 class ProxyTarget {
     public readonly array $interceptMethods;
     public readonly string $proxyClass;
     public __construct(string[] $interceptMethods = [], string $proxyClass = '')
 }
+#[Attribute(Attribute::TARGET_METHOD)]
 class Intercept {
     public readonly string $before;
     public readonly string $after;
     public readonly bool $cache;
     public __construct(string $before = '', string $after = '', bool $cache = false)
 }
+#[Attribute(Attribute::TARGET_METHOD)]
 class Memoize {
     public readonly int $ttl;
     public readonly string $keyGenerator;
@@ -140,7 +143,10 @@ while (!empty($this->fibers)) {
         }
     }
 }
+#[ProxyTarget(['calculatePrice', 'processOrder'], 'OrderServiceProxy')]
 class OrderService {
+    #[Memoize(ttl: 1800, keyGenerator: 'generatePriceKey')]
+    #[Intercept(before: 'logPriceCalculation', after: 'validatePriceResult')]
     public calculatePrice(list<array{id: int, quantity: int, price: float}> $items, string $currency = 'USD'): float {
 $total = 0.0;
         
@@ -153,6 +159,7 @@ $total = 0.0;
         
         return $total * $this->getCurrencyMultiplier($currency);
     }
+    #[Intercept(before: 'validateOrder', after: 'notifyOrderProcessed')]
     public processOrder(array{customer_id: int, items: list<array{id: int, quantity: int}>, payment_method: string} $orderData): string Order ID {
 $orderId = uniqid('order_');
         

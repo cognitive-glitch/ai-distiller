@@ -86,6 +86,11 @@ func (f *PHPFormatter) formatClass(class *ir.DistilledClass, indent int) string 
 	indentStr := strings.Repeat("    ", indent)
 	var parts []string
 
+	// Format decorators/attributes first
+	for _, dec := range class.Decorators {
+		parts = append(parts, fmt.Sprintf("%s#[%s]", indentStr, dec))
+	}
+
 	// Format API docblock if present
 	if class.APIDocblock != "" {
 		// Split and indent each line of the docblock
@@ -395,6 +400,12 @@ func (f *PHPFormatter) formatFunction(fn *ir.DistilledFunction, indent int) stri
 
 func (f *PHPFormatter) formatField(field *ir.DistilledField, indent int) string {
 	indentStr := strings.Repeat("    ", indent)
+	result := ""
+
+	// Format decorators/attributes first
+	for _, dec := range field.Decorators {
+		result += fmt.Sprintf("%s#[%s]\n", indentStr, dec)
+	}
 	
 	// Check if this is an enum case
 	if field.Extensions != nil && field.Extensions.PHP != nil && field.Extensions.PHP.IsEnumCase {
@@ -403,7 +414,7 @@ func (f *PHPFormatter) formatField(field *ir.DistilledField, indent int) string 
 		if field.DefaultValue != "" {
 			caseDecl += " = " + field.DefaultValue
 		}
-		return indentStr + caseDecl + ";"
+		return result + indentStr + caseDecl + ";"
 	}
 
 	// Check if this is a magic property from PHP docblock
@@ -437,7 +448,7 @@ func (f *PHPFormatter) formatField(field *ir.DistilledField, indent int) string 
 		}
 		
 		
-		return indentStr + accessMode + fieldDecl
+		return result + indentStr + accessMode + fieldDecl
 	}
 
 	// Check if this is a constant (has both static and final modifiers)
@@ -465,9 +476,9 @@ func (f *PHPFormatter) formatField(field *ir.DistilledField, indent int) string 
 		// Add visibility keyword
 		visKeyword := f.getPHPVisibilityKeyword(field.Visibility)
 		if visKeyword != "" {
-			return indentStr + visKeyword + " " + fieldDecl
+			return result + indentStr + visKeyword + " " + fieldDecl
 		}
-		return indentStr + fieldDecl
+		return result + indentStr + fieldDecl
 	}
 
 	// Check modifiers (but not visibility - that's handled by visibility prefix)
@@ -508,9 +519,9 @@ func (f *PHPFormatter) formatField(field *ir.DistilledField, indent int) string 
 	// Add visibility keyword
 	visKeyword := f.getPHPVisibilityKeyword(field.Visibility)
 	if visKeyword != "" {
-		return indentStr + visKeyword + " " + fieldDecl
+		return result + indentStr + visKeyword + " " + fieldDecl
 	}
-	return indentStr + fieldDecl
+	return result + indentStr + fieldDecl
 }
 
 func (f *PHPFormatter) formatGlobalField(field *ir.DistilledField) string {
