@@ -27,7 +27,7 @@ func TestProcessor_Process(t *testing.T) {
 				
 				classNode, ok := result.Children[0].(*ir.DistilledClass)
 				require.True(t, ok, "Expected a DistilledClass node")
-				assert.Equal(t, "struct Person", classNode.Name)
+				assert.Equal(t, "Person", classNode.Name)
 				assert.Equal(t, ir.VisibilityPublic, classNode.Visibility)
 				require.Len(t, classNode.Children, 2, "Expected two fields")
 				
@@ -100,7 +100,7 @@ use std::io::{self, Read, Write};`,
 				
 				enumNode, ok := result.Children[0].(*ir.DistilledClass)
 				require.True(t, ok, "Expected a DistilledClass node")
-				assert.Equal(t, "enum Status", enumNode.Name)
+				assert.Equal(t, "Status", enumNode.Name)
 				assert.Equal(t, ir.VisibilityPublic, enumNode.Visibility)
 				require.Len(t, enumNode.Children, 3, "Expected three variants")
 				
@@ -142,6 +142,50 @@ use std::io::{self, Read, Write};`,
 				assert.Equal(t, "name", method.Parameters[0].Name)
 				assert.NotNil(t, method.Returns)
 				assert.Equal(t, "Self", method.Returns.Name)
+			},
+		},
+		{
+			name: "function with lifetime parameters",
+			source: `pub fn analyze<'a, S>(source: &'a S) -> Result<String, Error> where S: DataSource + ?Sized {
+				Ok("result".to_string())
+			}`,
+			validate: func(t *testing.T, result *ir.DistilledFile) {
+				require.Len(t, result.Children, 1, "Expected one function")
+				
+				fnNode, ok := result.Children[0].(*ir.DistilledFunction)
+				require.True(t, ok, "Expected a DistilledFunction node")
+				assert.Equal(t, "analyze<'a, S>", fnNode.Name)
+				assert.Equal(t, ir.VisibilityPublic, fnNode.Visibility)
+				
+				require.Len(t, fnNode.Parameters, 1, "Expected one parameter")
+				assert.Equal(t, "source", fnNode.Parameters[0].Name)
+				assert.Equal(t, "&'a S", fnNode.Parameters[0].Type.Name)
+				
+				assert.NotNil(t, fnNode.Returns)
+				// The return type should include the where clause
+				assert.Equal(t, "Result<String, Error> where S: DataSource + ?Sized", fnNode.Returns.Name)
+			},
+		},
+		{
+			name: "complex lifetime parameters",
+			source: `fn compare_sources<'a, 'b, S1, S2>(source1: &'a S1, source2: &'b S2) -> Result<bool, Error> where S1: DataSource + Debug, S2: DataSource + Debug {
+				Ok(true)
+			}`,
+			validate: func(t *testing.T, result *ir.DistilledFile) {
+				require.Len(t, result.Children, 1, "Expected one function")
+				
+				fnNode, ok := result.Children[0].(*ir.DistilledFunction)
+				require.True(t, ok, "Expected a DistilledFunction node")
+				assert.Equal(t, "compare_sources<'a, 'b, S1, S2>", fnNode.Name)
+				
+				require.Len(t, fnNode.Parameters, 2, "Expected two parameters")
+				assert.Equal(t, "source1", fnNode.Parameters[0].Name)
+				assert.Equal(t, "&'a S1", fnNode.Parameters[0].Type.Name)
+				assert.Equal(t, "source2", fnNode.Parameters[1].Name)
+				assert.Equal(t, "&'b S2", fnNode.Parameters[1].Type.Name)
+				
+				assert.NotNil(t, fnNode.Returns)
+				assert.Equal(t, "Result<bool, Error> where S1: DataSource + Debug, S2: DataSource + Debug", fnNode.Returns.Name)
 			},
 		},
 	}

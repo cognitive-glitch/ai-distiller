@@ -26,12 +26,14 @@ var (
 	// Regular expressions for Rust constructs
 	useRe        = regexp.MustCompile(`^\s*(?:pub\s+)?use\s+(.+);`)
 	modRe        = regexp.MustCompile(`^\s*((?:pub(?:\([^)]+\))?\s+)?)mod\s+(\w+)`)
-	structRe     = regexp.MustCompile(`^\s*((?:pub(?:\([^)]+\))?\s+)?)struct\s+(\w+)(?:<[^>]+>)?`)
-	enumRe       = regexp.MustCompile(`^\s*((?:pub(?:\([^)]+\))?\s+)?)enum\s+(\w+)(?:<[^>]+>)?`)
-	traitRe      = regexp.MustCompile(`^\s*((?:pub(?:\([^)]+\))?\s+)?)trait\s+(\w+)(?:<[^>]+>)?`)
-	// More robust regex that handles paths with :: and basic generics
-	implRe       = regexp.MustCompile(`^\s*impl(?:<[^>]+>)?\s+(?:([\w\s:<>,]+?)\s+for\s+)?([\w\s:<>,]+)`)
-	fnRe         = regexp.MustCompile(`^\s*((?:pub(?:\([^)]+\))?\s+)?)((?:async\s+)?(?:unsafe\s+)?(?:const\s+)?(?:extern\s+)?)?fn\s+(\w+)(?:<[^>]+>)?\s*\(([^)]*)\)(?:\s*->\s*([^{]+))?`)
+	structRe     = regexp.MustCompile(`^\s*((?:pub(?:\([^)]+\))?\s+)?)struct\s+(\w+(?:<[^>]+>)?)`)
+	enumRe       = regexp.MustCompile(`^\s*((?:pub(?:\([^)]+\))?\s+)?)enum\s+(\w+(?:<[^>]+>)?)`)
+	traitRe      = regexp.MustCompile(`^\s*((?:pub(?:\([^)]+\))?\s+)?)trait\s+(\w+(?:<[^>]+>)?)`)
+	// More robust regex that handles paths with :: and generics
+	// This captures the full impl line up to the opening brace
+	implRe       = regexp.MustCompile(`^\s*impl(?:<[^>]+>)?\s+(?:(.+?)\s+for\s+)?([^{]+)`)
+	// Function regex that captures: visibility, modifiers, name, generics (in name), params, return type (including where clause)
+	fnRe         = regexp.MustCompile(`^\s*((?:pub(?:\([^)]+\))?\s+)?)((?:async\s+)?(?:unsafe\s+)?(?:const\s+)?(?:extern\s+)?)?fn\s+(\w+(?:<[^>]+>)?)\s*\(([^)]*)\)(?:\s*->\s*([^{]+))?`)
 	constRe      = regexp.MustCompile(`^\s*((?:pub(?:\([^)]+\))?\s+)?)const\s+(\w+):\s*([^=]+)(?:\s*=\s*(.+))?;`)
 	staticRe     = regexp.MustCompile(`^\s*((?:pub(?:\([^)]+\))?\s+)?)static\s+(?:(mut)\s+)?(\w+):\s*([^=]+)(?:\s*=\s*(.+))?;`)
 	typeRe       = regexp.MustCompile(`^\s*((?:pub(?:\([^)]+\))?\s+)?)type\s+(\w+)(?:<[^>]+>)?\s*=\s*(.+);`)
@@ -261,7 +263,7 @@ func (p *LineParser) parseEnum(file *ir.DistilledFile, matches []string) {
 		},
 		Name:       name,
 		Visibility: visibility,
-		Modifiers:  []ir.Modifier{},
+		Modifiers:  []ir.Modifier{ir.ModifierEnum},
 		Children:   []ir.DistilledNode{},
 	}
 
@@ -302,10 +304,15 @@ func (p *LineParser) parseTrait(file *ir.DistilledFile, matches []string) {
 	p.currentLine++
 	
 	// Parse trait body
-	if p.currentLine < len(p.lines) && strings.TrimSpace(p.lines[p.currentLine]) == "{" {
-		p.currentLine++
-		endLine := p.parseBlock(file, trait)
-		trait.Location.EndLine = endLine
+	if p.currentLine < len(p.lines) {
+		line := strings.TrimSpace(p.lines[p.currentLine])
+		if line == "{" || strings.HasSuffix(strings.TrimSpace(p.lines[p.currentLine-1]), "{") {
+			if line == "{" {
+				p.currentLine++
+			}
+			endLine := p.parseTraitBlock(file, trait)
+			trait.Location.EndLine = endLine
+		}
 	}
 
 	file.Children = append(file.Children, trait)
@@ -316,6 +323,20 @@ func (p *LineParser) parseImpl(file *ir.DistilledFile, matches []string) {
 	var implName string
 	trait := strings.TrimSpace(matches[1])
 	implType := strings.TrimSpace(matches[2])
+	
+	// Clean up trait and implType - remove trailing whitespace and opening brace
+	trait = strings.TrimSpace(trait)
+	implType = strings.TrimSpace(implType)
+	
+	// Remove trailing { and any whitespace before it
+	if idx := strings.LastIndex(implType, "{"); idx != -1 {
+		implType = strings.TrimSpace(implType[:idx])
+	}
+	
+	// Also clean trait in case it has trailing content
+	if idx := strings.LastIndex(trait, "{"); idx != -1 {
+		trait = strings.TrimSpace(trait[:idx])
+	}
 	
 	if trait != "" {
 		// impl Trait for Type
@@ -379,7 +400,54 @@ func (p *LineParser) parseFunction(file *ir.DistilledFile, parent ir.DistilledNo
 	}
 
 	if returnType != "" {
+		// Clean up return type - remove trailing brace and whitespace
+		returnType = strings.TrimSpace(strings.TrimSuffix(returnType, "{"))
+		
+		// The return type might include a where clause, which is fine
+		// We'll store the complete return type including where clause
 		fn.Returns = &ir.TypeRef{Name: returnType}
+	}
+	
+	// Check for where clause on the next line(s)
+	p.currentLine++
+	if p.currentLine < len(p.lines) {
+		trimmed := strings.TrimSpace(p.lines[p.currentLine])
+		if trimmed == "where" || strings.HasPrefix(trimmed, "where ") {
+			// Parse where clause
+			whereClause := trimmed
+			p.currentLine++
+			
+			// Continue reading where clause lines (they might be indented)
+			for p.currentLine < len(p.lines) {
+				line := strings.TrimSpace(p.lines[p.currentLine])
+				if line == "{" || line == "" {
+					break
+				}
+				// Check if this is still part of the where clause
+				if strings.HasPrefix(line, "F:") || strings.HasPrefix(line, "T:") || 
+				   strings.HasPrefix(line, "U:") || strings.HasPrefix(line, "Self:") ||
+				   strings.Contains(line, ":") && !strings.Contains(line, "::") {
+					whereClause += " " + line
+					p.currentLine++
+				} else {
+					break
+				}
+			}
+			
+			// Append where clause to return type or store separately
+			if fn.Returns != nil && fn.Returns.Name != "" {
+				fn.Returns.Name += " " + whereClause
+			} else {
+				// Store where clause without return type
+				// We'll handle this in the formatter
+				fn.Returns = &ir.TypeRef{Name: whereClause}
+			}
+		} else {
+			// Go back if we didn't find where clause
+			p.currentLine--
+		}
+	} else {
+		p.currentLine--
 	}
 
 	p.currentLine++
@@ -516,6 +584,7 @@ func (p *LineParser) parseType(file *ir.DistilledFile, parent ir.DistilledNode, 
 		Name:       name,
 		Visibility: visibility,
 		Type:       &ir.TypeRef{Name: typeStr},
+		Modifiers:  []ir.Modifier{ir.ModifierTypeAlias}, // Mark as type alias
 	}
 
 	if parent != nil {
@@ -775,21 +844,28 @@ func (p *LineParser) parseVisibility(vis string) ir.Visibility {
 	vis = strings.TrimSpace(vis)
 	
 	if vis == "" {
+		// In Rust, items without visibility modifiers are private to the module
+		// We use VisibilityPrivate to represent module-private visibility
 		return ir.VisibilityPrivate
 	}
 	
 	if strings.HasPrefix(vis, "pub(crate)") {
+		// Visible within the current crate
 		return ir.VisibilityInternal
 	}
 	
 	if strings.HasPrefix(vis, "pub(super)") || strings.HasPrefix(vis, "pub(in") {
-		return ir.VisibilityInternal
+		// pub(super) = visible to parent module
+		// pub(in path) = visible in specific path
+		return ir.VisibilityProtected
 	}
 	
 	if strings.HasPrefix(vis, "pub") {
+		// Public visibility
 		return ir.VisibilityPublic
 	}
 	
+	// Default is module-private
 	return ir.VisibilityPrivate
 }
 
@@ -813,16 +889,18 @@ func (p *LineParser) parseParameters(params string) []ir.Parameter {
 		return parameters
 	}
 	
-	// Simple parameter parsing
-	parts := strings.Split(params, ",")
+	// Handle nested generics and lifetime parameters in parameter types
+	// We need to split carefully to avoid breaking on commas inside generic types
+	parts := p.splitParameterList(params)
+	
 	for _, part := range parts {
 		part = strings.TrimSpace(part)
 		if part == "" {
 			continue
 		}
 		
-		// Handle self parameters
-		if strings.HasPrefix(part, "self") || strings.HasPrefix(part, "&self") || strings.HasPrefix(part, "&mut self") {
+		// Handle self parameters - exact match check
+		if part == "self" || part == "&self" || part == "&mut self" {
 			parameters = append(parameters, ir.Parameter{
 				Name: part,
 			})
@@ -840,6 +918,7 @@ func (p *LineParser) parseParameters(params string) []ir.Parameter {
 				name = "mut " + name
 			}
 			
+			// typeStr now preserves lifetime parameters like &'a str, Vec<'a, T>, etc.
 			parameters = append(parameters, ir.Parameter{
 				Name: name,
 				Type: ir.TypeRef{Name: typeStr},
@@ -848,6 +927,41 @@ func (p *LineParser) parseParameters(params string) []ir.Parameter {
 	}
 	
 	return parameters
+}
+
+// splitParameterList splits a parameter list string while respecting nested generics
+func (p *LineParser) splitParameterList(params string) []string {
+	var parts []string
+	var current strings.Builder
+	depth := 0
+	
+	for _, ch := range params {
+		switch ch {
+		case '<':
+			depth++
+			current.WriteRune(ch)
+		case '>':
+			depth--
+			current.WriteRune(ch)
+		case ',':
+			if depth == 0 {
+				// Only split on commas outside of generic parameters
+				parts = append(parts, current.String())
+				current.Reset()
+			} else {
+				current.WriteRune(ch)
+			}
+		default:
+			current.WriteRune(ch)
+		}
+	}
+	
+	// Don't forget the last part
+	if current.Len() > 0 {
+		parts = append(parts, current.String())
+	}
+	
+	return parts
 }
 
 // skipBlock skips over a code block by counting braces
@@ -890,4 +1004,137 @@ func (p *LineParser) isInsideBlock() bool {
 	// Check if current line is indented
 	line := p.lines[p.currentLine]
 	return len(line) > 0 && (line[0] == ' ' || line[0] == '\t')
+}
+
+// parseTraitBlock parses the contents of a trait definition
+func (p *LineParser) parseTraitBlock(file *ir.DistilledFile, parent ir.DistilledNode) int {
+	braceCount := 1
+	
+	// Regular expressions for trait items
+	// Handle GATs like: type Reader<'a>: std::io::Read where Self: 'a;
+	assocTypeRe := regexp.MustCompile(`^\s*type\s+(\w+)(?:<([^>]+)>)?(?:\s*:\s*([^;]+?))?(?:\s*where\s+([^;]+))?;`)
+	traitFnRe := regexp.MustCompile(`^\s*(async\s+)?fn\s+(\w+)(?:<([^>]+)>)?\s*\(([^)]*)\)(?:\s*->\s*([^{;]+))?(?:\s*where\s+([^{;]+))?`)
+	
+	for p.currentLine < len(p.lines) && braceCount > 0 {
+		line := p.lines[p.currentLine]
+		trimmed := strings.TrimSpace(line)
+		
+		// Skip empty lines and comments
+		if trimmed == "" || strings.HasPrefix(trimmed, "//") {
+			p.currentLine++
+			continue
+		}
+		
+		// Parse trait items before counting braces
+		if parent != nil && braceCount == 1 && trimmed != "}" {
+			// Check for associated types
+			if matches := assocTypeRe.FindStringSubmatch(trimmed); matches != nil {
+				field := &ir.DistilledField{
+					BaseNode: ir.BaseNode{
+						Location: ir.Location{
+							StartLine: p.currentLine + 1,
+							EndLine:   p.currentLine + 1,
+						},
+					},
+					Name:       matches[1],
+					Visibility: ir.VisibilityPublic, // Trait items are always public
+					Modifiers:  []ir.Modifier{ir.ModifierTypeAlias},
+				}
+				
+				// For GATs, the name includes the generic parameters
+				if matches[2] != "" {
+					field.Name = field.Name + "<" + matches[2] + ">"
+				}
+				
+				// The type is the bounds/constraints
+				if matches[3] != "" {
+					typeStr := strings.TrimSpace(matches[3])
+					if matches[4] != "" {
+						typeStr += " where " + strings.TrimSpace(matches[4])
+					}
+					field.Type = &ir.TypeRef{Name: typeStr}
+				}
+				
+				if class, ok := parent.(*ir.DistilledClass); ok {
+					class.Children = append(class.Children, field)
+				}
+				p.currentLine++
+				continue
+			}
+			
+			// Check for trait methods
+			if matches := traitFnRe.FindStringSubmatch(trimmed); matches != nil {
+				fn := &ir.DistilledFunction{
+					BaseNode: ir.BaseNode{
+						Location: ir.Location{
+							StartLine: p.currentLine + 1,
+						},
+					},
+					Name:       matches[2],
+					Visibility: ir.VisibilityPublic,
+					Parameters: p.parseParameters(matches[4]),
+					Modifiers:  []ir.Modifier{ir.ModifierAbstract}, // Trait methods are abstract by default
+				}
+				
+				// Add async modifier if present
+				if matches[1] != "" {
+					fn.Modifiers = append(fn.Modifiers, ir.ModifierAsync)
+				}
+				
+				// Add generics to name if present
+				if matches[3] != "" {
+					fn.Name = fn.Name + "<" + matches[3] + ">"
+				}
+				
+				// Handle return type with where clause
+				if matches[5] != "" {
+					returnType := strings.TrimSpace(matches[5])
+					if matches[6] != "" {
+						returnType += " where " + strings.TrimSpace(matches[6])
+					}
+					fn.Returns = &ir.TypeRef{Name: returnType}
+				}
+				
+				// Check if method has default implementation
+				p.currentLine++
+				if p.currentLine < len(p.lines) {
+					nextLine := strings.TrimSpace(p.lines[p.currentLine])
+					if nextLine == "{" || strings.HasSuffix(trimmed, "{") {
+						// Has implementation, remove abstract modifier
+						fn.Modifiers = []ir.Modifier{}
+						if matches[1] != "" {
+							fn.Modifiers = append(fn.Modifiers, ir.ModifierAsync)
+						}
+						// Skip the implementation block
+						if nextLine == "{" {
+							p.currentLine++
+						}
+						p.skipBlock()
+					}
+				}
+				
+				fn.Location.EndLine = p.currentLine + 1
+				
+				if class, ok := parent.(*ir.DistilledClass); ok {
+					class.Children = append(class.Children, fn)
+				}
+				continue
+			}
+		}
+		
+		// Count braces AFTER trying to parse constructs
+		braceCount += strings.Count(line, "{") - strings.Count(line, "}")
+		
+		if braceCount == 0 {
+			break
+		}
+		
+		p.currentLine++
+	}
+	
+	if braceCount == 0 {
+		p.currentLine++
+	}
+	
+	return p.currentLine
 }
