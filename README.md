@@ -544,6 +544,30 @@ exclude:
   - "**/__pycache__/**"
 ```
 
+## 🎯 Git History Analysis Mode
+
+AI Distiller includes a special mode for analyzing git repositories. When you pass a `.git` directory, it switches to git log mode:
+
+```bash
+# View formatted git history
+aid .git
+
+# Limit to recent commits
+aid .git --git-limit=100
+
+# Include AI analysis prompt for comprehensive insights
+aid .git --with-analysis-prompt
+```
+
+The `--with-analysis-prompt` flag adds a sophisticated prompt that guides AI to generate:
+- **Contributor statistics** with expertise areas and collaboration patterns
+- **Timeline analysis** with development phases and activity visualization
+- **Functional categorization** of commits (features, fixes, refactoring)
+- **Codebase evolution insights** including technology shifts
+- **Actionable recommendations** based on discovered patterns
+
+Perfect for understanding project history, identifying knowledge silos, or generating impressive development reports.
+
 ## 🔗 Documentation
 
 - [Installation Guide](docs/installation.md)
