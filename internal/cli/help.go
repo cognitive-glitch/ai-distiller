@@ -86,6 +86,11 @@ OUTPUT FILE NAMING:
   create multiple markdown files and directory structures.
 
 For complete documentation and examples: aid --help-extended
+
+---
+AI Distiller (aid) - https://aid.siteone.io/
+Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic)
+Explore the project on GitHub: https://github.com/janreges/ai-distiller
 `
 
 // Extended help content for --help-extended
@@ -629,6 +634,11 @@ EXAMPLES:
     aid ./src --ai-action flow-for-deep-file-to-file-analysis → .aid/ directory with task lists and templates
 
 For more examples: aid --help-extended
+
+---
+AI Distiller (aid) - https://aid.siteone.io/
+Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic)
+Explore the project on GitHub: https://github.com/janreges/ai-distiller
 `
 	fmt.Print(output)
 }
@@ -775,6 +785,11 @@ Common mistakes:
     • Using --implementation=1 for API documentation
 
 For complete examples: aid --help-extended
+
+---
+AI Distiller (aid) - https://aid.siteone.io/
+Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic)
+Explore the project on GitHub: https://github.com/janreges/ai-distiller
 `)
 }
 
@@ -908,6 +923,11 @@ When using --with-analysis-prompt, the output includes guidance for:
     • Future development recommendations
 
 For complete examples: aid --help-extended
+
+---
+AI Distiller (aid) - https://aid.siteone.io/
+Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic)
+Explore the project on GitHub: https://github.com/janreges/ai-distiller
 `)
 }
 
@@ -968,6 +988,11 @@ HELP:
   aid help actions     # AI actions details
   aid help filtering   # Filtering reference
   aid help git         # Git mode help
+
+---
+AI Distiller (aid) - https://aid.siteone.io/
+Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic)
+Explore the project on GitHub: https://github.com/janreges/ai-distiller
 `)
 }
 

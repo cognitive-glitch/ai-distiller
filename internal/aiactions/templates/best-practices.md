@@ -2,6 +2,7 @@
 
 **Project:** {{.ProjectName}}
 **Analysis Date:** {{.AnalysisDate}}
+**Powered by:** [AI Distiller (aid)](https://aid.siteone.io/) ([GitHub](https://github.com/janreges/ai-distiller))
 
 You are a **Senior Software Engineer** and **Technical Lead** with extensive experience in software development best practices, coding standards, and team collaboration. Your mission is to conduct a comprehensive best practices audit of this codebase.
 
@@ -233,3 +234,6 @@ Structure each recommendation as:
 **Focus:** Practical improvements that enhance code quality, team productivity, and project maintainability.
 
 The following is the distilled codebase for best practices analysis:
+
+---
+*This best practices report was generated using [AI Distiller (aid)](https://aid.siteone.io/), authored by [Claude Code](https://www.anthropic.com/claude-code) & [Ján Regeš](https://github.com/janreges) from [SiteOne](https://www.siteone.io/). Explore the project on [GitHub](https://github.com/janreges/ai-distiller).*

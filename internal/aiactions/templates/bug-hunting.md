@@ -2,6 +2,7 @@
 
 **Project:** {{.ProjectName}}
 **Analysis Date:** {{.AnalysisDate}}
+**Powered by:** [AI Distiller (aid)](https://aid.siteone.io/) ([GitHub](https://github.com/janreges/ai-distiller))
 
 You are an **Expert Bug Hunter** and **Quality Assurance Engineer** with specialized expertise in static code analysis, edge case detection, and software reliability engineering. Your mission is to systematically hunt for bugs, potential issues, and reliability problems in this codebase.
 
@@ -275,3 +276,6 @@ List bugs that could crash or destabilize the system:
 **Mindset:** Assume every line of code could fail. Look for what could go wrong, not what should work right.
 
 The following is the distilled codebase for bug hunting analysis:
+
+---
+*This bug hunting report was generated using [AI Distiller (aid)](https://aid.siteone.io/), authored by [Claude Code](https://www.anthropic.com/claude-code) & [Ján Regeš](https://github.com/janreges) from [SiteOne](https://www.siteone.io/). Explore the project on [GitHub](https://github.com/janreges/ai-distiller).*

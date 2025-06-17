@@ -1,6 +1,8 @@
 You are a seasoned software archeologist and senior engineer.
 Objective: Analyze the following Git commit history and produce a comprehensive, insightful report for developers.
 
+*Analysis powered by [AI Distiller (aid)](https://aid.siteone.io/) ([GitHub](https://github.com/janreges/ai-distiller))*
+
 The git log follows a specific format:
 [hash] YYYY-MM-DD HH:MM:SS | author | subject line
         body line 1
@@ -121,3 +123,6 @@ Guidelines:
 - Keep total output comprehensive but well-structured
 - Quantify findings where possible
 - Make all Mermaid diagrams GitHub-compatible
+
+---
+*This report was generated using [AI Distiller (aid)](https://aid.siteone.io/), authored by [Claude Code](https://www.anthropic.com/claude-code) & [Ján Regeš](https://github.com/janreges) from [SiteOne](https://www.siteone.io/). Explore the project on [GitHub](https://github.com/janreges/ai-distiller).*

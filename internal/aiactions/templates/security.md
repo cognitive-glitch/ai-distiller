@@ -3,6 +3,7 @@
 **Project:** {{.ProjectName}}
 **Analysis Date:** {{.AnalysisDate}}
 **Analysis Type:** DEEP SECURITY AUDIT
+**Powered by:** [AI Distiller (aid)](https://aid.siteone.io/) ([GitHub](https://github.com/janreges/ai-distiller))
 
 You are a **Principal Security Engineer** and **Ethical Hacker** with expertise in application security, penetration testing, and secure coding practices. Your mission is to conduct an exhaustive security audit of this codebase with ZERO tolerance for vulnerabilities.
 
@@ -248,3 +249,6 @@ Prioritize findings using DREAD:
 **Remember:** Be paranoid. Assume breach. Trust nothing. Verify everything.
 
 The following is the distilled codebase for security analysis:
+
+---
+*This security audit report was generated using [AI Distiller (aid)](https://aid.siteone.io/), authored by [Claude Code](https://www.anthropic.com/claude-code) & [Ján Regeš](https://github.com/janreges) from [SiteOne](https://www.siteone.io/). Explore the project on [GitHub](https://github.com/janreges/ai-distiller).*

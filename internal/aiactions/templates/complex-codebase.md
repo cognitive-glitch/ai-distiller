@@ -2,6 +2,7 @@
 
 **Project:** {{.ProjectName}}
 **Analysis Date:** {{.AnalysisDate}}
+**Powered by:** [AI Distiller (aid)](https://aid.siteone.io/) ([GitHub](https://github.com/janreges/ai-distiller))
 
 You are a **Principal Software Architect** with expertise in system design, security, performance optimization, and software engineering best practices. Perform a comprehensive analysis of the provided codebase.
 
@@ -229,3 +230,6 @@ Structure your response with clear sections, use tables for data, include code e
 ## 🚀 Begin Analysis
 
 The following is the distilled codebase for comprehensive analysis:
+
+---
+*This analysis report was generated using [AI Distiller (aid)](https://aid.siteone.io/), authored by [Claude Code](https://www.anthropic.com/claude-code) & [Ján Regeš](https://github.com/janreges) from [SiteOne](https://www.siteone.io/). Explore the project on [GitHub](https://github.com/janreges/ai-distiller).*

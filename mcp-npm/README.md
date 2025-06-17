@@ -299,3 +299,9 @@ MIT License - see [LICENSE](LICENSE) file for details.
 - [AI Distiller on GitHub](https://github.com/janreges/ai-distiller)
 - [Model Context Protocol](https://modelcontextprotocol.io)
 - [Claude Desktop](https://claude.ai)
+
+---
+
+**AI Distiller (aid)** - https://aid.siteone.io/  
+Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic)  
+Explore the project on [GitHub](https://github.com/janreges/ai-distiller)

@@ -328,6 +328,8 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 
 	// Check if the path is a .git directory
 	if filepath.Base(absPath) == ".git" {
+		// For git mode, default to stdout unless output file is explicitly specified
+		// This is different from regular mode where we auto-generate filenames
 		return handleGitMode(ctx, absPath)
 	}
 	
@@ -818,9 +820,6 @@ func handleGitMode(ctx context.Context, gitPath string) error {
 	// Get the repository directory (parent of .git)
 	repoPath := filepath.Dir(gitPath)
 	
-	// Force stdout output for git mode
-	outputToStdout = true
-	
 	// Build git log command with custom format
 	// Using a rare delimiter to avoid conflicts with commit messages
 	delimiter := "|||DELIMITER|||"
@@ -945,15 +944,21 @@ func handleGitMode(ctx context.Context, gitPath string) error {
 	}
 	
 	// Write to file if specified
-	if outputFile != "" && !outputToStdout {
+	if outputFile != "" {
 		if err := os.WriteFile(outputFile, []byte(output.String()), 0644); err != nil {
 			return fmt.Errorf("failed to write output file: %w", err)
 		}
-		dbg.Logf(debug.LevelBasic, "Wrote git log to %s", outputFile)
+		absOutputFile, _ := filepath.Abs(outputFile)
+		dbg.Logf(debug.LevelBasic, "Wrote git log to %s", absOutputFile)
+		if !outputToStdout {
+			fmt.Fprintf(os.Stderr, "Git log written to: %s\n", absOutputFile)
+		}
 	}
 	
-	// Write to stdout
-	fmt.Print(output.String())
+	// Write to stdout only if explicitly requested or no output file specified
+	if outputToStdout || outputFile == "" {
+		fmt.Print(output.String())
+	}
 	
 	return nil
 }
