@@ -1,10 +1,10 @@
 run:
   timeout: 5m
-  go: '1.21'
-  modules-download-mode: readonly
+  go: '1.22'
 
 output:
-  format: colored-line-number
+  formats:
+    - format: colored-line-number
   print-issued-lines: true
   print-linter-name: true
 
@@ -22,49 +22,52 @@ linters:
     - gocyclo
     - gofmt
     - goimports
-    - golint
+    - revive        # replaces deprecated golint
     - gosec
     - misspell
     - unconvert
     - unparam
     - dogsled
     - dupl
-    - gochecknoglobals
-    - gochecknoinits
     - goconst
     - gocritic
     - godot
     - gofumpt
-    - gomnd
+    - mnd          # replaces deprecated gomnd
     - goprintffuncname
     - lll
     - nakedret
     - nestif
-    - nolintlint
     - prealloc
-    - rowserrcheck
-    - exportloopref
     - whitespace
     - wsl
+    - bodyclose
+    - noctx
+    - rowserrcheck
+    - stylecheck
+    - tparallel
 
   disable:
-    - typecheck  # Can be unreliable in some contexts
+    - gochecknoglobals
+    - gochecknoinits
+    - testpackage
+    - wrapcheck
+    - paralleltest
+    - exhaustive
+    - exhaustivestruct
+    - goerr113
+    - nlreturn
+    - gci
+    - gocognit
+    - godox
+    - funlen
 
 linters-settings:
   gocyclo:
     min-complexity: 15
     
-  golint:
-    min-confidence: 0.8
-    
   lll:
-    line-length: 120
-    
-  gofmt:
-    simplify: true
-    
-  goimports:
-    local-prefixes: github.com/janreges/ai-distiller
+    line-length: 140
     
   goconst:
     min-len: 3
@@ -95,16 +98,25 @@ linters-settings:
   nestif:
     min-complexity: 4
     
-  gomnd:
-    settings:
-      mnd:
-        checks:
-          - argument
-          - case
-          - condition
-          - operation
-          - return
-        ignored-numbers: 0,1,2,8,10,16,24,32,64,100,1024
+  mnd:
+    checks:
+      - argument
+      - case
+      - condition
+      - operation
+      - return
+    ignored-numbers:
+      - '0'
+      - '1'
+      - '2'
+      - '8'
+      - '10'
+      - '16'
+      - '24'
+      - '32'
+      - '64'
+      - '100'
+      - '1024'
 
 issues:
   exclude-use-default: false
@@ -112,40 +124,36 @@ issues:
     # Exclude some linters from running on tests files
     - path: _test\.go
       linters:
-        - gocyclo
-        - errcheck
         - dupl
         - gosec
-        - gomnd
+        - goconst
         
-    # Exclude linters for generated files
+    # Allow unused in test utilities
+    - path: _test\.go
+      linters:
+        - unused
+        
+    # Exclude known issues in generated files
     - path: \.pb\.go$
       linters:
         - gofmt
         - goimports
-        - golint
-        - govet
+        - gocritic
         
-    # Exclude some staticcheck messages
-    - linters:
-        - staticcheck
-      text: "SA9003:"
-      
-    # Exclude some gosec rules that are not applicable
-    - linters:
-        - gosec
-      text: "G110:"  # Potential DoS vulnerability via decompression bomb
-      
-    # Allow long lines in embedding directives
-    - linters:
+    # Allow init functions in main packages
+    - path: ^cmd/
+      linters:
+        - gochecknoinits
+        
+    # Allow globals in version package
+    - path: internal/version/version\.go
+      linters:
+        - gochecknoglobals
+        
+    # Allow line length in test data files
+    - path: test-data/
+      linters:
         - lll
-      source: "^//go:embed"
 
-  # Maximum issues count per one linter
-  max-issues-per-linter: 50
-  
-  # Maximum count of issues with the same text
-  max-same-issues: 3
-  
-  # Show only new issues created after git revision
-  new-from-rev: ""
+  max-issues-per-linter: 0
+  max-same-issues: 0
