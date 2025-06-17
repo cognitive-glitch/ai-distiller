@@ -31,6 +31,7 @@ QUICK START:
   aid ./src --ai-action prompt-for-refactoring-suggestion    # For refactoring
   aid ./src --ai-action prompt-for-security-analysis         # Security analysis
   aid .git --git-limit=50                                    # Git history mode
+  aid .git --with-analysis-prompt                            # Git history with AI analysis (quality, patterns, visualizations)
 
 AI ACTIONS:
   Use --ai-action <ACTION> to format output for specific AI tasks:
@@ -64,7 +65,9 @@ SPECIAL MODES:
   --raw                       Process text files without parsing (overrides all content filters)
   --lang LANGUAGE             Force language: auto|python|typescript|javascript|go|rust|
                               java|csharp|kotlin|cpp|php|ruby|swift (useful for stdin input)
-  aid .git                    Git history analysis mode
+  aid .git                    Git history analysis mode (shows commit history)
+  --with-analysis-prompt      Add comprehensive AI prompt for commit quality analysis, patterns,
+                              development timeline visualization, and complexity insights
 
 HELP & DOCUMENTATION:
   aid --help-extended         Complete documentation (man page style)
@@ -193,7 +196,11 @@ Path Control:
 
 Git Mode (when path is .git):
     --git-limit NUM            Limit number of commits (default: 200, 0=all)
-    --with-analysis-prompt     Prepend AI analysis prompt to git output
+    --with-analysis-prompt     Prepend AI analysis prompt for comprehensive insights:
+                              - Commit quality scoring (0-100%) with individual feedback
+                              - Development timeline Gantt charts (10-25 items)
+                              - Complexity analysis with Mermaid visualizations
+                              - Bug pattern detection and problem area identification
 
 Performance:
     -w, --workers NUM          Parallel workers (0=auto, 1=serial, default: 0)
@@ -805,9 +812,11 @@ OPTIONS:
     --with-analysis-prompt     Prepend comprehensive AI analysis prompt
                               Guides LLM to generate insights about:
                               • Contributor statistics and expertise areas
-                              • Timeline analysis and development patterns
-                              • Functional categorization of commits
-                              • Codebase evolution insights
+                              • Commit message quality analysis with scores
+                              • Timeline visualization with Gantt charts
+                              • Complexity and bug pattern analysis
+                              • Development patterns and problem areas
+                              • Actionable recommendations for improvement
 
 EXAMPLES:
 
@@ -868,20 +877,35 @@ When using --with-analysis-prompt, the output includes guidance for:
     • What are their areas of expertise?
     • How has team composition changed?
 
-    Timeline Analysis:
-    • What are the development phases?
-    • When were major features added?
-    • Are there patterns in commit frequency?
+    Commit Message Quality:
+    • Overall project quality score (0-100%)
+    • Individual contributor scores and feedback
+    • Best/worst examples for learning
+    • Personalized improvement recommendations
 
-    Functional Categorization:
-    • What types of changes are most common? (features, fixes, refactoring)
-    • Which areas of the codebase see most activity?
-    • Are there any concerning patterns?
+    Timeline Visualization:
+    • Development phases with Gantt charts
+    • Major features and release cycles
+    • Bug fix periods and refactoring sprints
+    • 10-25 timeline items based on project scope
+
+    Complexity & Problem Areas:
+    • Files with highest change frequency
+    • Error-prone modules identification
+    • Visualization with pie charts and flowcharts
+    • Design challenge detection
+
+    Bug Pattern Analysis:
+    • Most problematic features
+    • Common bug types and frequencies
+    • Correlation between features and bugs
+    • Visual bug distribution diagrams
 
     Evolution Insights:
-    • How has the project's focus evolved?
-    • What major architectural decisions were made?
-    • Are there lessons for future development?
+    • Technology and architecture shifts
+    • Technical debt indicators
+    • Code health trends over time
+    • Future development recommendations
 
 For complete examples: aid --help-extended
 `)
@@ -925,8 +949,9 @@ QUICK COMBINATIONS:
   # Performance Analysis
   aid ./ --ai-action prompt-for-performance-analysis --implementation=1
 
-  # Git History
+  # Git History with Comprehensive Analysis
   aid .git --git-limit=50 --with-analysis-prompt
+  # Includes: commit quality scores, Gantt charts, bug patterns, complexity analysis
 
 OUTPUT FORMATS:
   --format text        # Compact (default)
