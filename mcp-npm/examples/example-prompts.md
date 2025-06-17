@@ -1,106 +1,145 @@
 # Example Prompts for Claude with AI Distiller MCP
 
-Here are some example prompts that demonstrate how to effectively use AI Distiller MCP tools:
+Here are example prompts that demonstrate how to effectively use the new AI Distiller MCP tools:
 
-## Understanding a New Codebase
+## 🎯 Using Specialized Tools (Recommended)
 
-> "I just cloned this Python project. Can you analyze its architecture and give me an overview of the main components?"
-
-Claude will use:
-- `listFiles` to understand project structure
-- `distillDirectory` on key directories like `src/`, `lib/`, etc.
-- `distillFile` on main entry points
-
-## Finding Implementation Details
-
-> "Show me how the authentication system works in this project. I need to understand the login flow."
+### Bug Hunting
+> "I've been getting random crashes in production. Can you check the codebase for potential bugs?"
 
 Claude will use:
-- `search` to find authentication-related files
-- `distillDirectory` on auth modules
-- `getFileContent` to examine specific implementations
+- `aid_hunt_bugs` to systematically scan for bugs, race conditions, and quality issues
+- Focus on areas like null pointer exceptions, unhandled errors, and concurrency issues
 
-## Code Review Preparation
-
-> "I'm about to review the payment module. Can you summarize what's in `src/payments/` and highlight the main classes and their responsibilities?"
+### Refactoring Complex Code
+> "The authentication module has grown too complex. Can you suggest how to refactor it?"
 
 Claude will use:
-- `distillDirectory` with `include_private=true` for comprehensive view
-- `listFiles` to see all payment-related files
+- `aid_suggest_refactoring` with goal "reduce complexity" to get specific suggestions
+- Provides before/after code examples and actionable steps
 
-## Searching for Patterns
-
-> "Find all TODO and FIXME comments in the codebase and summarize what needs to be done."
-
-Claude will use:
-- `search` with `query="TODO|FIXME"` and `mode="regex"`
-- `getFileContent` to read context around findings
-
-## API Documentation
-
-> "Generate a summary of all public APIs in the `api/` directory. I need to know what endpoints are available."
+### Understanding Architecture
+> "I just joined this project. Can you help me understand the overall architecture?"
 
 Claude will use:
-- `distillDirectory` with default settings (public only)
-- Output format can be JSON for structured data
+- `aid_generate_diagram` to create 10 different architectural views
+- Includes flowcharts, sequence diagrams, class diagrams, and system overviews
 
-## Dependency Analysis
-
-> "What external libraries does this project use? Check the import statements across all Python files."
-
-Claude will use:
-- `distillDirectory` on the entire project
-- Focus on import statements in the output
-
-## Test Coverage Understanding
-
-> "Show me the test structure for the user service. I want to know what's being tested."
+### Security Audit
+> "We're preparing for a security audit. Can you check our API endpoints for vulnerabilities?"
 
 Claude will use:
-- `listFiles` with pattern `test_*.py` or `*_test.py`
-- `distillFile` on test files to see test methods
+- `aid_analyze_security` focusing on OWASP Top 10 vulnerabilities
+- Returns categorized findings with risk levels and remediation steps
 
-## Refactoring Assistance
-
-> "I need to refactor the database module. First, show me all the classes and their relationships in `src/database/`."
-
-Claude will use:
-- `distillDirectory` with `include_private=true`
-- May use `search` to find usages elsewhere
-
-## Security Audit
-
-> "Search for potential security issues: hardcoded passwords, API keys, or sensitive data in the code."
+### Documentation Generation
+> "We need to document our core API module for external developers"
 
 Claude will use:
-- `search` with patterns like "password=", "api_key=", "secret"
-- `getFileContent` to examine suspicious findings
+- `aid_generate_docs` with doc_type="api-reference" and audience="developers"
+- Creates comprehensive API documentation with examples
 
-## Performance Analysis
+## 📚 Advanced Workflows
 
-> "Find all database queries in the application and check if they're using proper indexing."
+### Complete Code Review
+> "Review the payment processing module for bugs, security issues, and suggest improvements"
+
+Claude will:
+1. Use `aid_hunt_bugs` to find potential issues
+2. Use `aid_analyze_security` to check for vulnerabilities  
+3. Use `aid_suggest_refactoring` to improve code quality
+4. Provide a comprehensive review report
+
+### Onboarding New Developer
+> "Create an onboarding guide for a new developer joining our team"
+
+Claude will:
+1. Use `aid_generate_diagram` to visualize the architecture
+2. Use `aid_generate_docs` with audience="maintainers" for key modules
+3. Use `list_files` to show project structure
+4. Create a structured onboarding document
+
+### Performance Investigation
+> "The application has been running slowly. Can you help identify potential bottlenecks?"
+
+Claude will:
+1. Use `aid_analyze` with ai_action="prompt-for-performance-analysis"
+2. Focus on algorithmic complexity and resource usage patterns
+3. Suggest specific optimizations
+
+### Technical Debt Assessment
+> "We need to assess technical debt before our next sprint planning"
+
+Claude will:
+1. Use `aid_analyze` with ai_action="prompt-for-best-practices-analysis"
+2. Use `aid_suggest_refactoring` on problematic modules
+3. Create a prioritized technical debt backlog
+
+## 🔧 Using Core Analysis Engine
+
+### Custom Analysis Workflows
+> "Analyze how data flows through our microservices, focusing on the order processing system"
 
 Claude will use:
-- `search` for SQL patterns or ORM query methods
-- `distillFile` to understand query context
+```
+aid_analyze({
+  ai_action: "flow-for-deep-file-to-file-analysis",
+  target_path: "services/",
+  user_query: "trace order processing data flow",
+  include_patterns: "*.go,*.proto"
+})
+```
 
-## Tips for Effective Prompts
+### Multi-File Documentation
+> "Generate documentation for all our utility modules"
 
-1. **Be specific about scope**: "in the `src/auth/` directory" vs "in the entire project"
-2. **Mention if you need private members**: "including private methods" triggers `include_private=true`
-3. **Specify output needs**: "as JSON" or "show me the implementation" affects tool parameters
-4. **Combine tools**: Complex tasks often need multiple tools working together
+Claude will use:
+```
+aid_analyze({
+  ai_action: "flow-for-multi-file-docs",
+  target_path: "utils/",
+  include_patterns: "*.py"
+})
+```
 
-## Advanced Workflow Example
+## 💡 Tips for Effective Prompts
 
-> "I'm implementing a new feature similar to the existing notification system. Can you:
-> 1. Show me the current notification architecture
-> 2. Find where notifications are triggered
-> 3. List all notification types
-> 4. Suggest where I should add my new feature"
+1. **Be specific about your goal**: "find memory leaks" vs "check for bugs"
+2. **Mention specific areas**: "in the authentication module" vs "in the codebase"
+3. **State the purpose**: "for security audit" vs "for code review"
+4. **Include context**: "we're using Python 3.11 with FastAPI"
 
-This complex request will trigger Claude to:
-1. Use `distillDirectory` on notification modules
-2. Use `search` for notification trigger points
-3. Use `listFiles` to find all relevant files
-4. Analyze patterns and suggest implementation approach
+## 🚀 Power User Tips
+
+### Combining Tools
+For comprehensive analysis, Claude will often combine multiple tools:
+- Bug hunting + Security analysis for pre-deployment checks
+- Diagram generation + Documentation for onboarding materials
+- Refactoring suggestions + Best practices for code improvement sprints
+
+### Pattern Filtering
+Be specific with file patterns to improve analysis speed:
+- `include_patterns: "*.py,*.pyi"` for Python projects
+- `exclude_patterns: "*test*,*mock*"` to skip test files
+- `include_patterns: "src/**/*.ts"` for TypeScript source files
+
+### Visibility Control
+- Use `include_private: true` for bug hunting and security analysis
+- Use `include_implementation: true` for refactoring suggestions
+- Keep defaults (public only) for API documentation
+
+## 📋 Quick Reference
+
+| Task | Best Tool | Key Parameters |
+|------|-----------|----------------|
+| Find bugs | `aid_hunt_bugs` | `include_private: true` |
+| Improve code | `aid_suggest_refactoring` | `refactoring_goal: "..."` |
+| Understand architecture | `aid_generate_diagram` | `diagram_focus: "..."` |
+| Security check | `aid_analyze_security` | `security_focus: "..."` |
+| Create docs | `aid_generate_docs` | `doc_type: "...", audience: "..."` |
+| Custom analysis | `aid_analyze` | `ai_action: "...", user_query: "..."` |
+
+---
+
+*AI Distiller (aid) - https://aid.siteone.io/*  
+*Explore more on [GitHub](https://github.com/janreges/ai-distiller)*
