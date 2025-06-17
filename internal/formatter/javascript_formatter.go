@@ -56,14 +56,14 @@ func (f *JavaScriptFormatter) formatImport(w io.Writer, imp *ir.DistilledImport)
 					break
 				}
 			}
-			
+
 			if hasNamespace {
 				fmt.Fprintf(w, "import * as %s from '%s'\n", namespaceAlias, imp.Module)
 			} else {
 				// Named imports or default import
 				defaultImport := ""
 				namedImports := []string{}
-				
+
 				for _, sym := range imp.Symbols {
 					if sym.Alias != "" && sym.Name != "*" {
 						namedImports = append(namedImports, fmt.Sprintf("%s as %s", sym.Name, sym.Alias))
@@ -76,7 +76,7 @@ func (f *JavaScriptFormatter) formatImport(w io.Writer, imp *ir.DistilledImport)
 						}
 					}
 				}
-				
+
 				// Format the import statement
 				if defaultImport != "" && len(namedImports) == 0 {
 					fmt.Fprintf(w, "import %s from '%s'\n", defaultImport, imp.Module)
@@ -96,13 +96,13 @@ func (f *JavaScriptFormatter) formatImport(w io.Writer, imp *ir.DistilledImport)
 
 func (f *JavaScriptFormatter) formatClass(w io.Writer, class *ir.DistilledClass, indent int) error {
 	indentStr := strings.Repeat("    ", indent)
-	
+
 	// JavaScript classes don't have visibility keywords (ES6)
 	// Private fields use # prefix which is handled at field level
-	
+
 	// Format class declaration
 	fmt.Fprintf(w, "\n%sclass %s", indentStr, class.Name)
-	
+
 	// Add extends clause
 	if len(class.Extends) > 0 {
 		extends := make([]string, len(class.Extends))
@@ -111,23 +111,23 @@ func (f *JavaScriptFormatter) formatClass(w io.Writer, class *ir.DistilledClass,
 		}
 		fmt.Fprintf(w, " extends %s", strings.Join(extends, ", "))
 	}
-	
+
 	fmt.Fprintln(w, ":")
-	
+
 	// Format class members
 	for _, child := range class.Children {
 		f.FormatNode(w, child, indent+1)
 	}
-	
+
 	return nil
 }
 
 func (f *JavaScriptFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, indent int) error {
 	indentStr := strings.Repeat("    ", indent)
-	
+
 	// JavaScript methods don't have visibility keywords (except # for private)
 	// The # prefix is part of the method name itself
-	
+
 	// Handle different function types
 	if strings.HasPrefix(fn.Name, "get ") {
 		// Getter
@@ -150,11 +150,11 @@ func (f *JavaScriptFormatter) formatFunction(w io.Writer, fn *ir.DistilledFuncti
 		isStatic := false
 		isGenerator := strings.HasPrefix(fn.Name, "*")
 		functionName := fn.Name
-		
+
 		if isGenerator {
 			functionName = strings.TrimPrefix(functionName, "*")
 		}
-		
+
 		for _, mod := range fn.Modifiers {
 			if mod == ir.ModifierAsync {
 				isAsync = true
@@ -162,7 +162,7 @@ func (f *JavaScriptFormatter) formatFunction(w io.Writer, fn *ir.DistilledFuncti
 				isStatic = true
 			}
 		}
-		
+
 		// Check if it's a top-level const function
 		isConst := false
 		for _, mod := range fn.Modifiers {
@@ -171,7 +171,7 @@ func (f *JavaScriptFormatter) formatFunction(w io.Writer, fn *ir.DistilledFuncti
 				break
 			}
 		}
-		
+
 		// Format based on context
 		if indent == 0 && isConst {
 			// Top-level const arrow function
@@ -209,28 +209,28 @@ func (f *JavaScriptFormatter) formatFunction(w io.Writer, fn *ir.DistilledFuncti
 			fmt.Fprintf(w, "%s%s%s(%s)", indentStr, prefix, functionName, f.formatParameters(fn.Parameters))
 		}
 	}
-	
+
 	// Add return type if available (from JSDoc)
 	if fn.Returns != nil && fn.Returns.Name != "" {
 		fmt.Fprintf(w, " -> %s", fn.Returns.Name)
 	}
-	
+
 	fmt.Fprintln(w)
-	
+
 	// Implementation
 	if fn.Implementation != "" {
 		fmt.Fprintf(w, "%s    // implementation\n", indentStr)
 	}
-	
+
 	return nil
 }
 
 func (f *JavaScriptFormatter) formatField(w io.Writer, field *ir.DistilledField, indent int) error {
 	indentStr := strings.Repeat("    ", indent)
-	
+
 	// JavaScript uses # prefix for private fields (part of the name)
 	// No visibility keywords in JavaScript
-	
+
 	// Check for modifiers
 	isStatic := false
 	isConst := false
@@ -241,26 +241,26 @@ func (f *JavaScriptFormatter) formatField(w io.Writer, field *ir.DistilledField,
 			isConst = true
 		}
 	}
-	
+
 	if indent == 0 {
 		// Top-level variable declaration
 		varType := "let"
 		if isConst {
 			varType = "const"
 		}
-		
+
 		fmt.Fprintf(w, "%s %s", varType, field.Name)
-		
+
 		// Add type annotation if available (from JSDoc)
 		if field.Type != nil && field.Type.Name != "" {
 			fmt.Fprintf(w, ": %s", field.Type.Name)
 		}
-		
+
 		// Add default value
 		if field.DefaultValue != "" {
 			fmt.Fprintf(w, " = %s", field.DefaultValue)
 		}
-		
+
 		fmt.Fprintln(w)
 	} else {
 		// Class field
@@ -272,28 +272,28 @@ func (f *JavaScriptFormatter) formatField(w io.Writer, field *ir.DistilledField,
 		if len(prefixParts) > 0 {
 			prefix = strings.Join(prefixParts, " ") + " "
 		}
-		
+
 		fmt.Fprintf(w, "%s%s%s", indentStr, prefix, field.Name)
-		
+
 		// Add type annotation if available (from JSDoc)
 		if field.Type != nil && field.Type.Name != "" {
 			fmt.Fprintf(w, ": %s", field.Type.Name)
 		}
-		
+
 		// Add default value
 		if field.DefaultValue != "" {
 			fmt.Fprintf(w, " = %s", field.DefaultValue)
 		}
-		
+
 		fmt.Fprintln(w)
 	}
-	
+
 	return nil
 }
 
 func (f *JavaScriptFormatter) formatComment(w io.Writer, comment *ir.DistilledComment, indent int) error {
 	indentStr := strings.Repeat("    ", indent)
-	
+
 	// Handle special comment formats
 	switch comment.Format {
 	case "export":
@@ -314,7 +314,7 @@ func (f *JavaScriptFormatter) formatComment(w io.Writer, comment *ir.DistilledCo
 			fmt.Fprintf(w, "%s// %s\n", indentStr, comment.Text)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -324,27 +324,27 @@ func (f *JavaScriptFormatter) formatParameters(params []ir.Parameter) string {
 	if len(params) == 0 {
 		return ""
 	}
-	
+
 	paramStrs := make([]string, 0, len(params))
 	for _, param := range params {
 		if param.Name == "" {
 			continue
 		}
-		
+
 		paramStr := param.Name
-		
+
 		// Add type annotation if available (from JSDoc)
 		if param.Type.Name != "" {
 			paramStr += ": " + param.Type.Name
 		}
-		
+
 		// Add default value
 		if param.DefaultValue != "" {
 			paramStr += " = " + param.DefaultValue
 		}
-		
+
 		paramStrs = append(paramStrs, paramStr)
 	}
-	
+
 	return strings.Join(paramStrs, ", ")
 }

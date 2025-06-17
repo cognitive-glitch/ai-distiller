@@ -9,7 +9,7 @@ import (
 )
 
 // GoFormatter implements language-specific formatting for Go
-type GoFormatter struct{
+type GoFormatter struct {
 	BaseLanguageFormatter
 	isFirstImport bool
 	lastWasImport bool
@@ -25,7 +25,7 @@ func (f *GoFormatter) Reset() {
 func NewGoFormatter() LanguageFormatter {
 	return &GoFormatter{
 		BaseLanguageFormatter: NewBaseLanguageFormatter("go"),
-		isFirstImport: true,
+		isFirstImport:         true,
 	}
 }
 
@@ -91,7 +91,7 @@ func (f *GoFormatter) formatImport(w io.Writer, imp *ir.DistilledImport, indent 
 		fmt.Fprintf(w, "\n%simport (\n", indent)
 		f.isFirstImport = false
 	}
-	
+
 	// Format individual import
 	if len(imp.Symbols) > 0 && imp.Symbols[0].Alias != "" {
 		// Aliased import
@@ -106,10 +106,10 @@ func (f *GoFormatter) formatImport(w io.Writer, imp *ir.DistilledImport, indent 
 		// Standard import
 		fmt.Fprintf(w, "%s    \"%s\"", indent, imp.Module)
 	}
-	
+
 	// Comments are handled separately as DistilledComment nodes
 	fmt.Fprintln(w)
-	
+
 	return nil
 }
 
@@ -121,7 +121,7 @@ func (f *GoFormatter) formatComment(w io.Writer, comment *ir.DistilledComment, i
 		fmt.Fprintf(w, "//go:build %s\n", constraint)
 		return nil
 	}
-	
+
 	// Regular comment
 	lines := strings.Split(comment.Text, "\n")
 	for _, line := range lines {
@@ -136,12 +136,12 @@ func (f *GoFormatter) formatComment(w io.Writer, comment *ir.DistilledComment, i
 
 func (f *GoFormatter) formatField(w io.Writer, field *ir.DistilledField, indent string) error {
 	// Field comments are handled separately
-	
+
 	// Add blank line before top-level const/var
 	if indent == "" {
 		fmt.Fprintln(w)
 	}
-	
+
 	// Determine if this is a const or var
 	isConst := false
 	for _, mod := range field.Modifiers {
@@ -150,36 +150,36 @@ func (f *GoFormatter) formatField(w io.Writer, field *ir.DistilledField, indent 
 			break
 		}
 	}
-	
+
 	// Format the declaration
 	if isConst {
 		fmt.Fprintf(w, "%sconst %s", indent, field.Name)
 	} else {
 		fmt.Fprintf(w, "%svar %s", indent, field.Name)
 	}
-	
+
 	// Add type if specified
 	if field.Type != nil && field.Type.Name != "" {
 		fmt.Fprintf(w, " %s", field.Type.Name)
 	}
-	
+
 	// Add value if specified
 	if field.DefaultValue != "" {
 		fmt.Fprintf(w, " = %s", field.DefaultValue)
 	}
-	
+
 	fmt.Fprintln(w)
 	return nil
 }
 
 func (f *GoFormatter) formatStruct(w io.Writer, class *ir.DistilledClass, indent int) error {
 	indentStr := strings.Repeat("    ", indent)
-	
+
 	// Class comments are handled separately
-	
+
 	// Format struct declaration
 	fmt.Fprintf(w, "\n%stype %s struct", indentStr, class.Name)
-	
+
 	// Check if there are fields
 	hasFields := false
 	for _, child := range class.Children {
@@ -188,7 +188,7 @@ func (f *GoFormatter) formatStruct(w io.Writer, class *ir.DistilledClass, indent
 			break
 		}
 	}
-	
+
 	if hasFields {
 		fmt.Fprintln(w, " {")
 		// Format fields
@@ -202,16 +202,16 @@ func (f *GoFormatter) formatStruct(w io.Writer, class *ir.DistilledClass, indent
 		// Empty struct
 		fmt.Fprintln(w, " {}")
 	}
-	
+
 	// Methods are now formatted as top-level functions in original order
 	// No need to format them here within the struct
-	
+
 	return nil
 }
 
 func (f *GoFormatter) formatStructField(w io.Writer, field *ir.DistilledField, indent int) error {
 	indentStr := strings.Repeat("    ", indent)
-	
+
 	// Check if this is an embedded field
 	isEmbedded := false
 	for _, mod := range field.Modifiers {
@@ -220,7 +220,7 @@ func (f *GoFormatter) formatStructField(w io.Writer, field *ir.DistilledField, i
 			break
 		}
 	}
-	
+
 	if isEmbedded {
 		// Embedded field - just the type name
 		fmt.Fprintf(w, "%s%s", indentStr, field.Name)
@@ -231,22 +231,22 @@ func (f *GoFormatter) formatStructField(w io.Writer, field *ir.DistilledField, i
 			fmt.Fprintf(w, " %s", field.Type.Name)
 		}
 	}
-	
+
 	// TODO: Add struct tag support when Annotations are added to IR
-	
+
 	// Comments are handled separately
-	
+
 	fmt.Fprintln(w)
 	return nil
 }
 
 func (f *GoFormatter) formatInterface(w io.Writer, intf *ir.DistilledInterface, indent int) error {
 	indentStr := strings.Repeat("    ", indent)
-	
+
 	// Interface comments are handled separately
-	
+
 	fmt.Fprintf(w, "\n%stype %s interface", indentStr, intf.Name)
-	
+
 	// Check for type constraints or embedded interfaces
 	if len(intf.Extends) > 0 {
 		fmt.Fprintln(w, " {")
@@ -274,40 +274,40 @@ func (f *GoFormatter) formatInterface(w io.Writer, intf *ir.DistilledInterface, 
 		// Empty interface
 		fmt.Fprintln(w, " {}")
 	}
-	
+
 	return nil
 }
 
 func (f *GoFormatter) formatInterfaceMethod(w io.Writer, fn *ir.DistilledFunction, indent int) error {
 	indentStr := strings.Repeat("    ", indent)
-	
+
 	// Method comments are handled separately
-	
+
 	// Format method signature
 	fmt.Fprintf(w, "%s%s(", indentStr, fn.Name)
 	f.formatParameters(w, fn.Parameters)
 	fmt.Fprintf(w, ")")
-	
+
 	// Format return type
 	if fn.Returns != nil {
 		fmt.Fprintf(w, " %s", fn.Returns.Name)
 	}
-	
+
 	fmt.Fprintln(w)
 	return nil
 }
 
 func (f *GoFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, indent string) error {
 	// Function comments are handled separately
-	
+
 	// Format compiler directives
 	for _, dec := range fn.Decorators {
 		fmt.Fprintf(w, "%s%s\n", indent, dec)
 	}
-	
+
 	// Format function signature
 	fmt.Fprintf(w, "\n%sfunc %s", indent, fn.Name)
-	
+
 	// Add generic type parameters if present
 	if fn.TypeParams != nil && len(fn.TypeParams) > 0 {
 		fmt.Fprintf(w, "[")
@@ -322,19 +322,19 @@ func (f *GoFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, inde
 		}
 		fmt.Fprintf(w, "]")
 	}
-	
+
 	// Parameters
 	fmt.Fprintf(w, "(")
 	f.formatParameters(w, fn.Parameters)
 	fmt.Fprintf(w, ")")
-	
+
 	// Return type
 	if fn.Returns != nil && fn.Returns.Name != "" {
 		fmt.Fprintf(w, " %s", fn.Returns.Name)
 	}
-	
+
 	// Comments are handled separately
-	
+
 	// Implementation
 	if fn.Implementation != "" {
 		fmt.Fprintln(w)
@@ -345,18 +345,18 @@ func (f *GoFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, inde
 	} else {
 		fmt.Fprintln(w)
 	}
-	
+
 	return nil
 }
 
 func (f *GoFormatter) formatMethod(w io.Writer, fn *ir.DistilledFunction, receiverType string, indent string) error {
 	// Function comments are handled separately
-	
+
 	// Format compiler directives
 	for _, dec := range fn.Decorators {
 		fmt.Fprintf(w, "%s%s\n", indent, dec)
 	}
-	
+
 	// Determine receiver from first parameter (if it exists)
 	receiverStr := ""
 	startParam := 0
@@ -373,22 +373,22 @@ func (f *GoFormatter) formatMethod(w io.Writer, fn *ir.DistilledFunction, receiv
 		receiverStr = fmt.Sprintf("(%s %s) ", receiverName, receiver.Type.Name)
 		startParam = 1
 	}
-	
+
 	// Format method signature
 	fmt.Fprintf(w, "%sfunc %s%s(", indent, receiverStr, fn.Name)
-	
+
 	// Parameters (skip receiver)
 	params := fn.Parameters[startParam:]
 	f.formatParameters(w, params)
 	fmt.Fprintf(w, ")")
-	
+
 	// Return type
 	if fn.Returns != nil && fn.Returns.Name != "" {
 		fmt.Fprintf(w, " %s", fn.Returns.Name)
 	}
-	
+
 	// Comments are handled separately
-	
+
 	// Implementation
 	if fn.Implementation != "" {
 		fmt.Fprintln(w)
@@ -399,13 +399,13 @@ func (f *GoFormatter) formatMethod(w io.Writer, fn *ir.DistilledFunction, receiv
 	} else {
 		fmt.Fprintln(w)
 	}
-	
+
 	return nil
 }
 
 func (f *GoFormatter) formatTypeAlias(w io.Writer, alias *ir.DistilledTypeAlias, indent string) error {
 	// Type alias comments are handled separately
-	
+
 	fmt.Fprintf(w, "\n%stype %s = %s\n", indent, alias.Name, alias.Type.Name)
 	return nil
 }

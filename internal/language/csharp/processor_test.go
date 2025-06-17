@@ -158,7 +158,7 @@ public class Service {
 
 			// Convert result to string for easier checking
 			content := convertToString(result)
-			
+
 			// Check that all expected elements are present
 			for _, exp := range tt.expected {
 				assert.Contains(t, content, exp, "Expected to find %s in output", exp)
@@ -256,7 +256,7 @@ public class NullableExample {
 			require.NotNil(t, result)
 
 			content := convertToString(result)
-			
+
 			for _, exp := range tt.expected {
 				assert.Contains(t, content, exp, "Expected to find %s in output", exp)
 			}
@@ -343,14 +343,14 @@ namespace MyApp {
 
 	processor := NewProcessor()
 	ctx := context.Background()
-	
+
 	reader := strings.NewReader(code)
 	result, err := processor.Process(ctx, reader, "complex.cs")
 	require.NoError(t, err)
 	require.NotNil(t, result)
-	
+
 	content := convertToString(result)
-	
+
 	// Check various C# features
 	assert.Contains(t, content, "MyApp")
 	assert.Contains(t, content, "ILogger")
@@ -374,12 +374,12 @@ func TestProcessor_NullableDebug(t *testing.T) {
 
 	processor := NewProcessor()
 	ctx := context.Background()
-	
+
 	reader := strings.NewReader(code)
 	result, err := processor.Process(ctx, reader, "nullable.cs")
 	require.NoError(t, err)
 	require.NotNil(t, result)
-	
+
 	// Print structure for debugging
 	t.Logf("File has %d children", len(result.Children))
 	for _, node := range result.Children {
@@ -392,7 +392,7 @@ func TestProcessor_NullableDebug(t *testing.T) {
 			}
 		}
 	}
-	
+
 	// Check that properties exist
 	content := convertToString(result)
 	assert.Contains(t, content, "OptionalName")
@@ -415,12 +415,12 @@ public class VisibilityTest {
 
 	processor := NewProcessor()
 	ctx := context.Background()
-	
+
 	reader := strings.NewReader(code)
 	result, err := processor.Process(ctx, reader, "visibility.cs")
 	require.NoError(t, err)
 	require.NotNil(t, result)
-	
+
 	// Check visibility assignments
 	var checkVisibility func(ir.DistilledNode)
 	checkVisibility = func(node ir.DistilledNode) {
@@ -454,7 +454,7 @@ public class VisibilityTest {
 			}
 		}
 	}
-	
+
 	for _, node := range result.Children {
 		checkVisibility(node)
 	}
@@ -463,7 +463,7 @@ public class VisibilityTest {
 // Helper function to convert result to string representation
 func convertToString(file *ir.DistilledFile) string {
 	var sb strings.Builder
-	
+
 	// Recursively collect all names and modifiers from the IR structure
 	var collectInfo func(node ir.DistilledNode)
 	collectInfo = func(node ir.DistilledNode) {
@@ -501,7 +501,7 @@ func convertToString(file *ir.DistilledFile) string {
 		case *ir.DistilledTypeAlias:
 			sb.WriteString(n.Name + " ")
 		}
-		
+
 		// Process children
 		if node != nil {
 			for _, child := range node.GetChildren() {
@@ -509,11 +509,11 @@ func convertToString(file *ir.DistilledFile) string {
 			}
 		}
 	}
-	
+
 	// Process all top-level nodes
 	for _, node := range file.Children {
 		collectInfo(node)
 	}
-	
+
 	return sb.String()
 }

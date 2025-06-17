@@ -108,7 +108,7 @@ func TestJavaConstructs(t *testing.T) {
 
 					// Format using text formatter
 					textFormatter := formatter.NewLanguageAwareTextFormatter(formatter.Options{})
-					
+
 					var output strings.Builder
 					err = textFormatter.Format(&output, result)
 					require.NoError(t, err)
@@ -270,9 +270,9 @@ public record Point(int x, int y) {
 		var foundRecord *ir.DistilledClass
 		for _, child := range result.Children {
 			if class, ok := child.(*ir.DistilledClass); ok {
-				if class.Extensions != nil && 
-				   class.Extensions.Java != nil && 
-				   class.Extensions.Java.IsRecord {
+				if class.Extensions != nil &&
+					class.Extensions.Java != nil &&
+					class.Extensions.Java.IsRecord {
 					foundRecord = class
 					break
 				}

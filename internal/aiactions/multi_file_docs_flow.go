@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	
+
 	"github.com/janreges/ai-distiller/internal/ai"
 )
 
@@ -38,32 +38,32 @@ func (a *MultiFileDocsFlowAction) Validate() error {
 func (a *MultiFileDocsFlowAction) ExecuteFlow(ctx *ai.ActionContext) (*ai.FlowResult, error) {
 	// Get project basename and current date
 	basename := ctx.BaseName
-	currentDate := fmt.Sprintf("%04d-%02d-%02d", 
+	currentDate := fmt.Sprintf("%04d-%02d-%02d",
 		ctx.Timestamp.Year(), ctx.Timestamp.Month(), ctx.Timestamp.Day())
-	
+
 	// Collect source files from the project
 	sourceFiles, err := a.collectSourceFiles(ctx.ProjectPath, ctx.IncludePatterns, ctx.ExcludePatterns)
 	if err != nil {
 		return nil, fmt.Errorf("failed to collect source files: %w", err)
 	}
-	
+
 	// Generate file paths
 	docsTaskListPath := fmt.Sprintf("DOCS-TASK-LIST.%s.%s.md", basename, currentDate)
 	docsIndexPath := fmt.Sprintf("DOCS-INDEX.%s.%s.md", basename, currentDate)
 	docsDir := fmt.Sprintf("docs.%s/%s", basename, currentDate)
-	
+
 	// Generate task list content
 	taskListContent := a.generateDocsTaskList(basename, currentDate, sourceFiles, docsDir, ctx.ProjectPath)
-	
+
 	// Generate documentation index
 	indexContent := a.generateDocsIndex(basename, currentDate, sourceFiles, ctx.ProjectPath)
-	
+
 	// Generate API reference template
 	apiRefContent := a.generateAPIReferenceTemplate(basename, currentDate)
-	
+
 	// Generate README template
 	readmeContent := a.generateREADMETemplate(basename, currentDate)
-	
+
 	// Create the file map
 	files := map[string]string{
 		docsTaskListPath: taskListContent,
@@ -71,23 +71,23 @@ func (a *MultiFileDocsFlowAction) ExecuteFlow(ctx *ai.ActionContext) (*ai.FlowRe
 		filepath.Join(docsDir, "API-REFERENCE.md"): apiRefContent,
 		filepath.Join(docsDir, "README.md"):        readmeContent,
 	}
-	
+
 	// Generate individual file documentation templates
 	for _, file := range sourceFiles {
 		relativePath := strings.TrimPrefix(file, ctx.ProjectPath)
 		relativePath = strings.TrimPrefix(relativePath, "/")
-		
+
 		// Create documentation file path
 		docFileName := strings.ReplaceAll(relativePath, "/", "_")
 		docFileName = strings.ReplaceAll(docFileName, ".", "_")
 		docFileName = docFileName + ".md"
-		
+
 		docPath := filepath.Join(docsDir, "files", docFileName)
 		docContent := a.generateFileDocTemplate(relativePath, basename)
-		
+
 		files[docPath] = docContent
 	}
-	
+
 	// Generate messages
 	messages := []string{
 		fmt.Sprintf("📚 Documentation workflow generated for %d files", len(sourceFiles)),
@@ -96,7 +96,7 @@ func (a *MultiFileDocsFlowAction) ExecuteFlow(ctx *ai.ActionContext) (*ai.FlowRe
 		fmt.Sprintf("📁 Documentation Files Directory: %s", docsDir),
 		"🤖 Ready for systematic documentation generation!",
 	}
-	
+
 	return &ai.FlowResult{
 		Files:    files,
 		Messages: messages,
@@ -105,12 +105,12 @@ func (a *MultiFileDocsFlowAction) ExecuteFlow(ctx *ai.ActionContext) (*ai.FlowRe
 
 func (a *MultiFileDocsFlowAction) collectSourceFiles(projectPath string, includePatterns, excludePatterns []string) ([]string, error) {
 	var files []string
-	
+
 	err := filepath.Walk(projectPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-		
+
 		if info.IsDir() {
 			// Skip .aid directories completely
 			if filepath.Base(path) == ".aid" {
@@ -124,7 +124,7 @@ func (a *MultiFileDocsFlowAction) collectSourceFiles(projectPath string, include
 		if strings.Contains(basename, ".aid.") {
 			return nil
 		}
-		
+
 		// Check if file matches include patterns (if any)
 		if len(includePatterns) > 0 {
 			matched := false
@@ -138,34 +138,34 @@ func (a *MultiFileDocsFlowAction) collectSourceFiles(projectPath string, include
 				return nil
 			}
 		}
-		
+
 		// Check if file matches exclude patterns
 		for _, pattern := range excludePatterns {
 			if matched, _ := filepath.Match(pattern, filepath.Base(path)); matched {
 				return nil
 			}
 		}
-		
+
 		// Basic source file detection
 		ext := strings.ToLower(filepath.Ext(path))
 		sourceExts := []string{".go", ".py", ".js", ".ts", ".java", ".c", ".cpp", ".h", ".hpp", ".rs", ".rb", ".php", ".swift", ".kt", ".cs"}
-		
+
 		for _, sourceExt := range sourceExts {
 			if ext == sourceExt {
 				files = append(files, path)
 				break
 			}
 		}
-		
+
 		return nil
 	})
-	
+
 	return files, err
 }
 
 func (a *MultiFileDocsFlowAction) generateDocsTaskList(basename, date string, sourceFiles []string, docsDir string, projectPath string) string {
 	var sb strings.Builder
-	
+
 	sb.WriteString(fmt.Sprintf(`# 📚 Multi-File Documentation Task List
 
 **Project:** %s
@@ -221,7 +221,7 @@ This workflow guides you through creating comprehensive documentation for the en
 	for i, file := range sourceFiles {
 		relativePath := strings.TrimPrefix(file, projectPath)
 		relativePath = strings.TrimPrefix(relativePath, "/")
-		
+
 		sb.WriteString(fmt.Sprintf(`### Task 2.%d: Document %s
 - [ ] **Objective:** Create comprehensive documentation for this file
 - [ ] **Input:** Single-file distillation of %s
@@ -377,7 +377,7 @@ This workflow guides you through creating comprehensive documentation for the en
 
 func (a *MultiFileDocsFlowAction) generateDocsIndex(basename, date string, sourceFiles []string, projectPath string) string {
 	var sb strings.Builder
-	
+
 	sb.WriteString(fmt.Sprintf(`# 📖 Documentation Index
 
 **Project:** %s
@@ -408,12 +408,12 @@ The following files have individual documentation:
 	for _, file := range sourceFiles {
 		relativePath := strings.TrimPrefix(file, projectPath)
 		relativePath = strings.TrimPrefix(relativePath, "/")
-		
+
 		docFileName := strings.ReplaceAll(relativePath, "/", "_")
 		docFileName = strings.ReplaceAll(docFileName, ".", "_")
 		docFileName = docFileName + ".md"
-		
-		sb.WriteString(fmt.Sprintf("| %s | [files/%s](files/%s) | 📝 Template Ready | %s |\n", 
+
+		sb.WriteString(fmt.Sprintf("| %s | [files/%s](files/%s) | 📝 Template Ready | %s |\n",
 			relativePath, docFileName, docFileName, date))
 	}
 
@@ -557,9 +557,9 @@ Each API is documented using this standard format:
 **Category:** Core | Utility | Configuration | Integration
 
 #### Signature
-` + "```language" + `
+`+"```language"+`
 functionName(param1: Type1, param2: Type2) -> ReturnType
-` + "```" + `
+`+"```"+`
 
 #### Parameters
 - **param1** (Type1): Description of parameter 1
@@ -573,11 +573,11 @@ functionName(param1: Type1, param2: Type2) -> ReturnType
 - **ExceptionType2**: When this exception occurs
 
 #### Example Usage
-` + "```language" + `
+`+"```language"+`
 // Example showing how to use this API
 const result = APIName(value1, value2);
 console.log(result);
-` + "```" + `
+`+"```"+`
 
 #### Related APIs
 - [RelatedAPI1](#relatedapi1): How they work together
@@ -588,7 +588,7 @@ console.log(result);
 ## 🚀 Getting Started with APIs
 
 ### Basic Usage Pattern
-` + "```language" + `
+`+"```language"+`
 // 1. Initialize
 const instance = new MainAPI(config);
 
@@ -604,10 +604,10 @@ if (result.success) {
 } else {
     console.error('Error:', result.error);
 }
-` + "```" + `
+`+"```"+`
 
 ### Error Handling Pattern
-` + "```language" + `
+`+"```language"+`
 try {
     const result = api.dangerousOperation(data);
     return result;
@@ -618,7 +618,7 @@ try {
     console.error('Unexpected Error:', e.message);
     throw e;
 }
-` + "```" + `
+`+"```"+`
 
 ---
 
@@ -644,7 +644,7 @@ public API found in the codebase. Focus on:
 ## 🔗 Integration Examples
 
 ### Common Integration Patterns
-` + "```language" + `
+`+"```language"+`
 // Pattern 1: Simple integration
 const api = new SimpleAPI();
 api.process(data);
@@ -657,10 +657,10 @@ api.on('error', (error) => handleError(error));
 api.processAsync(data)
    .then(result => handleSuccess(result))
    .catch(error => handleError(error));
-` + "```" + `
+`+"```"+`
 
 ### External System Integration
-` + "```language" + `
+`+"```language"+`
 // Example: Database integration
 const dbAPI = new DatabaseAPI(connectionString);
 const result = await dbAPI.query(sql, parameters);
@@ -668,7 +668,7 @@ const result = await dbAPI.query(sql, parameters);
 // Example: HTTP API integration
 const httpAPI = new HttpAPI(baseUrl);
 const response = await httpAPI.post('/endpoint', data);
-` + "```" + `
+`+"```"+`
 
 ---
 
@@ -759,22 +759,22 @@ Brief description of what this project does and why it exists. Include the main 
 - Requirement 3
 
 ### Installation
-` + "```bash" + `
+`+"```bash"+`
 # Installation command
 npm install %s
 # or
 git clone https://github.com/user/%s.git
-` + "```" + `
+`+"```"+`
 
 ### Basic Usage
-` + "```language" + `
+`+"```language"+`
 // Quick example showing basic usage
 import { MainAPI } from '%s';
 
 const api = new MainAPI();
 const result = api.process(data);
 console.log(result);
-` + "```" + `
+`+"```"+`
 
 ## 📚 Documentation
 
@@ -796,14 +796,14 @@ console.log(result);
 ## 🏗️ Architecture
 
 ### High-Level Structure
-` + "```" + `
+`+"```"+`
 %s/
 ├── core/           # Core functionality
 ├── utils/          # Utility functions
 ├── config/         # Configuration
 ├── integrations/   # External integrations
 └── examples/       # Usage examples
-` + "```" + `
+`+"```"+`
 
 ### Key Components
 - **Core Module:** Primary functionality and APIs
@@ -814,7 +814,7 @@ console.log(result);
 ## 🔧 Development
 
 ### Setup Development Environment
-` + "```bash" + `
+`+"```bash"+`
 # Clone repository
 git clone https://github.com/user/%s.git
 cd %s
@@ -827,7 +827,7 @@ npm test
 
 # Start development server
 npm run dev
-` + "```" + `
+`+"```"+`
 
 ### Development Workflow
 1. Create feature branch from main
@@ -837,7 +837,7 @@ npm run dev
 5. Code review and merge
 
 ### Testing
-` + "```bash" + `
+`+"```bash"+`
 # Run all tests
 npm test
 
@@ -846,19 +846,19 @@ npm test -- --grep "component"
 
 # Run with coverage
 npm run test:coverage
-` + "```" + `
+`+"```"+`
 
 ## 📖 Examples
 
 ### Basic Example
-` + "```language" + `
+`+"```language"+`
 // Example 1: Basic usage
 const result = api.basicOperation(input);
 console.log('Result:', result);
-` + "```" + `
+`+"```"+`
 
 ### Advanced Example
-` + "```language" + `
+`+"```language"+`
 // Example 2: Advanced configuration
 const api = new API({
     option1: 'value1',
@@ -870,10 +870,10 @@ const api = new API({
 
 const result = await api.advancedOperation(complexInput);
 console.log('Advanced result:', result);
-` + "```" + `
+`+"```"+`
 
 ### Integration Example
-` + "```language" + `
+`+"```language"+`
 // Example 3: Integration with external system
 const integration = new ExternalIntegration(api);
 integration.on('data', (data) => {
@@ -881,7 +881,7 @@ integration.on('data', (data) => {
 });
 
 await integration.connect();
-` + "```" + `
+`+"```"+`
 
 ## 🤝 Contributing
 
@@ -983,14 +983,14 @@ func (a *MultiFileDocsFlowAction) generateFileDocTemplate(filePath, basename str
 **Purpose:** What this class does
 **Usage Pattern:** How it's typically used
 
-` + "```language" + `
+`+"```language"+`
 // Constructor and basic usage
 const instance = new ClassName(parameters);
-` + "```" + `
+`+"```"+`
 
 **Public Methods:**
-- ` + "`" + `methodName(params)` + "`" + `: Description
-- ` + "`" + `methodName2(params)` + "`" + `: Description
+- `+"`"+`methodName(params)`+"`"+`: Description
+- `+"`"+`methodName2(params)`+"`"+`: Description
 
 ### Functions
 [TO BE COMPLETED: Document all public functions]
@@ -1003,16 +1003,16 @@ const instance = new ClassName(parameters);
 
 **Returns:** Return type and description
 
-` + "```language" + `
+`+"```language"+`
 // Usage example
 const result = functionName(value1, value2);
-` + "```" + `
+`+"```"+`
 
 ### Constants/Variables
 [TO BE COMPLETED: Document public constants]
 
-- ` + "`" + `CONSTANT_NAME` + "`" + `: Description and usage
-- ` + "`" + `VARIABLE_NAME` + "`" + `: Description and usage
+- `+"`"+`CONSTANT_NAME`+"`"+`: Description and usage
+- `+"`"+`VARIABLE_NAME`+"`"+`: Description and usage
 
 ## 🔧 Implementation Details
 
@@ -1031,13 +1031,13 @@ const result = functionName(value1, value2);
 [TO BE COMPLETED: Document testing approach]
 
 ### Example Tests
-` + "```language" + `
+`+"```language"+`
 // Example test case
 test('should handle valid input', () => {
     const result = functionName(validInput);
     expect(result).toBe(expectedOutput);
 });
-` + "```" + `
+`+"```"+`
 
 ## 🔗 Integration
 
@@ -1047,11 +1047,11 @@ test('should handle valid input', () => {
 ### Usage Patterns
 [TO BE COMPLETED: Common ways this file is used]
 
-` + "```language" + `
+`+"```language"+`
 // Common usage pattern 1
 import { MainClass } from './%s';
 const instance = new MainClass();
-` + "```" + `
+`+"```"+`
 
 ### Dependencies Required
 [TO BE COMPLETED: What other files/modules this depends on]

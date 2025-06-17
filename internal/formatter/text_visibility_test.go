@@ -121,18 +121,18 @@ func TestTextFormatter_VisibilityPrefixes(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			formatter := NewTextFormatter(Options{})
 			var buf bytes.Buffer
-			
+
 			if file, ok := tt.node.(*ir.DistilledFile); ok {
 				err := formatter.Format(&buf, file)
 				assert.NoError(t, err)
 			}
-			
+
 			output := strings.TrimSpace(buf.String())
 			// Remove file tags for comparison
 			output = strings.Replace(output, "<file path=\""+tt.node.(*ir.DistilledFile).Path+"\">", "", 1)
 			output = strings.Replace(output, "</file>", "", 1)
 			output = strings.TrimSpace(output)
-			
+
 			assert.Contains(t, output, tt.expected)
 		})
 	}
@@ -143,15 +143,15 @@ func TestGetVisibilityPrefix(t *testing.T) {
 		visibility ir.Visibility
 		expected   string
 	}{
-		{ir.VisibilityPublic, ""},       // No prefix for public
-		{ir.VisibilityPrivate, "-"},     // Private
-		{ir.VisibilityProtected, "*"},   // Protected
-		{ir.VisibilityInternal, "~"},    // UML package/internal
-		{ir.VisibilityFilePrivate, "-"}, // Swift fileprivate -> similar to private
-		{ir.VisibilityOpen, ""},         // Swift open -> treat as public
+		{ir.VisibilityPublic, ""},              // No prefix for public
+		{ir.VisibilityPrivate, "-"},            // Private
+		{ir.VisibilityProtected, "*"},          // Protected
+		{ir.VisibilityInternal, "~"},           // UML package/internal
+		{ir.VisibilityFilePrivate, "-"},        // Swift fileprivate -> similar to private
+		{ir.VisibilityOpen, ""},                // Swift open -> treat as public
 		{ir.VisibilityProtectedInternal, "*~"}, // C# protected internal -> combination
 		{ir.VisibilityPrivateProtected, "-*"},  // C# private protected -> combination
-		{"", ""},                        // Default to public (no prefix)
+		{"", ""},                               // Default to public (no prefix)
 	}
 
 	for _, tt := range tests {

@@ -31,18 +31,18 @@ func (f *XMLFormatter) Extension() string {
 func (f *XMLFormatter) Format(w io.Writer, file *ir.DistilledFile) error {
 	// Write XML declaration
 	fmt.Fprintln(w, `<?xml version="1.0" encoding="UTF-8"?>`)
-	
+
 	// Start root element
 	fmt.Fprintln(w, `<distilled>`)
-	
+
 	// Format the file
 	if err := f.formatFile(w, file, 1); err != nil {
 		return err
 	}
-	
+
 	// Close root element
 	fmt.Fprintln(w, `</distilled>`)
-	
+
 	return nil
 }
 
@@ -50,45 +50,45 @@ func (f *XMLFormatter) Format(w io.Writer, file *ir.DistilledFile) error {
 func (f *XMLFormatter) FormatMultiple(w io.Writer, files []*ir.DistilledFile) error {
 	// Write XML declaration
 	fmt.Fprintln(w, `<?xml version="1.0" encoding="UTF-8"?>`)
-	
+
 	// Start root element
 	fmt.Fprintln(w, `<distilled>`)
-	
+
 	// Format each file
 	for _, file := range files {
 		if err := f.formatFile(w, file, 1); err != nil {
 			return err
 		}
 	}
-	
+
 	// Close root element
 	fmt.Fprintln(w, `</distilled>`)
-	
+
 	return nil
 }
 
 // formatFile formats a file element
 func (f *XMLFormatter) formatFile(w io.Writer, file *ir.DistilledFile, depth int) error {
 	indent := strings.Repeat("  ", depth)
-	
+
 	// Start file element
 	fmt.Fprintf(w, "%s<file", indent)
 	f.writeAttr(w, "path", file.Path)
 	f.writeAttr(w, "language", file.Language)
 	f.writeAttr(w, "version", file.Version)
-	
+
 	if f.options.IncludeLocation {
 		loc := file.GetLocation()
 		f.writeLocationAttrs(w, &loc)
 	}
-	
+
 	fmt.Fprintln(w, ">")
-	
+
 	// Write metadata if included
 	if f.options.IncludeMetadata && file.Metadata != nil {
 		f.formatMetadata(w, file.Metadata, depth+1)
 	}
-	
+
 	// Write errors
 	if len(file.Errors) > 0 {
 		fmt.Fprintf(w, "%s  <errors>\n", indent)
@@ -97,7 +97,7 @@ func (f *XMLFormatter) formatFile(w io.Writer, file *ir.DistilledFile, depth int
 		}
 		fmt.Fprintf(w, "%s  </errors>\n", indent)
 	}
-	
+
 	// Write nodes
 	if len(file.Children) > 0 {
 		fmt.Fprintf(w, "%s  <nodes>\n", indent)
@@ -106,10 +106,10 @@ func (f *XMLFormatter) formatFile(w io.Writer, file *ir.DistilledFile, depth int
 		}
 		fmt.Fprintf(w, "%s  </nodes>\n", indent)
 	}
-	
+
 	// Close file element
 	fmt.Fprintf(w, "%s</file>\n", indent)
-	
+
 	return nil
 }
 
@@ -133,14 +133,14 @@ func (f *XMLFormatter) formatMetadata(w io.Writer, meta *ir.FileMetadata, depth 
 // formatNode formats a node element
 func (f *XMLFormatter) formatNode(w io.Writer, node ir.DistilledNode, depth int) {
 	indent := strings.Repeat("  ", depth)
-	
+
 	switch n := node.(type) {
 	case *ir.DistilledPackage:
 		fmt.Fprintf(w, "%s<package", indent)
 		f.writeAttr(w, "name", n.Name)
 		f.writeNodeAttrs(w, n)
 		f.formatNodeChildren(w, ">", "</package>", n.Children, depth)
-		
+
 	case *ir.DistilledImport:
 		fmt.Fprintf(w, "%s<import", indent)
 		f.writeAttr(w, "type", n.ImportType)
@@ -159,7 +159,7 @@ func (f *XMLFormatter) formatNode(w io.Writer, node ir.DistilledNode, depth int)
 		} else {
 			fmt.Fprintln(w, "/>")
 		}
-		
+
 	case *ir.DistilledClass:
 		fmt.Fprintf(w, "%s<class", indent)
 		f.writeAttr(w, "name", n.Name)
@@ -167,14 +167,14 @@ func (f *XMLFormatter) formatNode(w io.Writer, node ir.DistilledNode, depth int)
 		f.writeModifiers(w, n.Modifiers)
 		f.writeNodeAttrs(w, n)
 		f.formatNodeChildren(w, ">", "</class>", n.Children, depth)
-		
+
 	case *ir.DistilledInterface:
 		fmt.Fprintf(w, "%s<interface", indent)
 		f.writeAttr(w, "name", n.Name)
 		f.writeAttr(w, "visibility", string(n.Visibility))
 		f.writeNodeAttrs(w, n)
 		f.formatNodeChildren(w, ">", "</interface>", n.Children, depth)
-		
+
 	case *ir.DistilledFunction:
 		fmt.Fprintf(w, "%s<function", indent)
 		f.writeAttr(w, "name", n.Name)
@@ -184,11 +184,11 @@ func (f *XMLFormatter) formatNode(w io.Writer, node ir.DistilledNode, depth int)
 			f.writeAttr(w, "returns", n.Returns.Name)
 		}
 		f.writeNodeAttrs(w, n)
-		
+
 		hasContent := len(n.Parameters) > 0 || (n.Implementation != "" && !f.options.Compact)
 		if hasContent {
 			fmt.Fprintln(w, ">")
-			
+
 			// Write parameters
 			if len(n.Parameters) > 0 {
 				fmt.Fprintf(w, "%s  <parameters>\n", indent)
@@ -211,18 +211,18 @@ func (f *XMLFormatter) formatNode(w io.Writer, node ir.DistilledNode, depth int)
 				}
 				fmt.Fprintf(w, "%s  </parameters>\n", indent)
 			}
-			
+
 			// Write implementation
 			if n.Implementation != "" && !f.options.Compact {
-				fmt.Fprintf(w, "%s  <implementation><![CDATA[\n%s\n%s  ]]></implementation>\n", 
+				fmt.Fprintf(w, "%s  <implementation><![CDATA[\n%s\n%s  ]]></implementation>\n",
 					indent, n.Implementation, indent)
 			}
-			
+
 			fmt.Fprintf(w, "%s</function>\n", indent)
 		} else {
 			fmt.Fprintln(w, "/>")
 		}
-		
+
 	case *ir.DistilledField:
 		fmt.Fprintf(w, "%s<field", indent)
 		f.writeAttr(w, "name", n.Name)
@@ -236,21 +236,21 @@ func (f *XMLFormatter) formatNode(w io.Writer, node ir.DistilledNode, depth int)
 		}
 		f.writeNodeAttrs(w, n)
 		fmt.Fprintln(w, "/>")
-		
+
 	case *ir.DistilledStruct:
 		fmt.Fprintf(w, "%s<struct", indent)
 		f.writeAttr(w, "name", n.Name)
 		f.writeAttr(w, "visibility", string(n.Visibility))
 		f.writeNodeAttrs(w, n)
 		f.formatNodeChildren(w, ">", "</struct>", n.Children, depth)
-		
+
 	case *ir.DistilledEnum:
 		fmt.Fprintf(w, "%s<enum", indent)
 		f.writeAttr(w, "name", n.Name)
 		f.writeAttr(w, "visibility", string(n.Visibility))
 		f.writeNodeAttrs(w, n)
 		f.formatNodeChildren(w, ">", "</enum>", n.Children, depth)
-		
+
 	case *ir.DistilledTypeAlias:
 		fmt.Fprintf(w, "%s<type_alias", indent)
 		f.writeAttr(w, "name", n.Name)
@@ -260,16 +260,16 @@ func (f *XMLFormatter) formatNode(w io.Writer, node ir.DistilledNode, depth int)
 		}
 		f.writeNodeAttrs(w, n)
 		fmt.Fprintln(w, "/>")
-		
+
 	case *ir.DistilledComment:
 		fmt.Fprintf(w, "%s<comment", indent)
 		f.writeAttr(w, "format", n.Format)
 		f.writeNodeAttrs(w, n)
 		fmt.Fprintf(w, "><![CDATA[%s]]></comment>\n", n.Text)
-		
+
 	case *ir.DistilledError:
 		f.formatError(w, n, depth)
-		
+
 	default:
 		// Generic node
 		fmt.Fprintf(w, "%s<node", indent)

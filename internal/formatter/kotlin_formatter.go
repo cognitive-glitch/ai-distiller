@@ -101,7 +101,7 @@ func (f *KotlinFormatter) formatClass(class *ir.DistilledClass, indent int) stri
 			break
 		}
 	}
-	
+
 	// Check if it's an object declaration (static modifier in Kotlin indicates object)
 	isObject := false
 	for _, mod := range class.Modifiers {
@@ -116,7 +116,7 @@ func (f *KotlinFormatter) formatClass(class *ir.DistilledClass, indent int) stri
 	if classDecl != "" {
 		classDecl += " "
 	}
-	
+
 	// Use 'object' keyword for Kotlin objects, otherwise 'class'
 	if isObject {
 		classDecl += "object " + class.Name
@@ -217,7 +217,7 @@ func (f *KotlinFormatter) formatClass(class *ir.DistilledClass, indent int) stri
 			parts = append(parts, f.formatClass(n, indent+1))
 		}
 	}
-	
+
 	// Add closing brace
 	parts = append(parts, indentStr+"}")
 
@@ -267,17 +267,17 @@ func (f *KotlinFormatter) formatInterface(intf *ir.DistilledInterface, indent in
 
 	var parts []string
 	parts = append(parts, indentStr+intfDecl+" {")
-	
+
 	// Format children (methods)
 	for _, child := range intf.Children {
 		if fn, ok := child.(*ir.DistilledFunction); ok {
 			parts = append(parts, f.formatFunction(fn, indent+1))
 		}
 	}
-	
+
 	// Add closing brace
 	parts = append(parts, indentStr+"}")
-	
+
 	return strings.Join(parts, "\n")
 }
 
@@ -301,7 +301,7 @@ func (f *KotlinFormatter) formatEnum(enum *ir.DistilledEnum, indent int) string 
 
 	var parts []string
 	parts = append(parts, indentStr+enumDecl+" {")
-	
+
 	// Format enum values and methods
 	for _, child := range enum.Children {
 		switch n := child.(type) {
@@ -316,10 +316,10 @@ func (f *KotlinFormatter) formatEnum(enum *ir.DistilledEnum, indent int) string 
 			parts = append(parts, valueStr)
 		}
 	}
-	
+
 	// Add closing brace
 	parts = append(parts, indentStr+"}")
-	
+
 	return strings.Join(parts, "\n")
 }
 
@@ -357,7 +357,7 @@ func (f *KotlinFormatter) formatFunction(fn *ir.DistilledFunction, indent int) s
 	if signature != "" {
 		signature += " "
 	}
-	
+
 	// Add 'fun' keyword
 	signature += "fun "
 
@@ -401,7 +401,7 @@ func (f *KotlinFormatter) formatFunction(fn *ir.DistilledFunction, indent int) s
 		// Strip leading and trailing braces from implementation if present
 		impl := fn.Implementation
 		lines := strings.Split(impl, "\n")
-		
+
 		// Find first and last non-empty lines
 		firstNonEmpty := -1
 		lastNonEmpty := -1
@@ -413,21 +413,21 @@ func (f *KotlinFormatter) formatFunction(fn *ir.DistilledFunction, indent int) s
 				lastNonEmpty = i
 			}
 		}
-		
+
 		// Check if first and last lines are braces
 		if firstNonEmpty >= 0 && lastNonEmpty >= 0 && firstNonEmpty < lastNonEmpty {
 			firstLine := strings.TrimSpace(lines[firstNonEmpty])
 			lastLine := strings.TrimSpace(lines[lastNonEmpty])
 			if firstLine == "{" && lastLine == "}" {
 				// Remove brace lines
-				lines = lines[firstNonEmpty+1:lastNonEmpty]
+				lines = lines[firstNonEmpty+1 : lastNonEmpty]
 			}
 		}
-		
+
 		// Join back and add
 		impl = strings.Join(lines, "\n")
 		impl = strings.TrimSpace(impl)
-		
+
 		// If implementation is empty after stripping braces, don't add anything
 		if impl == "" {
 			// Don't add implementation block
@@ -500,9 +500,9 @@ func (f *KotlinFormatter) formatTypeRef(typeRef *ir.TypeRef) string {
 	if typeRef == nil {
 		return ""
 	}
-	
+
 	result := typeRef.Name
-	
+
 	// Add generic type arguments if present
 	if len(typeRef.TypeArgs) > 0 {
 		typeArgs := []string{}
@@ -511,12 +511,11 @@ func (f *KotlinFormatter) formatTypeRef(typeRef *ir.TypeRef) string {
 		}
 		result += "<" + strings.Join(typeArgs, ", ") + ">"
 	}
-	
+
 	// Add nullable indicator if present
 	if typeRef.IsNullable {
 		result += "?"
 	}
-	
+
 	return result
 }
-

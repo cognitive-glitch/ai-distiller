@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/janreges/ai-distiller/internal/ir"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/janreges/ai-distiller/internal/ir"
 )
 
 func TestProcessorBasicClass(t *testing.T) {
@@ -48,17 +48,17 @@ class User extends BaseModel
 
 	proc := NewProcessor()
 	proc.EnableTreeSitter()
-	
+
 	ctx := context.Background()
 	file, err := proc.Process(ctx, strings.NewReader(source), "test.php")
-	
+
 	require.NoError(t, err)
 	require.NotNil(t, file)
-	
+
 	// Check file metadata
 	assert.Equal(t, "test.php", file.Path)
 	assert.Equal(t, "php", file.Language)
-	
+
 	// Find the User class
 	var userClass *ir.DistilledClass
 	for _, child := range file.Children {
@@ -69,7 +69,7 @@ class User extends BaseModel
 			}
 		}
 	}
-	
+
 	require.NotNil(t, userClass, "User class not found")
 }
 
@@ -100,16 +100,16 @@ class UserController
 
 	proc := NewProcessor()
 	proc.EnableTreeSitter()
-	
+
 	ctx := context.Background()
 	file, err := proc.Process(ctx, strings.NewReader(source), "modern.php")
-	
+
 	require.NoError(t, err)
 	require.NotNil(t, file)
-	
+
 	// Should parse without errors
 	assert.Empty(t, file.Errors)
-	
+
 	// Find UserController class
 	var controller *ir.DistilledClass
 	for _, child := range file.Children {
@@ -119,11 +119,11 @@ class UserController
 		}
 	}
 	require.NotNil(t, controller, "UserController class not found")
-	
+
 	// Check class has attribute
 	assert.NotEmpty(t, controller.Decorators, "UserController should have decorators")
 	assert.Contains(t, controller.Decorators[0], "Route", "UserController should have Route attribute")
-	
+
 	// Check constructor property promotion
 	fieldCount := 0
 	var apiKeyField *ir.DistilledField
@@ -138,7 +138,7 @@ class UserController
 	assert.Equal(t, 2, fieldCount, "Expected 2 promoted properties")
 	require.NotNil(t, apiKeyField, "apiKey field not found")
 	assert.Equal(t, ir.VisibilityPrivate, apiKeyField.Visibility, "apiKey should be private")
-	
+
 	// Check for readonly modifier
 	hasReadonly := false
 	for _, mod := range apiKeyField.Modifiers {
@@ -148,7 +148,7 @@ class UserController
 		}
 	}
 	assert.True(t, hasReadonly, "apiKey should have readonly modifier")
-	
+
 	// Check method with attribute
 	var showMethod *ir.DistilledFunction
 	for _, child := range controller.Children {
@@ -159,7 +159,7 @@ class UserController
 	}
 	require.NotNil(t, showMethod, "show method not found")
 	assert.NotEmpty(t, showMethod.Decorators, "show method should have decorators")
-	
+
 	// Check union type parameter
 	assert.Len(t, showMethod.Parameters, 1, "show method should have 1 parameter")
 	assert.Contains(t, showMethod.Parameters[0].Type.Name, "|", "Parameter should have union type")
@@ -187,13 +187,13 @@ class UserService implements ServiceInterface
 
 	proc := NewProcessor()
 	proc.EnableTreeSitter()
-	
+
 	ctx := context.Background()
 	file, err := proc.Process(ctx, strings.NewReader(source), "namespace.php")
-	
+
 	require.NoError(t, err)
 	require.NotNil(t, file)
-	
+
 	// Check that imports are captured
 	importCount := 0
 	var loggableImport, cacheableImport *ir.DistilledImport
@@ -208,10 +208,10 @@ class UserService implements ServiceInterface
 			}
 		}
 	}
-	
+
 	// Should have at least some imports
 	assert.Greater(t, importCount, 0, "No imports found")
-	
+
 	// Check grouped use statements are parsed correctly
 	assert.NotNil(t, loggableImport, "Loggable import not found")
 	assert.NotNil(t, cacheableImport, "Cacheable import not found")
@@ -244,16 +244,16 @@ class User
 
 	proc := NewProcessor()
 	proc.EnableTreeSitter()
-	
+
 	ctx := context.Background()
 	file, err := proc.Process(ctx, strings.NewReader(source), "traits.php")
-	
+
 	require.NoError(t, err)
 	require.NotNil(t, file)
-	
+
 	// Should have parsed traits and class
 	assert.GreaterOrEqual(t, len(file.Children), 3, "Expected at least 3 top-level nodes")
-	
+
 	// Check for Timestampable trait
 	var timestampableTrait *ir.DistilledClass
 	for _, child := range file.Children {
@@ -266,7 +266,7 @@ class User
 		}
 	}
 	assert.NotNil(t, timestampableTrait, "Timestampable trait not found or not marked as trait")
-	
+
 	// Check for User class with trait use comment
 	var userClass *ir.DistilledClass
 	for _, child := range file.Children {
@@ -276,7 +276,7 @@ class User
 		}
 	}
 	require.NotNil(t, userClass, "User class not found")
-	
+
 	// Check that User class uses traits
 	assert.NotEmpty(t, userClass.Mixins, "User class should have mixins (traits)")
 	assert.Len(t, userClass.Mixins, 2, "User class should use 2 traits")
@@ -321,16 +321,16 @@ class Model implements Serializable
 
 	proc := NewProcessor()
 	proc.EnableTreeSitter()
-	
+
 	ctx := context.Background()
 	file, err := proc.Process(ctx, strings.NewReader(source), "interfaces.php")
-	
+
 	require.NoError(t, err)
 	require.NotNil(t, file)
-	
+
 	// Should have parsed interfaces and class
 	assert.GreaterOrEqual(t, len(file.Children), 4, "Expected at least 4 top-level nodes")
-	
+
 	// Check that interfaces are properly parsed as DistilledInterface
 	interfaceCount := 0
 	var jsonable, arrayable, serializable *ir.DistilledInterface
@@ -347,12 +347,12 @@ class Model implements Serializable
 			}
 		}
 	}
-	
+
 	assert.Equal(t, 3, interfaceCount, "Expected 3 interfaces")
 	assert.NotNil(t, jsonable, "Jsonable interface not found")
 	assert.NotNil(t, arrayable, "Arrayable interface not found")
 	assert.NotNil(t, serializable, "Serializable interface not found")
-	
+
 	// Check that Serializable extends other interfaces
 	assert.Equal(t, 2, len(serializable.Extends), "Serializable should extend 2 interfaces")
 }
@@ -361,18 +361,18 @@ func TestProcessorFallbackToLineBased(t *testing.T) {
 	// Test that we can fall back gracefully
 	proc := NewProcessor()
 	proc.useTreeSitter = false // Force line-based parser
-	
+
 	source := `<?php
 class User {
     public $name;
 }`
-	
+
 	ctx := context.Background()
 	file, err := proc.Process(ctx, strings.NewReader(source), "fallback.php")
-	
+
 	require.NoError(t, err)
 	require.NotNil(t, file)
-	
+
 	// Should at least return a valid file structure
 	assert.Equal(t, "php", file.Language)
 	assert.Equal(t, "fallback.php", file.Path)

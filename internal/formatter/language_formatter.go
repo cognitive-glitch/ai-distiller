@@ -1,18 +1,18 @@
 package formatter
 
 import (
-	"io"
 	"github.com/janreges/ai-distiller/internal/ir"
+	"io"
 )
 
 // LanguageFormatter defines the interface for language-specific text formatting
 type LanguageFormatter interface {
 	// FormatNode formats a single IR node in language-specific syntax
 	FormatNode(w io.Writer, node ir.DistilledNode, indent int) error
-	
+
 	// GetLanguage returns the language this formatter supports
 	GetLanguage() string
-	
+
 	// Reset resets the formatter state for a new file (optional)
 	Reset()
 }

@@ -3,7 +3,7 @@ package aiactions
 import (
 	"fmt"
 	"strings"
-	
+
 	"github.com/janreges/ai-distiller/internal/ai"
 )
 
@@ -35,7 +35,7 @@ func (a *RefactoringPromptAction) Validate() error {
 
 func (a *RefactoringPromptAction) GenerateContent(ctx *ai.ActionContext) (*ai.ContentResult, error) {
 	prompt := a.generateRefactoringPrompt(ctx)
-	
+
 	return &ai.ContentResult{
 		ContentBefore: prompt,
 		ContentAfter:  "", // No content after for this action
@@ -44,7 +44,7 @@ func (a *RefactoringPromptAction) GenerateContent(ctx *ai.ActionContext) (*ai.Co
 
 func (a *RefactoringPromptAction) generateRefactoringPrompt(ctx *ai.ActionContext) string {
 	var sb strings.Builder
-	
+
 	sb.WriteString(fmt.Sprintf(`# Comprehensive Refactoring Analysis Request
 
 **Project:** %s
@@ -166,6 +166,6 @@ Rate each area on a 0-100 scale:
 The following is the distilled codebase for analysis:
 
 `, ctx.BaseName, ctx.Timestamp.Format("2006-01-02")))
-	
+
 	return sb.String()
 }

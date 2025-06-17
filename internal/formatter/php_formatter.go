@@ -65,12 +65,12 @@ func (f *PHPFormatter) formatImport(imp *ir.DistilledImport) string {
 	if imp.ImportType == "namespace" {
 		return fmt.Sprintf("namespace %s;", imp.Module)
 	}
-	
+
 	// Use statement with alias
 	if len(imp.Symbols) == 1 && imp.Symbols[0].Alias != "" {
 		return fmt.Sprintf("use %s\\%s as %s;", imp.Module, imp.Symbols[0].Name, imp.Symbols[0].Alias)
 	}
-	
+
 	// Check for function/const imports
 	if strings.Contains(imp.Module, "function ") {
 		return fmt.Sprintf("use %s;", imp.Module)
@@ -78,7 +78,7 @@ func (f *PHPFormatter) formatImport(imp *ir.DistilledImport) string {
 	if strings.Contains(imp.Module, "const ") {
 		return fmt.Sprintf("use %s;", imp.Module)
 	}
-	
+
 	return fmt.Sprintf("use %s;", imp.Module)
 }
 
@@ -103,7 +103,7 @@ func (f *PHPFormatter) formatClass(class *ir.DistilledClass, indent int) string 
 	// Check if this is an enum or trait
 	isEnum := class.Extensions != nil && class.Extensions.PHP != nil && class.Extensions.PHP.IsEnum
 	isTrait := class.Extensions != nil && class.Extensions.PHP != nil && class.Extensions.PHP.IsTrait
-	
+
 	// Class modifiers (but not for enums or traits)
 	modifiers := []string{}
 	if !isEnum && !isTrait {
@@ -130,7 +130,7 @@ func (f *PHPFormatter) formatClass(class *ir.DistilledClass, indent int) string 
 		classDecl = strings.Join(modifiers, " ") + " "
 	}
 	classDecl += classType + " " + class.Name
-	
+
 	// Enum backing type
 	if isEnum && class.Extensions.PHP.EnumBackingType != "" {
 		classDecl += ": " + class.Extensions.PHP.EnumBackingType
@@ -185,16 +185,16 @@ func (f *PHPFormatter) formatClass(class *ir.DistilledClass, indent int) string 
 				"__clone":       false, // Keep this - defines cloning behavior
 				"__debugInfo":   true,  // var_dump() behavior
 			}
-			
+
 			if skip, found := magicMethods[n.Name]; found && skip {
 				continue
 			}
-			
+
 			// Special case: skip __construct if it has no parameters
 			if n.Name == "__construct" && len(n.Parameters) == 0 {
 				continue
 			}
-			
+
 			parts = append(parts, f.formatFunction(n, indent+1))
 		case *ir.DistilledField:
 			// Skip virtual fields from docblock - they're already shown in the docblock
@@ -204,7 +204,7 @@ func (f *PHPFormatter) formatClass(class *ir.DistilledClass, indent int) string 
 			parts = append(parts, f.formatField(n, indent+1))
 		}
 	}
-	
+
 	// Add closing brace
 	parts = append(parts, indentStr+"}")
 
@@ -235,7 +235,7 @@ func (f *PHPFormatter) formatInterface(intf *ir.DistilledInterface, indent int) 
 			parts = append(parts, f.formatFunction(fn, indent+1))
 		}
 	}
-	
+
 	// Add closing brace
 	parts = append(parts, indentStr+"}")
 
@@ -255,7 +255,7 @@ func (f *PHPFormatter) formatEnum(enum *ir.DistilledEnum, indent int) string {
 
 	var parts []string
 	parts = append(parts, indentStr+enumDecl+" {")
-	
+
 	// Format enum members and methods
 	for _, child := range enum.Children {
 		switch n := child.(type) {
@@ -271,10 +271,10 @@ func (f *PHPFormatter) formatEnum(enum *ir.DistilledEnum, indent int) string {
 			parts = append(parts, caseStr)
 		}
 	}
-	
+
 	// Add closing brace
 	parts = append(parts, indentStr+"}")
-	
+
 	return strings.Join(parts, "\n")
 }
 
@@ -310,7 +310,7 @@ func (f *PHPFormatter) formatFunction(fn *ir.DistilledFunction, indent int) stri
 	params := []string{}
 	for _, p := range fn.Parameters {
 		param := ""
-		
+
 		// Type hint
 		if p.Type.Name != "" {
 			typeName := p.Type.Name
@@ -320,19 +320,19 @@ func (f *PHPFormatter) formatFunction(fn *ir.DistilledFunction, indent int) stri
 			}
 			param = typeName + " "
 		}
-		
+
 		// Parameter name (PHP variables start with $)
 		paramName := p.Name
 		if !strings.HasPrefix(paramName, "$") {
 			paramName = "$" + paramName
 		}
 		param += paramName
-		
+
 		// Default value
 		if p.DefaultValue != "" {
 			param += " = " + p.DefaultValue
 		}
-		
+
 		params = append(params, param)
 	}
 	signature += "(" + strings.Join(params, ", ") + ")"
@@ -358,7 +358,7 @@ func (f *PHPFormatter) formatFunction(fn *ir.DistilledFunction, indent int) stri
 			signature += " {\n"
 			// Strip leading and trailing braces from implementation if present
 			lines := strings.Split(fn.Implementation, "\n")
-			
+
 			// Find first and last non-empty lines
 			firstNonEmpty := -1
 			lastNonEmpty := -1
@@ -370,21 +370,21 @@ func (f *PHPFormatter) formatFunction(fn *ir.DistilledFunction, indent int) stri
 					lastNonEmpty = i
 				}
 			}
-			
+
 			// Check if first and last lines are braces
 			if firstNonEmpty >= 0 && lastNonEmpty >= 0 && firstNonEmpty < lastNonEmpty {
 				firstLine := strings.TrimSpace(lines[firstNonEmpty])
 				lastLine := strings.TrimSpace(lines[lastNonEmpty])
 				if firstLine == "{" && lastLine == "}" {
 					// Remove brace lines
-					lines = lines[firstNonEmpty+1:lastNonEmpty]
+					lines = lines[firstNonEmpty+1 : lastNonEmpty]
 				}
 			}
-			
+
 			// Join back and add
 			impl = strings.Join(lines, "\n")
 			impl = strings.TrimSpace(impl)
-			
+
 			// Add implementation with proper closing
 			if impl != "" {
 				signature += impl
@@ -416,7 +416,7 @@ func (f *PHPFormatter) formatField(field *ir.DistilledField, indent int) string 
 	for _, dec := range field.Decorators {
 		result += fmt.Sprintf("%s#[%s]\n", indentStr, dec)
 	}
-	
+
 	// Check if this is an enum case
 	if field.Extensions != nil && field.Extensions.PHP != nil && field.Extensions.PHP.IsEnumCase {
 		// Format as enum case
@@ -452,12 +452,11 @@ func (f *PHPFormatter) formatField(field *ir.DistilledField, indent int) string 
 		} else {
 			fieldDecl = "$" + field.Name
 		}
-		
+
 		if field.Description != "" {
 			fieldDecl += " " + field.Description
 		}
-		
-		
+
 		return result + indentStr + accessMode + fieldDecl
 	}
 
@@ -482,7 +481,7 @@ func (f *PHPFormatter) formatField(field *ir.DistilledField, indent int) string 
 			fieldDecl += " = " + field.DefaultValue
 		}
 		fieldDecl += ";"
-		
+
 		// Add visibility keyword
 		visKeyword := f.getPHPVisibilityKeyword(field.Visibility)
 		if visKeyword != "" {
@@ -543,7 +542,7 @@ func (f *PHPFormatter) formatGlobalField(field *ir.DistilledField) string {
 			break
 		}
 	}
-	
+
 	fieldDecl := ""
 	if isConst {
 		fieldDecl = "const " + field.Name
@@ -555,12 +554,12 @@ func (f *PHPFormatter) formatGlobalField(field *ir.DistilledField) string {
 		}
 		fieldDecl = fieldName
 	}
-	
+
 	// Add value if specified
 	if field.DefaultValue != "" {
 		fieldDecl += " = " + field.DefaultValue
 	}
-	
+
 	return fieldDecl
 }
 
@@ -583,7 +582,7 @@ func (f *PHPFormatter) getPHPVisibilityKeyword(visibility ir.Visibility) string 
 // formatComment formats a comment node
 func (f *PHPFormatter) formatComment(n *ir.DistilledComment, indent int) string {
 	indentStr := strings.Repeat("    ", indent)
-	
+
 	switch n.Format {
 	case "docblock", "doc":
 		// Format as docblock
@@ -603,7 +602,7 @@ func (f *PHPFormatter) formatComment(n *ir.DistilledComment, indent int) string 
 		}
 		result += indentStr + " */"
 		return result
-		
+
 	case "block":
 		// Format as block comment
 		lines := strings.Split(n.Text, "\n")
@@ -618,7 +617,7 @@ func (f *PHPFormatter) formatComment(n *ir.DistilledComment, indent int) string 
 		}
 		result += indentStr + "*/"
 		return result
-		
+
 	default:
 		// Format as line comment (default)
 		lines := strings.Split(n.Text, "\n")

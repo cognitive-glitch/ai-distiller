@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/janreges/ai-distiller/internal/processor"
 	"github.com/janreges/ai-distiller/internal/ir"
+	"github.com/janreges/ai-distiller/internal/processor"
 )
 
 // TestPythonConstructs tests all 5 Python constructs with 3 different options
@@ -24,7 +24,7 @@ func TestPythonConstructs(t *testing.T) {
 		},
 		{
 			name:     "Construct 2 - Simple user model",
-			testDir:  "02_simple", 
+			testDir:  "02_simple",
 			filename: "source.py",
 		},
 		{
@@ -45,9 +45,9 @@ func TestPythonConstructs(t *testing.T) {
 	}
 
 	options := []struct {
-		name               string
-		opts               processor.ProcessOptions
-		expectedSuffix     string
+		name           string
+		opts           processor.ProcessOptions
+		expectedSuffix string
 	}{
 		{
 			name: "Full output",
@@ -60,7 +60,7 @@ func TestPythonConstructs(t *testing.T) {
 			expectedSuffix: "expected_full.txt",
 		},
 		{
-			name: "No private members", 
+			name: "No private members",
 			opts: processor.ProcessOptions{
 				IncludeComments:       true,
 				IncludeImports:        true,

@@ -30,7 +30,7 @@ func NewASTParser() *ASTParser {
 func (p *ASTParser) ProcessSource(ctx context.Context, source []byte, filename string) (*ir.DistilledFile, error) {
 	dbg := debug.FromContext(ctx).WithSubsystem("golang:ast")
 	defer dbg.Timing(debug.LevelDetailed, "AST parsing")()
-	
+
 	p.source = source
 	p.filename = filename
 
@@ -59,7 +59,7 @@ func (p *ASTParser) ProcessSource(ctx context.Context, source []byte, filename s
 		Children: []ir.DistilledNode{},
 		Errors:   []ir.DistilledError{},
 	}
-	
+
 	// Extract build constraints from comments
 	buildConstraints := p.extractBuildConstraints(file.Comments)
 	if len(buildConstraints) > 0 {
@@ -86,7 +86,7 @@ func (p *ASTParser) ProcessSource(ctx context.Context, source []byte, filename s
 			distilledFile.Children = append(distilledFile.Children, docComment)
 		}
 	}
-	
+
 	// Process package declaration
 	if file.Name != nil {
 		pkg := &ir.DistilledPackage{
@@ -108,7 +108,7 @@ func (p *ASTParser) ProcessSource(ctx context.Context, source []byte, filename s
 
 	// Single-pass processing to preserve declaration order
 	typeMap := make(map[string]ir.DistilledNode) // Map from type name to the distilled node
-	
+
 	for _, decl := range file.Decls {
 		switch d := decl.(type) {
 		case *ast.FuncDecl:
@@ -122,7 +122,7 @@ func (p *ASTParser) ProcessSource(ctx context.Context, source []byte, filename s
 							BaseNode: ir.BaseNode{
 								Location: p.getLocation(comment.Pos(), comment.End()),
 							},
-							Text: text,
+							Text:   text,
 							Format: "doc",
 						}
 						docComments = append(docComments, docComment)
@@ -155,17 +155,17 @@ func (p *ASTParser) ProcessSource(ctx context.Context, source []byte, filename s
 			}
 		}
 	}
-	
+
 	// Third pass: analyze interface satisfaction and add "implements" relationships
 	p.analyzeInterfaceSatisfaction(typeMap)
-	
+
 	// Fourth pass: process remaining comments
 	p.processComments(file, distilledFile)
 
 	// Log summary at detailed level
-	dbg.Logf(debug.LevelDetailed, "Processed Go file: %d children, %d types in typeMap", 
+	dbg.Logf(debug.LevelDetailed, "Processed Go file: %d children, %d types in typeMap",
 		len(distilledFile.Children), len(typeMap))
-	
+
 	// Dump final structure at trace level
 	debug.Lazy(ctx, debug.LevelTrace, func(d debug.Debugger) {
 		d.Dump(debug.LevelTrace, "Final Go IR structure", distilledFile)
@@ -184,19 +184,19 @@ func (p *ASTParser) getReceiverTypeName(fn *ir.DistilledFunction) string {
 			break
 		}
 	}
-	
+
 	if hasReceiverModifier && len(fn.Parameters) > 0 {
 		receiverType := fn.Parameters[0].Type.Name
 		// Strip pointer if present (*User -> User, *Cache[K,V] -> Cache[K,V])
 		if strings.HasPrefix(receiverType, "*") {
 			receiverType = receiverType[1:]
 		}
-		
+
 		// Extract base type name for generic types (Cache[K,V] -> Cache)
 		if bracketIndex := strings.Index(receiverType, "["); bracketIndex != -1 {
 			return receiverType[:bracketIndex]
 		}
-		
+
 		return receiverType
 	}
 	return ""
@@ -212,7 +212,7 @@ func (p *ASTParser) cleanMethodParameters(fn *ir.DistilledFunction) {
 			break
 		}
 	}
-	
+
 	if hasReceiverModifier && len(fn.Parameters) > 0 {
 		fn.Parameters = fn.Parameters[1:]
 		// Also remove the Abstract modifier since it was just used to mark methods
@@ -235,13 +235,13 @@ func (p *ASTParser) analyzeInterfaceSatisfaction(typeMap map[string]ir.Distilled
 			interfaces[intf.Name] = intf
 		}
 	}
-	
+
 	// Check each struct/class against each interface
 	for _, node := range typeMap {
 		if class, ok := node.(*ir.DistilledClass); ok {
 			// Build method set for this class
 			classMethods := p.buildMethodSet(class)
-			
+
 			// Check against each interface
 			for intfName, intf := range interfaces {
 				if p.satisfiesInterface(classMethods, intf) {
@@ -284,7 +284,7 @@ func (p *ASTParser) getMethodSignature(fn *ir.DistilledFunction) string {
 	var sig strings.Builder
 	sig.WriteString(fn.Name)
 	sig.WriteString("(")
-	
+
 	// Add parameter types
 	for i, param := range fn.Parameters {
 		if i > 0 {
@@ -293,20 +293,20 @@ func (p *ASTParser) getMethodSignature(fn *ir.DistilledFunction) string {
 		sig.WriteString(param.Type.Name)
 	}
 	sig.WriteString(")")
-	
+
 	// Add return type
 	if fn.Returns != nil {
 		sig.WriteString(" -> ")
 		sig.WriteString(fn.Returns.Name)
 	}
-	
+
 	return sig.String()
 }
 
 // extractImplementationWithConcurrency extracts function body highlighting concurrency constructs
 func (p *ASTParser) extractImplementationWithConcurrency(body *ast.BlockStmt) string {
 	var impl strings.Builder
-	
+
 	for _, stmt := range body.List {
 		line := p.processStatement(stmt, 0)
 		if line != "" {
@@ -314,30 +314,30 @@ func (p *ASTParser) extractImplementationWithConcurrency(body *ast.BlockStmt) st
 			impl.WriteString("\n")
 		}
 	}
-	
+
 	return strings.TrimSpace(impl.String())
 }
 
 // processStatement processes a single statement, highlighting concurrency constructs
 func (p *ASTParser) processStatement(stmt ast.Stmt, indent int) string {
 	indentStr := strings.Repeat("    ", indent)
-	
+
 	switch s := stmt.(type) {
 	case *ast.GoStmt:
 		// Highlight goroutine spawn
 		call := p.processCallExpr(s.Call)
 		return fmt.Sprintf("%sgo %s", indentStr, call)
-		
+
 	case *ast.SelectStmt:
 		// Represent select statement
 		return p.processSelectStmt(s, indent)
-		
+
 	case *ast.SendStmt:
 		// Channel send
 		channel := p.exprToString(s.Chan)
 		value := p.exprToString(s.Value)
 		return fmt.Sprintf("%s%s <- %s", indentStr, channel, value)
-		
+
 	case *ast.ExprStmt:
 		// Regular expression statement
 		if callExpr, ok := s.X.(*ast.CallExpr); ok {
@@ -346,7 +346,7 @@ func (p *ASTParser) processStatement(stmt ast.Stmt, indent int) string {
 			}
 		}
 		return fmt.Sprintf("%s%s", indentStr, p.exprToString(s.X))
-		
+
 	case *ast.AssignStmt:
 		// Assignment, check for channel receives
 		var lhs, rhs []string
@@ -361,7 +361,7 @@ func (p *ASTParser) processStatement(stmt ast.Stmt, indent int) string {
 			op = "="
 		}
 		return fmt.Sprintf("%s%s %s %s", indentStr, strings.Join(lhs, ", "), op, strings.Join(rhs, ", "))
-		
+
 	case *ast.BlockStmt:
 		// Nested block
 		var result strings.Builder
@@ -373,7 +373,7 @@ func (p *ASTParser) processStatement(stmt ast.Stmt, indent int) string {
 			}
 		}
 		return strings.TrimSpace(result.String())
-		
+
 	case *ast.ForStmt:
 		// For loop - capture the body
 		var result strings.Builder
@@ -384,12 +384,12 @@ func (p *ASTParser) processStatement(stmt ast.Stmt, indent int) string {
 			result.WriteString(bodyStr)
 		}
 		return result.String()
-		
+
 	case *ast.IfStmt:
 		// If statement
 		cond := p.exprToString(s.Cond)
 		return fmt.Sprintf("%sif %s:", indentStr, cond)
-		
+
 	default:
 		// Generic statement
 		start := p.fset.Position(stmt.Pos()).Offset
@@ -405,9 +405,9 @@ func (p *ASTParser) processStatement(stmt ast.Stmt, indent int) string {
 func (p *ASTParser) processSelectStmt(stmt *ast.SelectStmt, indent int) string {
 	indentStr := strings.Repeat("    ", indent)
 	var result strings.Builder
-	
+
 	result.WriteString(fmt.Sprintf("%sselect:", indentStr))
-	
+
 	for _, clause := range stmt.Body.List {
 		if commClause, ok := clause.(*ast.CommClause); ok {
 			result.WriteString("\n")
@@ -419,7 +419,7 @@ func (p *ASTParser) processSelectStmt(stmt *ast.SelectStmt, indent int) string {
 			}
 		}
 	}
-	
+
 	return result.String()
 }
 
@@ -444,16 +444,16 @@ func (p *ASTParser) processComments(file *ast.File, distilledFile *ir.DistilledF
 	// This function is now called after all other processing is done,
 	// so we just need to handle inline and trailing comments that weren't
 	// already processed as doc comments
-	
+
 	processedComments := make(map[*ast.Comment]bool)
-	
+
 	// Mark package doc comments as processed (already added)
 	if file.Doc != nil {
 		for _, c := range file.Doc.List {
 			processedComments[c] = true
 		}
 	}
-	
+
 	// Mark declaration doc comments as processed
 	for _, decl := range file.Decls {
 		switch d := decl.(type) {
@@ -498,7 +498,7 @@ func (p *ASTParser) processComments(file *ast.File, distilledFile *ir.DistilledF
 			}
 		}
 	}
-	
+
 	// Now add inline and line comments that haven't been processed
 	for _, cg := range file.Comments {
 		for _, c := range cg.List {
@@ -510,7 +510,7 @@ func (p *ASTParser) processComments(file *ast.File, distilledFile *ir.DistilledF
 				}
 				// Also handle /* */ style comments
 				if strings.HasPrefix(c.Text, "/*") && strings.HasSuffix(c.Text, "*/") {
-					text = strings.TrimSpace(c.Text[2:len(c.Text)-2])
+					text = strings.TrimSpace(c.Text[2 : len(c.Text)-2])
 				}
 				if text != "" {
 					distilledComment := &ir.DistilledComment{
@@ -531,7 +531,7 @@ func (p *ASTParser) processComments(file *ast.File, distilledFile *ir.DistilledF
 func (p *ASTParser) insertCommentAtPosition(file *ir.DistilledFile, comment *ir.DistilledComment) {
 	// Find the appropriate position to insert the comment based on line numbers
 	commentLine := comment.Location.StartLine
-	
+
 	// Find the right position to insert
 	insertIndex := len(file.Children)
 	for i, child := range file.Children {
@@ -541,7 +541,7 @@ func (p *ASTParser) insertCommentAtPosition(file *ir.DistilledFile, comment *ir.
 			break
 		}
 	}
-	
+
 	// Insert at the appropriate position
 	if insertIndex == len(file.Children) {
 		file.Children = append(file.Children, comment)
@@ -555,17 +555,17 @@ func (p *ASTParser) insertCommentAtPosition(file *ir.DistilledFile, comment *ir.
 // extractBuildConstraints extracts build constraints from comments
 func (p *ASTParser) extractBuildConstraints(comments []*ast.CommentGroup) []string {
 	var constraints []string
-	
+
 	for _, group := range comments {
 		for _, comment := range group.List {
 			text := comment.Text
-			
+
 			// Check for //go:build directive
 			if strings.HasPrefix(text, "//go:build ") {
 				constraint := strings.TrimSpace(text[10:]) // Remove "//go:build "
 				constraints = append(constraints, constraint)
 			}
-			
+
 			// Check for legacy // +build directive
 			if strings.HasPrefix(text, "// +build ") {
 				constraint := strings.TrimSpace(text[9:]) // Remove "// +build "
@@ -573,7 +573,7 @@ func (p *ASTParser) extractBuildConstraints(comments []*ast.CommentGroup) []stri
 			}
 		}
 	}
-	
+
 	return constraints
 }
 
@@ -649,7 +649,7 @@ func (p *ASTParser) processDecl(decl ast.Decl) []ir.DistilledNode {
 // processGenDecl processes a general declaration (type, const, var)
 func (p *ASTParser) processGenDecl(decl *ast.GenDecl) []ir.DistilledNode {
 	var nodes []ir.DistilledNode
-	
+
 	// Process declaration-level doc comments
 	if decl.Doc != nil {
 		for _, comment := range decl.Doc.List {
@@ -659,7 +659,7 @@ func (p *ASTParser) processGenDecl(decl *ast.GenDecl) []ir.DistilledNode {
 					BaseNode: ir.BaseNode{
 						Location: p.getLocation(comment.Pos(), comment.End()),
 					},
-					Text: text,
+					Text:   text,
 					Format: "doc",
 				}
 				nodes = append(nodes, docComment)
@@ -679,7 +679,7 @@ func (p *ASTParser) processGenDecl(decl *ast.GenDecl) []ir.DistilledNode {
 							BaseNode: ir.BaseNode{
 								Location: p.getLocation(comment.Pos(), comment.End()),
 							},
-							Text: text,
+							Text:   text,
 							Format: "doc",
 						}
 						nodes = append(nodes, docComment)
@@ -700,7 +700,7 @@ func (p *ASTParser) processGenDecl(decl *ast.GenDecl) []ir.DistilledNode {
 							BaseNode: ir.BaseNode{
 								Location: p.getLocation(comment.Pos(), comment.End()),
 							},
-							Text: text,
+							Text:   text,
 							Format: "doc",
 						}
 						nodes = append(nodes, docComment)
@@ -761,7 +761,7 @@ func (p *ASTParser) processTypeSpec(spec *ast.TypeSpec) ir.DistilledNode {
 			typeParams = "[" + strings.Join(params, ", ") + "]"
 		}
 	}
-	
+
 	switch t := spec.Type.(type) {
 	case *ast.StructType:
 		return p.processStructWithParams(spec.Name.Name, typeParams, t)
@@ -904,7 +904,7 @@ func (p *ASTParser) processFunction(fn *ast.FuncDecl) *ir.DistilledFunction {
 	if fn.Recv != nil && len(fn.Recv.List) > 0 {
 		recv := fn.Recv.List[0]
 		recvType := p.typeToString(recv.Type)
-		
+
 		// Add receiver as special parameter
 		recvParam := ir.Parameter{
 			Name: "receiver",
@@ -914,7 +914,7 @@ func (p *ASTParser) processFunction(fn *ast.FuncDecl) *ir.DistilledFunction {
 			recvParam.Name = recv.Names[0].Name
 		}
 		distilledFn.Parameters = append(distilledFn.Parameters, recvParam)
-		
+
 		// Mark as method
 		distilledFn.Modifiers = append(distilledFn.Modifiers, ir.ModifierAbstract) // Using Abstract as "method" marker
 	}
@@ -982,15 +982,13 @@ func (p *ASTParser) processFunction(fn *ast.FuncDecl) *ir.DistilledFunction {
 	if fn.Body != nil {
 		// Parse the implementation to capture goroutines, channels, and select statements
 		distilledFn.Implementation = p.extractImplementationWithConcurrency(fn.Body)
-		
+
 		// Check for interesting constructs for modifiers
-		var goroutines, channels, defers int
+		var goroutines, defers int
 		ast.Inspect(fn.Body, func(n ast.Node) bool {
 			switch n.(type) {
 			case *ast.GoStmt:
 				goroutines++
-			case *ast.SendStmt:
-				channels++
 			case *ast.DeferStmt:
 				defers++
 			}
@@ -1167,11 +1165,11 @@ func (p *ASTParser) dumpAST(node ast.Node) map[string]interface{} {
 	if node == nil {
 		return nil
 	}
-	
+
 	result := map[string]interface{}{
 		"type": fmt.Sprintf("%T", node),
 	}
-	
+
 	// Add position info
 	if node.Pos().IsValid() {
 		pos := p.fset.Position(node.Pos())
@@ -1183,14 +1181,14 @@ func (p *ASTParser) dumpAST(node ast.Node) map[string]interface{} {
 		result["endLine"] = pos.Line
 		result["endCol"] = pos.Column
 	}
-	
+
 	// Add node-specific information
 	switch n := node.(type) {
 	case *ast.File:
 		result["package"] = n.Name.Name
 		result["imports"] = len(n.Imports)
 		result["declarations"] = len(n.Decls)
-		
+
 		// Add summary of declarations
 		var funcs, types, vars, consts int
 		for _, decl := range n.Decls {
@@ -1215,7 +1213,7 @@ func (p *ASTParser) dumpAST(node ast.Node) map[string]interface{} {
 			"variables": vars,
 			"constants": consts,
 		}
-		
+
 	case *ast.FuncDecl:
 		result["name"] = n.Name.Name
 		if n.Recv != nil && len(n.Recv.List) > 0 {
@@ -1223,28 +1221,28 @@ func (p *ASTParser) dumpAST(node ast.Node) map[string]interface{} {
 		}
 		result["params"] = p.formatFieldList(n.Type.Params)
 		result["results"] = p.formatFieldList(n.Type.Results)
-		
+
 	case *ast.GenDecl:
 		result["token"] = n.Tok.String()
 		result["specs"] = len(n.Specs)
-		
+
 	case *ast.TypeSpec:
 		result["name"] = n.Name.Name
 		result["typeKind"] = fmt.Sprintf("%T", n.Type)
-		
+
 	case *ast.StructType:
 		result["fields"] = n.Fields.NumFields()
-		
+
 	case *ast.InterfaceType:
 		result["methods"] = len(n.Methods.List)
-		
+
 	case *ast.ImportSpec:
 		if n.Name != nil {
 			result["alias"] = n.Name.Name
 		}
 		result["path"] = n.Path.Value
 	}
-	
+
 	return result
 }
 
@@ -1253,7 +1251,7 @@ func (p *ASTParser) formatFieldList(fields *ast.FieldList) []string {
 	if fields == nil || fields.List == nil {
 		return nil
 	}
-	
+
 	var result []string
 	for _, field := range fields.List {
 		fieldStr := ""

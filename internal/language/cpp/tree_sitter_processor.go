@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/janreges/ai-distiller/internal/ir"
 	sitter "github.com/smacker/go-tree-sitter"
 	tree_sitter_cpp "github.com/tree-sitter/tree-sitter-cpp/bindings/go"
-	"github.com/janreges/ai-distiller/internal/ir"
 )
 
 // TreeSitterProcessor uses tree-sitter for C++ parsing
@@ -19,7 +19,7 @@ type TreeSitterProcessor struct {
 func NewTreeSitterProcessor() *TreeSitterProcessor {
 	parser := sitter.NewParser()
 	parser.SetLanguage(sitter.NewLanguage(tree_sitter_cpp.Language()))
-	
+
 	return &TreeSitterProcessor{
 		parser: parser,
 	}
@@ -113,7 +113,7 @@ func (p *TreeSitterProcessor) processInclude(node *sitter.Node, source []byte, f
 			path := p.nodeText(child, source)
 			// Remove quotes or angle brackets
 			path = strings.Trim(path, "\"<>")
-			
+
 			imp := &ir.DistilledImport{
 				BaseNode: ir.BaseNode{
 					Location: p.nodeLocation(node),
@@ -134,7 +134,7 @@ func (p *TreeSitterProcessor) processUsingDeclaration(node *sitter.Node, source 
 	parts := strings.Fields(text)
 	if len(parts) >= 2 && parts[0] == "using" {
 		module := strings.TrimSuffix(strings.Join(parts[1:], " "), ";")
-		
+
 		imp := &ir.DistilledImport{
 			BaseNode: ir.BaseNode{
 				Location: p.nodeLocation(node),
@@ -328,7 +328,7 @@ func (p *TreeSitterProcessor) processClassBody(node *sitter.Node, source []byte,
 
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
-		
+
 		switch child.Type() {
 		case "access_specifier":
 			// Update current access level
@@ -364,7 +364,7 @@ func (p *TreeSitterProcessor) processStructBody(node *sitter.Node, source []byte
 
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
-		
+
 		switch child.Type() {
 		case "access_specifier":
 			// Update current access level
@@ -408,7 +408,7 @@ func (p *TreeSitterProcessor) processMethodDefinition(node *sitter.Node, source 
 	// Extract method details - build return type first, then function declarator
 	var returnTypeStr string
 	var foundDeclarator bool
-	
+
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		switch child.Type() {
@@ -456,7 +456,7 @@ func (p *TreeSitterProcessor) processMethodDefinition(node *sitter.Node, source 
 			method.Implementation = "= delete"
 		}
 	}
-	
+
 	// Set return type if we found one
 	if returnTypeStr != "" {
 		method.Returns = &ir.TypeRef{
@@ -466,7 +466,7 @@ func (p *TreeSitterProcessor) processMethodDefinition(node *sitter.Node, source 
 
 	// In C++, constructors and destructors should keep their original names
 	// No need to rename them
-	
+
 	// Check if this is a constructor or destructor and fix return type
 	if method.Name == class.Name || (strings.HasPrefix(method.Name, "~") && strings.TrimPrefix(method.Name, "~") == class.Name) {
 		// Constructor or destructor, no return type
@@ -534,7 +534,7 @@ func (p *TreeSitterProcessor) processFunctionDefinition(node *sitter.Node, sourc
 	// Extract function details - build return type first, then function declarator
 	var returnTypeStr string
 	var foundDeclarator bool
-	
+
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		switch child.Type() {
@@ -691,7 +691,7 @@ func (p *TreeSitterProcessor) processDeclaration(node *sitter.Node, source []byt
 	var returnTypeStr string
 	var foundDeclarator bool
 	var functionDeclaratorIdx int
-	
+
 	// First pass: find function declarator and build return type
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
@@ -701,7 +701,7 @@ func (p *TreeSitterProcessor) processDeclaration(node *sitter.Node, source []byt
 			break
 		}
 	}
-	
+
 	if foundDeclarator {
 		// This is a function declaration
 		function := &ir.DistilledFunction{
@@ -799,7 +799,7 @@ func (p *TreeSitterProcessor) processMethodDeclaration(node *sitter.Node, source
 	// Extract method details - build return type first, then function declarator
 	var returnTypeStr string
 	var foundDeclarator bool
-	
+
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		switch child.Type() {
@@ -860,7 +860,7 @@ func (p *TreeSitterProcessor) processMethodDeclaration(node *sitter.Node, source
 
 	// In C++, constructors and destructors should keep their original names
 	// No need to rename them
-	
+
 	// Check if this is a constructor or destructor and fix return type
 	if method.Name == class.Name || (strings.HasPrefix(method.Name, "~") && strings.TrimPrefix(method.Name, "~") == class.Name) {
 		// Constructor or destructor, no return type
@@ -884,7 +884,7 @@ func (p *TreeSitterProcessor) processStructMethodDeclaration(node *sitter.Node, 
 	// Extract method details - build return type first, then function declarator
 	var returnTypeStr string
 	var foundDeclarator bool
-	
+
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		switch child.Type() {
@@ -1131,7 +1131,7 @@ func (p *TreeSitterProcessor) processTemplateDeclaration(node *sitter.Node, sour
 				},
 			}
 			p.processClass(child, source, file, tempParent)
-			
+
 			// Add template parameters to the class
 			if capturedClass != nil {
 				capturedClass.TypeParams = templateParams
@@ -1148,7 +1148,7 @@ func (p *TreeSitterProcessor) processTemplateDeclaration(node *sitter.Node, sour
 				},
 			}
 			p.processFunctionDefinition(child, source, file, tempParent)
-			
+
 			// Add template parameters to the function
 			if capturedFunc != nil {
 				capturedFunc.TypeParams = templateParams
@@ -1196,7 +1196,7 @@ func (p *TreeSitterProcessor) processFriendDeclaration(node *sitter.Node, source
 func (p *TreeSitterProcessor) processConceptAsComment(node *sitter.Node, source []byte, file *ir.DistilledFile, parent ir.DistilledNode) {
 	// Extract the full concept definition
 	conceptText := p.nodeText(node, source)
-	
+
 	// Create a special comment to preserve the concept
 	comment := &ir.DistilledComment{
 		BaseNode: ir.BaseNode{
@@ -1234,7 +1234,7 @@ func (p *TreeSitterProcessor) processComment(node *sitter.Node, source []byte, f
 // extractBaseClasses extracts base class names from inheritance clause
 func (p *TreeSitterProcessor) extractBaseClasses(node *sitter.Node, source []byte) []ir.TypeRef {
 	var bases []ir.TypeRef
-	
+
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		if child.Type() == "type_identifier" || child.Type() == "qualified_identifier" {
@@ -1246,7 +1246,7 @@ func (p *TreeSitterProcessor) extractBaseClasses(node *sitter.Node, source []byt
 			bases = append(bases, p.extractBaseClasses(child, source)...)
 		}
 	}
-	
+
 	return bases
 }
 
@@ -1315,8 +1315,8 @@ type captureNode struct {
 }
 
 // Implement ir.DistilledNode interface
-func (c *captureNode) GetLocation() ir.Location { return ir.Location{} }
-func (c *captureNode) GetChildren() []ir.DistilledNode { return nil }
+func (c *captureNode) GetLocation() ir.Location             { return ir.Location{} }
+func (c *captureNode) GetChildren() []ir.DistilledNode      { return nil }
 func (c *captureNode) Accept(v ir.Visitor) ir.DistilledNode { return c }
-func (c *captureNode) GetNodeKind() ir.NodeKind { return ir.NodeKind("capture") }
-func (c *captureNode) GetSymbolID() *ir.SymbolID { return nil }
+func (c *captureNode) GetNodeKind() ir.NodeKind             { return ir.NodeKind("capture") }
+func (c *captureNode) GetSymbolID() *ir.SymbolID            { return nil }

@@ -49,9 +49,9 @@ func (p *Processor) ProcessFile(filename string, opts processor.ProcessOptions) 
 	if err != nil {
 		return nil, fmt.Errorf("failed to read file %s: %w", filename, err)
 	}
-	
+
 	ctx := context.Background()
-	
+
 	// Use tree-sitter parser
 	if p.useTreeSitter {
 		treeparser, err := NewTreeSitterProcessor()
@@ -67,23 +67,23 @@ func (p *Processor) ProcessFile(filename string, opts processor.ProcessOptions) 
 			fmt.Fprintf(os.Stderr, "PHP: Tree-sitter parse failed: %v\n", err)
 			return p.parseLineBasedPHP(ctx, source, filename, opts)
 		}
-		
+
 		// Apply standardized stripper for filtering
 		stripperOpts := opts.ToStripperOptions()
-		
+
 		// Debug
 		// fmt.Printf("DEBUG: IncludeAnnotations=%v, RemoveAnnotations=%v\n", opts.IncludeAnnotations, stripperOpts.RemoveAnnotations)
-		
+
 		// Only apply stripper if we need to remove something
 		if stripperOpts.HasAnyOption() {
 			s := stripper.New(stripperOpts)
 			stripped := file.Accept(s)
 			return stripped.(*ir.DistilledFile), nil
 		}
-		
+
 		return file, nil
 	}
-	
+
 	// Fall back to line-based parser
 	return p.parseLineBasedPHP(ctx, source, filename, opts)
 }
@@ -111,20 +111,20 @@ func (p *Processor) ProcessWithOptions(ctx context.Context, reader io.Reader, fi
 			fmt.Fprintf(os.Stderr, "PHP: Tree-sitter parse failed: %v\n", err)
 			return p.parseLineBasedPHP(ctx, source, filename, opts)
 		}
-		
+
 		// Apply standardized stripper for filtering
 		stripperOpts := opts.ToStripperOptions()
-		
+
 		// Debug
 		// fmt.Printf("DEBUG: IncludeAnnotations=%v, RemoveAnnotations=%v\n", opts.IncludeAnnotations, stripperOpts.RemoveAnnotations)
-		
+
 		// Only apply stripper if we need to remove something
 		if stripperOpts.HasAnyOption() {
 			s := stripper.New(stripperOpts)
 			stripped := file.Accept(s)
 			return stripped.(*ir.DistilledFile), nil
 		}
-		
+
 		return file, nil
 	}
 
@@ -159,7 +159,6 @@ func (p *Processor) parseLineBasedPHP(ctx context.Context, source []byte, filena
 			},
 		},
 	}
-	
+
 	return file, nil
 }
-

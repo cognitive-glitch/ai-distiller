@@ -3,7 +3,7 @@ package aiactions
 import (
 	"fmt"
 	"strings"
-	
+
 	"github.com/janreges/ai-distiller/internal/ai"
 )
 
@@ -34,7 +34,7 @@ func (a *PerformancePromptAction) Validate() error {
 
 func (a *PerformancePromptAction) GenerateContent(ctx *ai.ActionContext) (*ai.ContentResult, error) {
 	prompt := a.generatePerformancePrompt(ctx)
-	
+
 	return &ai.ContentResult{
 		ContentBefore: prompt,
 		ContentAfter:  "",
@@ -43,7 +43,7 @@ func (a *PerformancePromptAction) GenerateContent(ctx *ai.ActionContext) (*ai.Co
 
 func (a *PerformancePromptAction) generatePerformancePrompt(ctx *ai.ActionContext) string {
 	var sb strings.Builder
-	
+
 	sb.WriteString(fmt.Sprintf(`# ⚡ Performance Optimization Analysis
 
 **Project:** %s
@@ -74,13 +74,13 @@ For each significant function/method, analyze:
 - Cache efficiency
 
 #### Example Format:
-` + "```" + `
+`+"```"+`
 Function: processUserData() at UserService.ts:45
 Current: O(n²) - nested loops over users and permissions
 Optimal: O(n log n) - using sorted merge approach
 Impact: At 10K users, current takes ~5s, optimal would take ~0.1s
 Fix: Implement hash-based lookup instead of nested iteration
-` + "```" + `
+`+"```"+`
 
 ### 2. Database & I/O Performance (25%% Priority)
 
@@ -180,14 +180,14 @@ For EACH performance issue found:
 Detailed description of the performance issue
 
 **Evidence:**
-` + "```language" + `
+`+"```language"+`
 // Current problematic code
-` + "```" + `
+`+"```"+`
 
 **Solution:**
-` + "```language" + `
+`+"```language"+`
 // Optimized code
-` + "```" + `
+`+"```"+`
 
 **Implementation Notes:**
 - Step-by-step optimization approach
@@ -270,6 +270,6 @@ Recommended performance targets:
 The following is the distilled codebase for performance analysis:
 
 `, ctx.BaseName, ctx.Timestamp.Format("2006-01-02")))
-	
+
 	return sb.String()
 }

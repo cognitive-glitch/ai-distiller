@@ -22,7 +22,7 @@ func NewLanguageAwareTextFormatter(options Options) *LanguageAwareTextFormatter 
 		BaseFormatter: NewBaseFormatter(options),
 		formatters:    make(map[string]LanguageFormatter),
 	}
-	
+
 	// Register built-in language formatters
 	f.RegisterLanguageFormatter("java", NewJavaFormatter())
 	f.RegisterLanguageFormatter("go", NewGoFormatter())
@@ -38,7 +38,7 @@ func NewLanguageAwareTextFormatter(options Options) *LanguageAwareTextFormatter 
 	f.RegisterLanguageFormatter("cpp", NewCppFormatter())
 	f.RegisterLanguageFormatter("c++", NewCppFormatter()) // Alias
 	f.RegisterLanguageFormatter("php", NewPHPFormatter())
-	
+
 	return f
 }
 
@@ -53,15 +53,15 @@ func (f *LanguageAwareTextFormatter) RegisterLanguageFormatter(language string, 
 func (f *LanguageAwareTextFormatter) Format(w io.Writer, file *ir.DistilledFile) error {
 	// Write file header
 	fmt.Fprintf(w, "<file path=\"%s\">\n", file.Path)
-	
+
 	// Get language-specific formatter
 	langFormatter := f.getLanguageFormatter(file.Language)
-	
+
 	// Reset formatter state for new file
 	if langFormatter != nil {
 		langFormatter.Reset()
 	}
-	
+
 	// Write file contents
 	for _, child := range file.Children {
 		if langFormatter != nil {
@@ -75,15 +75,15 @@ func (f *LanguageAwareTextFormatter) Format(w io.Writer, file *ir.DistilledFile)
 			}
 		}
 	}
-	
+
 	// For Go formatter, ensure import block is closed
 	if goFormatter, ok := langFormatter.(*GoFormatter); ok && goFormatter.lastWasImport {
 		fmt.Fprintln(w, ")")
 	}
-	
+
 	// Write file footer
 	fmt.Fprintln(w, "</file>")
-	
+
 	return nil
 }
 
@@ -121,7 +121,7 @@ func (f *LanguageAwareTextFormatter) getLanguageFormatter(language string) Langu
 func (f *LanguageAwareTextFormatter) formatNodeGeneric(w io.Writer, node ir.DistilledNode, indent int) error {
 	// This is a simplified generic formatter
 	// In a real implementation, this could be more sophisticated
-	
+
 	switch n := node.(type) {
 	case *ir.DistilledImport:
 		fmt.Fprintf(w, "import %s\n", n.Module)
@@ -134,7 +134,7 @@ func (f *LanguageAwareTextFormatter) formatNodeGeneric(w io.Writer, node ir.Dist
 			}
 		}
 		fmt.Fprintf(w, "\n%sclass %s", modifiers, n.Name)
-		
+
 		// Add generic type parameters
 		if len(n.TypeParams) > 0 {
 			typeParams := make([]string, len(n.TypeParams))
@@ -146,7 +146,7 @@ func (f *LanguageAwareTextFormatter) formatNodeGeneric(w io.Writer, node ir.Dist
 			}
 			fmt.Fprintf(w, "<%s>", strings.Join(typeParams, ", "))
 		}
-		
+
 		// Add extends clause
 		if len(n.Extends) > 0 {
 			extends := make([]string, len(n.Extends))
@@ -155,7 +155,7 @@ func (f *LanguageAwareTextFormatter) formatNodeGeneric(w io.Writer, node ir.Dist
 			}
 			fmt.Fprintf(w, " extends %s", strings.Join(extends, ", "))
 		}
-		
+
 		// Add implements clause
 		if len(n.Implements) > 0 {
 			implements := make([]string, len(n.Implements))
@@ -164,7 +164,7 @@ func (f *LanguageAwareTextFormatter) formatNodeGeneric(w io.Writer, node ir.Dist
 			}
 			fmt.Fprintf(w, " implements %s", strings.Join(implements, ", "))
 		}
-		
+
 		fmt.Fprintln(w, ":")
 		for _, child := range n.Children {
 			f.formatNodeGeneric(w, child, indent+1)
@@ -180,7 +180,7 @@ func (f *LanguageAwareTextFormatter) formatNodeGeneric(w io.Writer, node ir.Dist
 		case ir.VisibilityPublic:
 			// Don't print "public" as it's the default
 		}
-		
+
 		modifiers := ""
 		for _, mod := range n.Modifiers {
 			if mod == ir.ModifierAbstract {
@@ -192,7 +192,7 @@ func (f *LanguageAwareTextFormatter) formatNodeGeneric(w io.Writer, node ir.Dist
 			}
 		}
 		fmt.Fprintf(w, "    %s%sfunction %s", visPrefix, modifiers, n.Name)
-		
+
 		// Add generic type parameters
 		if len(n.TypeParams) > 0 {
 			typeParams := make([]string, len(n.TypeParams))
@@ -204,9 +204,9 @@ func (f *LanguageAwareTextFormatter) formatNodeGeneric(w io.Writer, node ir.Dist
 			}
 			fmt.Fprintf(w, "<%s>", strings.Join(typeParams, ", "))
 		}
-		
+
 		fmt.Fprintf(w, "(")
-		
+
 		// Format parameters
 		params := make([]string, 0, len(n.Parameters))
 		for _, param := range n.Parameters {
@@ -223,14 +223,14 @@ func (f *LanguageAwareTextFormatter) formatNodeGeneric(w io.Writer, node ir.Dist
 			params = append(params, paramStr)
 		}
 		fmt.Fprintf(w, "%s)", strings.Join(params, ", "))
-		
+
 		// Format return type
 		if n.Returns != nil && n.Returns.Name != "" {
 			fmt.Fprintf(w, " -> %s", n.Returns.Name)
 		}
-		
+
 		fmt.Fprintln(w)
-		
+
 		if n.Implementation != "" {
 			fmt.Fprintln(w, "        // implementation")
 		}
@@ -245,7 +245,7 @@ func (f *LanguageAwareTextFormatter) formatNodeGeneric(w io.Writer, node ir.Dist
 		case ir.VisibilityPublic:
 			visPrefix = "public "
 		}
-		
+
 		modifiers := ""
 		for _, mod := range n.Modifiers {
 			if mod == ir.ModifierReadonly {
@@ -256,7 +256,7 @@ func (f *LanguageAwareTextFormatter) formatNodeGeneric(w io.Writer, node ir.Dist
 				modifiers += "const "
 			}
 		}
-		
+
 		// Top-level const variables should be shown differently from class fields
 		if indent == 0 && strings.Contains(modifiers, "const") {
 			// This is a top-level const variable
@@ -322,7 +322,7 @@ func (f *LanguageAwareTextFormatter) formatNodeGeneric(w io.Writer, node ir.Dist
 				// Format as method for interfaces
 				method := child.(*ir.DistilledFunction)
 				fmt.Fprintf(w, "    method %s", method.Name)
-				
+
 				// Add generic type parameters if any
 				if len(method.TypeParams) > 0 {
 					typeParams := make([]string, len(method.TypeParams))
@@ -334,7 +334,7 @@ func (f *LanguageAwareTextFormatter) formatNodeGeneric(w io.Writer, node ir.Dist
 					}
 					fmt.Fprintf(w, "<%s>", strings.Join(typeParams, ", "))
 				}
-				
+
 				fmt.Fprintf(w, "(")
 				params := make([]string, 0, len(method.Parameters))
 				for _, param := range method.Parameters {
@@ -348,7 +348,7 @@ func (f *LanguageAwareTextFormatter) formatNodeGeneric(w io.Writer, node ir.Dist
 					params = append(params, paramStr)
 				}
 				fmt.Fprintf(w, "%s)", strings.Join(params, ", "))
-				
+
 				if method.Returns != nil && method.Returns.Name != "" {
 					fmt.Fprintf(w, ": %s", method.Returns.Name)
 				}
@@ -366,6 +366,6 @@ func (f *LanguageAwareTextFormatter) formatNodeGeneric(w io.Writer, node ir.Dist
 	default:
 		// Skip unknown nodes
 	}
-	
+
 	return nil
 }

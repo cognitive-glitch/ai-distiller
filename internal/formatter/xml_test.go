@@ -95,7 +95,7 @@ func TestXMLFormatter_Format(t *testing.T) {
 			},
 		},
 		{
-			name: "with errors",
+			name:    "with errors",
 			options: Options{},
 			file: &ir.DistilledFile{
 				Path:     "error.py",
@@ -137,7 +137,7 @@ func TestXMLFormatter_Format(t *testing.T) {
 			},
 		},
 		{
-			name: "imports with symbols",
+			name:    "imports with symbols",
 			options: Options{},
 			file: &ir.DistilledFile{
 				Path:     "imports.py",
@@ -190,7 +190,7 @@ func TestXMLFormatter_Format(t *testing.T) {
 			},
 		},
 		{
-			name: "modifiers and visibility",
+			name:    "modifiers and visibility",
 			options: Options{},
 			file: &ir.DistilledFile{
 				Path:     "modifiers.py",
@@ -215,7 +215,7 @@ func TestXMLFormatter_Format(t *testing.T) {
 			},
 		},
 		{
-			name: "escaped XML content",
+			name:    "escaped XML content",
 			options: Options{},
 			file: &ir.DistilledFile{
 				Path:     "escape.py",
@@ -244,27 +244,27 @@ func TestXMLFormatter_Format(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			formatter := NewXMLFormatter(tt.options)
 			var buf bytes.Buffer
-			
+
 			err := formatter.Format(&buf, tt.file)
 			require.NoError(t, err)
-			
+
 			output := buf.String()
-			
+
 			// Check it's valid XML
 			var doc struct {
 				XMLName xml.Name `xml:"distilled"`
 			}
 			err = xml.Unmarshal([]byte(output), &doc)
 			assert.NoError(t, err, "Output should be valid XML")
-			
+
 			for _, expected := range tt.contains {
 				assert.Contains(t, output, expected, "Output should contain: %s", expected)
 			}
-			
+
 			for _, notExpected := range tt.notContains {
 				assert.NotContains(t, output, notExpected, "Output should not contain: %s", notExpected)
 			}
-			
+
 			if tt.checkXML != nil {
 				tt.checkXML(t, output)
 			}
@@ -274,7 +274,7 @@ func TestXMLFormatter_Format(t *testing.T) {
 
 func TestXMLFormatter_FormatMultiple(t *testing.T) {
 	formatter := NewXMLFormatter(Options{})
-	
+
 	files := []*ir.DistilledFile{
 		{
 			Path:     "file1.py",
@@ -291,24 +291,24 @@ func TestXMLFormatter_FormatMultiple(t *testing.T) {
 			},
 		},
 	}
-	
+
 	var buf bytes.Buffer
 	err := formatter.FormatMultiple(&buf, files)
 	require.NoError(t, err)
-	
+
 	output := buf.String()
-	
+
 	// Check structure
 	assert.Contains(t, output, `<?xml version="1.0" encoding="UTF-8"?>`)
 	assert.Contains(t, output, `<distilled>`)
 	assert.Contains(t, output, `</distilled>`)
-	
+
 	// Check both files are present
 	assert.Contains(t, output, `<file path="file1.py"`)
 	assert.Contains(t, output, `<file path="file2.py"`)
 	assert.Contains(t, output, `<function name="func1"`)
 	assert.Contains(t, output, `<function name="func2"`)
-	
+
 	// Count file elements
 	fileCount := strings.Count(output, "<file ")
 	assert.Equal(t, 2, fileCount)
@@ -321,7 +321,7 @@ func TestXMLFormatter_Extension(t *testing.T) {
 
 func TestXMLFormatter_AllNodeTypes(t *testing.T) {
 	formatter := NewXMLFormatter(Options{})
-	
+
 	file := &ir.DistilledFile{
 		Path:     "all_types.py",
 		Language: "python",
@@ -337,13 +337,13 @@ func TestXMLFormatter_AllNodeTypes(t *testing.T) {
 			},
 		},
 	}
-	
+
 	var buf bytes.Buffer
 	err := formatter.Format(&buf, file)
 	require.NoError(t, err)
-	
+
 	output := buf.String()
-	
+
 	// Check all node types are present
 	assert.Contains(t, output, `<package name="mypackage"/>`)
 	assert.Contains(t, output, `<interface name="IService"/>`)
@@ -354,7 +354,7 @@ func TestXMLFormatter_AllNodeTypes(t *testing.T) {
 
 func TestXMLFormatter_NestedStructures(t *testing.T) {
 	formatter := NewXMLFormatter(Options{})
-	
+
 	file := &ir.DistilledFile{
 		Path:     "nested.py",
 		Language: "python",
@@ -374,25 +374,25 @@ func TestXMLFormatter_NestedStructures(t *testing.T) {
 			},
 		},
 	}
-	
+
 	var buf bytes.Buffer
 	err := formatter.Format(&buf, file)
 	require.NoError(t, err)
-	
+
 	output := buf.String()
-	
+
 	// Check nesting structure
 	assert.Contains(t, output, `<class name="OuterClass">`)
 	assert.Contains(t, output, `<class name="InnerClass">`)
 	assert.Contains(t, output, `<function name="method"/>`)
 	assert.Contains(t, output, `</class>`) // Closing tags
-	
+
 	// Verify proper nesting by checking order
 	outerStart := strings.Index(output, `<class name="OuterClass">`)
 	innerStart := strings.Index(output, `<class name="InnerClass">`)
 	methodPos := strings.Index(output, `<function name="method"/>`)
 	outerEnd := strings.LastIndex(output, `</class>`)
-	
+
 	assert.True(t, outerStart < innerStart)
 	assert.True(t, innerStart < methodPos)
 	assert.True(t, methodPos < outerEnd)
@@ -400,7 +400,7 @@ func TestXMLFormatter_NestedStructures(t *testing.T) {
 
 func TestXMLFormatter_Parameters(t *testing.T) {
 	formatter := NewXMLFormatter(Options{})
-	
+
 	file := &ir.DistilledFile{
 		Path:     "params.py",
 		Language: "python",
@@ -416,13 +416,13 @@ func TestXMLFormatter_Parameters(t *testing.T) {
 			},
 		},
 	}
-	
+
 	var buf bytes.Buffer
 	err := formatter.Format(&buf, file)
 	require.NoError(t, err)
-	
+
 	output := buf.String()
-	
+
 	// Check parameters section
 	assert.Contains(t, output, `<parameters>`)
 	assert.Contains(t, output, `<parameter name="required" type="str"/>`)
@@ -434,7 +434,7 @@ func TestXMLFormatter_Parameters(t *testing.T) {
 
 func TestXMLFormatter_EmptyElements(t *testing.T) {
 	formatter := NewXMLFormatter(Options{})
-	
+
 	file := &ir.DistilledFile{
 		Path:     "empty.py",
 		Language: "python",
@@ -449,17 +449,17 @@ func TestXMLFormatter_EmptyElements(t *testing.T) {
 			},
 		},
 	}
-	
+
 	var buf bytes.Buffer
 	err := formatter.Format(&buf, file)
 	require.NoError(t, err)
-	
+
 	output := buf.String()
-	
+
 	// Empty class should be self-closing
 	assert.Contains(t, output, `<class name="EmptyClass"/>`)
 	assert.NotContains(t, output, `<class name="EmptyClass">`)
-	
+
 	// Function with no parameters should be self-closing
 	assert.Contains(t, output, `<function name="no_params"/>`)
 	assert.NotContains(t, output, `<parameters>`)
@@ -467,7 +467,7 @@ func TestXMLFormatter_EmptyElements(t *testing.T) {
 
 func TestXMLFormatter_SpecialCharacters(t *testing.T) {
 	formatter := NewXMLFormatter(Options{})
-	
+
 	file := &ir.DistilledFile{
 		Path:     "special.py",
 		Language: "python",
@@ -485,18 +485,18 @@ func TestXMLFormatter_SpecialCharacters(t *testing.T) {
 			},
 		},
 	}
-	
+
 	var buf bytes.Buffer
 	err := formatter.Format(&buf, file)
 	require.NoError(t, err)
-	
+
 	output := buf.String()
-	
+
 	// Check escaping in attributes
 	// XML escaping may use numeric entities for quotes
 	assert.Contains(t, output, `name="test&lt;&gt;&amp;`)
 	assert.Contains(t, output, `default="`)
-	
+
 	// Check escaping in text content
 	assert.Contains(t, output, `>Error with &lt;xml&gt; &amp; special chars</error>`)
 }

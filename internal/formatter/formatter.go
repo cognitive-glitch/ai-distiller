@@ -10,10 +10,10 @@ import (
 type Formatter interface {
 	// Format writes the IR to the writer in the specific format
 	Format(w io.Writer, file *ir.DistilledFile) error
-	
+
 	// FormatMultiple writes multiple files to the writer
 	FormatMultiple(w io.Writer, files []*ir.DistilledFile) error
-	
+
 	// Extension returns the recommended file extension for this format
 	Extension() string
 }
@@ -22,16 +22,16 @@ type Formatter interface {
 type Options struct {
 	// IncludeLocation includes source location information
 	IncludeLocation bool
-	
+
 	// IncludeMetadata includes file metadata
 	IncludeMetadata bool
-	
+
 	// Compact produces compact output (no extra whitespace)
 	Compact bool
-	
+
 	// AbsolutePaths uses absolute paths instead of relative
 	AbsolutePaths bool
-	
+
 	// SortNodes sorts nodes by type and name
 	SortNodes bool
 }

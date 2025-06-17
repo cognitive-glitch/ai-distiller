@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/janreges/ai-distiller/internal/ir"
 	sitter "github.com/smacker/go-tree-sitter"
 	tree_sitter_c_sharp "github.com/tree-sitter/tree-sitter-c-sharp/bindings/go"
-	"github.com/janreges/ai-distiller/internal/ir"
 )
 
 // TreeSitterProcessor uses tree-sitter for C# parsing
@@ -19,7 +19,7 @@ type TreeSitterProcessor struct {
 func NewTreeSitterProcessor() *TreeSitterProcessor {
 	parser := sitter.NewParser()
 	parser.SetLanguage(sitter.NewLanguage(tree_sitter_c_sharp.Language()))
-	
+
 	return &TreeSitterProcessor{
 		parser: parser,
 	}
@@ -58,7 +58,6 @@ func (p *TreeSitterProcessor) ProcessSource(ctx context.Context, source []byte, 
 // processNode recursively processes tree-sitter nodes
 func (p *TreeSitterProcessor) processNode(node *sitter.Node, source []byte, file *ir.DistilledFile, parent ir.DistilledNode) {
 	nodeType := node.Type()
-	
 
 	switch nodeType {
 	case "compilation_unit":
@@ -120,7 +119,7 @@ func (p *TreeSitterProcessor) processNode(node *sitter.Node, source []byte, file
 				return
 			}
 		}
-		
+
 		// Recursively process children
 		for i := 0; i < int(node.ChildCount()); i++ {
 			child := node.Child(i)
@@ -394,7 +393,7 @@ func (p *TreeSitterProcessor) processRecordDeclaration(node *sitter.Node, source
 	// Records are classes or structs with special compiler-generated members
 	// We represent both as classes with different modifiers
 	isStruct := node.Type() == "record_struct_declaration"
-	
+
 	record := &ir.DistilledClass{
 		BaseNode: ir.BaseNode{
 			Location: p.nodeLocation(node),
@@ -402,10 +401,10 @@ func (p *TreeSitterProcessor) processRecordDeclaration(node *sitter.Node, source
 		Modifiers: []ir.Modifier{ir.ModifierData}, // Mark as record
 		Children:  []ir.DistilledNode{},
 	}
-	
+
 	// If it's a record struct, add struct modifier
 	if isStruct {
-		record.Modifiers = append(record.Modifiers, ir.ModifierStruct) // Mark as struct
+		record.Modifiers = append(record.Modifiers, ir.ModifierStruct)   // Mark as struct
 		record.Modifiers = append(record.Modifiers, ir.ModifierReadonly) // Record structs are readonly by default
 	}
 
@@ -627,10 +626,9 @@ func (p *TreeSitterProcessor) processPropertyDeclaration(node *sitter.Node, sour
 		BaseNode: ir.BaseNode{
 			Location: p.nodeLocation(node),
 		},
-		Modifiers: []ir.Modifier{},
+		Modifiers:  []ir.Modifier{},
 		IsProperty: true, // Mark this as a property, not a field
 	}
-	
 
 	// Track accessor information
 	hasGetter := false
@@ -699,7 +697,7 @@ func (p *TreeSitterProcessor) processPropertyDeclaration(node *sitter.Node, sour
 	// Set property accessor information
 	property.HasGetter = hasGetter
 	property.HasSetter = hasSetter || hasInit
-	
+
 	// Add readonly modifier for init-only or getter-only properties
 	if hasGetter && !hasSetter && !hasInit {
 		property.Modifiers = append(property.Modifiers, ir.ModifierReadonly)
@@ -709,7 +707,6 @@ func (p *TreeSitterProcessor) processPropertyDeclaration(node *sitter.Node, sour
 	if property.Visibility == "" {
 		property.Visibility = ir.VisibilityPrivate // Default for properties
 	}
-	
 
 	p.addToParent(file, parent, property)
 }
@@ -752,7 +749,7 @@ func (p *TreeSitterProcessor) processFieldDeclaration(node *sitter.Node, source 
 					}
 				}
 			}
-			
+
 			// Process variable declarators
 			for j := 0; j < int(child.ChildCount()); j++ {
 				varChild := child.Child(j)
@@ -863,7 +860,7 @@ func (p *TreeSitterProcessor) processEventDeclaration(node *sitter.Node, source 
 // extractClassModifiers extracts modifiers for classes
 func (p *TreeSitterProcessor) extractClassModifiers(node *sitter.Node, source []byte, class *ir.DistilledClass) {
 	text := string(source[node.StartByte():node.EndByte()])
-	
+
 	switch text {
 	case "public":
 		class.Visibility = ir.VisibilityPublic
@@ -887,7 +884,7 @@ func (p *TreeSitterProcessor) extractClassModifiers(node *sitter.Node, source []
 // extractInterfaceModifiers extracts modifiers for interfaces
 func (p *TreeSitterProcessor) extractInterfaceModifiers(node *sitter.Node, source []byte, iface *ir.DistilledInterface) {
 	text := string(source[node.StartByte():node.EndByte()])
-	
+
 	switch text {
 	case "public":
 		iface.Visibility = ir.VisibilityPublic
@@ -903,7 +900,7 @@ func (p *TreeSitterProcessor) extractInterfaceModifiers(node *sitter.Node, sourc
 // extractStructModifiers extracts modifiers for structs
 func (p *TreeSitterProcessor) extractStructModifiers(node *sitter.Node, source []byte, strct *ir.DistilledStruct) {
 	text := string(source[node.StartByte():node.EndByte()])
-	
+
 	switch text {
 	case "public":
 		strct.Visibility = ir.VisibilityPublic
@@ -923,7 +920,7 @@ func (p *TreeSitterProcessor) extractStructModifiers(node *sitter.Node, source [
 // extractEnumModifiers extracts modifiers for enums
 func (p *TreeSitterProcessor) extractEnumModifiers(node *sitter.Node, source []byte, enum *ir.DistilledEnum) {
 	text := string(source[node.StartByte():node.EndByte()])
-	
+
 	switch text {
 	case "public":
 		enum.Visibility = ir.VisibilityPublic
@@ -939,7 +936,7 @@ func (p *TreeSitterProcessor) extractEnumModifiers(node *sitter.Node, source []b
 // extractMethodModifiers extracts modifiers for methods
 func (p *TreeSitterProcessor) extractMethodModifiers(node *sitter.Node, source []byte, method *ir.DistilledFunction) {
 	text := string(source[node.StartByte():node.EndByte()])
-	
+
 	switch text {
 	case "public":
 		method.Visibility = ir.VisibilityPublic
@@ -984,7 +981,7 @@ func (p *TreeSitterProcessor) extractFieldModifiers(node *sitter.Node, source []
 // extractFieldModifier extracts a single field modifier
 func (p *TreeSitterProcessor) extractFieldModifier(node *sitter.Node, source []byte) (ir.Modifier, ir.Visibility) {
 	text := string(source[node.StartByte():node.EndByte()])
-	
+
 	switch text {
 	case "public":
 		return "", ir.VisibilityPublic
@@ -1017,7 +1014,7 @@ func (p *TreeSitterProcessor) extractAttributes(node *sitter.Node, source []byte
 		if child.Type() == "attribute" {
 			// Extract the full attribute text
 			attrText := string(source[child.StartByte():child.EndByte()])
-			*decorators = append(*decorators, "[" + attrText + "]")
+			*decorators = append(*decorators, "["+attrText+"]")
 		}
 	}
 }
@@ -1028,10 +1025,10 @@ func (p *TreeSitterProcessor) extractTypeParameters(node *sitter.Node, source []
 		child := node.Child(i)
 		if child.Type() == "type_parameter" {
 			typeParam := ir.TypeParam{
-				Name: "",
+				Name:        "",
 				Constraints: []ir.TypeRef{},
 			}
-			
+
 			// Extract parameter name and constraints
 			for j := 0; j < int(child.ChildCount()); j++ {
 				paramChild := child.Child(j)
@@ -1039,7 +1036,7 @@ func (p *TreeSitterProcessor) extractTypeParameters(node *sitter.Node, source []
 					typeParam.Name = string(source[paramChild.StartByte():paramChild.EndByte()])
 				}
 			}
-			
+
 			class.TypeParams = append(class.TypeParams, typeParam)
 		}
 	}
@@ -1051,10 +1048,10 @@ func (p *TreeSitterProcessor) extractInterfaceTypeParameters(node *sitter.Node, 
 		child := node.Child(i)
 		if child.Type() == "type_parameter" {
 			typeParam := ir.TypeParam{
-				Name: "",
+				Name:        "",
 				Constraints: []ir.TypeRef{},
 			}
-			
+
 			// Extract parameter name
 			for j := 0; j < int(child.ChildCount()); j++ {
 				paramChild := child.Child(j)
@@ -1062,7 +1059,7 @@ func (p *TreeSitterProcessor) extractInterfaceTypeParameters(node *sitter.Node, 
 					typeParam.Name = string(source[paramChild.StartByte():paramChild.EndByte()])
 				}
 			}
-			
+
 			iface.TypeParams = append(iface.TypeParams, typeParam)
 		}
 	}
@@ -1074,10 +1071,10 @@ func (p *TreeSitterProcessor) extractStructTypeParameters(node *sitter.Node, sou
 		child := node.Child(i)
 		if child.Type() == "type_parameter" {
 			typeParam := ir.TypeParam{
-				Name: "",
+				Name:        "",
 				Constraints: []ir.TypeRef{},
 			}
-			
+
 			// Extract parameter name
 			for j := 0; j < int(child.ChildCount()); j++ {
 				paramChild := child.Child(j)
@@ -1085,7 +1082,7 @@ func (p *TreeSitterProcessor) extractStructTypeParameters(node *sitter.Node, sou
 					typeParam.Name = string(source[paramChild.StartByte():paramChild.EndByte()])
 				}
 			}
-			
+
 			strct.TypeParams = append(strct.TypeParams, typeParam)
 		}
 	}
@@ -1097,10 +1094,10 @@ func (p *TreeSitterProcessor) extractMethodTypeParameters(node *sitter.Node, sou
 		child := node.Child(i)
 		if child.Type() == "type_parameter" {
 			typeParam := ir.TypeParam{
-				Name: "",
+				Name:        "",
 				Constraints: []ir.TypeRef{},
 			}
-			
+
 			// Extract parameter name
 			for j := 0; j < int(child.ChildCount()); j++ {
 				paramChild := child.Child(j)
@@ -1108,7 +1105,7 @@ func (p *TreeSitterProcessor) extractMethodTypeParameters(node *sitter.Node, sou
 					typeParam.Name = string(source[paramChild.StartByte():paramChild.EndByte()])
 				}
 			}
-			
+
 			method.TypeParams = append(method.TypeParams, typeParam)
 		}
 	}
@@ -1121,7 +1118,7 @@ func (p *TreeSitterProcessor) extractBaseList(node *sitter.Node, source []byte, 
 		if child.Type() == ":" {
 			continue
 		}
-		
+
 		// First base type is usually the base class (unless it's an interface)
 		baseType := p.extractType(child, source)
 		if len(class.Extends) == 0 {
@@ -1131,7 +1128,7 @@ func (p *TreeSitterProcessor) extractBaseList(node *sitter.Node, source []byte, 
 			// Rest are interfaces
 			class.Implements = append(class.Implements, *baseType)
 		}
-		
+
 		// TODO: Properly distinguish between base class and interfaces
 	}
 }
@@ -1143,7 +1140,7 @@ func (p *TreeSitterProcessor) extractInterfaceBaseList(node *sitter.Node, source
 		if child.Type() == ":" || child.Type() == "," {
 			continue
 		}
-		
+
 		baseType := p.extractType(child, source)
 		iface.Extends = append(iface.Extends, *baseType)
 	}
@@ -1165,11 +1162,11 @@ func (p *TreeSitterProcessor) extractRecordParameters(node *sitter.Node, source 
 				BaseNode: ir.BaseNode{
 					Location: p.nodeLocation(child),
 				},
-				Visibility: ir.VisibilityPublic, // Record properties are public by default
+				Visibility: ir.VisibilityPublic,                // Record properties are public by default
 				Modifiers:  []ir.Modifier{ir.ModifierReadonly}, // Record properties are readonly
-				IsProperty: true, // Record parameters are properties
-				HasGetter: true,  // Record properties have getters
-				HasSetter: false, // Record properties are init-only
+				IsProperty: true,                               // Record parameters are properties
+				HasGetter:  true,                               // Record properties have getters
+				HasSetter:  false,                              // Record properties are init-only
 			}
 
 			// Extract parameter attributes, type and name
@@ -1209,7 +1206,7 @@ func (p *TreeSitterProcessor) extractRecordParameters(node *sitter.Node, source 
 // extractType extracts type information
 func (p *TreeSitterProcessor) extractType(node *sitter.Node, source []byte) *ir.TypeRef {
 	nodeType := node.Type()
-	
+
 	switch nodeType {
 	case "predefined_type", "identifier", "qualified_name":
 		return &ir.TypeRef{Name: string(source[node.StartByte():node.EndByte()])}
@@ -1299,7 +1296,7 @@ func (p *TreeSitterProcessor) extractParameters(node *sitter.Node, source []byte
 // extractParameter extracts a single parameter
 func (p *TreeSitterProcessor) extractParameter(node *sitter.Node, source []byte) *ir.Parameter {
 	param := &ir.Parameter{}
-	
+
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		switch child.Type() {
@@ -1491,10 +1488,10 @@ func (p *TreeSitterProcessor) extractTypeParameterConstraints(node *sitter.Node,
 	// Structure: type_parameter_constraints_clause
 	//   -> identifier (TUser)
 	//   -> type_constraint+ (class, IUser)
-	
+
 	var paramName string
 	var constraints []ir.TypeRef
-	
+
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		switch child.Type() {
@@ -1509,7 +1506,7 @@ func (p *TreeSitterProcessor) extractTypeParameterConstraints(node *sitter.Node,
 			}
 		}
 	}
-	
+
 	// Find the matching type parameter and update its constraints
 	for i := range typeParams {
 		if typeParams[i].Name == paramName {
@@ -1522,13 +1519,13 @@ func (p *TreeSitterProcessor) extractTypeParameterConstraints(node *sitter.Node,
 // extractTypeConstraint extracts a single type constraint
 func (p *TreeSitterProcessor) extractTypeConstraint(node *sitter.Node, source []byte) *ir.TypeRef {
 	// Type constraint can be: class, struct, new(), or a type name
-	
+
 	// If the node itself is the constraint text (e.g., "class", "IUser")
 	nodeText := string(source[node.StartByte():node.EndByte()])
 	if nodeText == "class" || nodeText == "struct" {
 		return &ir.TypeRef{Name: nodeText}
 	}
-	
+
 	// Otherwise check child nodes
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
@@ -1543,12 +1540,12 @@ func (p *TreeSitterProcessor) extractTypeConstraint(node *sitter.Node, source []
 			return p.extractType(child, source)
 		}
 	}
-	
+
 	// If no specific constraint type found, use the node text directly
 	if nodeText != "" {
 		return &ir.TypeRef{Name: nodeText}
 	}
-	
+
 	return nil
 }
 

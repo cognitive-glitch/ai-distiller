@@ -24,20 +24,20 @@ func TestProcessor_Process(t *testing.T) {
 			}`,
 			validate: func(t *testing.T, result *ir.DistilledFile) {
 				require.Len(t, result.Children, 1, "Expected one top-level node")
-				
+
 				classNode, ok := result.Children[0].(*ir.DistilledClass)
 				require.True(t, ok, "Expected a DistilledClass node")
 				assert.Equal(t, "Person", classNode.Name)
 				assert.Equal(t, ir.VisibilityPublic, classNode.Visibility)
 				require.Len(t, classNode.Children, 2, "Expected two fields")
-				
+
 				field1, ok := classNode.Children[0].(*ir.DistilledField)
 				require.True(t, ok, "Expected first child to be a field")
 				assert.Equal(t, "name", field1.Name)
 				assert.Equal(t, ir.VisibilityPublic, field1.Visibility)
 				assert.NotNil(t, field1.Type)
 				assert.Equal(t, "String", field1.Type.Name)
-				
+
 				field2, ok := classNode.Children[1].(*ir.DistilledField)
 				require.True(t, ok, "Expected second child to be a field")
 				assert.Equal(t, "age", field2.Name)
@@ -53,16 +53,16 @@ func TestProcessor_Process(t *testing.T) {
 			}`,
 			validate: func(t *testing.T, result *ir.DistilledFile) {
 				require.Len(t, result.Children, 1, "Expected one function")
-				
+
 				fnNode, ok := result.Children[0].(*ir.DistilledFunction)
 				require.True(t, ok, "Expected a DistilledFunction node")
 				assert.Equal(t, "greet", fnNode.Name)
 				assert.Equal(t, ir.VisibilityPublic, fnNode.Visibility)
-				
+
 				require.Len(t, fnNode.Parameters, 1, "Expected one parameter")
 				assert.Equal(t, "name", fnNode.Parameters[0].Name)
 				assert.Equal(t, "&str", fnNode.Parameters[0].Type.Name)
-				
+
 				assert.NotNil(t, fnNode.Returns)
 				assert.Equal(t, "String", fnNode.Returns.Name)
 			},
@@ -73,12 +73,12 @@ func TestProcessor_Process(t *testing.T) {
 use std::io::{self, Read, Write};`,
 			validate: func(t *testing.T, result *ir.DistilledFile) {
 				require.Len(t, result.Children, 2, "Expected two import statements")
-				
+
 				imp1, ok := result.Children[0].(*ir.DistilledImport)
 				require.True(t, ok, "Expected first to be import")
 				assert.Equal(t, "use", imp1.ImportType)
 				assert.Equal(t, "std::collections::HashMap", imp1.Module)
-				
+
 				imp2, ok := result.Children[1].(*ir.DistilledImport)
 				require.True(t, ok, "Expected second to be import")
 				assert.Equal(t, "use", imp2.ImportType)
@@ -97,13 +97,13 @@ use std::io::{self, Read, Write};`,
 			}`,
 			validate: func(t *testing.T, result *ir.DistilledFile) {
 				require.Len(t, result.Children, 1, "Expected one enum")
-				
+
 				enumNode, ok := result.Children[0].(*ir.DistilledClass)
 				require.True(t, ok, "Expected a DistilledClass node")
 				assert.Equal(t, "Status", enumNode.Name)
 				assert.Equal(t, ir.VisibilityPublic, enumNode.Visibility)
 				require.Len(t, enumNode.Children, 3, "Expected three variants")
-				
+
 				// Check variants
 				for i, expectedName := range []string{"Active", "Inactive", "Pending"} {
 					variant, ok := enumNode.Children[i].(*ir.DistilledField)
@@ -111,7 +111,7 @@ use std::io::{self, Read, Write};`,
 					assert.Equal(t, expectedName, variant.Name)
 					assert.Equal(t, ir.VisibilityPublic, variant.Visibility)
 				}
-				
+
 				// Check Pending has tuple type
 				pending := enumNode.Children[2].(*ir.DistilledField)
 				assert.NotNil(t, pending.Type)
@@ -127,13 +127,13 @@ use std::io::{self, Read, Write};`,
 			}`,
 			validate: func(t *testing.T, result *ir.DistilledFile) {
 				require.Len(t, result.Children, 1, "Expected one impl block")
-				
+
 				implNode, ok := result.Children[0].(*ir.DistilledClass)
 				require.True(t, ok, "Expected a DistilledClass node")
 				assert.Equal(t, "impl Person", implNode.Name)
 				assert.Equal(t, ir.VisibilityPublic, implNode.Visibility)
 				require.Len(t, implNode.Children, 1, "Expected one method")
-				
+
 				method, ok := implNode.Children[0].(*ir.DistilledFunction)
 				require.True(t, ok, "Expected a function")
 				assert.Equal(t, "new", method.Name)
@@ -151,16 +151,16 @@ use std::io::{self, Read, Write};`,
 			}`,
 			validate: func(t *testing.T, result *ir.DistilledFile) {
 				require.Len(t, result.Children, 1, "Expected one function")
-				
+
 				fnNode, ok := result.Children[0].(*ir.DistilledFunction)
 				require.True(t, ok, "Expected a DistilledFunction node")
 				assert.Equal(t, "analyze<'a, S>", fnNode.Name)
 				assert.Equal(t, ir.VisibilityPublic, fnNode.Visibility)
-				
+
 				require.Len(t, fnNode.Parameters, 1, "Expected one parameter")
 				assert.Equal(t, "source", fnNode.Parameters[0].Name)
 				assert.Equal(t, "&'a S", fnNode.Parameters[0].Type.Name)
-				
+
 				assert.NotNil(t, fnNode.Returns)
 				// The return type should include the where clause
 				assert.Equal(t, "Result<String, Error> where S: DataSource + ?Sized", fnNode.Returns.Name)
@@ -173,17 +173,17 @@ use std::io::{self, Read, Write};`,
 			}`,
 			validate: func(t *testing.T, result *ir.DistilledFile) {
 				require.Len(t, result.Children, 1, "Expected one function")
-				
+
 				fnNode, ok := result.Children[0].(*ir.DistilledFunction)
 				require.True(t, ok, "Expected a DistilledFunction node")
 				assert.Equal(t, "compare_sources<'a, 'b, S1, S2>", fnNode.Name)
-				
+
 				require.Len(t, fnNode.Parameters, 2, "Expected two parameters")
 				assert.Equal(t, "source1", fnNode.Parameters[0].Name)
 				assert.Equal(t, "&'a S1", fnNode.Parameters[0].Type.Name)
 				assert.Equal(t, "source2", fnNode.Parameters[1].Name)
 				assert.Equal(t, "&'b S2", fnNode.Parameters[1].Type.Name)
-				
+
 				assert.NotNil(t, fnNode.Returns)
 				assert.Equal(t, "Result<bool, Error> where S1: DataSource + Debug, S2: DataSource + Debug", fnNode.Returns.Name)
 			},
@@ -212,13 +212,13 @@ use std::io::{self, Read, Write};`,
 func TestProcessor_SupportedExtensions(t *testing.T) {
 	processor := NewProcessor()
 	extensions := processor.SupportedExtensions()
-	
+
 	assert.Contains(t, extensions, ".rs")
 }
 
 func TestProcessor_CanProcess(t *testing.T) {
 	processor := NewProcessor()
-	
+
 	tests := []struct {
 		filename string
 		expected bool
@@ -230,7 +230,7 @@ func TestProcessor_CanProcess(t *testing.T) {
 		{"main.go", false},
 		{"file.js", false},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.filename, func(t *testing.T) {
 			assert.Equal(t, tt.expected, processor.CanProcess(tt.filename))

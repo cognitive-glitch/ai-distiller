@@ -21,12 +21,12 @@ var defaultRegistry = &Registry{
 func (r *Registry) Register(name string, factory func(Options) Formatter) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	
+
 	name = strings.ToLower(name)
 	if _, exists := r.formatters[name]; exists {
 		return fmt.Errorf("formatter %q already registered", name)
 	}
-	
+
 	r.formatters[name] = factory
 	return nil
 }
@@ -35,13 +35,13 @@ func (r *Registry) Register(name string, factory func(Options) Formatter) error 
 func (r *Registry) Get(name string, options Options) (Formatter, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	
+
 	name = strings.ToLower(name)
 	factory, exists := r.formatters[name]
 	if !exists {
 		return nil, fmt.Errorf("formatter %q not found", name)
 	}
-	
+
 	return factory(options), nil
 }
 
@@ -49,7 +49,7 @@ func (r *Registry) Get(name string, options Options) (Formatter, error) {
 func (r *Registry) List() []string {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	
+
 	names := make([]string, 0, len(r.formatters))
 	for name := range r.formatters {
 		names = append(names, name)
@@ -81,25 +81,25 @@ func init() {
 	Register("md", func(opts Options) Formatter {
 		return NewMarkdownFormatter(opts)
 	})
-	
+
 	Register("jsonl", func(opts Options) Formatter {
 		return NewJSONLFormatter(opts)
 	})
 	Register("json-lines", func(opts Options) Formatter {
 		return NewJSONLFormatter(opts)
 	})
-	
+
 	Register("xml", func(opts Options) Formatter {
 		return NewXMLFormatter(opts)
 	})
-	
+
 	Register("json", func(opts Options) Formatter {
 		return NewJSONStructuredFormatter(opts)
 	})
 	Register("json-structured", func(opts Options) Formatter {
 		return NewJSONStructuredFormatter(opts)
 	})
-	
+
 	Register("text", func(opts Options) Formatter {
 		return NewLanguageAwareTextFormatter(opts)
 	})

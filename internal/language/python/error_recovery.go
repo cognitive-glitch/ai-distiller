@@ -96,7 +96,7 @@ func validatePythonName(name string) error {
 		"lambda", "nonlocal", "not", "or", "pass", "raise", "return", "try",
 		"while", "with", "yield",
 	}
-	
+
 	for _, kw := range keywords {
 		if name == kw {
 			return fmt.Errorf("'%s' is a Python keyword", name)
@@ -121,7 +121,7 @@ func findUnclosedParenthesis(line string) (int, bool) {
 	depth := 0
 	inString := false
 	stringChar := rune(0)
-	
+
 	for i, ch := range line {
 		if !inString {
 			if ch == '"' || ch == '\'' {
@@ -139,7 +139,7 @@ func findUnclosedParenthesis(line string) (int, bool) {
 			inString = false
 		}
 	}
-	
+
 	return -1, depth > 0
 }
 
@@ -148,12 +148,12 @@ func detectIndentationError(lines []string, lineNum int) *ParseError {
 	if lineNum >= len(lines) {
 		return nil
 	}
-	
+
 	line := lines[lineNum]
 	if strings.TrimSpace(line) == "" {
 		return nil
 	}
-	
+
 	// Count leading spaces/tabs
 	spaces := 0
 	tabs := 0
@@ -166,7 +166,7 @@ func detectIndentationError(lines []string, lineNum int) *ParseError {
 			break
 		}
 	}
-	
+
 	// Mixed indentation
 	if spaces > 0 && tabs > 0 {
 		return &ParseError{
@@ -177,7 +177,7 @@ func detectIndentationError(lines []string, lineNum int) *ParseError {
 			Severity: "error",
 		}
 	}
-	
+
 	// Check if indentation is multiple of 4 (common Python convention)
 	if spaces > 0 && spaces%4 != 0 {
 		return &ParseError{
@@ -188,7 +188,7 @@ func detectIndentationError(lines []string, lineNum int) *ParseError {
 			Severity: "warning",
 		}
 	}
-	
+
 	return nil
 }
 
@@ -211,13 +211,13 @@ func tryRecoverFromError(lines []string, startIdx int, errorKind ParseErrorKind)
 				}
 			}
 		}
-		
+
 	case ErrorKindIncomplete:
 		// For incomplete definitions, skip to next non-indented line
 		if startIdx >= len(lines) {
 			return len(lines)
 		}
-		
+
 		baseIndent := len(lines[startIdx]) - len(strings.TrimLeft(lines[startIdx], " \t"))
 		for i := startIdx + 1; i < len(lines); i++ {
 			line := lines[i]
@@ -230,7 +230,7 @@ func tryRecoverFromError(lines []string, startIdx int, errorKind ParseErrorKind)
 			}
 		}
 	}
-	
+
 	// Default: skip to next line
 	return startIdx + 1
 }

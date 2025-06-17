@@ -14,15 +14,15 @@ import (
 
 func TestAdvancedPythonFeatures(t *testing.T) {
 	t.Skip("Skipping advanced python tests - test files missing")
-	
+
 	p := NewProcessor()
-	
+
 	tests := []struct {
-		name           string
-		inputFile      string
-		expectedNodes  []string // Expected function/class names
-		minNodeCount   int
-		description    string
+		name          string
+		inputFile     string
+		expectedNodes []string // Expected function/class names
+		minNodeCount  int
+		description   string
 	}{
 		{
 			name:          "pattern_matching",
@@ -77,27 +77,27 @@ func TestAdvancedPythonFeatures(t *testing.T) {
 				IncludeImports:        true,
 				IncludePrivate:        true,
 			})
-			
+
 			require.NoError(t, err, "Failed to process %s", tt.inputFile)
 			require.NotNil(t, file)
-			
+
 			// Check minimum node count
 			nodeCount := countNodes(file.Children)
-			assert.GreaterOrEqual(t, nodeCount, tt.minNodeCount, 
+			assert.GreaterOrEqual(t, nodeCount, tt.minNodeCount,
 				"Expected at least %d nodes, got %d", tt.minNodeCount, nodeCount)
-			
+
 			// Check for expected nodes
 			foundNodes := collectNodeNames(file.Children)
 			for _, expectedName := range tt.expectedNodes {
-				assert.Contains(t, foundNodes, expectedName, 
+				assert.Contains(t, foundNodes, expectedName,
 					"Expected to find '%s' in parsed nodes", expectedName)
 			}
-			
+
 			// Log what was found
 			t.Logf("%s: Found %d nodes", tt.description, nodeCount)
 			t.Logf("Classes: %v", filterByType(foundNodes, file.Children, "*ir.DistilledClass"))
 			t.Logf("Functions: %v", filterByType(foundNodes, file.Children, "*ir.DistilledFunction"))
-			
+
 			// Check for errors in error test files
 			if tt.name == "pattern_matching_errors" {
 				// Line-based parser may not detect all syntax errors
@@ -161,21 +161,21 @@ def match_point(p):
 			expected: []string{"Point", "match_point"},
 		},
 	}
-	
+
 	p := NewProcessor()
 	ctx := context.Background()
-	
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			reader := strings.NewReader(tc.code)
 			file, err := p.Process(ctx, reader, "test.py")
-			
+
 			require.NoError(t, err)
 			require.NotNil(t, file)
-			
+
 			foundNames := collectNodeNames(file.Children)
 			for _, expected := range tc.expected {
-				assert.Contains(t, foundNames, expected, 
+				assert.Contains(t, foundNames, expected,
 					"Expected to find '%s' in parsed code", expected)
 			}
 		})
@@ -219,22 +219,22 @@ def test():
 			description: "Invalid: walrus as statement",
 		},
 	}
-	
+
 	p := NewProcessor()
 	ctx := context.Background()
-	
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			reader := strings.NewReader(tc.code)
 			file, err := p.Process(ctx, reader, "test.py")
-			
+
 			if tc.shouldParse {
 				assert.NoError(t, err, "Expected code to parse: %s", tc.description)
 				assert.NotNil(t, file)
 			} else {
 				// For syntax errors, either parsing fails or errors are recorded
 				if err == nil && file != nil {
-					assert.Greater(t, len(file.Errors), 0, 
+					assert.Greater(t, len(file.Errors), 0,
 						"Expected errors for: %s", tc.description)
 				}
 			}

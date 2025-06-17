@@ -14,7 +14,7 @@ import (
 func TestProcessor_BasicTypes(t *testing.T) {
 	t.Skip("Skipping typescript processor tests - output format has changed")
 	t.Skip("Skipping typescript processor tests - output format has changed")
-	
+
 	tests := []struct {
 		name     string
 		input    string
@@ -65,7 +65,7 @@ interface List<T extends object> {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := p.ProcessWithOptions(ctx, strings.NewReader(tt.input), "test.ts", processor.ProcessOptions{
-				IncludePrivate:       true,
+				IncludePrivate:        true,
 				IncludeImplementation: true,
 			})
 			require.NoError(t, err)
@@ -89,9 +89,9 @@ interface List<T extends object> {
 func TestProcessor_Classes(t *testing.T) {
 	t.Skip("Skipping typescript processor tests - output format has changed")
 	tests := []struct {
-		name     string
-		input    string
-		expected []string
+		name        string
+		input       string
+		expected    []string
 		notExpected []string
 	}{
 		{
@@ -134,7 +134,7 @@ func TestProcessor_Classes(t *testing.T) {
 			expected: []string{
 				"class:Point",
 				"field:x:number:public",
-				"field:y:number:public", 
+				"field:y:number:public",
 				"field:id:string:private",
 				"method:constructor",
 			},
@@ -185,7 +185,7 @@ class Dog extends Animal {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := p.ProcessWithOptions(ctx, strings.NewReader(tt.input), "test.ts", processor.ProcessOptions{
-				IncludePrivate:       true,
+				IncludePrivate:        true,
 				IncludeImplementation: true,
 			})
 			require.NoError(t, err)
@@ -261,7 +261,7 @@ function map<T, U>(items: T[], fn: (item: T) => U): U[] {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := p.ProcessWithOptions(ctx, strings.NewReader(tt.input), "test.ts", processor.ProcessOptions{
-				IncludePrivate:       true,
+				IncludePrivate:        true,
 				IncludeImplementation: true,
 			})
 			require.NoError(t, err)
@@ -307,15 +307,15 @@ func TestProcessor_StripOptions(t *testing.T) {
 }`
 
 	tests := []struct {
-		name        string
-		opts        processor.ProcessOptions
-		shouldFind  []string
+		name          string
+		opts          processor.ProcessOptions
+		shouldFind    []string
 		shouldNotFind []string
 	}{
 		{
 			name: "include_all",
 			opts: processor.ProcessOptions{
-				IncludePrivate:       true,
+				IncludePrivate:        true,
 				IncludeImplementation: true,
 			},
 			shouldFind: []string{
@@ -330,7 +330,7 @@ func TestProcessor_StripOptions(t *testing.T) {
 		{
 			name: "strip_private",
 			opts: processor.ProcessOptions{
-				IncludePrivate:       false,
+				IncludePrivate:        false,
 				IncludeImplementation: true,
 			},
 			shouldFind: []string{
@@ -345,7 +345,7 @@ func TestProcessor_StripOptions(t *testing.T) {
 		{
 			name: "strip_implementation",
 			opts: processor.ProcessOptions{
-				IncludePrivate:       true,
+				IncludePrivate:        true,
 				IncludeImplementation: false,
 			},
 			shouldFind: []string{
@@ -403,7 +403,7 @@ func TestProcessor_ComplexGenerics(t *testing.T) {
 	ctx := context.Background()
 
 	result, err := p.ProcessWithOptions(ctx, strings.NewReader(input), "test.ts", processor.ProcessOptions{
-		IncludePrivate:       true,
+		IncludePrivate:        true,
 		IncludeImplementation: true,
 	})
 	require.NoError(t, err)
@@ -444,9 +444,9 @@ export type { UserData } from './types';`
 	ctx := context.Background()
 
 	result, err := p.ProcessWithOptions(ctx, strings.NewReader(input), "test.ts", processor.ProcessOptions{
-		IncludePrivate:       true,
+		IncludePrivate:        true,
 		IncludeImplementation: true,
-		IncludeImports:       true,
+		IncludeImports:        true,
 	})
 	require.NoError(t, err)
 
@@ -464,8 +464,8 @@ export type { UserData } from './types';`
 		walkNodes(result, func(node ir.DistilledNode) {
 			if imp, ok := node.(*ir.DistilledImport); ok {
 				nodeStr := nodeToString(node)
-				if strings.Contains(nodeStr, expected) || 
-				   (strings.Contains(expected, imp.Module) && strings.Contains(expected, "type") == imp.IsType) {
+				if strings.Contains(nodeStr, expected) ||
+					(strings.Contains(expected, imp.Module) && strings.Contains(expected, "type") == imp.IsType) {
 					found = true
 				}
 			}
@@ -478,7 +478,7 @@ export type { UserData } from './types';`
 
 func walkNodes(node ir.DistilledNode, fn func(ir.DistilledNode)) {
 	fn(node)
-	
+
 	switch n := node.(type) {
 	case *ir.DistilledFile:
 		for _, child := range n.Children {
@@ -521,7 +521,7 @@ func nodeToString(node ir.DistilledNode) string {
 			typeParams = "<" + strings.Join(params, ", ") + ">"
 		}
 		return "class:" + n.Name + typeParams + extends + ":" + modifiers
-		
+
 	case *ir.DistilledInterface:
 		typeParams := ""
 		if len(n.TypeParams) > 0 {
@@ -536,7 +536,7 @@ func nodeToString(node ir.DistilledNode) string {
 			typeParams = "<" + strings.Join(params, ", ") + ">"
 		}
 		return "interface:" + n.Name + typeParams
-		
+
 	case *ir.DistilledFunction:
 		modifiers := ""
 		for _, mod := range n.Modifiers {
@@ -555,14 +555,14 @@ func nodeToString(node ir.DistilledNode) string {
 			returnType = ":" + n.Returns.Name
 		}
 		return "method:" + n.Name + typeParams + ":" + string(n.Visibility) + ":" + modifiers + returnType
-		
+
 	case *ir.DistilledField:
 		typeStr := ""
 		if n.Type != nil {
 			typeStr = ":" + n.Type.Name
 		}
 		return "field:" + n.Name + typeStr + ":" + string(n.Visibility)
-		
+
 	case *ir.DistilledTypeAlias:
 		typeParams := ""
 		if len(n.TypeParams) > 0 {
@@ -577,7 +577,7 @@ func nodeToString(node ir.DistilledNode) string {
 			typeParams = "<" + strings.Join(params, ", ") + ">"
 		}
 		return "type:" + n.Name + typeParams
-		
+
 	case *ir.DistilledImport:
 		typeStr := ""
 		if n.IsType {
@@ -587,10 +587,10 @@ func nodeToString(node ir.DistilledNode) string {
 			return "import:" + n.Symbols[0].Name + typeStr
 		}
 		return "import:" + n.Module + typeStr
-		
+
 	case *ir.DistilledComment:
 		return n.Text
-		
+
 	default:
 		return ""
 	}

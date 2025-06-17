@@ -3,7 +3,7 @@ package aiactions
 import (
 	"fmt"
 	"strings"
-	
+
 	"github.com/janreges/ai-distiller/internal/ai"
 )
 
@@ -34,7 +34,7 @@ func (a *ComplexCodebasePromptAction) Validate() error {
 
 func (a *ComplexCodebasePromptAction) GenerateContent(ctx *ai.ActionContext) (*ai.ContentResult, error) {
 	prompt := a.generateComplexAnalysisPrompt(ctx)
-	
+
 	return &ai.ContentResult{
 		ContentBefore: prompt,
 		ContentAfter:  "",
@@ -43,7 +43,7 @@ func (a *ComplexCodebasePromptAction) GenerateContent(ctx *ai.ActionContext) (*a
 
 func (a *ComplexCodebasePromptAction) generateComplexAnalysisPrompt(ctx *ai.ActionContext) string {
 	var sb strings.Builder
-	
+
 	sb.WriteString(fmt.Sprintf(`# Comprehensive Codebase Analysis
 
 **Project:** %s
@@ -77,7 +77,7 @@ Provide a concise overview including:
 
 Create a high-level architecture diagram using Mermaid syntax:
 
-` + "```mermaid" + `
+`+"```mermaid"+`
 graph TB
     subgraph "Presentation Layer"
         UI[User Interface]
@@ -97,7 +97,7 @@ graph TB
     API --> SVC
     SVC --> DB
     SVC --> CACHE
-` + "```" + `
+`+"```"+`
 
 #### 2.2 Component Analysis
 
@@ -277,6 +277,6 @@ Structure your response with clear sections, use tables for data, include code e
 The following is the distilled codebase for comprehensive analysis:
 
 `, ctx.BaseName, ctx.Timestamp.Format("2006-01-02")))
-	
+
 	return sb.String()
 }

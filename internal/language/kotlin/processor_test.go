@@ -150,7 +150,7 @@ fun String.isPalindrome(): Boolean {
 
 			// Convert result to string for easier checking
 			content := convertToString(result)
-			
+
 			// Check that all expected elements are present
 			for _, exp := range tt.expected {
 				assert.Contains(t, content, exp, "Expected to find %s in output", exp)
@@ -283,7 +283,7 @@ class Calculator {
 			require.NotNil(t, result)
 
 			content := convertToString(result)
-			
+
 			for _, exp := range tt.expected {
 				assert.Contains(t, content, exp, "Expected to find %s in output")
 			}
@@ -401,14 +401,14 @@ typealias UserPredicate = (User) -> Boolean
 
 	processor := NewProcessor()
 	ctx := context.Background()
-	
+
 	reader := strings.NewReader(code)
 	result, err := processor.Process(ctx, reader, "complex.kt")
 	require.NoError(t, err)
 	require.NotNil(t, result)
-	
+
 	content := convertToString(result)
-	
+
 	// Check various Kotlin features
 	assert.Contains(t, content, "com.example.app")
 	assert.Contains(t, content, "Response")
@@ -443,12 +443,12 @@ class VisibilityTest {
 
 	processor := NewProcessor()
 	ctx := context.Background()
-	
+
 	reader := strings.NewReader(code)
 	result, err := processor.Process(ctx, reader, "visibility.kt")
 	require.NoError(t, err)
 	require.NotNil(t, result)
-	
+
 	// Check visibility assignments
 	var checkVisibility func(ir.DistilledNode)
 	checkVisibility = func(node ir.DistilledNode) {
@@ -483,7 +483,7 @@ class VisibilityTest {
 			}
 		}
 	}
-	
+
 	for _, node := range result.Children {
 		checkVisibility(node)
 	}
@@ -492,7 +492,7 @@ class VisibilityTest {
 // Helper function to convert result to string representation
 func convertToString(file *ir.DistilledFile) string {
 	var sb strings.Builder
-	
+
 	// Recursively collect all names and modifiers from the IR structure
 	var collectInfo func(node ir.DistilledNode)
 	collectInfo = func(node ir.DistilledNode) {
@@ -533,7 +533,7 @@ func convertToString(file *ir.DistilledFile) string {
 		case *ir.DistilledTypeAlias:
 			sb.WriteString(n.Name + " ")
 		}
-		
+
 		// Process children
 		if node != nil {
 			for _, child := range node.GetChildren() {
@@ -541,11 +541,11 @@ func convertToString(file *ir.DistilledFile) string {
 			}
 		}
 	}
-	
+
 	// Process all top-level nodes
 	for _, node := range file.Children {
 		collectInfo(node)
 	}
-	
+
 	return sb.String()
 }

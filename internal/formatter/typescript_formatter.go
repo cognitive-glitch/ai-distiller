@@ -67,13 +67,13 @@ func (f *TypeScriptFormatter) formatClass(w io.Writer, class *ir.DistilledClass,
 			modifiers += "abstract "
 		}
 	}
-	
+
 	if hasExport {
 		fmt.Fprintf(w, "\nexport %sclass %s", modifiers, class.Name)
 	} else {
 		fmt.Fprintf(w, "\n%sclass %s", modifiers, class.Name)
 	}
-	
+
 	// Add generic type parameters
 	if len(class.TypeParams) > 0 {
 		typeParams := make([]string, len(class.TypeParams))
@@ -85,7 +85,7 @@ func (f *TypeScriptFormatter) formatClass(w io.Writer, class *ir.DistilledClass,
 		}
 		fmt.Fprintf(w, "<%s>", strings.Join(typeParams, ", "))
 	}
-	
+
 	// Add extends clause
 	if len(class.Extends) > 0 {
 		extends := make([]string, len(class.Extends))
@@ -94,7 +94,7 @@ func (f *TypeScriptFormatter) formatClass(w io.Writer, class *ir.DistilledClass,
 		}
 		fmt.Fprintf(w, " extends %s", strings.Join(extends, ", "))
 	}
-	
+
 	// Add implements clause
 	if len(class.Implements) > 0 {
 		implements := make([]string, len(class.Implements))
@@ -103,16 +103,16 @@ func (f *TypeScriptFormatter) formatClass(w io.Writer, class *ir.DistilledClass,
 		}
 		fmt.Fprintf(w, " implements %s", strings.Join(implements, ", "))
 	}
-	
+
 	fmt.Fprintln(w, " {")
-	
+
 	// Format class members
 	for _, child := range class.Children {
 		f.FormatNode(w, child, indent+1)
 	}
-	
+
 	fmt.Fprintln(w, "}")
-	
+
 	return nil
 }
 
@@ -124,13 +124,13 @@ func (f *TypeScriptFormatter) formatInterface(w io.Writer, intf *ir.DistilledInt
 			break
 		}
 	}
-	
+
 	if hasExport {
 		fmt.Fprintf(w, "\nexport interface %s", intf.Name)
 	} else {
 		fmt.Fprintf(w, "\ninterface %s", intf.Name)
 	}
-	
+
 	// Add generic type parameters
 	if len(intf.TypeParams) > 0 {
 		typeParams := make([]string, len(intf.TypeParams))
@@ -142,7 +142,7 @@ func (f *TypeScriptFormatter) formatInterface(w io.Writer, intf *ir.DistilledInt
 		}
 		fmt.Fprintf(w, "<%s>", strings.Join(typeParams, ", "))
 	}
-	
+
 	// Add extends clause
 	if len(intf.Extends) > 0 {
 		extends := make([]string, len(intf.Extends))
@@ -151,9 +151,9 @@ func (f *TypeScriptFormatter) formatInterface(w io.Writer, intf *ir.DistilledInt
 		}
 		fmt.Fprintf(w, " extends %s", strings.Join(extends, ", "))
 	}
-	
+
 	fmt.Fprintln(w, " {")
-	
+
 	// Format interface members
 	for _, child := range intf.Children {
 		switch c := child.(type) {
@@ -167,7 +167,7 @@ func (f *TypeScriptFormatter) formatInterface(w io.Writer, intf *ir.DistilledInt
 		case *ir.DistilledFunction:
 			// Interface methods
 			fmt.Fprintf(w, "    method %s", c.Name)
-			
+
 			// Add generic type parameters if any
 			if len(c.TypeParams) > 0 {
 				typeParams := make([]string, len(c.TypeParams))
@@ -179,7 +179,7 @@ func (f *TypeScriptFormatter) formatInterface(w io.Writer, intf *ir.DistilledInt
 				}
 				fmt.Fprintf(w, "<%s>", strings.Join(typeParams, ", "))
 			}
-			
+
 			// Parameters
 			fmt.Fprintf(w, "(")
 			params := make([]string, 0, len(c.Parameters))
@@ -194,7 +194,7 @@ func (f *TypeScriptFormatter) formatInterface(w io.Writer, intf *ir.DistilledInt
 				params = append(params, paramStr)
 			}
 			fmt.Fprintf(w, "%s)", strings.Join(params, ", "))
-			
+
 			// Return type
 			if c.Returns != nil && c.Returns.Name != "" {
 				fmt.Fprintf(w, ": %s", c.Returns.Name)
@@ -202,24 +202,24 @@ func (f *TypeScriptFormatter) formatInterface(w io.Writer, intf *ir.DistilledInt
 			fmt.Fprintln(w)
 		}
 	}
-	
+
 	fmt.Fprintln(w, "}")
-	
+
 	return nil
 }
 
 func (f *TypeScriptFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, indent int) error {
 	indentStr := strings.Repeat("    ", indent)
-	
+
 	// Format decorators/annotations
 	for _, dec := range fn.Decorators {
 		fmt.Fprintf(w, "%s@%s\n", indentStr, dec)
 	}
-	
+
 	modifiers := ""
 	isConst := false
 	hasExport := false
-	
+
 	// Format visibility keyword (only for class methods, not top-level functions)
 	if indent > 0 {
 		visKeyword := f.getTypeScriptVisibilityKeyword(fn.Visibility)
@@ -240,7 +240,7 @@ func (f *TypeScriptFormatter) formatFunction(w io.Writer, fn *ir.DistilledFuncti
 			isConst = true
 		}
 	}
-	
+
 	// Top-level functions don't have indentation
 	if indent == 0 {
 		indentStr = ""
@@ -258,7 +258,7 @@ func (f *TypeScriptFormatter) formatFunction(w io.Writer, fn *ir.DistilledFuncti
 		// Methods inside classes/interfaces - no "function" keyword needed
 		fmt.Fprintf(w, "%s%s%s", indentStr, modifiers, fn.Name)
 	}
-	
+
 	// Add generic type parameters
 	if len(fn.TypeParams) > 0 {
 		typeParams := make([]string, len(fn.TypeParams))
@@ -270,7 +270,7 @@ func (f *TypeScriptFormatter) formatFunction(w io.Writer, fn *ir.DistilledFuncti
 		}
 		fmt.Fprintf(w, "<%s>", strings.Join(typeParams, ", "))
 	}
-	
+
 	// Parameters
 	fmt.Fprintf(w, "(")
 	params := make([]string, 0, len(fn.Parameters))
@@ -288,19 +288,19 @@ func (f *TypeScriptFormatter) formatFunction(w io.Writer, fn *ir.DistilledFuncti
 		params = append(params, paramStr)
 	}
 	fmt.Fprintf(w, "%s)", strings.Join(params, ", "))
-	
+
 	// Return type
 	if fn.Returns != nil && fn.Returns.Name != "" {
 		fmt.Fprintf(w, ": %s", fn.Returns.Name)
 	}
-	
+
 	fmt.Fprintln(w)
-	
+
 	// Implementation
 	if fn.Implementation != "" {
 		fmt.Fprintf(w, "%s    // implementation\n", indentStr)
 	}
-	
+
 	return nil
 }
 
@@ -317,12 +317,12 @@ func (f *TypeScriptFormatter) formatField(w io.Writer, field *ir.DistilledField,
 				hasExport = true
 			}
 		}
-		
+
 		exportPrefix := ""
 		if hasExport {
 			exportPrefix = "export "
 		}
-		
+
 		fmt.Fprintf(w, "%s%s %s", exportPrefix, varType, field.Name)
 		if field.Type != nil && field.Type.Name != "" {
 			fmt.Fprintf(w, ": %s", field.Type.Name)
@@ -334,7 +334,7 @@ func (f *TypeScriptFormatter) formatField(w io.Writer, field *ir.DistilledField,
 	} else {
 		// Class field - use visibility keywords
 		visKeyword := f.getTypeScriptVisibilityKeyword(field.Visibility)
-		
+
 		modifiers := ""
 		if visKeyword != "" {
 			modifiers = visKeyword + " "
@@ -346,7 +346,7 @@ func (f *TypeScriptFormatter) formatField(w io.Writer, field *ir.DistilledField,
 				modifiers += "static "
 			}
 		}
-		
+
 		fmt.Fprintf(w, "    %s%s", modifiers, field.Name)
 		if field.Type != nil && field.Type.Name != "" {
 			fmt.Fprintf(w, ": %s", field.Type.Name)
@@ -356,7 +356,7 @@ func (f *TypeScriptFormatter) formatField(w io.Writer, field *ir.DistilledField,
 		}
 		fmt.Fprintln(w)
 	}
-	
+
 	return nil
 }
 
@@ -368,13 +368,13 @@ func (f *TypeScriptFormatter) formatTypeAlias(w io.Writer, alias *ir.DistilledTy
 			break
 		}
 	}
-	
+
 	if hasExport {
 		fmt.Fprintf(w, "export type %s", alias.Name)
 	} else {
 		fmt.Fprintf(w, "type %s", alias.Name)
 	}
-	
+
 	// Add generic type parameters
 	if len(alias.TypeParams) > 0 {
 		typeParams := make([]string, len(alias.TypeParams))
@@ -386,9 +386,9 @@ func (f *TypeScriptFormatter) formatTypeAlias(w io.Writer, alias *ir.DistilledTy
 		}
 		fmt.Fprintf(w, "<%s>", strings.Join(typeParams, ", "))
 	}
-	
+
 	fmt.Fprintf(w, " = %s\n", alias.Type.Name)
-	
+
 	return nil
 }
 

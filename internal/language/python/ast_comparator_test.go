@@ -13,7 +13,7 @@ import (
 
 func TestASTComparator(t *testing.T) {
 	t.Skip("Skipping AST comparator tests - test files missing")
-	
+
 	// Skip if Python is not available
 	if _, err := exec.LookPath("python3"); err != nil {
 		t.Skip("Python3 not available, skipping AST comparison tests")
@@ -74,7 +74,7 @@ func TestASTComparator(t *testing.T) {
 			// Log comparison results
 			t.Logf("Comparison for %s:", tt.description)
 			t.Logf("  Our nodes: %d, Python nodes: %d", result.OurNodeCount, result.PythonNodeCount)
-			
+
 			if len(result.MissingInOurs) > 0 {
 				t.Logf("  Missing in ours: %v", result.MissingInOurs)
 			}
@@ -96,7 +96,7 @@ func TestASTComparator(t *testing.T) {
 
 func TestASTComparatorWithAdvancedFeatures(t *testing.T) {
 	t.Skip("Skipping AST comparator advanced tests - test files missing")
-	
+
 	// Skip if Python is not available
 	if _, err := exec.LookPath("python3"); err != nil {
 		t.Skip("Python3 not available, skipping AST comparison tests")
@@ -129,13 +129,13 @@ func TestASTComparatorWithAdvancedFeatures(t *testing.T) {
 
 			// Log what we found vs what Python found
 			t.Logf("File: %s", filepath.Base(file))
-			t.Logf("Our parser found %d nodes, Python found %d nodes", 
+			t.Logf("Our parser found %d nodes, Python found %d nodes",
 				result.OurNodeCount, result.PythonNodeCount)
-			
+
 			// We expect to find most structures, even if not all details match
 			accuracy := float64(result.OurNodeCount-len(result.MissingInOurs)) / float64(result.PythonNodeCount)
 			t.Logf("Accuracy: %.2f%%", accuracy*100)
-			
+
 			// Line-based parser should find at least 70% of structures
 			assert.Greater(t, accuracy, 0.7, "Parser should find most structures")
 		})
@@ -144,25 +144,25 @@ func TestASTComparatorWithAdvancedFeatures(t *testing.T) {
 
 func TestCompareWithPythonLibraries(t *testing.T) {
 	t.Skip("Manual test for comparing with real Python libraries")
-	
+
 	// This test can be enabled manually to test against real Python libraries
 	// Example usage:
 	//
 	// 1. Clone a Python library: git clone https://github.com/psf/requests.git
 	// 2. Update libraryPath below
 	// 3. Run: go test -run TestCompareWithPythonLibraries -v
-	
+
 	libraryPath := "/path/to/requests"
-	
+
 	p := NewProcessor()
 	comparator := NewASTComparator()
-	
+
 	// Walk through all Python files
 	err := filepath.Walk(libraryPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-		
+
 		if filepath.Ext(path) == ".py" {
 			t.Run(path, func(t *testing.T) {
 				// Parse with our parser
@@ -172,28 +172,28 @@ func TestCompareWithPythonLibraries(t *testing.T) {
 					IncludeImports:        true,
 					IncludePrivate:        true,
 				})
-				
+
 				if err != nil {
 					t.Logf("Failed to parse %s: %v", path, err)
 					return
 				}
-				
+
 				// Compare with Python AST
 				result, err := comparator.CompareFile(path, ourAST)
 				if err != nil {
 					t.Logf("Failed to compare %s: %v", path, err)
 					return
 				}
-				
+
 				// Log statistics
 				if !result.Match {
 					t.Logf("Mismatch in %s: missing %d items", path, len(result.MissingInOurs))
 				}
 			})
 		}
-		
+
 		return nil
 	})
-	
+
 	require.NoError(t, err)
 }

@@ -12,10 +12,10 @@ import (
 
 func TestMarkdownFormatter_Format(t *testing.T) {
 	tests := []struct {
-		name     string
-		options  Options
-		file     *ir.DistilledFile
-		contains []string
+		name        string
+		options     Options
+		file        *ir.DistilledFile
+		contains    []string
 		notContains []string
 	}{
 		{
@@ -61,7 +61,7 @@ func TestMarkdownFormatter_Format(t *testing.T) {
 				"🔧 **Function** `__init__`(`self`, `value`: `int`)",
 			},
 			notContains: []string{
-				"<sub>L",  // No location info
+				"<sub>L",    // No location info
 				"Language:", // No metadata
 			},
 		},
@@ -92,7 +92,7 @@ func TestMarkdownFormatter_Format(t *testing.T) {
 			},
 		},
 		{
-			name: "file with errors",
+			name:    "file with errors",
 			options: Options{},
 			file: &ir.DistilledFile{
 				Path:     "error.py",
@@ -114,7 +114,7 @@ func TestMarkdownFormatter_Format(t *testing.T) {
 			},
 		},
 		{
-			name: "imports formatting",
+			name:    "imports formatting",
 			options: Options{},
 			file: &ir.DistilledFile{
 				Path:     "imports.py",
@@ -140,7 +140,7 @@ func TestMarkdownFormatter_Format(t *testing.T) {
 			},
 		},
 		{
-			name: "modifiers and visibility",
+			name:    "modifiers and visibility",
 			options: Options{},
 			file: &ir.DistilledFile{
 				Path:     "modifiers.py",
@@ -158,7 +158,7 @@ func TestMarkdownFormatter_Format(t *testing.T) {
 			},
 		},
 		{
-			name: "class inheritance",
+			name:    "class inheritance",
 			options: Options{},
 			file: &ir.DistilledFile{
 				Path:     "inheritance.py",
@@ -225,16 +225,16 @@ func TestMarkdownFormatter_Format(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			formatter := NewMarkdownFormatter(tt.options)
 			var buf bytes.Buffer
-			
+
 			err := formatter.Format(&buf, tt.file)
 			require.NoError(t, err)
-			
+
 			output := buf.String()
-			
+
 			for _, expected := range tt.contains {
 				assert.Contains(t, output, expected, "Output should contain: %s", expected)
 			}
-			
+
 			for _, notExpected := range tt.notContains {
 				assert.NotContains(t, output, notExpected, "Output should not contain: %s", notExpected)
 			}
@@ -244,7 +244,7 @@ func TestMarkdownFormatter_Format(t *testing.T) {
 
 func TestMarkdownFormatter_FormatMultiple(t *testing.T) {
 	formatter := NewMarkdownFormatter(Options{})
-	
+
 	files := []*ir.DistilledFile{
 		{
 			Path:     "file1.py",
@@ -261,11 +261,11 @@ func TestMarkdownFormatter_FormatMultiple(t *testing.T) {
 			},
 		},
 	}
-	
+
 	var buf bytes.Buffer
 	err := formatter.FormatMultiple(&buf, files)
 	require.NoError(t, err)
-	
+
 	output := buf.String()
 	assert.Contains(t, output, "# file1.py")
 	assert.Contains(t, output, "# file2.py")
@@ -281,7 +281,7 @@ func TestMarkdownFormatter_Extension(t *testing.T) {
 
 func TestMarkdownFormatter_AllNodeTypes(t *testing.T) {
 	formatter := NewMarkdownFormatter(Options{})
-	
+
 	file := &ir.DistilledFile{
 		Path:     "all_types.py",
 		Language: "python",
@@ -305,11 +305,11 @@ func TestMarkdownFormatter_AllNodeTypes(t *testing.T) {
 			},
 		},
 	}
-	
+
 	var buf bytes.Buffer
 	err := formatter.Format(&buf, file)
 	require.NoError(t, err)
-	
+
 	output := buf.String()
 	assert.Contains(t, output, "📦 **Package** `mypackage`")
 	assert.Contains(t, output, "🔌 **Interface** `IService`")
@@ -324,7 +324,7 @@ func TestMarkdownFormatter_Metadata(t *testing.T) {
 	formatter := NewMarkdownFormatter(Options{
 		IncludeMetadata: true,
 	})
-	
+
 	file := &ir.DistilledFile{
 		Path:     "meta.py",
 		Language: "python",
@@ -334,11 +334,11 @@ func TestMarkdownFormatter_Metadata(t *testing.T) {
 			Encoding: "utf-8",
 		},
 	}
-	
+
 	var buf bytes.Buffer
 	err := formatter.Format(&buf, file)
 	require.NoError(t, err)
-	
+
 	output := buf.String()
 	assert.Contains(t, output, "**Language:** python")
 	assert.Contains(t, output, "**Size:** 1234 bytes")
@@ -346,7 +346,7 @@ func TestMarkdownFormatter_Metadata(t *testing.T) {
 
 func TestMarkdownFormatter_NestedStructures(t *testing.T) {
 	formatter := NewMarkdownFormatter(Options{})
-	
+
 	file := &ir.DistilledFile{
 		Path:     "nested.py",
 		Language: "python",
@@ -366,11 +366,11 @@ func TestMarkdownFormatter_NestedStructures(t *testing.T) {
 			},
 		},
 	}
-	
+
 	var buf bytes.Buffer
 	err := formatter.Format(&buf, file)
 	require.NoError(t, err)
-	
+
 	output := buf.String()
 	// Check indentation
 	lines := strings.Split(output, "\n")

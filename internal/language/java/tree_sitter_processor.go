@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/janreges/ai-distiller/internal/ir"
 	sitter "github.com/smacker/go-tree-sitter"
 	tree_sitter_java "github.com/tree-sitter/tree-sitter-java/bindings/go"
-	"github.com/janreges/ai-distiller/internal/ir"
 )
 
 // TreeSitterProcessor uses tree-sitter for Java parsing
@@ -19,7 +19,7 @@ type TreeSitterProcessor struct {
 func NewTreeSitterProcessor() *TreeSitterProcessor {
 	parser := sitter.NewParser()
 	parser.SetLanguage(sitter.NewLanguage(tree_sitter_java.Language()))
-	
+
 	return &TreeSitterProcessor{
 		parser: parser,
 	}
@@ -33,7 +33,6 @@ func (p *TreeSitterProcessor) ProcessSource(ctx context.Context, source []byte, 
 		return nil, fmt.Errorf("failed to parse Java code: %w", err)
 	}
 	defer tree.Close()
-
 
 	// Create distilled file
 	file := &ir.DistilledFile{
@@ -59,7 +58,7 @@ func (p *TreeSitterProcessor) ProcessSource(ctx context.Context, source []byte, 
 // processNode recursively processes tree-sitter nodes
 func (p *TreeSitterProcessor) processNode(node *sitter.Node, source []byte, file *ir.DistilledFile, parent ir.DistilledNode) {
 	nodeType := node.Type()
-	
+
 	switch nodeType {
 	case "package_declaration":
 		p.processPackageDeclaration(node, source, file)
@@ -282,7 +281,7 @@ func (p *TreeSitterProcessor) processAnnotationTypeDeclaration(node *sitter.Node
 		BaseNode: ir.BaseNode{
 			Location: p.nodeLocation(node),
 		},
-		Children: []ir.DistilledNode{},
+		Children:   []ir.DistilledNode{},
 		Decorators: []string{"@interface"},
 	}
 
@@ -334,7 +333,7 @@ func (p *TreeSitterProcessor) processAnnotationElement(node *sitter.Node, source
 			},
 		},
 		Parameters: []ir.Parameter{},
-		Modifiers:  []ir.Modifier{}, // No explicit modifiers for annotation elements
+		Modifiers:  []ir.Modifier{},     // No explicit modifiers for annotation elements
 		Visibility: ir.VisibilityPublic, // Annotation elements are implicitly public
 	}
 
@@ -527,10 +526,10 @@ func (p *TreeSitterProcessor) processFieldDeclaration(node *sitter.Node, source 
 				BaseNode: ir.BaseNode{
 					Location: p.nodeLocation(child),
 				},
-				Type:        fieldType,
-				Modifiers:   modifiers,
-				Visibility:  visibility,
-				Decorators:  decorators,
+				Type:       fieldType,
+				Modifiers:  modifiers,
+				Visibility: visibility,
+				Decorators: decorators,
 			}
 
 			// Extract field name and value
@@ -564,7 +563,7 @@ func (p *TreeSitterProcessor) extractModifiers(node *sitter.Node, source []byte,
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		text := string(source[child.StartByte():child.EndByte()])
-		
+
 		switch text {
 		case "public":
 			class.Visibility = ir.VisibilityPublic
@@ -596,7 +595,7 @@ func (p *TreeSitterProcessor) extractEnumModifiers(node *sitter.Node, source []b
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		text := string(source[child.StartByte():child.EndByte()])
-		
+
 		switch text {
 		case "public":
 			enum.Visibility = ir.VisibilityPublic
@@ -618,7 +617,7 @@ func (p *TreeSitterProcessor) extractInterfaceModifiers(node *sitter.Node, sourc
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		text := string(source[child.StartByte():child.EndByte()])
-		
+
 		switch text {
 		case "public":
 			iface.Visibility = ir.VisibilityPublic
@@ -642,7 +641,7 @@ func (p *TreeSitterProcessor) extractMethodModifiers(node *sitter.Node, source [
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		text := string(source[child.StartByte():child.EndByte()])
-		
+
 		switch text {
 		case "public":
 			method.Visibility = ir.VisibilityPublic
@@ -680,7 +679,7 @@ func (p *TreeSitterProcessor) extractFieldModifiers(node *sitter.Node, source []
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		text := string(source[child.StartByte():child.EndByte()])
-		
+
 		switch text {
 		case "public":
 			visibility = ir.VisibilityPublic
@@ -827,7 +826,7 @@ func (p *TreeSitterProcessor) extractTypeList(node *sitter.Node, source []byte, 
 // extractType extracts type information
 func (p *TreeSitterProcessor) extractType(node *sitter.Node, source []byte) *ir.TypeRef {
 	nodeType := node.Type()
-	
+
 	switch nodeType {
 	case "type_identifier", "integral_type", "floating_point_type", "boolean_type":
 		return &ir.TypeRef{Name: string(source[node.StartByte():node.EndByte()])}
@@ -906,7 +905,7 @@ func (p *TreeSitterProcessor) extractParameter(node *sitter.Node, source []byte)
 	param := &ir.Parameter{
 		Decorators: []string{},
 	}
-	
+
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		switch child.Type() {
@@ -955,7 +954,7 @@ func (p *TreeSitterProcessor) extractParameter(node *sitter.Node, source []byte)
 func (p *TreeSitterProcessor) extractRecordComponents(node *sitter.Node, source []byte, record *ir.DistilledClass) {
 	// Record components are stored as parameters in JavaExtensions, not as fields
 	var recordParams []ir.Parameter
-	
+
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		if child.Type() == "formal_parameter" {
@@ -963,7 +962,7 @@ func (p *TreeSitterProcessor) extractRecordComponents(node *sitter.Node, source 
 			recordParams = append(recordParams, *param)
 		}
 	}
-	
+
 	// Store parameters in JavaExtensions
 	if record.Extensions == nil {
 		record.Extensions = &ir.NodeExtensions{}
@@ -980,12 +979,12 @@ func (p *TreeSitterProcessor) extractThrows(node *sitter.Node, source []byte, me
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		childType := child.Type()
-		
+
 		// Skip the 'throws' keyword and commas
 		if childType == "throws" || childType == "," {
 			continue
 		}
-		
+
 		if childType == "type_identifier" || childType == "scoped_type_identifier" {
 			exception := p.extractType(child, source)
 			method.Throws = append(method.Throws, *exception)
@@ -1094,7 +1093,7 @@ func (p *TreeSitterProcessor) addToParent(file *ir.DistilledFile, parent ir.Dist
 // extractTypeParameter extracts a single type parameter
 func (p *TreeSitterProcessor) extractTypeParameter(node *sitter.Node, source []byte) *ir.TypeParam {
 	param := &ir.TypeParam{}
-	
+
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		switch child.Type() {
@@ -1114,7 +1113,7 @@ func (p *TreeSitterProcessor) extractTypeParameter(node *sitter.Node, source []b
 			}
 		}
 	}
-	
+
 	return param
 }
 
@@ -1143,7 +1142,7 @@ func (p *TreeSitterProcessor) extractMethodTypeParameters(node *sitter.Node, sou
 // extractAnnotationArguments extracts annotation arguments
 func (p *TreeSitterProcessor) extractAnnotationArguments(node *sitter.Node, source []byte) []string {
 	var args []string
-	
+
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		switch child.Type() {
@@ -1153,9 +1152,9 @@ func (p *TreeSitterProcessor) extractAnnotationArguments(node *sitter.Node, sour
 			if arg != "" {
 				args = append(args, arg)
 			}
-		case "string_literal", "decimal_integer_literal", "hex_integer_literal", 
-			 "octal_integer_literal", "binary_integer_literal", "decimal_floating_point_literal",
-			 "true", "false", "null_literal":
+		case "string_literal", "decimal_integer_literal", "hex_integer_literal",
+			"octal_integer_literal", "binary_integer_literal", "decimal_floating_point_literal",
+			"true", "false", "null_literal":
 			// Direct value argument
 			args = append(args, string(source[child.StartByte():child.EndByte()]))
 		case "identifier":
@@ -1169,14 +1168,14 @@ func (p *TreeSitterProcessor) extractAnnotationArguments(node *sitter.Node, sour
 			args = append(args, string(source[child.StartByte():child.EndByte()]))
 		}
 	}
-	
+
 	return args
 }
 
 // extractElementValuePair extracts key=value pairs from annotations
 func (p *TreeSitterProcessor) extractElementValuePair(node *sitter.Node, source []byte) string {
 	var key, value string
-	
+
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		switch child.Type() {
@@ -1186,31 +1185,31 @@ func (p *TreeSitterProcessor) extractElementValuePair(node *sitter.Node, source 
 			}
 		case "=":
 			// Skip assignment operator
-		case "string_literal", "decimal_integer_literal", "hex_integer_literal", 
-			 "octal_integer_literal", "binary_integer_literal", "decimal_floating_point_literal",
-			 "true", "false", "null_literal", "field_access", "array_initializer":
+		case "string_literal", "decimal_integer_literal", "hex_integer_literal",
+			"octal_integer_literal", "binary_integer_literal", "decimal_floating_point_literal",
+			"true", "false", "null_literal", "field_access", "array_initializer":
 			value = string(source[child.StartByte():child.EndByte()])
 		}
 	}
-	
+
 	if key != "" && value != "" {
 		return key + "=" + value
 	} else if value != "" {
 		return value // Single value without key
 	}
-	
+
 	return ""
 }
 
 // processJavaDocComment processes JavaDoc comments (/** ... */)
 func (p *TreeSitterProcessor) processJavaDocComment(node *sitter.Node, source []byte, file *ir.DistilledFile, parent ir.DistilledNode) {
 	text := string(source[node.StartByte():node.EndByte()])
-	
+
 	// Only process JavaDoc comments (start with /**)
 	if !strings.HasPrefix(text, "/**") {
 		return
 	}
-	
+
 	javaDoc := p.parseJavaDoc(text)
 	if javaDoc != nil {
 		p.addToParent(file, parent, javaDoc)
@@ -1227,11 +1226,11 @@ func (p *TreeSitterProcessor) parseJavaDoc(text string) *ir.DistilledComment {
 	if strings.HasSuffix(content, "*/") {
 		content = content[:len(content)-2]
 	}
-	
+
 	// Clean up the content by removing leading asterisks and extra whitespace
 	lines := strings.Split(content, "\n")
 	var cleanedLines []string
-	
+
 	for _, line := range lines {
 		cleaned := strings.TrimSpace(line)
 		if strings.HasPrefix(cleaned, "*") {
@@ -1241,14 +1240,13 @@ func (p *TreeSitterProcessor) parseJavaDoc(text string) *ir.DistilledComment {
 			cleanedLines = append(cleanedLines, cleaned)
 		}
 	}
-	
+
 	if len(cleanedLines) == 0 {
 		return nil
 	}
-	
+
 	return &ir.DistilledComment{
 		Text:   strings.Join(cleanedLines, " "),
 		Format: "doc",
 	}
 }
-

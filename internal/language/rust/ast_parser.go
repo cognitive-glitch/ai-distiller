@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	sitter "github.com/smacker/go-tree-sitter"
 	"github.com/janreges/ai-distiller/internal/ir"
+	sitter "github.com/smacker/go-tree-sitter"
 )
 
 // ASTParser handles Rust source code parsing using tree-sitter
@@ -27,7 +27,7 @@ func NewASTParser() *ASTParser {
 // ProcessSource processes Rust source code and returns the IR
 func (p *ASTParser) ProcessSource(ctx context.Context, source []byte, filename string) (*ir.DistilledFile, error) {
 	p.source = source
-	
+
 	if p.parser == nil {
 		return nil, fmt.Errorf("tree-sitter-rust grammar not available yet")
 	}
@@ -561,7 +561,7 @@ func (p *ASTParser) parseAssociatedType(node *sitter.Node, parent *ir.DistilledC
 	if genericParams != "" {
 		assocType.Name = typeName + genericParams
 	}
-	
+
 	if bounds != "" {
 		assocType.Type = &ir.TypeRef{Name: bounds}
 	} else {
@@ -950,7 +950,7 @@ func (p *ASTParser) parseTypeAlias(node *sitter.Node, file *ir.DistilledFile, pa
 func (p *ASTParser) parseLineComment(node *sitter.Node, file *ir.DistilledFile, parent ir.DistilledNode) {
 	text := p.nodeText(node)
 	text = strings.TrimPrefix(text, "//")
-	
+
 	format := "line"
 	if strings.HasPrefix(text, "/") || strings.HasPrefix(text, "!") {
 		format = "doc"
@@ -977,7 +977,7 @@ func (p *ASTParser) parseBlockComment(node *sitter.Node, file *ir.DistilledFile,
 	text := p.nodeText(node)
 	text = strings.TrimPrefix(text, "/*")
 	text = strings.TrimSuffix(text, "*/")
-	
+
 	format := "block"
 	if strings.HasPrefix(text, "*") || strings.HasPrefix(text, "!") {
 		format = "doc"

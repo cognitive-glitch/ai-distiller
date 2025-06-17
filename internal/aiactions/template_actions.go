@@ -36,7 +36,7 @@ func (a *TemplateRefactoringPromptAction) GenerateContent(ctx *ai.ActionContext)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return &ai.ContentResult{
 		ContentBefore: prompt,
 		ContentAfter:  "",
@@ -75,7 +75,7 @@ func (a *TemplateSecurityPromptAction) GenerateContent(ctx *ai.ActionContext) (*
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return &ai.ContentResult{
 		ContentBefore: prompt,
 		ContentAfter:  "",
@@ -114,7 +114,7 @@ func (a *TemplatePerformancePromptAction) GenerateContent(ctx *ai.ActionContext)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return &ai.ContentResult{
 		ContentBefore: prompt,
 		ContentAfter:  "",
@@ -153,7 +153,7 @@ func (a *TemplateComplexCodebasePromptAction) GenerateContent(ctx *ai.ActionCont
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return &ai.ContentResult{
 		ContentBefore: prompt,
 		ContentAfter:  "",
@@ -192,7 +192,7 @@ func (a *TemplateBestPracticesPromptAction) GenerateContent(ctx *ai.ActionContex
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return &ai.ContentResult{
 		ContentBefore: prompt,
 		ContentAfter:  "",
@@ -231,7 +231,7 @@ func (a *TemplateBugHuntingPromptAction) GenerateContent(ctx *ai.ActionContext) 
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return &ai.ContentResult{
 		ContentBefore: prompt,
 		ContentAfter:  "",
@@ -270,7 +270,7 @@ func (a *TemplateSingleFileDocsPromptAction) GenerateContent(ctx *ai.ActionConte
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return &ai.ContentResult{
 		ContentBefore: prompt,
 		ContentAfter:  "",
@@ -309,7 +309,7 @@ func (a *TemplateDiagramsPromptAction) GenerateContent(ctx *ai.ActionContext) (*
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return &ai.ContentResult{
 		ContentBefore: prompt,
 		ContentAfter:  "",

@@ -27,15 +27,15 @@ func BenchmarkProcessor(b *testing.B) {
 			// Generate test content
 			content := size.gen(size.lines)
 			contentBytes := []byte(content)
-			
+
 			// Create processor once
 			p := NewProcessor()
 			ctx := context.Background()
-			
+
 			// Reset timer to exclude setup
 			b.ResetTimer()
 			b.ReportAllocs()
-			
+
 			// Run benchmark
 			for i := 0; i < b.N; i++ {
 				reader := bytes.NewReader(contentBytes)
@@ -44,7 +44,7 @@ func BenchmarkProcessor(b *testing.B) {
 					b.Fatal(err)
 				}
 			}
-			
+
 			// Report metrics
 			b.SetBytes(int64(len(contentBytes)))
 			b.ReportMetric(float64(size.lines)/b.Elapsed().Seconds(), "lines/sec")
@@ -57,14 +57,14 @@ func BenchmarkProcessorParallel(b *testing.B) {
 	// Use medium-sized file for parallel benchmark
 	content := generateMediumFile(500)
 	contentBytes := []byte(content)
-	
+
 	// Create processor
 	p := NewProcessor()
 	ctx := context.Background()
-	
+
 	b.ResetTimer()
 	b.ReportAllocs()
-	
+
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			reader := bytes.NewReader(contentBytes)
@@ -125,16 +125,16 @@ from collections import defaultdict as dd
 `,
 		},
 	}
-	
+
 	p := NewProcessor()
 	ctx := context.Background()
-	
+
 	for _, scenario := range scenarios {
 		b.Run(scenario.name, func(b *testing.B) {
 			contentBytes := []byte(scenario.content)
 			b.ResetTimer()
 			b.ReportAllocs()
-			
+
 			for i := 0; i < b.N; i++ {
 				reader := bytes.NewReader(contentBytes)
 				_, err := p.Process(ctx, reader, "bench_test.py")
@@ -153,7 +153,7 @@ func generateSmallFile(lines int) string {
 	sb.WriteString("# Small Python file for benchmarking\n")
 	sb.WriteString("import os\n")
 	sb.WriteString("from typing import List, Dict\n\n")
-	
+
 	// Generate a few classes with methods
 	classCount := lines / 10
 	for i := 0; i < classCount; i++ {
@@ -163,7 +163,7 @@ func generateSmallFile(lines int) string {
 		sb.WriteString("    def method(self, x: int) -> int:\n")
 		sb.WriteString("        return x * 2\n\n")
 	}
-	
+
 	return sb.String()
 }
 
@@ -174,7 +174,7 @@ func generateMediumFile(lines int) string {
 	sb.WriteString("import sys\n")
 	sb.WriteString("import json\n")
 	sb.WriteString("from collections import defaultdict\n\n")
-	
+
 	// Mix of classes and functions
 	itemCount := lines / 20
 	for i := 0; i < itemCount; i++ {
@@ -195,13 +195,13 @@ func generateMediumFile(lines int) string {
 		sb.WriteString("    @property\n")
 		sb.WriteString("    def is_ready(self) -> bool:\n")
 		sb.WriteString("        return True\n\n")
-		
+
 		// Standalone function
 		sb.WriteString(fmt.Sprintf("def process_item_%d(item: Union[str, int]) -> str:\n", i))
 		sb.WriteString("    \"\"\"Process a single item.\"\"\"\n")
 		sb.WriteString("    return str(item)\n\n")
 	}
-	
+
 	return sb.String()
 }
 
@@ -209,7 +209,7 @@ func generateLargeFile(lines int) string {
 	var sb strings.Builder
 	sb.WriteString("# Large Python file for benchmarking\n")
 	sb.WriteString("# This simulates a real-world Python module\n\n")
-	
+
 	// Complex imports
 	sb.WriteString("from __future__ import annotations\n")
 	sb.WriteString("from typing import (\n")
@@ -222,28 +222,28 @@ func generateLargeFile(lines int) string {
 	sb.WriteString("import logging\n")
 	sb.WriteString("from abc import ABC, abstractmethod\n")
 	sb.WriteString("from dataclasses import dataclass, field\n\n")
-	
+
 	// Generate various Python constructs
 	currentLine := 15
 	classIndex := 0
 	funcIndex := 0
-	
+
 	for currentLine < lines {
 		choice := currentLine % 3
-		
+
 		switch choice {
 		case 0:
 			// Generate a class
 			linesAdded := generateBenchmarkClass(&sb, classIndex)
 			currentLine += linesAdded
 			classIndex++
-			
+
 		case 1:
 			// Generate a function
 			linesAdded := generateBenchmarkFunction(&sb, funcIndex)
 			currentLine += linesAdded
 			funcIndex++
-			
+
 		case 2:
 			// Generate a dataclass or enum
 			linesAdded := generateBenchmarkDataStructure(&sb, classIndex)
@@ -251,13 +251,13 @@ func generateLargeFile(lines int) string {
 			classIndex++
 		}
 	}
-	
+
 	return sb.String()
 }
 
 func generateBenchmarkClass(sb *strings.Builder, index int) int {
 	lines := 0
-	
+
 	sb.WriteString(fmt.Sprintf("class Component%d(ABC):\n", index))
 	lines++
 	sb.WriteString("    \"\"\"Component with abstract methods.\"\"\"\n")
@@ -298,13 +298,13 @@ func generateBenchmarkClass(sb *strings.Builder, index int) int {
 	lines++
 	sb.WriteString("        return self._initialized\n\n")
 	lines += 2
-	
+
 	return lines
 }
 
 func generateBenchmarkFunction(sb *strings.Builder, index int) int {
 	lines := 0
-	
+
 	sb.WriteString(fmt.Sprintf("async def async_operation_%d(\n", index))
 	lines++
 	sb.WriteString("    client: AsyncClient,\n")
@@ -329,13 +329,13 @@ func generateBenchmarkFunction(sb *strings.Builder, index int) int {
 	lines++
 	sb.WriteString("        return Response(success=False, error=str(e))\n\n")
 	lines += 2
-	
+
 	return lines
 }
 
 func generateBenchmarkDataStructure(sb *strings.Builder, index int) int {
 	lines := 0
-	
+
 	if index%2 == 0 {
 		// Generate dataclass
 		sb.WriteString(fmt.Sprintf("@dataclass\n"))
@@ -375,6 +375,6 @@ func generateBenchmarkDataStructure(sb *strings.Builder, index int) int {
 		sb.WriteString("    FAILED = \"failed\"\n\n")
 		lines += 2
 	}
-	
+
 	return lines
 }

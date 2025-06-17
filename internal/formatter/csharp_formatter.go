@@ -36,7 +36,7 @@ func (f *CSharpFormatter) FormatNode(w io.Writer, node ir.DistilledNode, indent 
 			}
 			structDecl += "<" + strings.Join(genericParams, ", ") + ">"
 		}
-		_, err := fmt.Fprintln(w, structDecl + " {")
+		_, err := fmt.Fprintln(w, structDecl+" {")
 		if err != nil {
 			return err
 		}
@@ -58,7 +58,7 @@ func (f *CSharpFormatter) FormatNode(w io.Writer, node ir.DistilledNode, indent 
 		}
 		// Format class declaration
 		classDecl := f.formatClass(n, indent)
-		
+
 		// Check if this is a record with only parameters (no body)
 		isRecord := false
 		onlyProperties := true
@@ -68,7 +68,7 @@ func (f *CSharpFormatter) FormatNode(w io.Writer, node ir.DistilledNode, indent 
 				break
 			}
 		}
-		
+
 		if isRecord {
 			// Check if all children are readonly properties (record parameters)
 			for _, child := range n.Children {
@@ -78,15 +78,15 @@ func (f *CSharpFormatter) FormatNode(w io.Writer, node ir.DistilledNode, indent 
 				}
 			}
 		}
-		
+
 		if isRecord && onlyProperties && len(n.Children) > 0 {
 			// Record with only parameters - don't print body
-			fmt.Fprintln(w, classDecl + ";")
+			fmt.Fprintln(w, classDecl+";")
 			return nil
 		}
-		
+
 		// Regular class or record with body
-		_, err := fmt.Fprintln(w, classDecl + " {")
+		_, err := fmt.Fprintln(w, classDecl+" {")
 		if err != nil {
 			return err
 		}
@@ -107,7 +107,7 @@ func (f *CSharpFormatter) FormatNode(w io.Writer, node ir.DistilledNode, indent 
 		return nil
 	case *ir.DistilledInterface:
 		// Format interface declaration
-		_, err := fmt.Fprintln(w, f.formatInterface(n, indent) + " {")
+		_, err := fmt.Fprintln(w, f.formatInterface(n, indent)+" {")
 		if err != nil {
 			return err
 		}
@@ -123,7 +123,7 @@ func (f *CSharpFormatter) FormatNode(w io.Writer, node ir.DistilledNode, indent 
 		return nil
 	case *ir.DistilledEnum:
 		// Format enum declaration
-		_, err := fmt.Fprintln(w, f.formatEnum(n, indent) + " {")
+		_, err := fmt.Fprintln(w, f.formatEnum(n, indent)+" {")
 		if err != nil {
 			return err
 		}
@@ -183,10 +183,10 @@ func (f *CSharpFormatter) formatClass(class *ir.DistilledClass, indent int) stri
 
 	// Build visibility keyword (not prefix)
 	visibility := f.getVisibilityKeyword(class.Visibility)
-	
+
 	// Collect all modifiers
 	modifiers := []string{}
-	
+
 	// Add visibility first if not default
 	if visibility != "" {
 		modifiers = append(modifiers, visibility)
@@ -195,7 +195,7 @@ func (f *CSharpFormatter) formatClass(class *ir.DistilledClass, indent int) stri
 	// Check if this is a record and/or struct
 	isRecord := false
 	isStruct := false
-	
+
 	// Add other modifiers
 	for _, mod := range class.Modifiers {
 		if mod == ir.ModifierData {
@@ -220,12 +220,12 @@ func (f *CSharpFormatter) formatClass(class *ir.DistilledClass, indent int) stri
 	if len(modifiers) > 0 {
 		classDecl += strings.Join(modifiers, " ") + " "
 	}
-	
+
 	if isRecord && isStruct {
 		classDecl += "record struct " + class.Name
 	} else if isRecord {
 		classDecl += "record " + class.Name
-		
+
 		// For records, check if there are constructor parameters (properties)
 		recordParams := []string{}
 		for _, child := range class.Children {
@@ -238,7 +238,7 @@ func (f *CSharpFormatter) formatClass(class *ir.DistilledClass, indent int) stri
 						break
 					}
 				}
-				
+
 				if hasReadonly {
 					// This is likely a record parameter
 					paramStr := ""
@@ -257,7 +257,7 @@ func (f *CSharpFormatter) formatClass(class *ir.DistilledClass, indent int) stri
 				}
 			}
 		}
-		
+
 		if len(recordParams) > 0 {
 			classDecl += "("
 			if len(recordParams) == 1 {
@@ -326,7 +326,7 @@ func (f *CSharpFormatter) formatInterface(intf *ir.DistilledInterface, indent in
 
 	// Build visibility keyword
 	visibility := f.getVisibilityKeyword(intf.Visibility)
-	
+
 	// Interface declaration
 	intfDecl := indentStr
 	if visibility != "" {
@@ -368,13 +368,12 @@ func (f *CSharpFormatter) formatInterface(intf *ir.DistilledInterface, indent in
 	return intfDecl
 }
 
-
 func (f *CSharpFormatter) formatEnum(enum *ir.DistilledEnum, indent int) string {
 	indentStr := strings.Repeat("    ", indent)
 
 	// Build visibility keyword
 	visibility := f.getVisibilityKeyword(enum.Visibility)
-	
+
 	// Enum declaration
 	enumDecl := indentStr
 	if visibility != "" {
@@ -395,10 +394,10 @@ func (f *CSharpFormatter) formatFunction(fn *ir.DistilledFunction, indent int) s
 
 	// Build visibility keyword
 	visibility := f.getVisibilityKeyword(fn.Visibility)
-	
+
 	// Collect all modifiers
 	modifiers := []string{}
-	
+
 	// Add visibility first if not default
 	if visibility != "" {
 		modifiers = append(modifiers, visibility)
@@ -426,7 +425,7 @@ func (f *CSharpFormatter) formatFunction(fn *ir.DistilledFunction, indent int) s
 	if len(modifiers) > 0 {
 		signature += strings.Join(modifiers, " ") + " "
 	}
-	
+
 	// Add return type if present (constructors have no return type)
 	if fn.Returns != nil && fn.Returns.Name != "" {
 		signature += f.formatTypeRef(fn.Returns) + " "
@@ -437,7 +436,7 @@ func (f *CSharpFormatter) formatFunction(fn *ir.DistilledFunction, indent int) s
 		// Explicit void return
 		signature += "void "
 	}
-	
+
 	signature += fn.Name
 
 	// Generics
@@ -464,7 +463,7 @@ func (f *CSharpFormatter) formatFunction(fn *ir.DistilledFunction, indent int) s
 		params = append(params, param)
 	}
 	signature += "(" + strings.Join(params, ", ") + ")"
-	
+
 	// Add generic constraints with 'where' clauses if present
 	if len(fn.TypeParams) > 0 {
 		for _, typeParam := range fn.TypeParams {
@@ -477,7 +476,7 @@ func (f *CSharpFormatter) formatFunction(fn *ir.DistilledFunction, indent int) s
 			}
 		}
 	}
-	
+
 	// Add semicolon for method declarations without implementation
 	if fn.Implementation == "" {
 		signature += ";"
@@ -496,10 +495,10 @@ func (f *CSharpFormatter) formatField(field *ir.DistilledField, indent int) stri
 
 	// Build visibility keyword
 	visibility := f.getVisibilityKeyword(field.Visibility)
-	
+
 	// Collect all modifiers
 	modifiers := []string{}
-	
+
 	// Add visibility first if not default
 	if visibility != "" {
 		modifiers = append(modifiers, visibility)
@@ -583,9 +582,9 @@ func (f *CSharpFormatter) formatTypeRef(typeRef *ir.TypeRef) string {
 	if typeRef == nil {
 		return ""
 	}
-	
+
 	result := typeRef.Name
-	
+
 	// Add generic type arguments if present
 	if len(typeRef.TypeArgs) > 0 {
 		genericArgs := []string{}
@@ -594,11 +593,11 @@ func (f *CSharpFormatter) formatTypeRef(typeRef *ir.TypeRef) string {
 		}
 		result += "<" + strings.Join(genericArgs, ", ") + ">"
 	}
-	
+
 	// Add nullable indicator if present
 	if typeRef.IsNullable {
 		result += "?"
 	}
-	
+
 	return result
 }

@@ -45,8 +45,8 @@ class Valid:
 			errorMessages:  []string{"invalid class name"},
 		},
 		{
-			name: "mixed_indentation",
-			input: "def function():\n\t    pass  # tab then spaces\n    return True",
+			name:           "mixed_indentation",
+			input:          "def function():\n\t    pass  # tab then spaces\n    return True",
 			expectedNodes:  1,
 			expectedErrors: 0, // Parser doesn't check body indentation currently
 			errorMessages:  []string{},
@@ -117,14 +117,14 @@ def Ελληνικά():
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			reader := strings.NewReader(tt.input)
-			
+
 			file, err := p.Process(ctx, reader, "test.py")
 			require.NoError(t, err, "Process should not return error even with invalid syntax")
 			require.NotNil(t, file)
 
 			// Count actual nodes (excluding errors)
 			nodeCount := countNonErrorNodes(file.Children)
-			
+
 			// Debug output
 			t.Logf("Test %s: Found %d nodes", tt.name, nodeCount)
 			for i, node := range file.Children {
@@ -139,7 +139,7 @@ def Ελληνικά():
 					t.Logf("  [%d] Other: %T", i, n)
 				}
 			}
-			
+
 			assert.Equal(t, tt.expectedNodes, nodeCount, "Expected %d nodes, got %d", tt.expectedNodes, nodeCount)
 
 			// Check errors
@@ -198,7 +198,7 @@ func TestIndentationWarnings(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			reader := strings.NewReader(tt.input)
-			
+
 			file, err := p.Process(ctx, reader, "test.py")
 			require.NoError(t, err)
 			require.NotNil(t, file)
@@ -208,7 +208,7 @@ func TestIndentationWarnings(t *testing.T) {
 			for _, err := range file.Errors {
 				if err.Severity == "warning" {
 					warnings++
-					
+
 					// Check if warning message matches expected
 					found := false
 					for _, expected := range tt.expectedWarnings {
@@ -217,12 +217,12 @@ func TestIndentationWarnings(t *testing.T) {
 							break
 						}
 					}
-					assert.True(t, found || len(tt.expectedWarnings) == 0, 
+					assert.True(t, found || len(tt.expectedWarnings) == 0,
 						"Unexpected warning: %s", err.Message)
 				}
 			}
-			
-			assert.Equal(t, len(tt.expectedWarnings), warnings, 
+
+			assert.Equal(t, len(tt.expectedWarnings), warnings,
 				"Expected %d warnings, got %d", len(tt.expectedWarnings), warnings)
 		})
 	}
@@ -232,25 +232,25 @@ func TestErrorRecoveryOnRealFile(t *testing.T) {
 	t.Skip("Skipping error recovery test - not essential for core functionality")
 	// Test with the actual error_recovery.py test file
 	p := NewProcessor()
-	
+
 	file, err := p.ProcessFile("../../../testdata/input/error_recovery.py", processor.ProcessOptions{
 		IncludeComments:       true,
 		IncludeImplementation: true,
 		IncludeImports:        true,
 		IncludePrivate:        true,
 	})
-	
+
 	require.NoError(t, err)
 	require.NotNil(t, file)
-	
+
 	// Should have parsed valid constructs despite errors
 	assert.True(t, len(file.Children) >= 6, "Should parse at least 6 valid constructs")
-	
+
 	// Our tree-sitter parser is robust and may not record syntax errors as "errors"
 	// This is correct behavior - tree-sitter handles malformed code gracefully
 	// So we'll check if errors were recorded, but it's not required
 	t.Logf("Recorded %d errors (tree-sitter may gracefully handle syntax errors)", len(file.Errors))
-	
+
 	// Verify specific nodes were parsed
 	nodeNames := make(map[string]bool)
 	t.Logf("Found %d children:", len(file.Children))
@@ -269,7 +269,7 @@ func TestErrorRecoveryOnRealFile(t *testing.T) {
 			t.Logf("  Other node: %T", node)
 		}
 	}
-	
+
 	// These valid constructs should be parsed
 	assert.True(t, nodeNames["valid_function"], "Should parse valid_function")
 	assert.True(t, nodeNames["ValidClass"], "Should parse ValidClass")

@@ -4,10 +4,10 @@ import (
 	"context"
 	"strings"
 	"testing"
-	
-	"github.com/stretchr/testify/assert"
-	"github.com/janreges/ai-distiller/internal/processor"
+
 	"github.com/janreges/ai-distiller/internal/ir"
+	"github.com/janreges/ai-distiller/internal/processor"
+	"github.com/stretchr/testify/assert"
 )
 
 // TestPHPConstruct1Basic tests basic PHP constructs
@@ -45,8 +45,8 @@ $finalPrice = calculate_final_price($bookPrice, 15);
 echo "Final price: " . $finalPrice;`
 
 	tests := []struct {
-		name string
-		opts processor.ProcessOptions
+		name  string
+		opts  processor.ProcessOptions
 		check func(t *testing.T, file *ir.DistilledFile)
 	}{
 		{
@@ -67,7 +67,7 @@ echo "Final price: " . $finalPrice;`
 				if fn.Implementation == "" {
 					t.Error("Function should have implementation")
 				}
-				
+
 				// Should have empty class
 				var cls *ir.DistilledClass
 				for _, child := range file.Children {
@@ -84,10 +84,10 @@ echo "Final price: " . $finalPrice;`
 		{
 			name: "no_impl",
 			opts: processor.ProcessOptions{
-				IncludePrivate: true,
+				IncludePrivate:        true,
 				IncludeImplementation: false,
-				IncludeComments: true,
-				IncludeImports: true,
+				IncludeComments:       true,
+				IncludeImports:        true,
 			},
 			check: func(t *testing.T, file *ir.DistilledFile) {
 				// Function should have no implementation
@@ -105,7 +105,7 @@ echo "Final price: " . $finalPrice;`
 
 	p := NewProcessor()
 	ctx := context.Background()
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			reader := strings.NewReader(source)
@@ -154,8 +154,8 @@ class User
 }`
 
 	tests := []struct {
-		name string
-		opts processor.ProcessOptions
+		name  string
+		opts  processor.ProcessOptions
 		check func(t *testing.T, file *ir.DistilledFile)
 	}{
 		{
@@ -173,7 +173,7 @@ class User
 				if user == nil {
 					t.Fatal("Class User not found")
 				}
-				
+
 				// Check promoted properties
 				fields := 0
 				var idField *ir.DistilledField
@@ -211,10 +211,10 @@ class User
 		{
 			name: "no_private",
 			opts: processor.ProcessOptions{
-				IncludePrivate: false,
+				IncludePrivate:        false,
 				IncludeImplementation: true,
-				IncludeComments: true,
-				IncludeImports: true,
+				IncludeComments:       true,
+				IncludeImports:        true,
 			},
 			check: func(t *testing.T, file *ir.DistilledFile) {
 				// Find User class
@@ -228,7 +228,7 @@ class User
 				if user == nil {
 					t.Fatal("Class User not found")
 				}
-				
+
 				// Should have no fields (all are private)
 				fields := 0
 				for _, child := range user.Children {
@@ -239,7 +239,7 @@ class User
 				if fields != 0 {
 					t.Errorf("Expected 0 fields, got %d", fields)
 				}
-				
+
 				// Should have public constructor
 				hasConstructor := false
 				for _, child := range user.Children {
@@ -257,7 +257,7 @@ class User
 
 	p := NewProcessor()
 	ctx := context.Background()
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			reader := strings.NewReader(source)
@@ -320,12 +320,12 @@ class FileLogger extends AbstractStorage implements Loggable
 	p := NewProcessor()
 	ctx := context.Background()
 	reader := strings.NewReader(source)
-	
+
 	file, err := p.ProcessWithOptions(ctx, reader, "test.php", processor.DefaultProcessOptions())
 	if err != nil {
 		t.Fatalf("Failed to process: %v", err)
 	}
-	
+
 	// Check interface
 	var intf *ir.DistilledInterface
 	for _, child := range file.Children {
@@ -337,7 +337,7 @@ class FileLogger extends AbstractStorage implements Loggable
 	if intf == nil {
 		t.Fatal("Interface Loggable not found")
 	}
-	
+
 	// Check abstract class
 	var abstractClass *ir.DistilledClass
 	for _, child := range file.Children {
@@ -349,7 +349,7 @@ class FileLogger extends AbstractStorage implements Loggable
 	if abstractClass == nil {
 		t.Fatal("Abstract class AbstractStorage not found")
 	}
-	
+
 	// Check for abstract modifier
 	hasAbstract := false
 	for _, mod := range abstractClass.Modifiers {
@@ -361,7 +361,7 @@ class FileLogger extends AbstractStorage implements Loggable
 	if !hasAbstract {
 		t.Error("AbstractStorage should have abstract modifier")
 	}
-	
+
 	// Check final method
 	var finalMethod *ir.DistilledFunction
 	for _, child := range abstractClass.Children {
@@ -373,7 +373,7 @@ class FileLogger extends AbstractStorage implements Loggable
 	if finalMethod == nil {
 		t.Fatal("Method getStoragePath not found")
 	}
-	
+
 	hasFinal := false
 	for _, mod := range finalMethod.Modifiers {
 		if mod == ir.ModifierFinal {
@@ -384,7 +384,7 @@ class FileLogger extends AbstractStorage implements Loggable
 	if !hasFinal {
 		t.Error("getStoragePath should have final modifier")
 	}
-	
+
 	// Check FileLogger implements and extends
 	var fileLogger *ir.DistilledClass
 	for _, child := range file.Children {
@@ -396,11 +396,11 @@ class FileLogger extends AbstractStorage implements Loggable
 	if fileLogger == nil {
 		t.Fatal("Class FileLogger not found")
 	}
-	
+
 	if len(fileLogger.Extends) != 1 || fileLogger.Extends[0].Name != "AbstractStorage" {
 		t.Error("FileLogger should extend AbstractStorage")
 	}
-	
+
 	if len(fileLogger.Implements) != 1 || fileLogger.Implements[0].Name != "Loggable" {
 		t.Error("FileLogger should implement Loggable")
 	}
@@ -467,12 +467,12 @@ trait Timestampable
 	p := NewProcessor()
 	ctx := context.Background()
 	reader := strings.NewReader(source)
-	
+
 	file, err := p.ProcessWithOptions(ctx, reader, "test.php", processor.DefaultProcessOptions())
 	if err != nil {
 		t.Fatalf("Failed to process: %v", err)
 	}
-	
+
 	// Check trait use
 	var emailPayload *ir.DistilledClass
 	for _, child := range file.Children {
@@ -484,14 +484,14 @@ trait Timestampable
 	if emailPayload == nil {
 		t.Fatal("Class EmailPayload not found")
 	}
-	
+
 	// Check that EmailPayload uses traits
 	if len(emailPayload.Mixins) == 0 {
 		t.Error("EmailPayload should use Timestampable trait")
 	} else {
 		assert.Equal(t, "Timestampable", emailPayload.Mixins[0].Name, "EmailPayload should use Timestampable trait")
 	}
-	
+
 	// Check union type
 	var notifier *ir.DistilledClass
 	for _, child := range file.Children {
@@ -503,7 +503,7 @@ trait Timestampable
 	if notifier == nil {
 		t.Fatal("Class Notifier not found")
 	}
-	
+
 	var sendMethod *ir.DistilledFunction
 	for _, child := range notifier.Children {
 		if fn, ok := child.(*ir.DistilledFunction); ok && fn.Name == "send" {
@@ -514,16 +514,16 @@ trait Timestampable
 	if sendMethod == nil {
 		t.Fatal("Method send not found")
 	}
-	
+
 	if len(sendMethod.Parameters) != 1 {
 		t.Fatal("Send method should have 1 parameter")
 	}
-	
+
 	param := sendMethod.Parameters[0]
 	if !strings.Contains(param.Type.Name, "|") {
 		t.Errorf("Parameter should have union type, got %s", param.Type.Name)
 	}
-	
+
 	// Check trait definition
 	var trait *ir.DistilledClass
 	for _, child := range file.Children {
@@ -601,12 +601,12 @@ class ProductRepository extends BaseRepository implements FindableById, Cacheabl
 	p := NewProcessor()
 	ctx := context.Background()
 	reader := strings.NewReader(source)
-	
+
 	file, err := p.ProcessWithOptions(ctx, reader, "test.php", processor.DefaultProcessOptions())
 	if err != nil {
 		t.Fatalf("Failed to process: %v", err)
 	}
-	
+
 	// Check grouped use imports
 	cacheableImport := false
 	deletableImport := false
@@ -626,7 +626,7 @@ class ProductRepository extends BaseRepository implements FindableById, Cacheabl
 	if !deletableImport {
 		t.Error("Deletable import not correctly resolved")
 	}
-	
+
 	// Check attribute on class
 	var productRepo *ir.DistilledClass
 	for _, child := range file.Children {
@@ -638,7 +638,7 @@ class ProductRepository extends BaseRepository implements FindableById, Cacheabl
 	if productRepo == nil {
 		t.Fatal("Class ProductRepository not found")
 	}
-	
+
 	if len(productRepo.Decorators) == 0 {
 		t.Error("ProductRepository should have decorators")
 	} else {
@@ -646,7 +646,7 @@ class ProductRepository extends BaseRepository implements FindableById, Cacheabl
 			t.Error("ProductRepository should have RepositoryConfig attribute")
 		}
 	}
-	
+
 	// Check static property
 	var staticField *ir.DistilledField
 	for _, child := range productRepo.Children {
@@ -658,7 +658,7 @@ class ProductRepository extends BaseRepository implements FindableById, Cacheabl
 	if staticField == nil {
 		t.Fatal("Static field queryCount not found")
 	}
-	
+
 	hasStatic := false
 	for _, mod := range staticField.Modifiers {
 		if mod == ir.ModifierStatic {
@@ -669,7 +669,7 @@ class ProductRepository extends BaseRepository implements FindableById, Cacheabl
 	if !hasStatic {
 		t.Error("queryCount should have static modifier")
 	}
-	
+
 	// Check multiple interface implementation
 	if len(productRepo.Implements) != 4 {
 		t.Errorf("ProductRepository should implement 4 interfaces, got %d", len(productRepo.Implements))

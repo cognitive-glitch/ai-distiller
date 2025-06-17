@@ -12,7 +12,7 @@ import (
 
 func TestNewProcessor(t *testing.T) {
 	proc := NewProcessor()
-	
+
 	assert.NotNil(t, proc)
 	assert.Equal(t, "python", proc.Language())
 	assert.Equal(t, "1.0.0", proc.Version())
@@ -97,9 +97,9 @@ def public_function():
 `
 
 	tests := []struct {
-		name         string
-		opts         processor.ProcessOptions
-		checkFunc    func(t *testing.T, file interface{})
+		name      string
+		opts      processor.ProcessOptions
+		checkFunc func(t *testing.T, file interface{})
 	}{
 		{
 			name: "ExcludeComments",
@@ -141,9 +141,9 @@ def public_function():
 		t.Run(tt.name, func(t *testing.T) {
 			reader := strings.NewReader(source)
 			file, _ := proc.ProcessWithOptions(ctx, reader, "test.py", tt.opts)
-			
+
 			assert.NotNil(t, file)
-			
+
 			if tt.checkFunc != nil {
 				tt.checkFunc(t, file)
 			}
@@ -196,11 +196,11 @@ func TestInitializeWASM(t *testing.T) {
 	proc := NewProcessor()
 
 	ctx := context.Background()
-	
+
 	// Test with empty WASM bytes (will fail but tests the flow)
 	err := proc.InitializeWASM(ctx, []byte{})
 	assert.Error(t, err) // Empty WASM should fail
-	
+
 	// Test that runtime was created
 	assert.NotNil(t, proc.wasmRuntime)
 }
@@ -216,10 +216,10 @@ func TestReadError(t *testing.T) {
 	proc := NewProcessor()
 
 	ctx := context.Background()
-	
+
 	// Create a reader that always fails
 	reader := &failingReader{}
-	
+
 	_, err := proc.Process(ctx, reader, "test.py")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to read source")

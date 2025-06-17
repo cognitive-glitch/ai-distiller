@@ -49,7 +49,7 @@ async function asyncFunc() { return 3; }`,
 	}
 
 	processor := NewProcessor()
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := processor.Process(context.Background(), strings.NewReader(tt.input), "test.js")
@@ -58,7 +58,7 @@ async function asyncFunc() { return 3; }`,
 			}
 
 			functions := extractFunctionNames(result)
-			
+
 			if len(functions) != len(tt.expected) {
 				t.Errorf("Expected %d functions, got %d: %v", len(tt.expected), len(functions), functions)
 			}
@@ -121,7 +121,7 @@ import * as lodash from 'lodash';`,
 	}
 
 	processor := NewProcessor()
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := processor.Process(context.Background(), strings.NewReader(tt.input), "test.js")
@@ -130,7 +130,7 @@ import * as lodash from 'lodash';`,
 			}
 
 			imports := extractImports(result)
-			
+
 			if len(imports) != len(tt.expected) {
 				t.Errorf("Expected %d imports, got %d", len(tt.expected), len(imports))
 			}
@@ -139,16 +139,16 @@ import * as lodash from 'lodash';`,
 				if i >= len(imports) {
 					break
 				}
-				
+
 				actual := imports[i]
 				if actual.module != expected.module {
 					t.Errorf("Import %d module: expected %q, got %q", i, expected.module, actual.module)
 				}
-				
+
 				if !slicesEqual(actual.symbols, expected.symbols) {
 					t.Errorf("Import %d symbols: expected %v, got %v", i, expected.symbols, actual.symbols)
 				}
-				
+
 				if len(expected.aliases) > 0 && !slicesEqual(actual.aliases, expected.aliases) {
 					t.Errorf("Import %d aliases: expected %v, got %v", i, expected.aliases, actual.aliases)
 				}
@@ -184,14 +184,14 @@ func extractImports(file *ir.DistilledFile) []importInfo {
 				symbols: make([]string, 0, len(imp.Symbols)),
 				aliases: make([]string, 0, len(imp.Symbols)),
 			}
-			
+
 			for _, sym := range imp.Symbols {
 				info.symbols = append(info.symbols, sym.Name)
 				if sym.Alias != "" {
 					info.aliases = append(info.aliases, sym.Alias)
 				}
 			}
-			
+
 			imports = append(imports, info)
 		}
 	}

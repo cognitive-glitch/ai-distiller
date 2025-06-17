@@ -13,31 +13,31 @@ type LineParser struct {
 	source   []byte
 	filename string
 	lines    []string
-	
+
 	// Parser state
-	currentLine      int
-	insideComment    bool
-	insideImpl       bool
-	currentClass     *ir.DistilledClass
-	currentIndent    int
+	currentLine   int
+	insideComment bool
+	insideImpl    bool
+	currentClass  *ir.DistilledClass
+	currentIndent int
 }
 
 var (
 	// Regular expressions for Rust constructs
-	useRe        = regexp.MustCompile(`^\s*(?:pub\s+)?use\s+(.+);`)
-	modRe        = regexp.MustCompile(`^\s*((?:pub(?:\([^)]+\))?\s+)?)mod\s+(\w+)`)
-	structRe     = regexp.MustCompile(`^\s*((?:pub(?:\([^)]+\))?\s+)?)struct\s+(\w+(?:<[^>]+>)?)`)
-	enumRe       = regexp.MustCompile(`^\s*((?:pub(?:\([^)]+\))?\s+)?)enum\s+(\w+(?:<[^>]+>)?)`)
-	traitRe      = regexp.MustCompile(`^\s*((?:pub(?:\([^)]+\))?\s+)?)trait\s+(\w+(?:<[^>]+>)?)`)
+	useRe    = regexp.MustCompile(`^\s*(?:pub\s+)?use\s+(.+);`)
+	modRe    = regexp.MustCompile(`^\s*((?:pub(?:\([^)]+\))?\s+)?)mod\s+(\w+)`)
+	structRe = regexp.MustCompile(`^\s*((?:pub(?:\([^)]+\))?\s+)?)struct\s+(\w+(?:<[^>]+>)?)`)
+	enumRe   = regexp.MustCompile(`^\s*((?:pub(?:\([^)]+\))?\s+)?)enum\s+(\w+(?:<[^>]+>)?)`)
+	traitRe  = regexp.MustCompile(`^\s*((?:pub(?:\([^)]+\))?\s+)?)trait\s+(\w+(?:<[^>]+>)?)`)
 	// More robust regex that handles paths with :: and generics
 	// This captures the full impl line up to the opening brace
-	implRe       = regexp.MustCompile(`^\s*impl(?:<[^>]+>)?\s+(?:(.+?)\s+for\s+)?([^{]+)`)
+	implRe = regexp.MustCompile(`^\s*impl(?:<[^>]+>)?\s+(?:(.+?)\s+for\s+)?([^{]+)`)
 	// Function regex that captures: visibility, modifiers, name, generics (in name), params, return type (including where clause)
-	fnRe         = regexp.MustCompile(`^\s*((?:pub(?:\([^)]+\))?\s+)?)((?:async\s+)?(?:unsafe\s+)?(?:const\s+)?(?:extern\s+)?)?fn\s+(\w+(?:<[^>]+>)?)\s*\(([^)]*)\)(?:\s*->\s*([^{]+))?(?:\s*where\s+([^{]+?))?`)
-	constRe      = regexp.MustCompile(`^\s*((?:pub(?:\([^)]+\))?\s+)?)const\s+(\w+):\s*([^=]+)(?:\s*=\s*(.+))?;`)
-	staticRe     = regexp.MustCompile(`^\s*((?:pub(?:\([^)]+\))?\s+)?)static\s+(?:(mut)\s+)?(\w+):\s*([^=]+)(?:\s*=\s*(.+))?;`)
-	typeRe       = regexp.MustCompile(`^\s*((?:pub(?:\([^)]+\))?\s+)?)type\s+(\w+)(?:<[^>]+>)?\s*=\s*(.+);`)
-	fieldRe      = regexp.MustCompile(`^\s*((?:pub(?:\([^)]+\))?\s+)?)(\w+):\s*(.+),?$`)
+	fnRe          = regexp.MustCompile(`^\s*((?:pub(?:\([^)]+\))?\s+)?)((?:async\s+)?(?:unsafe\s+)?(?:const\s+)?(?:extern\s+)?)?fn\s+(\w+(?:<[^>]+>)?)\s*\(([^)]*)\)(?:\s*->\s*([^{]+))?(?:\s*where\s+([^{]+?))?`)
+	constRe       = regexp.MustCompile(`^\s*((?:pub(?:\([^)]+\))?\s+)?)const\s+(\w+):\s*([^=]+)(?:\s*=\s*(.+))?;`)
+	staticRe      = regexp.MustCompile(`^\s*((?:pub(?:\([^)]+\))?\s+)?)static\s+(?:(mut)\s+)?(\w+):\s*([^=]+)(?:\s*=\s*(.+))?;`)
+	typeRe        = regexp.MustCompile(`^\s*((?:pub(?:\([^)]+\))?\s+)?)type\s+(\w+)(?:<[^>]+>)?\s*=\s*(.+);`)
+	fieldRe       = regexp.MustCompile(`^\s*((?:pub(?:\([^)]+\))?\s+)?)(\w+):\s*(.+),?$`)
 	enumVariantRe = regexp.MustCompile(`^\s*(\w+)(?:\(([^)]+)\)|\{[^}]+\})?,?$`)
 )
 
@@ -143,7 +143,7 @@ func (p *LineParser) parseUse(file *ir.DistilledFile, matches []string) {
 			basePath := strings.TrimSpace(usePath[:idx])
 			basePath = strings.TrimSuffix(basePath, "::")
 			imp.Module = basePath
-			
+
 			// Extract symbols
 			symbolsPart := usePath[idx+1 : strings.Index(usePath, "}")]
 			symbols := strings.Split(symbolsPart, ",")
@@ -188,7 +188,7 @@ func (p *LineParser) parseMod(file *ir.DistilledFile, matches []string) {
 	}
 
 	p.currentLine++
-	
+
 	// Check if it's a module with body
 	if p.currentLine < len(p.lines) {
 		// Check if brace is on the same line
@@ -203,7 +203,7 @@ func (p *LineParser) parseMod(file *ir.DistilledFile, matches []string) {
 				p.currentLine++
 				endLine := p.parseBlock(file, mod)
 				mod.Location.EndLine = endLine
-				} else {
+			} else {
 				mod.Location.EndLine = mod.Location.StartLine
 			}
 		}
@@ -230,7 +230,7 @@ func (p *LineParser) parseStruct(file *ir.DistilledFile, matches []string) {
 	}
 
 	p.currentLine++
-	
+
 	// Check for struct body
 	if p.currentLine < len(p.lines) {
 		line := strings.TrimSpace(p.lines[p.currentLine])
@@ -268,7 +268,7 @@ func (p *LineParser) parseEnum(file *ir.DistilledFile, matches []string) {
 	}
 
 	p.currentLine++
-	
+
 	// Parse enum variants
 	if p.currentLine < len(p.lines) {
 		line := strings.TrimSpace(p.lines[p.currentLine])
@@ -302,7 +302,7 @@ func (p *LineParser) parseTrait(file *ir.DistilledFile, matches []string) {
 	}
 
 	p.currentLine++
-	
+
 	// Parse trait body
 	if p.currentLine < len(p.lines) {
 		line := strings.TrimSpace(p.lines[p.currentLine])
@@ -323,21 +323,21 @@ func (p *LineParser) parseImpl(file *ir.DistilledFile, matches []string) {
 	var implName string
 	trait := strings.TrimSpace(matches[1])
 	implType := strings.TrimSpace(matches[2])
-	
+
 	// Clean up trait and implType - remove trailing whitespace and opening brace
 	trait = strings.TrimSpace(trait)
 	implType = strings.TrimSpace(implType)
-	
+
 	// Remove trailing { and any whitespace before it
 	if idx := strings.LastIndex(implType, "{"); idx != -1 {
 		implType = strings.TrimSpace(implType[:idx])
 	}
-	
+
 	// Also clean trait in case it has trailing content
 	if idx := strings.LastIndex(trait, "{"); idx != -1 {
 		trait = strings.TrimSpace(trait[:idx])
 	}
-	
+
 	if trait != "" {
 		// impl Trait for Type
 		implName = fmt.Sprintf("impl %s for %s", trait, implType)
@@ -361,7 +361,7 @@ func (p *LineParser) parseImpl(file *ir.DistilledFile, matches []string) {
 	p.currentLine++
 	p.insideImpl = true
 	p.currentClass = impl
-	
+
 	// Parse impl body
 	if p.currentLine < len(p.lines) {
 		line := strings.TrimSpace(p.lines[p.currentLine])
@@ -406,15 +406,15 @@ func (p *LineParser) parseFunction(file *ir.DistilledFile, parent ir.DistilledNo
 	if returnType != "" {
 		// Clean up return type - remove trailing brace and whitespace
 		returnType = strings.TrimSpace(strings.TrimSuffix(returnType, "{"))
-		
+
 		// Add where clause if present
 		if whereClause != "" {
 			returnType += " where " + whereClause
 		}
-		
+
 		fn.Returns = &ir.TypeRef{Name: returnType}
 	}
-	
+
 	// Check for where clause on the next line(s)
 	p.currentLine++
 	if p.currentLine < len(p.lines) {
@@ -423,7 +423,7 @@ func (p *LineParser) parseFunction(file *ir.DistilledFile, parent ir.DistilledNo
 			// Parse where clause
 			whereClause := trimmed
 			p.currentLine++
-			
+
 			// Continue reading where clause lines (they might be indented)
 			for p.currentLine < len(p.lines) {
 				line := strings.TrimSpace(p.lines[p.currentLine])
@@ -431,16 +431,16 @@ func (p *LineParser) parseFunction(file *ir.DistilledFile, parent ir.DistilledNo
 					break
 				}
 				// Check if this is still part of the where clause
-				if strings.HasPrefix(line, "F:") || strings.HasPrefix(line, "T:") || 
-				   strings.HasPrefix(line, "U:") || strings.HasPrefix(line, "Self:") ||
-				   strings.Contains(line, ":") && !strings.Contains(line, "::") {
+				if strings.HasPrefix(line, "F:") || strings.HasPrefix(line, "T:") ||
+					strings.HasPrefix(line, "U:") || strings.HasPrefix(line, "Self:") ||
+					strings.Contains(line, ":") && !strings.Contains(line, "::") {
 					whereClause += " " + line
 					p.currentLine++
 				} else {
 					break
 				}
 			}
-			
+
 			// Append where clause to return type or store separately
 			if fn.Returns != nil && fn.Returns.Name != "" {
 				fn.Returns.Name += " " + whereClause
@@ -458,12 +458,12 @@ func (p *LineParser) parseFunction(file *ir.DistilledFile, parent ir.DistilledNo
 	}
 
 	p.currentLine++
-	
+
 	// Parse function body
 	if p.currentLine < len(p.lines) {
 		line := strings.TrimSpace(p.lines[p.currentLine])
 		prevLine := strings.TrimSpace(p.lines[p.currentLine-1])
-		
+
 		if strings.HasSuffix(prevLine, "{") {
 			// Opening brace is on the same line as function declaration
 			startLine := p.currentLine - 1
@@ -471,7 +471,7 @@ func (p *LineParser) parseFunction(file *ir.DistilledFile, parent ir.DistilledNo
 			p.skipBlock()
 			p.currentLine++ // Move past the closing brace
 			fn.Location.EndLine = p.currentLine
-			
+
 			// Extract implementation
 			if p.currentLine > startLine {
 				var implLines []string
@@ -486,7 +486,7 @@ func (p *LineParser) parseFunction(file *ir.DistilledFile, parent ir.DistilledNo
 			p.skipBlock()
 			p.currentLine++ // Move past the closing brace
 			fn.Location.EndLine = p.currentLine
-			
+
 			// Extract implementation
 			if p.currentLine > startLine {
 				var implLines []string
@@ -538,7 +538,7 @@ func (p *LineParser) parseConst(file *ir.DistilledFile, parent ir.DistilledNode,
 	} else {
 		file.Children = append(file.Children, field)
 	}
-	
+
 	p.currentLine++
 }
 
@@ -571,7 +571,7 @@ func (p *LineParser) parseStatic(file *ir.DistilledFile, parent ir.DistilledNode
 	} else {
 		file.Children = append(file.Children, field)
 	}
-	
+
 	p.currentLine++
 }
 
@@ -601,7 +601,7 @@ func (p *LineParser) parseType(file *ir.DistilledFile, parent ir.DistilledNode, 
 	} else {
 		file.Children = append(file.Children, field)
 	}
-	
+
 	p.currentLine++
 }
 
@@ -609,12 +609,11 @@ func (p *LineParser) parseType(file *ir.DistilledFile, parent ir.DistilledNode, 
 // TODO: This uses simple brace counting which can be fooled by braces in strings/comments
 func (p *LineParser) parseBlock(file *ir.DistilledFile, parent ir.DistilledNode) int {
 	braceCount := 1
-	
 
 	for p.currentLine < len(p.lines) && braceCount > 0 {
 		line := p.lines[p.currentLine]
 		trimmed := strings.TrimSpace(line)
-		
+
 		// Debug all lines
 		// fmt.Printf("parseBlock ALL: line %d, trimmed: %q, braceCount: %d\n", p.currentLine, trimmed, braceCount)
 
@@ -704,7 +703,7 @@ func (p *LineParser) parseTupleFields(parent *ir.DistilledClass, line string) {
 		if end := strings.Index(line, ")"); end > start {
 			fieldsStr := line[start+1 : end]
 			fields := strings.Split(fieldsStr, ",")
-			
+
 			for i, fieldType := range fields {
 				fieldType = strings.TrimSpace(fieldType)
 				if fieldType != "" {
@@ -767,7 +766,7 @@ func (p *LineParser) parseEnumVariants(parent *ir.DistilledClass) {
 func (p *LineParser) parseLineComment(file *ir.DistilledFile, parent ir.DistilledNode) {
 	line := p.lines[p.currentLine]
 	text := strings.TrimPrefix(strings.TrimSpace(line), "//")
-	
+
 	format := "line"
 	if strings.HasPrefix(text, "/") || strings.HasPrefix(text, "!") {
 		format = "doc"
@@ -801,11 +800,11 @@ func (p *LineParser) parseLineComment(file *ir.DistilledFile, parent ir.Distille
 func (p *LineParser) parseBlockComment(file *ir.DistilledFile, parent ir.DistilledNode) {
 	startLine := p.currentLine
 	var lines []string
-	
+
 	for p.currentLine < len(p.lines) {
 		line := p.lines[p.currentLine]
 		lines = append(lines, line)
-		
+
 		if strings.Contains(line, "*/") {
 			break
 		}
@@ -815,7 +814,7 @@ func (p *LineParser) parseBlockComment(file *ir.DistilledFile, parent ir.Distill
 	text := strings.Join(lines, "\n")
 	text = strings.TrimPrefix(text, "/*")
 	text = strings.TrimSuffix(text, "*/")
-	
+
 	format := "block"
 	if strings.HasPrefix(text, "*") || strings.HasPrefix(text, "!") {
 		format = "doc"
@@ -849,63 +848,63 @@ func (p *LineParser) parseBlockComment(file *ir.DistilledFile, parent ir.Distill
 
 func (p *LineParser) parseVisibility(vis string) ir.Visibility {
 	vis = strings.TrimSpace(vis)
-	
+
 	if vis == "" {
 		// In Rust, items without visibility modifiers are private to the module
 		// We use VisibilityPrivate to represent module-private visibility
 		return ir.VisibilityPrivate
 	}
-	
+
 	if strings.HasPrefix(vis, "pub(crate)") {
 		// Visible within the current crate
 		return ir.VisibilityInternal
 	}
-	
+
 	if strings.HasPrefix(vis, "pub(super)") || strings.HasPrefix(vis, "pub(in") {
 		// pub(super) = visible to parent module
 		// pub(in path) = visible in specific path
 		return ir.VisibilityProtected
 	}
-	
+
 	if strings.HasPrefix(vis, "pub") {
 		// Public visibility
 		return ir.VisibilityPublic
 	}
-	
+
 	// Default is module-private
 	return ir.VisibilityPrivate
 }
 
 func (p *LineParser) parseFunctionModifiers(mods string) []ir.Modifier {
 	var modifiers []ir.Modifier
-	
+
 	if strings.Contains(mods, "async") {
 		modifiers = append(modifiers, ir.ModifierAsync)
 	}
 	if strings.Contains(mods, "const") {
 		modifiers = append(modifiers, ir.ModifierFinal)
 	}
-	
+
 	return modifiers
 }
 
 func (p *LineParser) parseParameters(params string) []ir.Parameter {
 	var parameters []ir.Parameter
-	
+
 	if params == "" {
 		return parameters
 	}
-	
+
 	// Handle nested generics and lifetime parameters in parameter types
 	// We need to split carefully to avoid breaking on commas inside generic types
 	parts := p.splitParameterList(params)
-	
+
 	for _, part := range parts {
 		part = strings.TrimSpace(part)
 		if part == "" {
 			continue
 		}
-		
+
 		// Handle self parameters - including lifetime parameters
 		if p.isSelfParameter(part) {
 			parameters = append(parameters, ir.Parameter{
@@ -913,18 +912,18 @@ func (p *LineParser) parseParameters(params string) []ir.Parameter {
 			})
 			continue
 		}
-		
+
 		// Handle regular parameters
 		if idx := strings.Index(part, ":"); idx > 0 {
 			name := strings.TrimSpace(part[:idx])
 			typeStr := strings.TrimSpace(part[idx+1:])
-			
+
 			// Handle mut parameters
 			if strings.HasPrefix(name, "mut ") {
 				name = strings.TrimPrefix(name, "mut ")
 				name = "mut " + name
 			}
-			
+
 			// typeStr now preserves lifetime parameters like &'a str, Vec<'a, T>, etc.
 			parameters = append(parameters, ir.Parameter{
 				Name: name,
@@ -932,7 +931,7 @@ func (p *LineParser) parseParameters(params string) []ir.Parameter {
 			})
 		}
 	}
-	
+
 	return parameters
 }
 
@@ -941,7 +940,7 @@ func (p *LineParser) splitParameterList(params string) []string {
 	var parts []string
 	var current strings.Builder
 	depth := 0
-	
+
 	for _, ch := range params {
 		switch ch {
 		case '<':
@@ -962,24 +961,24 @@ func (p *LineParser) splitParameterList(params string) []string {
 			current.WriteRune(ch)
 		}
 	}
-	
+
 	// Don't forget the last part
 	if current.Len() > 0 {
 		parts = append(parts, current.String())
 	}
-	
+
 	return parts
 }
 
 // isSelfParameter checks if a parameter is a self parameter (including lifetime params)
 func (p *LineParser) isSelfParameter(param string) bool {
 	param = strings.TrimSpace(param)
-	
+
 	// Exact matches for common patterns
 	if param == "self" || param == "&self" || param == "&mut self" {
 		return true
 	}
-	
+
 	// Handle lifetime parameters like &'a self, &'a mut self
 	if strings.HasPrefix(param, "&") {
 		// Remove the & and check if it ends with "self" or "mut self"
@@ -987,7 +986,7 @@ func (p *LineParser) isSelfParameter(param string) bool {
 		if rest == "self" {
 			return true
 		}
-		
+
 		// Handle &'lifetime self or &'lifetime mut self
 		if strings.Contains(rest, "'") && strings.HasSuffix(rest, " self") {
 			return true
@@ -996,7 +995,7 @@ func (p *LineParser) isSelfParameter(param string) bool {
 			return true
 		}
 	}
-	
+
 	return false
 }
 
@@ -1008,7 +1007,7 @@ func (p *LineParser) isSelfParameter(param string) bool {
 func (p *LineParser) skipBlock() {
 	braceCount := 1
 	p.currentLine++
-	
+
 	for p.currentLine < len(p.lines) && braceCount > 0 {
 		line := p.lines[p.currentLine]
 		braceCount += strings.Count(line, "{") - strings.Count(line, "}")
@@ -1045,22 +1044,22 @@ func (p *LineParser) isInsideBlock() bool {
 // parseTraitBlock parses the contents of a trait definition
 func (p *LineParser) parseTraitBlock(file *ir.DistilledFile, parent ir.DistilledNode) int {
 	braceCount := 1
-	
+
 	// Regular expressions for trait items
 	// Handle GATs like: type Reader<'a>: std::io::Read where Self: 'a;
 	assocTypeRe := regexp.MustCompile(`^\s*type\s+(\w+)(?:<([^>]+)>)?(?:\s*:\s*([^;]+?))?(?:\s*where\s+([^;]+))?;`)
 	traitFnRe := regexp.MustCompile(`^\s*fn\s+(\w+)(?:<([^>]+)>)?\s*\(([^)]*)\)(?:\s*->\s*([^{]+))?(?:\s*where\s+([^{]+?))?`)
-	
+
 	for p.currentLine < len(p.lines) && braceCount > 0 {
 		line := p.lines[p.currentLine]
 		trimmed := strings.TrimSpace(line)
-		
+
 		// Skip empty lines and comments
 		if trimmed == "" || strings.HasPrefix(trimmed, "//") {
 			p.currentLine++
 			continue
 		}
-		
+
 		// Parse trait items before counting braces
 		if parent != nil && braceCount == 1 && trimmed != "}" {
 			// Check for associated types
@@ -1076,12 +1075,12 @@ func (p *LineParser) parseTraitBlock(file *ir.DistilledFile, parent ir.Distilled
 					Visibility: ir.VisibilityPublic, // Trait items are always public
 					Modifiers:  []ir.Modifier{ir.ModifierTypeAlias},
 				}
-				
+
 				// For GATs, the name includes the generic parameters
 				if matches[2] != "" {
 					field.Name = field.Name + "<" + matches[2] + ">"
 				}
-				
+
 				// The type is the bounds/constraints
 				if matches[3] != "" {
 					typeStr := strings.TrimSpace(matches[3])
@@ -1090,14 +1089,14 @@ func (p *LineParser) parseTraitBlock(file *ir.DistilledFile, parent ir.Distilled
 					}
 					field.Type = &ir.TypeRef{Name: typeStr}
 				}
-				
+
 				if class, ok := parent.(*ir.DistilledClass); ok {
 					class.Children = append(class.Children, field)
 				}
 				p.currentLine++
 				continue
 			}
-			
+
 			// Check for trait methods
 			if matches := traitFnRe.FindStringSubmatch(trimmed); matches != nil {
 				fn := &ir.DistilledFunction{
@@ -1111,12 +1110,12 @@ func (p *LineParser) parseTraitBlock(file *ir.DistilledFile, parent ir.Distilled
 					Parameters: p.parseParameters(matches[3]),
 					Modifiers:  []ir.Modifier{ir.ModifierAbstract}, // Trait methods are abstract by default
 				}
-				
+
 				// Add generics to name if present
 				if matches[2] != "" {
 					fn.Name = fn.Name + "<" + matches[2] + ">"
 				}
-				
+
 				// Handle return type with where clause
 				if matches[4] != "" {
 					returnType := strings.TrimSpace(matches[4])
@@ -1125,7 +1124,7 @@ func (p *LineParser) parseTraitBlock(file *ir.DistilledFile, parent ir.Distilled
 					}
 					fn.Returns = &ir.TypeRef{Name: returnType}
 				}
-				
+
 				// Check if method has default implementation
 				p.currentLine++
 				if p.currentLine < len(p.lines) {
@@ -1140,29 +1139,29 @@ func (p *LineParser) parseTraitBlock(file *ir.DistilledFile, parent ir.Distilled
 						p.skipBlock()
 					}
 				}
-				
+
 				fn.Location.EndLine = p.currentLine + 1
-				
+
 				if class, ok := parent.(*ir.DistilledClass); ok {
 					class.Children = append(class.Children, fn)
 				}
 				continue
 			}
 		}
-		
+
 		// Count braces AFTER trying to parse constructs
 		braceCount += strings.Count(line, "{") - strings.Count(line, "}")
-		
+
 		if braceCount == 0 {
 			break
 		}
-		
+
 		p.currentLine++
 	}
-	
+
 	if braceCount == 0 {
 		p.currentLine++
 	}
-	
+
 	return p.currentLine
 }

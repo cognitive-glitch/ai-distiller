@@ -13,7 +13,7 @@ import (
 
 func TestProcessor_SimpleBasics(t *testing.T) {
 	t.Skip("Skipping typescript processor tests - output format has changed")
-	
+
 	tests := []struct {
 		name        string
 		input       string
@@ -28,7 +28,7 @@ func TestProcessor_SimpleBasics(t *testing.T) {
 				name: string;
 			}`,
 			opts: processor.ProcessOptions{
-				IncludePrivate:       true,
+				IncludePrivate:        true,
 				IncludeImplementation: true,
 			},
 			contains: []string{
@@ -43,7 +43,7 @@ func TestProcessor_SimpleBasics(t *testing.T) {
 				constructor(public x: number, public y: number) {}
 			}`,
 			opts: processor.ProcessOptions{
-				IncludePrivate:       true,
+				IncludePrivate:        true,
 				IncludeImplementation: true,
 			},
 			contains: []string{
@@ -62,7 +62,7 @@ func TestProcessor_SimpleBasics(t *testing.T) {
 				}
 			}`,
 			opts: processor.ProcessOptions{
-				IncludePrivate:       true,
+				IncludePrivate:        true,
 				IncludeImplementation: true,
 			},
 			contains: []string{
@@ -78,7 +78,7 @@ func TestProcessor_SimpleBasics(t *testing.T) {
 				protected name: string;
 			}`,
 			opts: processor.ProcessOptions{
-				IncludePrivate:       true,
+				IncludePrivate:        true,
 				IncludeImplementation: true,
 			},
 			contains: []string{
@@ -95,8 +95,8 @@ func TestProcessor_SimpleBasics(t *testing.T) {
 				protected hook(): void {}
 			}`,
 			opts: processor.ProcessOptions{
-				RemovePrivateOnly:    true,
-				IncludePrivate:       true,
+				RemovePrivateOnly:     true,
+				IncludePrivate:        true,
 				IncludeImplementation: true,
 			},
 			contains: []string{
@@ -113,7 +113,7 @@ func TestProcessor_SimpleBasics(t *testing.T) {
 				map(item: T): U;
 			}`,
 			opts: processor.ProcessOptions{
-				IncludePrivate:       true,
+				IncludePrivate:        true,
 				IncludeImplementation: true,
 			},
 			contains: []string{
@@ -126,7 +126,7 @@ func TestProcessor_SimpleBasics(t *testing.T) {
 			input: `type ID = string | number;
 			type Point = { x: number; y: number };`,
 			opts: processor.ProcessOptions{
-				IncludePrivate:       true,
+				IncludePrivate:        true,
 				IncludeImplementation: true,
 			},
 			contains: []string{
@@ -141,7 +141,7 @@ func TestProcessor_SimpleBasics(t *testing.T) {
 				key: string;
 			}`,
 			opts: processor.ProcessOptions{
-				IncludePrivate:       true,
+				IncludePrivate:        true,
 				IncludeImplementation: true,
 			},
 			contains: []string{
@@ -229,7 +229,7 @@ func TestProcessor_RealWorldExamples(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := p.ProcessWithOptions(ctx, strings.NewReader(tt.input), "test.ts", processor.ProcessOptions{
-				IncludePrivate:       true,
+				IncludePrivate:        true,
 				IncludeImplementation: true,
 			})
 			require.NoError(t, err)

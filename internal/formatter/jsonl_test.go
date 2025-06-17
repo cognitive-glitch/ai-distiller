@@ -13,11 +13,11 @@ import (
 
 func TestJSONLFormatter_Format(t *testing.T) {
 	tests := []struct {
-		name        string
-		options     Options
-		file        *ir.DistilledFile
-		lineCount   int
-		checkLines  []func(t *testing.T, line map[string]interface{})
+		name       string
+		options    Options
+		file       *ir.DistilledFile
+		lineCount  int
+		checkLines []func(t *testing.T, line map[string]interface{})
 	}{
 		{
 			name: "basic file with class and function",
@@ -118,7 +118,7 @@ func TestJSONLFormatter_Format(t *testing.T) {
 			},
 		},
 		{
-			name: "imports and symbols",
+			name:    "imports and symbols",
 			options: Options{},
 			file: &ir.DistilledFile{
 				Path:     "imports.py",
@@ -175,11 +175,11 @@ func TestJSONLFormatter_Format(t *testing.T) {
 			checkLines: []func(t *testing.T, line map[string]interface{}){
 				func(t *testing.T, line map[string]interface{}) {
 					assert.Equal(t, "file", line["type"])
-					
+
 					metadata := line["metadata"].(map[string]interface{})
 					assert.Equal(t, float64(1234), metadata["size_bytes"])
 					assert.Equal(t, "abc123", metadata["hash"])
-					
+
 					errors := line["errors"].([]interface{})
 					assert.Len(t, errors, 1)
 					err0 := errors[0].(map[string]interface{})
@@ -244,13 +244,13 @@ func TestJSONLFormatter_Format(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			formatter := NewJSONLFormatter(tt.options)
 			var buf bytes.Buffer
-			
+
 			err := formatter.Format(&buf, tt.file)
 			require.NoError(t, err)
-			
+
 			lines := strings.Split(strings.TrimSpace(buf.String()), "\n")
 			assert.Equal(t, tt.lineCount, len(lines), "Should have correct number of lines")
-			
+
 			for i, checkFunc := range tt.checkLines {
 				if checkFunc != nil && i < len(lines) {
 					var obj map[string]interface{}
@@ -265,7 +265,7 @@ func TestJSONLFormatter_Format(t *testing.T) {
 
 func TestJSONLFormatter_FormatMultiple(t *testing.T) {
 	formatter := NewJSONLFormatter(Options{})
-	
+
 	files := []*ir.DistilledFile{
 		{
 			Path:     "file1.py",
@@ -282,21 +282,21 @@ func TestJSONLFormatter_FormatMultiple(t *testing.T) {
 			},
 		},
 	}
-	
+
 	var buf bytes.Buffer
 	err := formatter.FormatMultiple(&buf, files)
 	require.NoError(t, err)
-	
+
 	lines := strings.Split(strings.TrimSpace(buf.String()), "\n")
 	assert.Equal(t, 4, len(lines)) // 2 files + 2 functions
-	
+
 	// Check file lines
 	var file1Line, file2Line map[string]interface{}
 	for _, line := range lines {
 		var obj map[string]interface{}
 		err := json.Unmarshal([]byte(line), &obj)
 		require.NoError(t, err)
-		
+
 		if obj["type"] == "file" {
 			if obj["path"] == "file1.py" {
 				file1Line = obj
@@ -305,7 +305,7 @@ func TestJSONLFormatter_FormatMultiple(t *testing.T) {
 			}
 		}
 	}
-	
+
 	assert.NotNil(t, file1Line, "Should have file1.py")
 	assert.NotNil(t, file2Line, "Should have file2.py")
 }
@@ -317,7 +317,7 @@ func TestJSONLFormatter_Extension(t *testing.T) {
 
 func TestJSONLFormatter_AllNodeTypes(t *testing.T) {
 	formatter := NewJSONLFormatter(Options{})
-	
+
 	file := &ir.DistilledFile{
 		Path:     "all_types.py",
 		Language: "python",
@@ -357,24 +357,24 @@ func TestJSONLFormatter_AllNodeTypes(t *testing.T) {
 			},
 		},
 	}
-	
+
 	var buf bytes.Buffer
 	err := formatter.Format(&buf, file)
 	require.NoError(t, err)
-	
+
 	lines := strings.Split(strings.TrimSpace(buf.String()), "\n")
 	assert.Equal(t, 8, len(lines)) // 1 file + 7 nodes
-	
+
 	// Check various node types
 	foundTypes := make(map[string]bool)
 	for _, line := range lines[1:] { // Skip file line
 		var obj map[string]interface{}
 		err := json.Unmarshal([]byte(line), &obj)
 		require.NoError(t, err)
-		
+
 		nodeType := obj["type"].(string)
 		foundTypes[nodeType] = true
-		
+
 		switch nodeType {
 		case "class":
 			assert.Equal(t, "MyClass", obj["name"])
@@ -402,7 +402,7 @@ func TestJSONLFormatter_AllNodeTypes(t *testing.T) {
 			assert.Equal(t, "error:10", obj["name"])
 		}
 	}
-	
+
 	assert.True(t, foundTypes["package"])
 	assert.True(t, foundTypes["class"])
 	assert.True(t, foundTypes["interface"])
@@ -414,7 +414,7 @@ func TestJSONLFormatter_AllNodeTypes(t *testing.T) {
 
 func TestJSONLFormatter_NestedPaths(t *testing.T) {
 	formatter := NewJSONLFormatter(Options{})
-	
+
 	file := &ir.DistilledFile{
 		Path:     "nested.py",
 		Language: "python",
@@ -437,22 +437,22 @@ func TestJSONLFormatter_NestedPaths(t *testing.T) {
 			},
 		},
 	}
-	
+
 	var buf bytes.Buffer
 	err := formatter.Format(&buf, file)
 	require.NoError(t, err)
-	
+
 	lines := strings.Split(strings.TrimSpace(buf.String()), "\n")
-	
+
 	// Check paths
 	for _, line := range lines[1:] { // Skip file line
 		var obj map[string]interface{}
 		err := json.Unmarshal([]byte(line), &obj)
 		require.NoError(t, err)
-		
+
 		name := obj["name"].(string)
 		path := obj["path"].([]interface{})
-		
+
 		switch name {
 		case "OuterClass":
 			assert.Equal(t, []interface{}{}, path)
@@ -468,7 +468,7 @@ func TestJSONLFormatter_NestedPaths(t *testing.T) {
 
 func TestJSONLFormatter_Parameters(t *testing.T) {
 	formatter := NewJSONLFormatter(Options{})
-	
+
 	file := &ir.DistilledFile{
 		Path:     "params.py",
 		Language: "python",
@@ -485,39 +485,39 @@ func TestJSONLFormatter_Parameters(t *testing.T) {
 			},
 		},
 	}
-	
+
 	var buf bytes.Buffer
 	err := formatter.Format(&buf, file)
 	require.NoError(t, err)
-	
+
 	lines := strings.Split(strings.TrimSpace(buf.String()), "\n")
 	var funcLine map[string]interface{}
 	err = json.Unmarshal([]byte(lines[1]), &funcLine)
 	require.NoError(t, err)
-	
+
 	assert.Equal(t, "function", funcLine["type"])
 	assert.Equal(t, "dict", funcLine["returns"])
-	
+
 	params := funcLine["parameters"].([]interface{})
 	assert.Len(t, params, 4)
-	
+
 	// Check each parameter
 	p0 := params[0].(map[string]interface{})
 	assert.Equal(t, "required", p0["name"])
 	assert.Equal(t, "str", p0["type"])
 	assert.Nil(t, p0["optional"])
 	assert.Nil(t, p0["default"])
-	
+
 	p1 := params[1].(map[string]interface{})
 	assert.Equal(t, "optional", p1["name"])
 	assert.Equal(t, "int", p1["type"])
 	assert.Equal(t, true, p1["optional"])
-	
+
 	p2 := params[2].(map[string]interface{})
 	assert.Equal(t, "default", p2["name"])
 	assert.Equal(t, "bool", p2["type"])
 	assert.Equal(t, "True", p2["default"])
-	
+
 	p3 := params[3].(map[string]interface{})
 	assert.Equal(t, "args", p3["name"])
 	assert.Equal(t, true, p3["variadic"])

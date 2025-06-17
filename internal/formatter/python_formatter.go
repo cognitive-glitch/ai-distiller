@@ -43,7 +43,7 @@ func (f *PythonFormatter) FormatNode(w io.Writer, node ir.DistilledNode, indent 
 func (f *PythonFormatter) formatComment(w io.Writer, comment *ir.DistilledComment, indent int) error {
 	text := comment.Text
 	indentStr := strings.Repeat("    ", indent)
-	
+
 	// Special handling for module-level docstrings
 	if indent == 0 && comment.Format == "docstring" {
 		// Module docstrings should be wrapped in triple quotes
@@ -55,20 +55,20 @@ func (f *PythonFormatter) formatComment(w io.Writer, comment *ir.DistilledCommen
 		}
 		return nil
 	}
-	
+
 	// If it's a // comment from the generic parser
 	if strings.HasPrefix(text, "//") {
 		text = strings.TrimPrefix(text, "//")
 		text = strings.TrimSpace(text)
 	}
-	
+
 	// For non-module level comments, format as single-line comments
 	if !strings.HasPrefix(text, "#") {
 		fmt.Fprintf(w, "%s# %s\n", indentStr, text)
 	} else {
 		fmt.Fprintf(w, "%s%s\n", indentStr, text)
 	}
-	
+
 	return nil
 }
 
@@ -100,40 +100,40 @@ func (f *PythonFormatter) formatImport(w io.Writer, imp *ir.DistilledImport) err
 
 func (f *PythonFormatter) formatField(w io.Writer, field *ir.DistilledField, indent int) error {
 	indentStr := strings.Repeat("    ", indent)
-	
+
 	// Get visibility prefix
 	visPrefix := getVisibilityPrefix(field.Visibility)
-	
+
 	// Format field declaration
 	fmt.Fprintf(w, "%s%s%s", indentStr, visPrefix, field.Name)
-	
+
 	// Add type annotation if present
 	if field.Type != nil && field.Type.Name != "" {
 		fmt.Fprintf(w, ": %s", field.Type.Name)
 	}
-	
+
 	// Add default value if present
 	if field.DefaultValue != "" {
 		fmt.Fprintf(w, " = %s", field.DefaultValue)
 	}
-	
+
 	fmt.Fprintln(w)
 	return nil
 }
 
 func (f *PythonFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, indent int) error {
 	indentStr := strings.Repeat("    ", indent)
-	
+
 	// Format decorators
 	for _, dec := range fn.Decorators {
 		fmt.Fprintf(w, "%s@%s\n", indentStr, dec)
 	}
-	
+
 	// Get visibility prefix
 	visPrefix := getVisibilityPrefix(fn.Visibility)
 	// DEBUG: Print visibility info
 	// fmt.Fprintf(os.Stderr, "DEBUG: Function %s, Visibility=%v, Prefix=%q\n", fn.Name, fn.Visibility, visPrefix)
-	
+
 	// Check for special modifiers
 	modifiers := ""
 	for _, mod := range fn.Modifiers {
@@ -141,7 +141,7 @@ func (f *PythonFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, 
 			modifiers = "async "
 		}
 	}
-	
+
 	// Format function signature
 	if fn.Implementation != "" {
 		// Full function with implementation
@@ -150,7 +150,7 @@ func (f *PythonFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, 
 		// Just signature without def keyword
 		fmt.Fprintf(w, "%s%s%s%s(", indentStr, visPrefix, modifiers, fn.Name)
 	}
-	
+
 	// Format parameters
 	params := make([]string, 0, len(fn.Parameters))
 	for _, param := range fn.Parameters {
@@ -167,20 +167,20 @@ func (f *PythonFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, 
 		params = append(params, paramStr)
 	}
 	fmt.Fprintf(w, "%s)", strings.Join(params, ", "))
-	
+
 	// Format return type
 	if fn.Returns != nil && fn.Returns.Name != "" {
 		fmt.Fprintf(w, " -> %s", fn.Returns.Name)
 	}
-	
+
 	// Handle implementation
 	if fn.Implementation != "" {
 		fmt.Fprintln(w, ":")
-		
+
 		// Check if implementation contains docstring
 		impl := strings.TrimSpace(fn.Implementation)
 		lines := strings.Split(impl, "\n")
-		
+
 		// Write implementation with proper indentation
 		for _, line := range lines {
 			if line != "" {
@@ -193,26 +193,26 @@ func (f *PythonFormatter) formatFunction(w io.Writer, fn *ir.DistilledFunction, 
 		// No implementation - just signature
 		fmt.Fprintln(w)
 	}
-	
+
 	return nil
 }
 
 func (f *PythonFormatter) formatClass(w io.Writer, class *ir.DistilledClass, indent int) error {
 	indentStr := strings.Repeat("    ", indent)
-	
+
 	// Add blank line before class
 	if !f.inClass && len(indentStr) == 0 {
 		fmt.Fprintln(w)
 	}
-	
+
 	// Format decorators
 	for _, dec := range class.Decorators {
 		fmt.Fprintf(w, "%s@%s\n", indentStr, dec)
 	}
-	
+
 	// Format class declaration
 	fmt.Fprintf(w, "%sclass %s", indentStr, class.Name)
-	
+
 	// Add base classes if any
 	if len(class.Extends) > 0 {
 		bases := make([]string, len(class.Extends))
@@ -221,17 +221,17 @@ func (f *PythonFormatter) formatClass(w io.Writer, class *ir.DistilledClass, ind
 		}
 		fmt.Fprintf(w, "(%s)", strings.Join(bases, ", "))
 	}
-	
+
 	fmt.Fprintln(w, ":")
-	
+
 	// Format class body
 	if len(class.Children) > 0 {
 		wasInClass := f.inClass
 		f.inClass = true
-		
+
 		// Group children by type for better formatting
 		var comments, fields, functions []ir.DistilledNode
-		
+
 		for _, child := range class.Children {
 			switch child.(type) {
 			case *ir.DistilledComment:
@@ -242,27 +242,26 @@ func (f *PythonFormatter) formatClass(w io.Writer, class *ir.DistilledClass, ind
 				functions = append(functions, child)
 			}
 		}
-		
+
 		// Write all comments (docstrings and regular comments)
 		for _, comment := range comments {
 			f.FormatNode(w, comment, indent+1)
 		}
-		
+
 		// Write fields
 		for _, field := range fields {
 			f.FormatNode(w, field, indent+1)
 		}
-		
+
 		// Write functions
 		for _, function := range functions {
 			f.FormatNode(w, function, indent+1)
 		}
-		
+
 		f.inClass = wasInClass
 	} else {
 		fmt.Fprintf(w, "%s    pass\n", indentStr)
 	}
-	
+
 	return nil
 }
-

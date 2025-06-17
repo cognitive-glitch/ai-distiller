@@ -1,3 +1,4 @@
+//go:build go1.18
 // +build go1.18
 
 package python
@@ -7,7 +8,7 @@ import (
 	"context"
 	"os"
 	"testing"
-	
+
 	"github.com/janreges/ai-distiller/internal/ir"
 )
 
@@ -37,7 +38,7 @@ func FuzzProcess(f *testing.F) {
 	f.Add([]byte("class 中文类名:\n\tdef 方法(self):\n\t\tpass"))
 	f.Add([]byte("def f(\n\tx: int,\n\ty: str\n) -> bool:\n\tpass"))
 	f.Add([]byte("from . import (\n\ta,\n\tb,\n\tc\n)"))
-	
+
 	// Add malformed inputs
 	f.Add([]byte("class"))
 	f.Add([]byte("def"))
@@ -66,12 +67,12 @@ func FuzzProcess(f *testing.F) {
 		// Run again with same input
 		reader2 := bytes.NewReader(input)
 		file2, err2 := p.Process(ctx, reader2, "fuzz_test.py")
-		
+
 		// Results should be identical
 		if (err == nil) != (err2 == nil) {
 			t.Error("Parser not deterministic: different error states")
 		}
-		
+
 		if err == nil && err2 == nil {
 			// Both succeeded, structures should be equal
 			// (simplified check - in reality would need deep comparison)

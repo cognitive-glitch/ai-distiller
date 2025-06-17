@@ -116,7 +116,7 @@ func (f *CppFormatter) formatClass(class *ir.DistilledClass, indent int) string 
 			parts = append(parts, f.formatField(n, indent+1))
 		}
 	}
-	
+
 	// Closing brace
 	parts = append(parts, indentStr+"};")
 
@@ -155,7 +155,7 @@ func (f *CppFormatter) formatStruct(strct *ir.DistilledStruct, indent int) strin
 			parts = append(parts, f.formatField(n, indent+1))
 		}
 	}
-	
+
 	// Closing brace
 	parts = append(parts, indentStr+"};")
 
@@ -176,7 +176,7 @@ func (f *CppFormatter) formatEnum(enum *ir.DistilledEnum, indent int) string {
 
 	var parts []string
 	parts = append(parts, indentStr+enumDecl+" {")
-	
+
 	// Format enum values
 	for _, child := range enum.Children {
 		if field, ok := child.(*ir.DistilledField); ok {
@@ -187,16 +187,16 @@ func (f *CppFormatter) formatEnum(enum *ir.DistilledEnum, indent int) string {
 			parts = append(parts, valueStr)
 		}
 	}
-	
+
 	// Closing brace
 	parts = append(parts, indentStr+"};")
-	
+
 	return strings.Join(parts, "\n")
 }
 
 func (f *CppFormatter) formatFunction(fn *ir.DistilledFunction, indent int) string {
 	indentStr := strings.Repeat("    ", indent)
-	
+
 	// C++ doesn't use visibility keywords on standalone functions
 	// Access specifiers are used in class/struct scope
 
@@ -231,7 +231,7 @@ func (f *CppFormatter) formatFunction(fn *ir.DistilledFunction, indent int) stri
 	// Return type - constructors and destructors don't have return types
 	var returnType string
 	hasReturnType := true
-	
+
 	// Check if this is a constructor or destructor by examining the parent context
 	// In C++, constructors have the same name as the class and no return type
 	// Destructors start with ~ and have no return type
@@ -338,4 +338,3 @@ func (f *CppFormatter) formatField(field *ir.DistilledField, indent int) string 
 	// For text format, we'll just show the field without prefix
 	return indentStr + fieldDecl
 }
-

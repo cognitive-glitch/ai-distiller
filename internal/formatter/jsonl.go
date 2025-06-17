@@ -30,13 +30,13 @@ func (f *JSONLFormatter) Extension() string {
 func (f *JSONLFormatter) Format(w io.Writer, file *ir.DistilledFile) error {
 	// JSONL format should always be one object per line, no indentation
 	encoder := json.NewEncoder(w)
-	
+
 	// Write file as a single line
 	fileObj := f.fileToJSON(file)
 	if err := encoder.Encode(fileObj); err != nil {
 		return err
 	}
-	
+
 	// Write each node as a separate line
 	return f.writeNodes(encoder, file.Path, file.Children, []string{})
 }
@@ -45,20 +45,20 @@ func (f *JSONLFormatter) Format(w io.Writer, file *ir.DistilledFile) error {
 func (f *JSONLFormatter) FormatMultiple(w io.Writer, files []*ir.DistilledFile) error {
 	// JSONL format should always be one object per line, no indentation
 	encoder := json.NewEncoder(w)
-	
+
 	for _, file := range files {
 		// Write file object
 		fileObj := f.fileToJSON(file)
 		if err := encoder.Encode(fileObj); err != nil {
 			return err
 		}
-		
+
 		// Write nodes
 		if err := f.writeNodes(encoder, file.Path, file.Children, []string{}); err != nil {
 			return err
 		}
 	}
-	
+
 	return nil
 }
 
@@ -70,25 +70,25 @@ func (f *JSONLFormatter) fileToJSON(file *ir.DistilledFile) map[string]interface
 		"language": file.Language,
 		"version":  file.Version,
 	}
-	
+
 	if f.options.IncludeLocation {
 		obj["location"] = file.GetLocation()
 	}
-	
+
 	if f.options.IncludeMetadata && file.Metadata != nil {
 		obj["metadata"] = file.Metadata
 	}
-	
+
 	if len(file.Errors) > 0 {
 		obj["errors"] = file.Errors
 	}
-	
+
 	// Summary stats
 	stats := f.calculateStats(file)
 	if len(stats) > 0 {
 		obj["stats"] = stats
 	}
-	
+
 	return obj
 }
 
@@ -99,7 +99,7 @@ func (f *JSONLFormatter) writeNodes(encoder *json.Encoder, filePath string, node
 		if err := encoder.Encode(nodeObj); err != nil {
 			return err
 		}
-		
+
 		// Process children
 		if children := node.GetChildren(); len(children) > 0 {
 			newPath := append(path, f.getNodeName(node))
@@ -114,28 +114,28 @@ func (f *JSONLFormatter) writeNodes(encoder *json.Encoder, filePath string, node
 // nodeToJSON converts a node to JSON representation
 func (f *JSONLFormatter) nodeToJSON(filePath string, node ir.DistilledNode, path []string) map[string]interface{} {
 	obj := map[string]interface{}{
-		"type":     string(node.GetNodeKind()),
-		"file":     filePath,
-		"path":     path,
-		"name":     f.getNodeName(node),
+		"type": string(node.GetNodeKind()),
+		"file": filePath,
+		"path": path,
+		"name": f.getNodeName(node),
 	}
-	
+
 	if f.options.IncludeLocation {
 		obj["location"] = node.GetLocation()
 	}
-	
+
 	// Add node-specific fields
 	switch n := node.(type) {
 	case *ir.DistilledPackage:
 		// Package is already handled by name
-		
+
 	case *ir.DistilledImport:
 		obj["import_type"] = n.ImportType
 		obj["module"] = n.Module
 		if len(n.Symbols) > 0 {
 			obj["symbols"] = n.Symbols
 		}
-		
+
 	case *ir.DistilledClass:
 		obj["visibility"] = n.Visibility
 		if len(n.Modifiers) > 0 {
@@ -147,13 +147,13 @@ func (f *JSONLFormatter) nodeToJSON(filePath string, node ir.DistilledNode, path
 		if len(n.Implements) > 0 {
 			obj["implements"] = f.typeRefsToStrings(n.Implements)
 		}
-		
+
 	case *ir.DistilledInterface:
 		obj["visibility"] = n.Visibility
 		if len(n.Extends) > 0 {
 			obj["extends"] = f.typeRefsToStrings(n.Extends)
 		}
-		
+
 	case *ir.DistilledFunction:
 		obj["visibility"] = n.Visibility
 		if len(n.Modifiers) > 0 {
@@ -168,7 +168,7 @@ func (f *JSONLFormatter) nodeToJSON(filePath string, node ir.DistilledNode, path
 		} else if n.Implementation != "" {
 			obj["implementation"] = n.Implementation
 		}
-		
+
 	case *ir.DistilledField:
 		obj["visibility"] = n.Visibility
 		if len(n.Modifiers) > 0 {
@@ -180,15 +180,15 @@ func (f *JSONLFormatter) nodeToJSON(filePath string, node ir.DistilledNode, path
 		if n.DefaultValue != "" {
 			obj["default"] = n.DefaultValue
 		}
-		
+
 	case *ir.DistilledTypeAlias:
 		obj["visibility"] = n.Visibility
 		obj["alias_type"] = n.Type.Name
-		
+
 	case *ir.DistilledComment:
 		obj["format"] = n.Format
 		obj["text"] = n.Text
-		
+
 	case *ir.DistilledError:
 		obj["severity"] = n.Severity
 		obj["message"] = n.Message
@@ -196,7 +196,7 @@ func (f *JSONLFormatter) nodeToJSON(filePath string, node ir.DistilledNode, path
 			obj["code"] = n.Code
 		}
 	}
-	
+
 	return obj
 }
 
@@ -275,7 +275,7 @@ func (f *JSONLFormatter) countNodes(nodes []ir.DistilledNode, stats map[string]i
 	for _, node := range nodes {
 		kind := string(node.GetNodeKind())
 		stats[kind]++
-		
+
 		if children := node.GetChildren(); len(children) > 0 {
 			f.countNodes(children, stats)
 		}

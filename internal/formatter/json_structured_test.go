@@ -12,10 +12,10 @@ import (
 
 func TestJSONStructuredFormatter_Format(t *testing.T) {
 	tests := []struct {
-		name     string
-		options  Options
-		file     *ir.DistilledFile
-		check    func(t *testing.T, data map[string]interface{})
+		name    string
+		options Options
+		file    *ir.DistilledFile
+		check   func(t *testing.T, data map[string]interface{})
 	}{
 		{
 			name: "basic file with structured output",
@@ -58,42 +58,42 @@ func TestJSONStructuredFormatter_Format(t *testing.T) {
 				assert.Equal(t, "example.py", data["path"])
 				assert.Equal(t, "python", data["language"])
 				assert.Equal(t, "3.9", data["version"])
-				
+
 				// Check structure
 				structure := data["structure"].(map[string]interface{})
-				
+
 				// Packages
 				packages := structure["packages"].([]interface{})
 				assert.Len(t, packages, 1)
 				pkg := packages[0].(map[string]interface{})
 				assert.Equal(t, "mypackage", pkg["name"])
-				
+
 				// Imports
 				imports := structure["imports"].([]interface{})
 				assert.Len(t, imports, 1)
 				imp := imports[0].(map[string]interface{})
 				assert.Equal(t, "from", imp["type"])
 				assert.Equal(t, "os", imp["module"])
-				
+
 				// Classes
 				classes := structure["classes"].([]interface{})
 				assert.Len(t, classes, 1)
 				class := classes[0].(map[string]interface{})
 				assert.Equal(t, "TestClass", class["name"])
-				
+
 				// Class members
 				members := class["members"].(map[string]interface{})
 				fields := members["fields"].([]interface{})
 				assert.Len(t, fields, 1)
 				methods := members["methods"].([]interface{})
 				assert.Len(t, methods, 1)
-				
+
 				// Functions
 				functions := structure["functions"].([]interface{})
 				assert.Len(t, functions, 1)
 				fn := functions[0].(map[string]interface{})
 				assert.Equal(t, "standalone_func", fn["name"])
-				
+
 				// Stats
 				stats := data["stats"].(map[string]interface{})
 				assert.Equal(t, float64(1), stats["package"])
@@ -128,7 +128,7 @@ func TestJSONStructuredFormatter_Format(t *testing.T) {
 				fileLoc := data["location"].(map[string]interface{})
 				assert.Equal(t, float64(1), fileLoc["start_line"])
 				assert.Equal(t, float64(100), fileLoc["end_line"])
-				
+
 				// Function location
 				structure := data["structure"].(map[string]interface{})
 				functions := structure["functions"].([]interface{})
@@ -163,7 +163,7 @@ func TestJSONStructuredFormatter_Format(t *testing.T) {
 				metadata := data["metadata"].(map[string]interface{})
 				assert.Equal(t, float64(1234), metadata["size_bytes"])
 				assert.Equal(t, "abc123", metadata["hash"])
-				
+
 				// Errors
 				errors := data["errors"].([]interface{})
 				assert.Len(t, errors, 1)
@@ -197,7 +197,7 @@ func TestJSONStructuredFormatter_Format(t *testing.T) {
 			},
 		},
 		{
-			name: "complex class hierarchy",
+			name:    "complex class hierarchy",
 			options: Options{},
 			file: &ir.DistilledFile{
 				Path:     "hierarchy.py",
@@ -222,17 +222,17 @@ func TestJSONStructuredFormatter_Format(t *testing.T) {
 			},
 			check: func(t *testing.T, data map[string]interface{}) {
 				structure := data["structure"].(map[string]interface{})
-				
+
 				// Classes
 				classes := structure["classes"].([]interface{})
 				assert.Len(t, classes, 2)
-				
+
 				derived := classes[1].(map[string]interface{})
 				assert.Equal(t, "DerivedClass", derived["name"])
 				assert.Equal(t, []interface{}{"abstract"}, derived["modifiers"])
 				assert.Equal(t, []interface{}{"BaseClass"}, derived["extends"])
 				assert.Equal(t, []interface{}{"Interface1", "Interface2"}, derived["implements"])
-				
+
 				// Interfaces
 				interfaces := structure["interfaces"].([]interface{})
 				assert.Len(t, interfaces, 1)
@@ -242,7 +242,7 @@ func TestJSONStructuredFormatter_Format(t *testing.T) {
 			},
 		},
 		{
-			name: "all node types",
+			name:    "all node types",
 			options: Options{},
 			file: &ir.DistilledFile{
 				Path:     "all_types.py",
@@ -262,7 +262,7 @@ func TestJSONStructuredFormatter_Format(t *testing.T) {
 			},
 			check: func(t *testing.T, data map[string]interface{}) {
 				structure := data["structure"].(map[string]interface{})
-				
+
 				// Check all sections exist
 				assert.NotNil(t, structure["packages"])
 				assert.NotNil(t, structure["imports"])
@@ -271,7 +271,7 @@ func TestJSONStructuredFormatter_Format(t *testing.T) {
 				assert.NotNil(t, structure["functions"])
 				assert.NotNil(t, structure["variables"])
 				assert.NotNil(t, structure["types"])
-				
+
 				// Type aliases
 				types := structure["types"].([]interface{})
 				assert.Len(t, types, 1)
@@ -286,14 +286,14 @@ func TestJSONStructuredFormatter_Format(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			formatter := NewJSONStructuredFormatter(tt.options)
 			var buf bytes.Buffer
-			
+
 			err := formatter.Format(&buf, tt.file)
 			require.NoError(t, err)
-			
+
 			var data map[string]interface{}
 			err = json.Unmarshal(buf.Bytes(), &data)
 			require.NoError(t, err, "Output should be valid JSON")
-			
+
 			tt.check(t, data)
 		})
 	}
@@ -301,7 +301,7 @@ func TestJSONStructuredFormatter_Format(t *testing.T) {
 
 func TestJSONStructuredFormatter_FormatMultiple(t *testing.T) {
 	formatter := NewJSONStructuredFormatter(Options{})
-	
+
 	files := []*ir.DistilledFile{
 		{
 			Path:     "file1.py",
@@ -320,31 +320,31 @@ func TestJSONStructuredFormatter_FormatMultiple(t *testing.T) {
 			},
 		},
 	}
-	
+
 	var buf bytes.Buffer
 	err := formatter.FormatMultiple(&buf, files)
 	require.NoError(t, err)
-	
+
 	var data map[string]interface{}
 	err = json.Unmarshal(buf.Bytes(), &data)
 	require.NoError(t, err)
-	
+
 	// Check project structure
 	assert.Equal(t, "project", data["type"])
-	
+
 	// Check files
 	fileList := data["files"].([]interface{})
 	assert.Len(t, fileList, 2)
-	
+
 	// Check total stats
 	totalStats := data["total_stats"].(map[string]interface{})
 	assert.Equal(t, float64(2), totalStats["class"])
 	assert.Equal(t, float64(2), totalStats["function"])
-	
+
 	// Verify file contents
 	file1 := fileList[0].(map[string]interface{})
 	assert.Equal(t, "file1.py", file1["path"])
-	
+
 	file2 := fileList[1].(map[string]interface{})
 	assert.Equal(t, "file2.py", file2["path"])
 }
@@ -356,7 +356,7 @@ func TestJSONStructuredFormatter_Extension(t *testing.T) {
 
 func TestJSONStructuredFormatter_Parameters(t *testing.T) {
 	formatter := NewJSONStructuredFormatter(Options{})
-	
+
 	file := &ir.DistilledFile{
 		Path:     "params.py",
 		Language: "python",
@@ -373,37 +373,37 @@ func TestJSONStructuredFormatter_Parameters(t *testing.T) {
 			},
 		},
 	}
-	
+
 	var buf bytes.Buffer
 	err := formatter.Format(&buf, file)
 	require.NoError(t, err)
-	
+
 	var data map[string]interface{}
 	err = json.Unmarshal(buf.Bytes(), &data)
 	require.NoError(t, err)
-	
+
 	structure := data["structure"].(map[string]interface{})
 	functions := structure["functions"].([]interface{})
 	fn := functions[0].(map[string]interface{})
-	
+
 	assert.Equal(t, "dict", fn["returns"])
-	
+
 	params := fn["parameters"].([]interface{})
 	assert.Len(t, params, 4)
-	
+
 	// Check parameter details
 	p0 := params[0].(map[string]interface{})
 	assert.Equal(t, "required", p0["name"])
 	assert.Equal(t, "str", p0["type"])
-	
+
 	p1 := params[1].(map[string]interface{})
 	assert.Equal(t, "optional", p1["name"])
 	assert.Equal(t, true, p1["optional"])
-	
+
 	p2 := params[2].(map[string]interface{})
 	assert.Equal(t, "default", p2["name"])
 	assert.Equal(t, "True", p2["default"])
-	
+
 	p3 := params[3].(map[string]interface{})
 	assert.Equal(t, "args", p3["name"])
 	assert.Equal(t, true, p3["variadic"])
@@ -411,24 +411,24 @@ func TestJSONStructuredFormatter_Parameters(t *testing.T) {
 
 func TestJSONStructuredFormatter_EmptyStructure(t *testing.T) {
 	formatter := NewJSONStructuredFormatter(Options{})
-	
+
 	file := &ir.DistilledFile{
 		Path:     "empty.py",
 		Language: "python",
 		Children: []ir.DistilledNode{},
 	}
-	
+
 	var buf bytes.Buffer
 	err := formatter.Format(&buf, file)
 	require.NoError(t, err)
-	
+
 	var data map[string]interface{}
 	err = json.Unmarshal(buf.Bytes(), &data)
 	require.NoError(t, err)
-	
+
 	// Should not have structure key if no children
 	assert.Nil(t, data["structure"])
-	
+
 	// Should have empty stats
 	stats, ok := data["stats"].(map[string]interface{})
 	if ok {
@@ -441,7 +441,7 @@ func TestJSONStructuredFormatter_EmptyStructure(t *testing.T) {
 
 func TestJSONStructuredFormatter_NestedClasses(t *testing.T) {
 	formatter := NewJSONStructuredFormatter(Options{})
-	
+
 	file := &ir.DistilledFile{
 		Path:     "nested.py",
 		Language: "python",
@@ -468,38 +468,38 @@ func TestJSONStructuredFormatter_NestedClasses(t *testing.T) {
 			},
 		},
 	}
-	
+
 	var buf bytes.Buffer
 	err := formatter.Format(&buf, file)
 	require.NoError(t, err)
-	
+
 	var data map[string]interface{}
 	err = json.Unmarshal(buf.Bytes(), &data)
 	require.NoError(t, err)
-	
+
 	// Outer class should contain inner class in its members
 	structure := data["structure"].(map[string]interface{})
 	classes := structure["classes"].([]interface{})
 	assert.Len(t, classes, 1) // Only outer class at top level
-	
+
 	outerClass := classes[0].(map[string]interface{})
 	assert.Equal(t, "OuterClass", outerClass["name"])
-	
+
 	// Check outer class members
 	outerMembers := outerClass["members"].(map[string]interface{})
 	outerFields := outerMembers["fields"].([]interface{})
 	assert.Len(t, outerFields, 1)
-	
+
 	// Stats should count nested elements
 	stats := data["stats"].(map[string]interface{})
-	assert.Equal(t, float64(2), stats["class"]) // Outer and inner
-	assert.Equal(t, float64(2), stats["field"]) // Both fields
+	assert.Equal(t, float64(2), stats["class"])    // Outer and inner
+	assert.Equal(t, float64(2), stats["field"])    // Both fields
 	assert.Equal(t, float64(1), stats["function"]) // Inner method
 }
 
 func TestJSONStructuredFormatter_ImportSymbols(t *testing.T) {
 	formatter := NewJSONStructuredFormatter(Options{})
-	
+
 	file := &ir.DistilledFile{
 		Path:     "imports.py",
 		Language: "python",
@@ -514,26 +514,26 @@ func TestJSONStructuredFormatter_ImportSymbols(t *testing.T) {
 			},
 		},
 	}
-	
+
 	var buf bytes.Buffer
 	err := formatter.Format(&buf, file)
 	require.NoError(t, err)
-	
+
 	var data map[string]interface{}
 	err = json.Unmarshal(buf.Bytes(), &data)
 	require.NoError(t, err)
-	
+
 	structure := data["structure"].(map[string]interface{})
 	imports := structure["imports"].([]interface{})
 	imp := imports[0].(map[string]interface{})
-	
+
 	symbols := imp["symbols"].([]interface{})
 	assert.Len(t, symbols, 2)
-	
+
 	sym0 := symbols[0].(map[string]interface{})
 	assert.Equal(t, "defaultdict", sym0["name"])
 	assert.Nil(t, sym0["alias"])
-	
+
 	sym1 := symbols[1].(map[string]interface{})
 	assert.Equal(t, "OrderedDict", sym1["name"])
 	assert.Equal(t, "ODict", sym1["alias"])

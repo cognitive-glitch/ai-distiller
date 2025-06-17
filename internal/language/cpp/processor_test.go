@@ -52,7 +52,7 @@ struct Point {
 			expected: []string{
 				"Point",
 				"x",
-				"y", 
+				"y",
 				"distance",
 			},
 		},
@@ -95,7 +95,7 @@ T max(T a, T b) {
 
 			// Convert result to string for easier checking
 			content := convertToString(result)
-			
+
 			// Check that all expected elements are present
 			for _, exp := range tt.expected {
 				assert.Contains(t, content, exp, "Expected to find %s in output", exp)
@@ -155,14 +155,14 @@ int Counter::count = 0;
 
 	processor := NewProcessor()
 	ctx := context.Background()
-	
+
 	reader := strings.NewReader(code)
 	result, err := processor.Process(ctx, reader, "complex.cpp")
 	require.NoError(t, err)
 	require.NotNil(t, result)
-	
+
 	content := convertToString(result)
-	
+
 	// Check various C++ features
 	assert.Contains(t, content, "Container")
 	assert.Contains(t, content, "Shape")
@@ -176,7 +176,7 @@ int Counter::count = 0;
 // Helper function to convert result to string representation
 func convertToString(file *ir.DistilledFile) string {
 	var sb strings.Builder
-	
+
 	// Recursively collect all names from the IR structure
 	var collectNames func(node ir.DistilledNode)
 	collectNames = func(node ir.DistilledNode) {
@@ -197,7 +197,7 @@ func convertToString(file *ir.DistilledFile) string {
 		case *ir.DistilledEnum:
 			sb.WriteString(n.Name + " ")
 		}
-		
+
 		// Process children
 		if node != nil {
 			for _, child := range node.GetChildren() {
@@ -205,11 +205,11 @@ func convertToString(file *ir.DistilledFile) string {
 			}
 		}
 	}
-	
+
 	// Process all top-level nodes
 	for _, node := range file.Children {
 		collectNames(node)
 	}
-	
+
 	return sb.String()
 }

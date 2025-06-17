@@ -49,20 +49,20 @@ type PythonClass struct {
 }
 
 type PythonImport struct {
-	Module  string   `json:"module"`
-	Names   []string `json:"names"`
-	IsFrom  bool     `json:"is_from"`
-	Level   int      `json:"level"` // For relative imports
+	Module string   `json:"module"`
+	Names  []string `json:"names"`
+	IsFrom bool     `json:"is_from"`
+	Level  int      `json:"level"` // For relative imports
 }
 
 // CompareResult holds the comparison results
 type CompareResult struct {
-	Match            bool
-	MissingInOurs    []string
-	MissingInPython  []string
-	Differences      []string
-	OurNodeCount     int
-	PythonNodeCount  int
+	Match           bool
+	MissingInOurs   []string
+	MissingInPython []string
+	Differences     []string
+	OurNodeCount    int
+	PythonNodeCount int
 }
 
 // CompareFile compares a file parsed by our parser with Python's ast
@@ -84,7 +84,7 @@ func (c *ASTComparator) CompareFile(filename string, ourAST *ir.DistilledFile) (
 	// Build maps for comparison
 	ourFuncs := make(map[string]*ir.DistilledFunction)
 	ourClasses := make(map[string]*ir.DistilledClass)
-	
+
 	for _, node := range ourAST.Children {
 		switch n := node.(type) {
 		case *ir.DistilledFunction:
@@ -102,11 +102,11 @@ func (c *ASTComparator) CompareFile(filename string, ourAST *ir.DistilledFile) (
 		if ourFunc, exists := ourFuncs[pyFunc.Name]; exists {
 			// Compare details
 			if len(ourFunc.Parameters) != len(pyFunc.Args) {
-				result.Differences = append(result.Differences, 
+				result.Differences = append(result.Differences,
 					fmt.Sprintf("Function %s: parameter count mismatch (ours: %d, python: %d)",
 						pyFunc.Name, len(ourFunc.Parameters), len(pyFunc.Args)))
 			}
-			
+
 			// Check async modifier
 			isOurAsync := false
 			for _, mod := range ourFunc.Modifiers {
@@ -120,7 +120,7 @@ func (c *ASTComparator) CompareFile(filename string, ourAST *ir.DistilledFile) (
 					fmt.Sprintf("Function %s: async mismatch", pyFunc.Name))
 			}
 		} else {
-			result.MissingInOurs = append(result.MissingInOurs, 
+			result.MissingInOurs = append(result.MissingInOurs,
 				fmt.Sprintf("function: %s", pyFunc.Name))
 			result.Match = false
 		}
@@ -136,7 +136,7 @@ func (c *ASTComparator) CompareFile(filename string, ourAST *ir.DistilledFile) (
 					fmt.Sprintf("Class %s: base class count mismatch (ours: %d, python: %d)",
 						pyClass.Name, len(ourClass.Extends), len(pyClass.Bases)))
 			}
-			
+
 			// Count methods
 			ourMethodCount := 0
 			for _, child := range ourClass.Children {

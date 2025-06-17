@@ -14,7 +14,7 @@ type LineParser struct {
 	source   []byte
 	filename string
 	lines    []string
-	
+
 	// Pre-compiled regular expressions
 	importRe           *regexp.Regexp
 	classRe            *regexp.Regexp
@@ -39,13 +39,13 @@ type parserState struct {
 	insideExtension bool
 	insideEnum      bool
 	insideActor     bool
-	
+
 	currentClass     *ir.DistilledClass
 	currentInterface *ir.DistilledInterface
 	currentEnum      *ir.DistilledEnum
-	
-	braceLevel      int
-	lastNodeLine    int
+
+	braceLevel   int
+	lastNodeLine int
 }
 
 // NewLineParser creates a new line-based parser
@@ -54,7 +54,7 @@ func NewLineParser(source []byte, filename string) *LineParser {
 		source:   source,
 		filename: filename,
 		lines:    strings.Split(string(source), "\n"),
-		
+
 		// Compile regular expressions
 		importRe:           regexp.MustCompile(`^\s*import\s+(\S+)`),
 		classRe:            regexp.MustCompile(`^\s*(open\s+|public\s+|internal\s+|fileprivate\s+|private\s+)?(final\s+)?class\s+(\w+)(\s*:\s*([^{]+))?`),
@@ -90,7 +90,7 @@ func (p *LineParser) Parse() *ir.DistilledFile {
 		lineNum++
 		line := scanner.Text()
 		trimmedLine := strings.TrimSpace(line)
-		
+
 		// DEBUG
 		// if strings.Contains(trimmedLine, "enum") || strings.Contains(trimmedLine, "func") {
 		// 	fmt.Printf("DEBUG: Line %d: %s\n", lineNum, trimmedLine)
@@ -100,7 +100,7 @@ func (p *LineParser) Parse() *ir.DistilledFile {
 		if trimmedLine == "" {
 			continue
 		}
-		
+
 		// Handle comments
 		if strings.HasPrefix(trimmedLine, "//") {
 			// Parse doc comments
@@ -220,7 +220,7 @@ func (p *LineParser) parseClass(matches []string, lineNum int, file *ir.Distille
 	state.insideClass = true
 	state.currentClass = class
 	state.lastNodeLine = lineNum
-	
+
 	file.Children = append(file.Children, class)
 }
 
@@ -244,7 +244,7 @@ func (p *LineParser) parseStruct(matches []string, lineNum int, file *ir.Distill
 	state.insideStruct = true
 	state.currentClass = class
 	state.lastNodeLine = lineNum
-	
+
 	file.Children = append(file.Children, class)
 }
 
@@ -272,7 +272,7 @@ func (p *LineParser) parseProtocol(matches []string, lineNum int, file *ir.Disti
 	state.insideProtocol = true
 	state.currentInterface = protocol
 	state.lastNodeLine = lineNum
-	
+
 	file.Children = append(file.Children, protocol)
 }
 
@@ -304,7 +304,7 @@ func (p *LineParser) parseExtension(matches []string, lineNum int, file *ir.Dist
 	state.insideExtension = true
 	state.currentClass = ext
 	state.lastNodeLine = lineNum
-	
+
 	file.Children = append(file.Children, ext)
 }
 
@@ -322,7 +322,7 @@ func (p *LineParser) parseEnum(matches []string, lineNum int, file *ir.Distilled
 	state.insideEnum = true
 	state.currentEnum = enum
 	state.lastNodeLine = lineNum
-	
+
 	file.Children = append(file.Children, enum)
 }
 
@@ -342,7 +342,7 @@ func (p *LineParser) parseActor(matches []string, lineNum int, file *ir.Distille
 	state.insideActor = true
 	state.currentClass = class
 	state.lastNodeLine = lineNum
-	
+
 	file.Children = append(file.Children, class)
 }
 
@@ -531,7 +531,7 @@ func (p *LineParser) parseParameters(paramStr string) []ir.Parameter {
 			if len(nameParts) > 0 {
 				name = nameParts[len(nameParts)-1]
 			}
-			
+
 			typeStr := strings.TrimSpace(part[colonIdx+1:])
 			params = append(params, ir.Parameter{
 				Name: name,
@@ -574,6 +574,6 @@ func (p *LineParser) addToParent(file *ir.DistilledFile, state *parserState, nod
 			return
 		}
 	}
-	
+
 	file.Children = append(file.Children, node)
 }

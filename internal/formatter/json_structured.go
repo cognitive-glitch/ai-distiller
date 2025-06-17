@@ -30,7 +30,7 @@ func (f *JSONStructuredFormatter) Format(w io.Writer, file *ir.DistilledFile) er
 	if !f.options.Compact {
 		encoder.SetIndent("", "  ")
 	}
-	
+
 	data := f.fileToStructured(file)
 	return encoder.Encode(data)
 }
@@ -41,20 +41,20 @@ func (f *JSONStructuredFormatter) FormatMultiple(w io.Writer, files []*ir.Distil
 	if !f.options.Compact {
 		encoder.SetIndent("", "  ")
 	}
-	
+
 	// Create project structure
 	project := map[string]interface{}{
 		"type":  "project",
 		"files": make([]interface{}, len(files)),
 	}
-	
+
 	// Add statistics
 	totalStats := make(map[string]int)
-	
+
 	for i, file := range files {
 		fileData := f.fileToStructured(file)
 		project["files"].([]interface{})[i] = fileData
-		
+
 		// Aggregate stats
 		if stats, ok := fileData["stats"].(map[string]int); ok {
 			for k, v := range stats {
@@ -62,11 +62,11 @@ func (f *JSONStructuredFormatter) FormatMultiple(w io.Writer, files []*ir.Distil
 			}
 		}
 	}
-	
+
 	if len(totalStats) > 0 {
 		project["total_stats"] = totalStats
 	}
-	
+
 	return encoder.Encode(project)
 }
 
@@ -78,39 +78,39 @@ func (f *JSONStructuredFormatter) fileToStructured(file *ir.DistilledFile) map[s
 		"language": file.Language,
 		"version":  file.Version,
 	}
-	
+
 	if f.options.IncludeLocation {
 		data["location"] = file.GetLocation()
 	}
-	
+
 	if f.options.IncludeMetadata && file.Metadata != nil {
 		data["metadata"] = file.Metadata
 	}
-	
+
 	// Structure nodes by type
 	structure := f.structureNodes(file.Children)
 	if len(structure) > 0 {
 		data["structure"] = structure
 	}
-	
+
 	// Add errors
 	if len(file.Errors) > 0 {
 		data["errors"] = file.Errors
 	}
-	
+
 	// Add statistics
 	stats := f.calculateStats(file.Children)
 	if len(stats) > 0 {
 		data["stats"] = stats
 	}
-	
+
 	return data
 }
 
 // structureNodes organizes nodes by type
 func (f *JSONStructuredFormatter) structureNodes(nodes []ir.DistilledNode) map[string]interface{} {
 	structure := make(map[string]interface{})
-	
+
 	// Group nodes by type
 	packages := []interface{}{}
 	imports := []interface{}{}
@@ -119,32 +119,32 @@ func (f *JSONStructuredFormatter) structureNodes(nodes []ir.DistilledNode) map[s
 	functions := []interface{}{}
 	variables := []interface{}{}
 	types := []interface{}{}
-	
+
 	for _, node := range nodes {
 		switch n := node.(type) {
 		case *ir.DistilledPackage:
 			packages = append(packages, f.packageToStructured(n))
-			
+
 		case *ir.DistilledImport:
 			imports = append(imports, f.importToStructured(n))
-			
+
 		case *ir.DistilledClass:
 			classes = append(classes, f.classToStructured(n))
-			
+
 		case *ir.DistilledInterface:
 			interfaces = append(interfaces, f.interfaceToStructured(n))
-			
+
 		case *ir.DistilledFunction:
 			functions = append(functions, f.functionToStructured(n))
-			
+
 		case *ir.DistilledField:
 			variables = append(variables, f.fieldToStructured(n))
-			
+
 		case *ir.DistilledTypeAlias:
 			types = append(types, f.typeAliasToStructured(n))
 		}
 	}
-	
+
 	// Add non-empty sections
 	if len(packages) > 0 {
 		structure["packages"] = packages
@@ -167,7 +167,7 @@ func (f *JSONStructuredFormatter) structureNodes(nodes []ir.DistilledNode) map[s
 	if len(types) > 0 {
 		structure["types"] = types
 	}
-	
+
 	return structure
 }
 
@@ -186,7 +186,7 @@ func (f *JSONStructuredFormatter) importToStructured(n *ir.DistilledImport) map[
 		"type":   n.ImportType,
 		"module": n.Module,
 	}
-	
+
 	if len(n.Symbols) > 0 {
 		symbols := make([]map[string]string, len(n.Symbols))
 		for i, sym := range n.Symbols {
@@ -198,7 +198,7 @@ func (f *JSONStructuredFormatter) importToStructured(n *ir.DistilledImport) map[
 		}
 		imp["symbols"] = symbols
 	}
-	
+
 	f.addCommonFields(imp, n)
 	return imp
 }
@@ -208,19 +208,19 @@ func (f *JSONStructuredFormatter) classToStructured(n *ir.DistilledClass) map[st
 		"name":       n.Name,
 		"visibility": n.Visibility,
 	}
-	
+
 	if len(n.Modifiers) > 0 {
 		class["modifiers"] = n.Modifiers
 	}
-	
+
 	if len(n.Extends) > 0 {
 		class["extends"] = f.typeRefsToStrings(n.Extends)
 	}
-	
+
 	if len(n.Implements) > 0 {
 		class["implements"] = f.typeRefsToStrings(n.Implements)
 	}
-	
+
 	// Structure class members
 	if len(n.Children) > 0 {
 		members := f.structureClassMembers(n.Children)
@@ -228,7 +228,7 @@ func (f *JSONStructuredFormatter) classToStructured(n *ir.DistilledClass) map[st
 			class["members"] = members
 		}
 	}
-	
+
 	f.addCommonFields(class, n)
 	return class
 }
@@ -238,18 +238,18 @@ func (f *JSONStructuredFormatter) interfaceToStructured(n *ir.DistilledInterface
 		"name":       n.Name,
 		"visibility": n.Visibility,
 	}
-	
+
 	if len(n.Extends) > 0 {
 		iface["extends"] = f.typeRefsToStrings(n.Extends)
 	}
-	
+
 	if len(n.Children) > 0 {
 		members := f.structureClassMembers(n.Children)
 		if len(members) > 0 {
 			iface["members"] = members
 		}
 	}
-	
+
 	f.addCommonFields(iface, n)
 	return iface
 }
@@ -259,11 +259,11 @@ func (f *JSONStructuredFormatter) functionToStructured(n *ir.DistilledFunction) 
 		"name":       n.Name,
 		"visibility": n.Visibility,
 	}
-	
+
 	if len(n.Modifiers) > 0 {
 		fn["modifiers"] = n.Modifiers
 	}
-	
+
 	// Parameters
 	if len(n.Parameters) > 0 {
 		params := make([]map[string]interface{}, len(n.Parameters))
@@ -285,12 +285,12 @@ func (f *JSONStructuredFormatter) functionToStructured(n *ir.DistilledFunction) 
 		}
 		fn["parameters"] = params
 	}
-	
+
 	// Return type
 	if n.Returns != nil && n.Returns.Name != "" {
 		fn["returns"] = n.Returns.Name
 	}
-	
+
 	// Implementation
 	if n.Implementation != "" {
 		if f.options.Compact {
@@ -299,7 +299,7 @@ func (f *JSONStructuredFormatter) functionToStructured(n *ir.DistilledFunction) 
 			fn["implementation"] = n.Implementation
 		}
 	}
-	
+
 	f.addCommonFields(fn, n)
 	return fn
 }
@@ -309,19 +309,19 @@ func (f *JSONStructuredFormatter) fieldToStructured(n *ir.DistilledField) map[st
 		"name":       n.Name,
 		"visibility": n.Visibility,
 	}
-	
+
 	if len(n.Modifiers) > 0 {
 		field["modifiers"] = n.Modifiers
 	}
-	
+
 	if n.Type != nil && n.Type.Name != "" {
 		field["type"] = n.Type.Name
 	}
-	
+
 	if n.DefaultValue != "" {
 		field["default"] = n.DefaultValue
 	}
-	
+
 	f.addCommonFields(field, n)
 	return field
 }
@@ -332,7 +332,7 @@ func (f *JSONStructuredFormatter) typeAliasToStructured(n *ir.DistilledTypeAlias
 		"visibility": n.Visibility,
 		"type":       n.Type.Name,
 	}
-	
+
 	f.addCommonFields(ta, n)
 	return ta
 }
@@ -340,10 +340,10 @@ func (f *JSONStructuredFormatter) typeAliasToStructured(n *ir.DistilledTypeAlias
 // structureClassMembers structures class/interface members
 func (f *JSONStructuredFormatter) structureClassMembers(nodes []ir.DistilledNode) map[string]interface{} {
 	members := make(map[string]interface{})
-	
+
 	fields := []interface{}{}
 	methods := []interface{}{}
-	
+
 	for _, node := range nodes {
 		switch n := node.(type) {
 		case *ir.DistilledField:
@@ -352,14 +352,14 @@ func (f *JSONStructuredFormatter) structureClassMembers(nodes []ir.DistilledNode
 			methods = append(methods, f.functionToStructured(n))
 		}
 	}
-	
+
 	if len(fields) > 0 {
 		members["fields"] = fields
 	}
 	if len(methods) > 0 {
 		members["methods"] = methods
 	}
-	
+
 	return members
 }
 
@@ -395,7 +395,7 @@ func (f *JSONStructuredFormatter) countNodes(nodes []ir.DistilledNode, stats map
 	for _, node := range nodes {
 		kind := string(node.GetNodeKind())
 		stats[kind]++
-		
+
 		if children := node.GetChildren(); len(children) > 0 {
 			f.countNodes(children, stats)
 		}

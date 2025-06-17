@@ -53,10 +53,10 @@ func (p *Processor) ProcessWithOptions(ctx context.Context, reader io.Reader, fi
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Apply stripper if any options are set
 	stripperOpts := opts.ToStripperOptions()
-	
+
 	// Only strip if there's something to strip
 	if stripperOpts.HasAnyOption() {
 		s := stripper.New(stripperOpts)
@@ -65,6 +65,6 @@ func (p *Processor) ProcessWithOptions(ctx context.Context, reader io.Reader, fi
 			return strippedFile, nil
 		}
 	}
-	
+
 	return file, nil
 }

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/janreges/ai-distiller/internal/ir"
 	sitter "github.com/smacker/go-tree-sitter"
 	"github.com/smacker/go-tree-sitter/kotlin"
-	"github.com/janreges/ai-distiller/internal/ir"
 )
 
 // TreeSitterProcessor uses tree-sitter for Kotlin parsing
@@ -19,7 +19,7 @@ type TreeSitterProcessor struct {
 func NewTreeSitterProcessor() *TreeSitterProcessor {
 	parser := sitter.NewParser()
 	parser.SetLanguage(kotlin.GetLanguage())
-	
+
 	return &TreeSitterProcessor{
 		parser: parser,
 	}
@@ -58,7 +58,6 @@ func (p *TreeSitterProcessor) ProcessSource(ctx context.Context, source []byte, 
 // processNode recursively processes tree-sitter nodes
 func (p *TreeSitterProcessor) processNode(node *sitter.Node, source []byte, file *ir.DistilledFile, parent ir.DistilledNode) {
 	nodeType := node.Type()
-	
 
 	switch nodeType {
 	case "source_file":
@@ -168,7 +167,7 @@ func (p *TreeSitterProcessor) processImport(node *sitter.Node, source []byte, fi
 	}
 
 	imp.Module = importPath
-	
+
 	if !hasAlias && len(imp.Symbols) == 0 {
 		// Import a specific class/function
 		parts := strings.Split(importPath, ".")
@@ -206,17 +205,17 @@ func (p *TreeSitterProcessor) processClassDeclaration(node *sitter.Node, source 
 			break
 		}
 	}
-	
+
 	if isEnum {
 		p.processEnumDeclaration(node, source, file, parent)
 		return
 	}
-	
+
 	if isInterface {
 		p.processInterfaceDeclaration(node, source, file, parent)
 		return
 	}
-	
+
 	class := &ir.DistilledClass{
 		BaseNode: ir.BaseNode{
 			Location: p.nodeLocation(node),
@@ -293,7 +292,6 @@ func (p *TreeSitterProcessor) processEnumDeclaration(node *sitter.Node, source [
 		},
 		Children: []ir.DistilledNode{},
 	}
-	
 
 	// Extract modifiers, name
 	for i := 0; i < int(node.ChildCount()); i++ {
@@ -551,7 +549,7 @@ func (p *TreeSitterProcessor) processPrimaryConstructor(node *sitter.Node, sourc
 		case "class_parameter":
 			param := p.extractClassParameter(child, source)
 			constructor.Parameters = append(constructor.Parameters, *param)
-			
+
 			// If parameter is val/var, it's also a property
 			// For data classes, ALL parameters are properties
 			isDataClass := false
@@ -561,7 +559,7 @@ func (p *TreeSitterProcessor) processPrimaryConstructor(node *sitter.Node, sourc
 					break
 				}
 			}
-			
+
 			if isDataClass || p.isPropertyParameter(child, source) {
 				p.createPropertyFromParameter(child, source, class, param)
 			}
@@ -626,7 +624,7 @@ func (p *TreeSitterProcessor) extractModifiers(node *sitter.Node, source []byte,
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		text := string(source[child.StartByte():child.EndByte()])
-		
+
 		switch text {
 		case "public":
 			class.Visibility = ir.VisibilityPublic
@@ -670,7 +668,7 @@ func (p *TreeSitterProcessor) extractInterfaceModifiers(node *sitter.Node, sourc
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		text := string(source[child.StartByte():child.EndByte()])
-		
+
 		switch text {
 		case "public":
 			iface.Visibility = ir.VisibilityPublic
@@ -699,7 +697,7 @@ func (p *TreeSitterProcessor) extractEnumModifiers(node *sitter.Node, source []b
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		text := string(source[child.StartByte():child.EndByte()])
-		
+
 		switch text {
 		case "public":
 			enum.Visibility = ir.VisibilityPublic
@@ -723,7 +721,7 @@ func (p *TreeSitterProcessor) extractFunctionModifiers(node *sitter.Node, source
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		text := string(source[child.StartByte():child.EndByte()])
-		
+
 		switch text {
 		case "public":
 			function.Visibility = ir.VisibilityPublic
@@ -765,7 +763,7 @@ func (p *TreeSitterProcessor) extractPropertyModifiers(node *sitter.Node, source
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		text := string(source[child.StartByte():child.EndByte()])
-		
+
 		switch text {
 		case "public":
 			property.Visibility = ir.VisibilityPublic
@@ -816,7 +814,7 @@ func (p *TreeSitterProcessor) extractTypeParams(node *sitter.Node, source []byte
 			param := ir.TypeParam{
 				Name: "",
 			}
-			
+
 			// Extract parameter name and constraints
 			for j := 0; j < int(child.ChildCount()); j++ {
 				grandchild := child.Child(j)
@@ -835,7 +833,7 @@ func (p *TreeSitterProcessor) extractTypeParams(node *sitter.Node, source []byte
 					}
 				}
 			}
-			
+
 			if param.Name != "" {
 				function.TypeParams = append(function.TypeParams, param)
 			}
@@ -900,7 +898,7 @@ func (p *TreeSitterProcessor) extractDelegatedType(node *sitter.Node, source []b
 // extractType extracts type information
 func (p *TreeSitterProcessor) extractType(node *sitter.Node, source []byte) *ir.TypeRef {
 	nodeType := node.Type()
-	
+
 	switch nodeType {
 	case "type_identifier", "simple_identifier":
 		return &ir.TypeRef{Name: string(source[node.StartByte():node.EndByte()])}
@@ -977,7 +975,7 @@ func (p *TreeSitterProcessor) extractParameters(node *sitter.Node, source []byte
 // extractParameter extracts a single parameter
 func (p *TreeSitterProcessor) extractParameter(node *sitter.Node, source []byte) *ir.Parameter {
 	param := &ir.Parameter{}
-	
+
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		switch child.Type() {
@@ -1008,7 +1006,7 @@ func (p *TreeSitterProcessor) extractParameter(node *sitter.Node, source []byte)
 // extractClassParameter extracts parameters from primary constructor
 func (p *TreeSitterProcessor) extractClassParameter(node *sitter.Node, source []byte) *ir.Parameter {
 	param := &ir.Parameter{}
-	
+
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		switch child.Type() {
@@ -1148,7 +1146,7 @@ func (p *TreeSitterProcessor) processEnumBody(node *sitter.Node, source []byte, 
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		nodeType := child.Type()
-		
+
 		switch nodeType {
 		case "enum_entry":
 			p.processEnumEntry(child, source, file, parent)

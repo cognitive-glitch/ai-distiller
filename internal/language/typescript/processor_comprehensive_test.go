@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/janreges/ai-distiller/internal/processor"
 	"github.com/janreges/ai-distiller/internal/ir"
+	"github.com/janreges/ai-distiller/internal/processor"
 )
 
 // TestTypeScriptConstructs tests all 6 TypeScript constructs with 3 different options
@@ -24,7 +24,7 @@ func TestTypeScriptConstructs(t *testing.T) {
 		},
 		{
 			name:     "Construct 2 - Simple user model class",
-			testDir:  "02_simple", 
+			testDir:  "02_simple",
 			filename: "source.ts",
 		},
 		{
@@ -50,9 +50,9 @@ func TestTypeScriptConstructs(t *testing.T) {
 	}
 
 	options := []struct {
-		name               string
-		opts               processor.ProcessOptions
-		expectedSuffix     string
+		name           string
+		opts           processor.ProcessOptions
+		expectedSuffix string
 	}{
 		{
 			name: "Full output",
@@ -65,7 +65,7 @@ func TestTypeScriptConstructs(t *testing.T) {
 			expectedSuffix: "expected_full.txt",
 		},
 		{
-			name: "No private members", 
+			name: "No private members",
 			opts: processor.ProcessOptions{
 				IncludeComments:       true,
 				IncludeImports:        true,
@@ -256,7 +256,7 @@ func validateTypeScriptConstruct2(t *testing.T, result *ir.DistilledFile, opts p
 	for _, child := range result.Children {
 		if class, ok := child.(*ir.DistilledClass); ok && class.Name == "UserModel" {
 			hasClass = true
-			
+
 			// Check for constructor and methods - might not be fully parsed
 			for _, member := range class.Children {
 				switch member := member.(type) {
@@ -283,7 +283,7 @@ func validateTypeScriptConstruct2(t *testing.T, result *ir.DistilledFile, opts p
 	// if !hasConstructor {
 	//     t.Error("Expected constructor in UserModel class")
 	// }
-	
+
 	// For now, just log what we have
 	t.Logf("Class parsing status: hasClass=%v, hasConstructor=%v, hasPrivateMembers=%v", hasClass, hasConstructor, hasPrivateMembers)
 }

@@ -45,7 +45,7 @@ func (p *Processor) Process(ctx context.Context, reader io.Reader, filename stri
 			break
 		}
 	}
-	
+
 	// Use tree-sitter AST parser
 	parser := NewASTParser()
 	return parser.ProcessSource(ctx, source, filename, isTSX)
@@ -58,20 +58,20 @@ func (p *Processor) ProcessWithOptions(ctx context.Context, reader io.Reader, fi
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Apply stripping if any options are set
 	stripperOpts := opts.ToStripperOptions()
-	
+
 	// Only strip if there's something to strip
 	if stripperOpts.HasAnyOption() {
-		
+
 		s := stripper.New(stripperOpts)
 		stripped := result.Accept(s)
 		if strippedFile, ok := stripped.(*ir.DistilledFile); ok {
 			return strippedFile, nil
 		}
 	}
-	
+
 	return result, nil
 }
 

@@ -55,7 +55,7 @@ func (p *Processor) ProcessWithOptions(ctx context.Context, reader io.Reader, fi
 
 	// Apply stripper options
 	stripperOpts := opts.ToStripperOptions()
-	
+
 	// Only strip if there's something to strip
 	if stripperOpts.HasAnyOption() {
 		s := stripper.New(stripperOpts)

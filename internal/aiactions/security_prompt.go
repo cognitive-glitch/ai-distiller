@@ -3,7 +3,7 @@ package aiactions
 import (
 	"fmt"
 	"strings"
-	
+
 	"github.com/janreges/ai-distiller/internal/ai"
 )
 
@@ -34,7 +34,7 @@ func (a *SecurityPromptAction) Validate() error {
 
 func (a *SecurityPromptAction) GenerateContent(ctx *ai.ActionContext) (*ai.ContentResult, error) {
 	prompt := a.generateSecurityPrompt(ctx)
-	
+
 	return &ai.ContentResult{
 		ContentBefore: prompt,
 		ContentAfter:  "",
@@ -43,7 +43,7 @@ func (a *SecurityPromptAction) GenerateContent(ctx *ai.ActionContext) (*ai.Conte
 
 func (a *SecurityPromptAction) generateSecurityPrompt(ctx *ai.ActionContext) string {
 	var sb strings.Builder
-	
+
 	sb.WriteString(fmt.Sprintf(`# 🛡️ Comprehensive Security Analysis
 
 **Project:** %s
@@ -225,7 +225,7 @@ For EACH vulnerability found:
 
 ### Attack Surface Map
 
-` + "```mermaid" + `
+`+"```mermaid"+`
 graph LR
     A[External User] -->|HTTP/HTTPS| B[Web Interface]
     A -->|API| C[REST API]
@@ -239,7 +239,7 @@ graph LR
     style A fill:#f96,stroke:#333,stroke-width:2px
     style F fill:#f66,stroke:#333,stroke-width:2px
     style G fill:#f66,stroke:#333,stroke-width:2px
-` + "```" + `
+`+"```"+`
 
 ### Security Testing Checklist
 
@@ -352,6 +352,6 @@ Prioritize findings using DREAD:
 The following is the distilled codebase for security analysis:
 
 `, ctx.BaseName, ctx.Timestamp.Format("2006-01-02")))
-	
+
 	return sb.String()
 }

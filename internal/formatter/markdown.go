@@ -29,7 +29,7 @@ func (f *MarkdownFormatter) Extension() string {
 func (f *MarkdownFormatter) Format(w io.Writer, file *ir.DistilledFile) error {
 	// Write file header
 	fmt.Fprintf(w, "# %s\n\n", file.Path)
-	
+
 	if f.options.IncludeMetadata && file.Metadata != nil {
 		fmt.Fprintf(w, "**Language:** %s\n", file.Language)
 		fmt.Fprintf(w, "**Size:** %d bytes\n", file.Metadata.Size)
@@ -78,7 +78,7 @@ func (f *MarkdownFormatter) FormatMultiple(w io.Writer, files []*ir.DistilledFil
 // formatNode formats a single node
 func (f *MarkdownFormatter) formatNode(w io.Writer, node ir.DistilledNode, depth int) {
 	indent := strings.Repeat("  ", depth)
-	
+
 	switch n := node.(type) {
 	case *ir.DistilledPackage:
 		fmt.Fprintf(w, "%s📦 **Package** `%s`\n", indent, n.Name)
@@ -152,7 +152,7 @@ func (f *MarkdownFormatter) formatNode(w io.Writer, node ir.DistilledNode, depth
 		fmt.Fprintf(w, "%s🔧 **Function** `%s`", indent, n.Name)
 		f.formatVisibility(w, n.Visibility)
 		f.formatModifiers(w, n.Modifiers)
-		
+
 		// Format parameters
 		fmt.Fprint(w, "(")
 		params := make([]string, len(n.Parameters))
@@ -163,15 +163,15 @@ func (f *MarkdownFormatter) formatNode(w io.Writer, node ir.DistilledNode, depth
 			}
 		}
 		fmt.Fprintf(w, "%s)", strings.Join(params, ", "))
-		
+
 		// Format return type
 		if n.Returns != nil && n.Returns.Name != "" {
 			fmt.Fprintf(w, " → `%s`", n.Returns.Name)
 		}
-		
+
 		f.formatLocation(w, n, depth)
 		fmt.Fprintln(w)
-		
+
 		// Format implementation if included
 		if n.Implementation != "" && !f.options.Compact {
 			fmt.Fprintf(w, "%s  ```\n", indent)

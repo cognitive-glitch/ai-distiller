@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/janreges/ai-distiller/internal/ir"
 	sitter "github.com/smacker/go-tree-sitter"
 	tree_sitter_ruby "github.com/tree-sitter/tree-sitter-ruby/bindings/go"
-	"github.com/janreges/ai-distiller/internal/ir"
 )
 
 // TreeSitterProcessor uses tree-sitter for Ruby parsing
@@ -19,7 +19,7 @@ type TreeSitterProcessor struct {
 func NewTreeSitterProcessor() *TreeSitterProcessor {
 	parser := sitter.NewParser()
 	parser.SetLanguage(sitter.NewLanguage(tree_sitter_ruby.Language()))
-	
+
 	return &TreeSitterProcessor{
 		parser: parser,
 	}
@@ -296,7 +296,7 @@ func (p *TreeSitterProcessor) processAttrMethods(methodName string, arguments []
 	for _, arg := range arguments {
 		// Remove quotes and colons
 		attrName := strings.Trim(arg, "\":' ")
-		
+
 		// Create getter
 		if methodName == "attr_reader" || methodName == "attr_accessor" {
 			getter := &ir.DistilledFunction{
