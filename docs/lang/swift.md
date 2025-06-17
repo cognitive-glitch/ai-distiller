@@ -77,7 +77,7 @@ Swift emphasizes protocol-oriented programming. AI Distiller recognizes:
 - Import statements
 - Actor declarations
 
-## Recent Fixes (December 2024)
+## Recent Fixes (2025-06-15)
 
 1. **Tree-sitter segfault** (✅ Fixed)
    - **Issue**: Tree-sitter Swift parser was causing segmentation faults

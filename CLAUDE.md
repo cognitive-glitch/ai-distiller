@@ -190,13 +190,13 @@ aid .git
 aid .git --git-limit=50
 
 # Example output:
-abc123 2024-01-15 14:30:00 +0100 john.doe
+abc123 2025-06-15 14:30:00 +0100 john.doe
     feat: add new authentication system
     - Implement JWT token generation
     - Add user session management
     - Update API endpoints
 
-def456 2024-01-14 11:20:00 +0100 jane.smith
+def456 2025-06-15 11:20:00 +0100 jane.smith
     fix: resolve memory leak in parser
     Fixed issue where large files caused excessive memory usage
 ```

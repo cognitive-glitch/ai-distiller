@@ -6,7 +6,7 @@ AI Distiller provides comprehensive support for Kotlin codebases using the [tree
 
 Kotlin support in AI Distiller is designed to extract the complete structure of Kotlin code while preserving null safety, immutability, and functional programming constructs. The distilled output maintains Kotlin's expressive syntax and type safety while optimizing for AI consumption.
 
-## Recent Improvements (2025-01)
+## Recent Improvements (2025-06-15)
 
 - **Val/Var Distinction**: Fixed critical issue where all properties were shown as `var` instead of preserving `val`
 - **Null Safety**: Fixed preservation of nullable types (`String?`, `T?`)
@@ -15,7 +15,7 @@ Kotlin support in AI Distiller is designed to extract the complete structure of 
 - **Enum Values**: Fixed to show all enum values (was only showing first)
 - **Const Properties**: Added support for `const val` declarations
 
-## Recent Fixes (December 2024)
+## Recent Fixes (2025-06-15)
 
 1. **Annotation classes** (✅ Fixed)
    - **Issue**: Annotation classes were shown as regular classes

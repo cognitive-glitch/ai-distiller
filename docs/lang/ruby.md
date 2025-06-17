@@ -6,7 +6,7 @@ AI Distiller provides comprehensive support for Ruby codebases using the [tree-s
 
 Ruby support in AI Distiller captures the essential structure of Ruby code including classes, modules, methods, and constants. The distilled output preserves Ruby's object-oriented design and metaprogramming capabilities while optimizing for AI consumption.
 
-## Recent Fixes (December 2024)
+## Recent Fixes (2025-06-15)
 
 1. **Missing `def` keyword** (✅ Fixed)
    - **Issue**: Methods were displayed without the `def` keyword

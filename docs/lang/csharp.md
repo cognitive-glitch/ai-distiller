@@ -6,7 +6,7 @@ AI Distiller provides comprehensive support for C# codebases using the [tree-sit
 
 C# support in AI Distiller is designed to extract the complete structure of .NET code while preserving all type information, generic constraints, and modern language features. The distilled output maintains C#'s strong typing and object-oriented design while optimizing for AI consumption.
 
-## Recent Improvements (December 2024)
+## Recent Improvements (2025-06-15)
 
 1. **Operator support** (✅ Fixed)
    - **Issue**: User-defined operators were not extracted

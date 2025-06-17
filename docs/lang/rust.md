@@ -36,7 +36,7 @@ Rust support in AI Distiller captures the essential structure of Rust code inclu
 | **Return types** | ✅ Full | Including `impl Trait`, `-> Result<T, E>` |
 | **Self types** | ✅ Full | `self`, `&self`, `&mut self`, `&'a self` |
 
-## Recent Fixes (December 2024)
+## Recent Fixes (2025-06-15)
 
 1. **&self parameters missing** (✅ Fixed)
    - **Issue**: Methods with lifetime-annotated self like `&'a self` were missing parameters

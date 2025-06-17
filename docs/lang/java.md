@@ -245,7 +245,7 @@ public class UserService extends BaseService implements Cacheable, Auditable {
   </blockquote></details>
 </blockquote></details>
 
-## Recent Improvements (2025-01)
+## Recent Improvements (2025-06-15)
 
 - **Fixed Visibility Detection**: Package-private types no longer incorrectly promoted to public (critical bug fix)
 - **Enhanced Annotation Support**: @interface definitions with default values now properly displayed without redundant modifiers

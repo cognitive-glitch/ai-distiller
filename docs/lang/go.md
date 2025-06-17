@@ -382,7 +382,7 @@ func ProcessNumericChan[T Number](ch <-chan *Node[T]) T
   </blockquote></details>
 </blockquote></details>
 
-## Recent Fixes (December 2024)
+## Recent Fixes (2025-06-15)
 
 1. **Generic type parameters** (✅ Fixed)
    - **Issue**: Generic type parameters were missing from function signatures

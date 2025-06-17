@@ -22,7 +22,7 @@ They face a fundamental limitation: even the most advanced LLMs have context win
 ### 2.2 Market Opportunity
 
 **Target Market Size:**
-- 26.9 million professional developers worldwide (2023)
+- 26.9 million professional developers worldwide (2025)
 - 71% use AI coding assistants regularly
 - Growing at 3-5% annually
 
@@ -130,7 +130,7 @@ FLAGS:
 # AI Distiller Output
 - Version: 1.0
 - Source: /path/to/project
-- Generated: 2024-01-15T10:30:00Z
+- Generated: 2025-06-15T10:30:00Z
 
 ---
 
@@ -152,7 +152,7 @@ func loadConfig() (*Config, error)
 
 **JSONL Format (Machine-Readable):**
 ```json
-{"version":"1.0","type":"header","source":"/path/to/project","generated":"2024-01-15T10:30:00Z"}
+{"version":"1.0","type":"header","source":"/path/to/project","generated":"2025-06-15T10:30:00Z"}
 {"type":"file","path":"src/main.go","language":"go","content":"package main\n\ntype Config struct..."}
 ```
 
@@ -161,7 +161,7 @@ func loadConfig() (*Config, error)
 {
   "version": "1.0",
   "source": "/path/to/project",
-  "generated": "2024-01-15T10:30:00Z",
+  "generated": "2025-06-15T10:30:00Z",
   "files": [{
     "path": "src/main.go",
     "language": "go",
@@ -811,8 +811,8 @@ Automated benchmarks for:
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
-| 1.0 | 2024-01-15 | Claude & Gemini | Initial PRD |
-| 1.1 | 2024-01-15 | Claude & Gemini | Updated architecture with IR, Visitor pattern, dual PoC strategy |
+| 1.0 | 2025-06-15 | Claude & Gemini | Initial PRD |
+| 1.1 | 2025-06-15 | Claude & Gemini | Updated architecture with IR, Visitor pattern, dual PoC strategy |
 
 ---
 

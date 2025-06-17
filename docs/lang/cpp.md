@@ -37,7 +37,7 @@ C++ support in AI Distiller captures the essential structure of C++ code includi
 | **C++20 Concepts** | ⚠️ Partial | Shown as special comments |
 | **Attributes** | ⚠️ Partial | [[nodiscard]], [[deprecated]] |
 
-## Recent Fixes (December 2024)
+## Recent Fixes (2025-06-15)
 
 1. **Missing return types** (✅ Fixed)
    - **Issue**: Function return types were not captured correctly

@@ -363,7 +363,7 @@ class Service {
 
 ## Known Issues & Recent Fixes
 
-### Recently Fixed (December 2024)
+### Recently Fixed (2025-06-15)
 
 1. **Export modifiers missing** (✅ Fixed)
    - **Issue**: Export keywords were not captured for classes, interfaces, and functions
