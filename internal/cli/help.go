@@ -4,14 +4,33 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/janreges/ai-distiller/internal/ai"
 	"github.com/janreges/ai-distiller/internal/aiactions"
+	"github.com/janreges/ai-distiller/internal/version"
 )
 
-// Custom help template for better organization
-const helpTemplate = `{{.Short}}
+// getVersionInfo returns formatted version string with build date
+func getVersionInfo() string {
+	versionInfo := fmt.Sprintf("v%s", Version)
+	if Version == "" {
+		versionInfo = "v" + version.Version
+	}
+	if version.Date != "unknown" && version.Date != "" {
+		if t, err := time.Parse(time.RFC3339, version.Date); err == nil {
+			versionInfo += fmt.Sprintf(" built %s", t.Format("2006-01-02"))
+		}
+	}
+	return versionInfo
+}
+
+// getHelpTemplate returns the help template with version info
+func getHelpTemplate() string {
+	versionInfo := getVersionInfo()
+	
+	return fmt.Sprintf(`{{.Short}} (%s)
 
 AI Distiller transforms source code into optimized formats for Large Language Models.
 Compress codebases by 60-90%% while preserving all semantic information needed for AI analysis.
@@ -91,7 +110,8 @@ For complete documentation and examples: aid --help-extended
 AI Distiller (aid) - https://aid.siteone.io/
 Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic)
 Explore the project on GitHub: https://github.com/janreges/ai-distiller
-`
+`, versionInfo)
+}
 
 // Extended help content for --help-extended
 const extendedHelpContent = `AI DISTILLER - COMPLETE REFERENCE
@@ -285,7 +305,7 @@ COPYRIGHT
 // initializeHelpSystem sets up custom help templates and commands
 func initializeHelpSystem() {
 	// Set custom help template
-	rootCmd.SetHelpTemplate(helpTemplate)
+	rootCmd.SetHelpTemplate(getHelpTemplate())
 	
 	// Add extended help functionality
 	rootCmd.Flags().Bool("help-extended", false, "Show extended help documentation")

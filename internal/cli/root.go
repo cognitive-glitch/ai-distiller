@@ -21,6 +21,7 @@ import (
 	"github.com/janreges/ai-distiller/internal/ir"
 	"github.com/janreges/ai-distiller/internal/processor"
 	"github.com/janreges/ai-distiller/internal/language"
+	"github.com/janreges/ai-distiller/internal/version"
 	_ "github.com/janreges/ai-distiller/internal/language" // Register language processors
 )
 
@@ -262,6 +263,13 @@ func initFlags() {
 	rootCmd.PreRun = func(cmd *cobra.Command, args []string) {
 		if v, _ := cmd.Flags().GetBool("version"); v {
 			fmt.Printf("aid version %s\n", Version)
+			if version.Date != "unknown" && version.Date != "" {
+				// Parse and format the date
+				if t, err := time.Parse(time.RFC3339, version.Date); err == nil {
+					fmt.Printf("built: %s\n", t.Format("2006-01-02"))
+				}
+			}
+			fmt.Printf("https://aid.siteone.io/\n")
 			os.Exit(0)
 		}
 		

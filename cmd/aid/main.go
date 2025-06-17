@@ -4,14 +4,12 @@ import (
 	"os"
 
 	"github.com/janreges/ai-distiller/internal/cli"
+	"github.com/janreges/ai-distiller/internal/version"
 )
 
-// Version is set at build time via ldflags
-var version = "dev"
-
 func main() {
-	// Set version for CLI
-	cli.Version = version
+	// Set version for CLI from version package
+	cli.Version = version.Version
 
 	// Execute the root command
 	if err := cli.Execute(); err != nil {

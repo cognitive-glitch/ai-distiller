@@ -15,7 +15,7 @@ import (
 
 const (
 	serverName    = "AI Distiller MCP"
-	serverVersion = "2.0.0"
+	serverVersion = "1.0.0"
 )
 
 var (

@@ -4,8 +4,18 @@
 BINARY_NAME = aid
 BUILD_DIR = build
 INSTALL_DIR = /usr/local/bin
-VERSION := $(shell git describe --tags --always --dirty)
-LDFLAGS = -ldflags "-X main.version=$(VERSION)"
+
+# Read version from VERSION file
+VERSION := $(shell cat VERSION)
+# Get git metadata
+GIT_COMMIT := $(shell git rev-parse --short HEAD 2>/dev/null || echo "none")
+BUILD_DATE := $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
+
+# Define ldflags
+LDFLAGS_VARS = -X 'github.com/janreges/ai-distiller/internal/version.Version=$(VERSION)' \
+               -X 'github.com/janreges/ai-distiller/internal/version.Commit=$(GIT_COMMIT)' \
+               -X 'github.com/janreges/ai-distiller/internal/version.Date=$(BUILD_DATE)'
+LDFLAGS = -ldflags "$(LDFLAGS_VARS)"
 
 # Go parameters
 GOCMD = go
@@ -268,6 +278,27 @@ help:
 	@echo "  npm-publish     - Publish package to NPM registry"
 	@echo "  npm-version     - Show current NPM package version"
 	@echo "  npm-release     - Full release process (prepare + build)"
+	@echo ""
+	@echo "Version Management targets:"
+	@echo "  version         - Show current version"
+	@echo "  sync-versions   - Sync version across all files"
+
+# Version management
+version:
+	@echo "AI Distiller version: $(VERSION)"
+	@echo "Git commit: $(GIT_COMMIT)"
+	@echo "Build date: $(BUILD_DATE)"
+
+# Sync version across all files
+sync-versions:
+	@echo "Syncing version $(VERSION) across all files..."
+	@# Update MCP package.json
+	@cd mcp-npm && npm version --no-git-tag-version --allow-same-version $(VERSION) > /dev/null
+	@echo "✓ Updated mcp-npm/package.json"
+	@# Update MCP server version constant
+	@sed -i 's/serverVersion = "[^"]*"/serverVersion = "$(VERSION)"/' mcp-npm/cmd/aid-mcp/main.go
+	@echo "✓ Updated MCP server version"
+	@echo "Version sync complete!"
 
 # Default target
 .DEFAULT_GOAL := build
