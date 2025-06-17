@@ -203,11 +203,11 @@ func TestCLIFlags(t *testing.T) {
 			"--output", "test.txt",
 			"--stdout",
 			"--format", "jsonl",
-			"--strip", "comments,imports",
+			"--comments=0",
+			"--imports=0",
 			"--include", "*.go",
 			"--exclude", "*_test.go",
 			"--file-path-type", "absolute",
-			"--strict",
 			"-vvv",
 		}
 
@@ -223,20 +223,20 @@ func TestCLIFlags(t *testing.T) {
 		format, _ := cmd.Flags().GetString("format")
 		assert.Equal(t, "jsonl", format)
 
-		strip, _ := cmd.Flags().GetStringSlice("strip")
-		assert.Equal(t, []string{"comments", "imports"}, strip)
+		comments, _ := cmd.Flags().GetBool("comments")
+		assert.Equal(t, false, comments)
 
-		include, _ := cmd.Flags().GetString("include")
-		assert.Equal(t, "*.go", include)
+		imports, _ := cmd.Flags().GetBool("imports")
+		assert.Equal(t, false, imports)
 
-		exclude, _ := cmd.Flags().GetString("exclude")
-		assert.Equal(t, "*_test.go", exclude)
+		include, _ := cmd.Flags().GetStringSlice("include")
+		assert.Equal(t, []string{"*.go"}, include)
+
+		exclude, _ := cmd.Flags().GetStringSlice("exclude")
+		assert.Equal(t, []string{"*_test.go"}, exclude)
 
 		filePathType, _ := cmd.Flags().GetString("file-path-type")
 		assert.Equal(t, "absolute", filePathType)
-
-		strictFlag, _ := cmd.Flags().GetBool("strict")
-		assert.True(t, strictFlag)
 
 		verbose, _ := cmd.Flags().GetCount("verbose")
 		assert.Equal(t, 3, verbose)
@@ -410,7 +410,6 @@ func TestCLIHelp(t *testing.T) {
 	assert.Contains(t, output, "--protected")
 	assert.Contains(t, output, "--comments")
 	assert.Contains(t, output, "--implementation")
-	assert.Contains(t, output, "--recursive")
 }
 
 func TestStripOptionsAbbreviation(t *testing.T) {
