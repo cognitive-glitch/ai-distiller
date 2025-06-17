@@ -1,3 +1,6 @@
+//go:build cgo
+// +build cgo
+
 package tree_sitter_typescript
 
 // #cgo CFLAGS: -std=c11 -fPIC -I./source/typescript/src -I./source/common
