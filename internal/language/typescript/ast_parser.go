@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"unsafe"
 
 	"github.com/janreges/ai-distiller/internal/ir"
 	sitter "github.com/smacker/go-tree-sitter"
@@ -35,11 +36,18 @@ func (p *ASTParser) ProcessSource(ctx context.Context, source []byte, filename s
 	p.isTSX = isTSX
 
 	// Set the appropriate language based on file type
+	var lang unsafe.Pointer
 	if isTSX {
-		p.parser.SetLanguage(sitter.NewLanguage(typescript.LanguageTSX()))
+		lang = typescript.LanguageTSX()
 	} else {
-		p.parser.SetLanguage(sitter.NewLanguage(typescript.Language()))
+		lang = typescript.Language()
 	}
+	
+	if lang == nil {
+		return nil, fmt.Errorf("tree-sitter-typescript is not available (CGO disabled)")
+	}
+	
+	p.parser.SetLanguage(sitter.NewLanguage(lang))
 
 	// Parse the source code
 	tree, err := p.parser.ParseCtx(ctx, nil, source)

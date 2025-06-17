@@ -27,8 +27,13 @@ type TreeSitterProcessor struct {
 
 // NewTreeSitterProcessor creates a new tree-sitter based processor
 func NewTreeSitterProcessor() (*TreeSitterProcessor, error) {
+	lang := swift.Language()
+	if lang == nil {
+		return nil, fmt.Errorf("tree-sitter-swift is not available (CGO disabled)")
+	}
+	
 	parser := sitter.NewParser()
-	parser.SetLanguage(sitter.NewLanguage(swift.Language()))
+	parser.SetLanguage(sitter.NewLanguage(lang))
 
 	return &TreeSitterProcessor{
 		parser:        parser,
