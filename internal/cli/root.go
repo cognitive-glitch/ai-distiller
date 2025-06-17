@@ -11,6 +11,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"time"
 	
 	"github.com/spf13/cobra"
 	"github.com/janreges/ai-distiller/internal/debug"
@@ -30,8 +31,8 @@ var (
 	outputToStdout   bool
 	outputFormat     string
 	stripOptions     []string // Deprecated, kept for backward compatibility
-	includeGlob      string
-	excludeGlob      string
+	includeGlob      []string
+	excludeGlob      []string
 	recursiveStr     string
 	filePathType     string
 	relativePathPrefix string
@@ -64,6 +65,9 @@ var (
 	// Git mode flags
 	gitCommitLimit        int
 	withAnalysisPrompt    bool
+	
+	// AI analysis task list flag
+	aiAnalysisTaskList    bool
 )
 
 // rootCmd represents the base command
@@ -188,8 +192,8 @@ func initFlags() {
 	rootCmd.Flags().MarkDeprecated("strip", "use individual filtering flags like --public=1, --private=0, etc.")
 	
 	// File pattern flags
-	rootCmd.Flags().StringVar(&includeGlob, "include", "", "Include file patterns (default: all supported)")
-	rootCmd.Flags().StringVar(&excludeGlob, "exclude", "", "Exclude file patterns")
+	rootCmd.Flags().StringSliceVar(&includeGlob, "include", nil, "Include file patterns (comma-separated: *.go,*.py or use flag multiple times)")
+	rootCmd.Flags().StringSliceVar(&excludeGlob, "exclude", nil, "Exclude file patterns (comma-separated: *.json,*test* or use flag multiple times)")
 	rootCmd.Flags().StringVarP(&recursiveStr, "recursive", "r", "1", "Process directories recursively (0/1, default: 1)")
 	rootCmd.Flags().StringVar(&filePathType, "file-path-type", "relative", "How paths appear in output: relative|absolute (default: relative)")
 	rootCmd.Flags().StringVar(&relativePathPrefix, "relative-path-prefix", "", "Custom prefix for relative paths (e.g., \"src/\")")
@@ -230,8 +234,11 @@ func initFlags() {
 	rootCmd.Flags().BoolVar(&rawMode, "raw", false, "Raw mode: process all text files without parsing (txt, md, json, yaml, etc.")
 	
 	// Git mode flags
-	rootCmd.Flags().IntVar(&gitCommitLimit, "git-limit", 0, "Limit number of commits in git mode (0=all)")
+	rootCmd.Flags().IntVar(&gitCommitLimit, "git-limit", 200, "Limit number of commits in git mode (default: 200, 0=all)")
 	rootCmd.Flags().BoolVar(&withAnalysisPrompt, "with-analysis-prompt", false, "Prepend AI analysis prompt to git output")
+	
+	// AI analysis task list flag
+	rootCmd.Flags().BoolVar(&aiAnalysisTaskList, "ai-analysis-task-list", false, "Generate structured task list for comprehensive AI-driven code analysis")
 
 	// Handle version flag specially
 	rootCmd.PreRun = func(cmd *cobra.Command, args []string) {
@@ -304,6 +311,11 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 	// Check if the path is a .git directory
 	if filepath.Base(absPath) == ".git" {
 		return handleGitMode(ctx, absPath)
+	}
+	
+	// Check if AI analysis task list flag is set
+	if aiAnalysisTaskList {
+		return handleAIAnalysisTaskList(ctx, absPath)
 	}
 
 	// Generate output filename if not specified and not using stdout
@@ -992,4 +1004,483 @@ Guidelines:
 - Use specific examples from commits
 - Keep total output concise but insightful
 - Quantify findings where possible`
+}
+
+// handleAIAnalysisTaskList generates a comprehensive AI analysis task list for the project
+func handleAIAnalysisTaskList(ctx context.Context, projectPath string) error {
+	dbg := debug.FromContext(ctx).WithSubsystem("ai-analysis")
+	dbg.Logf(debug.LevelBasic, "AI Analysis Task List mode activated for: %s", projectPath)
+	
+	// Get project basename and current date
+	basename := filepath.Base(projectPath)
+	currentDate := fmt.Sprintf("%04d-%02d-%02d", 
+		time.Now().Year(), time.Now().Month(), time.Now().Day())
+	
+	// Create .aid directory structure
+	aidDir := filepath.Join(projectPath, ".aid")
+	analysisDir := filepath.Join(aidDir, fmt.Sprintf("analysis.%s", basename), currentDate)
+	
+	if err := os.MkdirAll(analysisDir, 0755); err != nil {
+		return fmt.Errorf("failed to create .aid directory structure: %w", err)
+	}
+	
+	dbg.Logf(debug.LevelBasic, "Created directory structure: %s", analysisDir)
+	
+	// Collect all source files
+	sourceFiles, err := collectSourceFiles(projectPath)
+	if err != nil {
+		return fmt.Errorf("failed to collect source files: %w", err)
+	}
+	
+	dbg.Logf(debug.LevelBasic, "Found %d source files to analyze", len(sourceFiles))
+	
+	// Pre-create all individual report directories to avoid mkdir operations during analysis
+	for _, file := range sourceFiles {
+		reportDir := filepath.Join(analysisDir, filepath.Dir(file))
+		if err := os.MkdirAll(reportDir, 0755); err != nil {
+			return fmt.Errorf("failed to create report directory %s: %w", reportDir, err)
+		}
+	}
+	
+	dbg.Logf(debug.LevelBasic, "Pre-created all report directories for %d files", len(sourceFiles))
+	
+	// Generate task list file
+	taskListFile := filepath.Join(aidDir, fmt.Sprintf("ANALYSIS-TASK-LIST.%s.%s.md", basename, currentDate))
+	if err := generateTaskList(taskListFile, basename, currentDate, sourceFiles); err != nil {
+		return fmt.Errorf("failed to generate task list: %w", err)
+	}
+	
+	// Generate summary file with headers
+	summaryFile := filepath.Join(aidDir, fmt.Sprintf("ANALYSIS-SUMMARY.%s.%s.md", basename, currentDate))
+	if err := generateSummaryFile(summaryFile, basename, currentDate); err != nil {
+		return fmt.Errorf("failed to generate summary file: %w", err)
+	}
+	
+	dbg.Logf(debug.LevelBasic, "Generated task list: %s", taskListFile)
+	dbg.Logf(debug.LevelBasic, "Generated summary file: %s", summaryFile)
+	
+	// Output information to user
+	fmt.Printf("✅ AI Analysis Task List generated successfully!\n\n")
+	fmt.Printf("📋 Task List: %s\n", taskListFile)
+	fmt.Printf("📊 Summary File: %s\n", summaryFile)
+	fmt.Printf("📁 Analysis Reports Directory: %s\n\n", analysisDir)
+	fmt.Printf("🤖 Ready for AI-driven analysis workflow!\n")
+	fmt.Printf("   Files to analyze: %d\n", len(sourceFiles))
+	fmt.Printf("   Analysis structure created in: %s\n", aidDir)
+	
+	return nil
+}
+
+// collectSourceFiles recursively collects all source files from the project directory
+func collectSourceFiles(projectPath string) ([]string, error) {
+	var sourceFiles []string
+	
+	// Load git submodules to skip them
+	gitSubmodules, err := loadGitSubmodules(projectPath)
+	if err != nil {
+		// Not a git repo or no submodules - continue without error
+		gitSubmodules = make(map[string]bool)
+	}
+	
+	// Define source file extensions (focus on core programming languages)
+	sourceExtensions := map[string]bool{
+		// Core programming languages
+		".py": true, ".js": true, ".ts": true, ".tsx": true, ".jsx": true,
+		".go": true, ".java": true, ".kt": true, ".kts": true,
+		".rs": true, ".swift": true, ".rb": true, ".php": true,
+		".cpp": true, ".cc": true, ".cxx": true, ".c": true, ".h": true, ".hpp": true,
+		".cs": true, ".fs": true, ".vb": true,
+		".scala": true, ".clj": true, ".cljs": true,
+		
+		// Frontend frameworks and templates
+		".vue": true, ".svelte": true, ".astro": true,
+		".twig": true, ".tpl": true, ".latte": true, ".j2": true, ".jinja": true, ".jinja2": true,
+		".hbs": true, ".handlebars": true, ".mustache": true, ".ejs": true, ".pug": true, ".jade": true,
+		".blade": true, ".razor": true, ".cshtml": true, ".vbhtml": true,
+		
+		// Web technologies
+		".html": true, ".htm": true, ".xhtml": true,
+		".css": true, ".scss": true, ".sass": true, ".less": true, ".styl": true, ".stylus": true,
+		".xml": true, ".xsl": true, ".xslt": true, ".svg": true,
+		
+		// Configuration and data files
+		".json": true, ".json5": true, ".jsonc": true,
+		".yaml": true, ".yml": true, ".neon": true,
+		".toml": true, ".ini": true, ".cfg": true, ".conf": true,
+		".env": true, ".properties": true,
+		
+		// Documentation and markup
+		".md": true, ".mdx": true, ".rst": true, ".txt": true, ".asciidoc": true, ".adoc": true,
+		
+		// Scripts and shell
+		".sh": true, ".bash": true, ".zsh": true, ".fish": true, ".bat": true, ".cmd": true, ".ps1": true,
+		".awk": true, ".sed": true,
+		
+		// Database and query languages
+		".sql": true, ".psql": true, ".mysql": true, ".sqlite": true, ".graphql": true, ".gql": true,
+		
+		// Keep all languages - users can control scope via directory selection or --exclude
+	}
+	
+	// Skip these directories
+	skipDirs := map[string]bool{
+		"node_modules": true, ".git": true, ".svn": true, ".hg": true,
+		"__pycache__": true, ".pytest_cache": true,
+		"target": true, "build": true, "dist": true, "out": true,
+		".aid": true, // Skip our own analysis directory
+		"vendor": true, ".vscode": true, ".idea": true,
+		"coverage": true, ".coverage": true, ".nyc_output": true,
+		"grammars": true, // Skip tree-sitter grammars
+		"test-data": true, // Skip test data files
+		"testdata": true, // Skip test data files (alternative naming)
+		"docs": true, // Skip documentation
+		"examples": true, // Skip example code
+		"assets": true, // Skip assets
+		"static": true, // Skip static files
+	}
+	
+	err = filepath.Walk(projectPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		
+		// Skip directories that we don't want to analyze
+		if info.IsDir() {
+			dirName := filepath.Base(path)
+			
+			// Check if this is a git submodule directory
+			relPath, err := filepath.Rel(projectPath, path)
+			if err == nil && gitSubmodules[relPath] {
+				return filepath.SkipDir
+			}
+			
+			// Skip directories by name or if they contain "grammars" in their path
+			if skipDirs[dirName] || strings.HasPrefix(dirName, ".") && dirName != "." {
+				return filepath.SkipDir
+			}
+			
+			// Skip any directory path containing tree-sitter related content
+			if err == nil && (strings.Contains(relPath, "/grammars") || 
+							  strings.Contains(relPath, "grammars/") ||
+							  strings.Contains(relPath, "tree-sitter") ||
+							  strings.Contains(relPath, "parser/grammars") ||
+							  strings.HasPrefix(relPath, "internal/parser/grammars") ||
+							  relPath == "grammars") {
+				return filepath.SkipDir
+			}
+			
+			return nil
+		}
+		
+		// Check if it's a source file
+		ext := strings.ToLower(filepath.Ext(path))
+		if sourceExtensions[ext] {
+			// Make path relative to project directory
+			relPath, err := filepath.Rel(projectPath, path)
+			if err == nil {
+				// Skip specific unwanted files
+				fileName := filepath.Base(relPath)
+				
+				// Skip generated files and AI Distiller output files
+				if strings.HasSuffix(fileName, ".aid.txt") || 
+				   strings.HasSuffix(fileName, ".aid.md") ||
+				   strings.HasPrefix(fileName, ".") ||
+				   strings.Contains(fileName, "generated") ||
+				   strings.Contains(fileName, ".generated.") ||
+				   strings.Contains(relPath, "/parser.c") ||
+				   strings.Contains(relPath, "/scanner.c") ||
+				   strings.Contains(relPath, "tree-sitter") ||
+				   strings.Contains(relPath, "/grammars/") ||
+				   strings.Contains(relPath, "/src/parser.c") ||
+				   strings.Contains(relPath, "/src/scanner.c") ||
+				   strings.Contains(fileName, "grammar.js") {
+					return nil
+				}
+				
+				// Apply include/exclude filters if specified
+				if shouldIncludeFile(relPath, includeGlob, excludeGlob) {
+					sourceFiles = append(sourceFiles, relPath)
+				}
+			}
+		}
+		
+		return nil
+	})
+	
+	return sourceFiles, err
+}
+
+// generateTaskList creates the main task list file with checkboxes for each source file
+func generateTaskList(taskListFile, basename, currentDate string, sourceFiles []string) error {
+	var content strings.Builder
+	
+	// Write header
+	content.WriteString(fmt.Sprintf("# AI Distiller – Comprehensive Code Analysis Task List\n\n"))
+	content.WriteString(fmt.Sprintf("**Project:** `%s`  \n", basename))
+	content.WriteString(fmt.Sprintf("**Analysis Date:** %s  \n", currentDate))
+	content.WriteString(fmt.Sprintf("**Total Files:** %d  \n\n", len(sourceFiles)))
+	
+	// Write comprehensive prompt
+	content.WriteString(getAIAnalysisPrompt(basename, currentDate))
+	content.WriteString("\n\n")
+	
+	// Write the task list
+	content.WriteString("## 📋 Analysis Task List\n\n")
+	content.WriteString("Complete each task in order, checking off items as you finish:\n\n")
+	
+	// Task 1: Create summary file
+	content.WriteString(fmt.Sprintf("- [ ] **1. Initialize Analysis Summary**  \n"))
+	content.WriteString(fmt.Sprintf("      Create `./aid/ANALYSIS-SUMMARY.%s.%s.md` with project overview\n\n", basename, currentDate))
+	
+	// Tasks for each file
+	for i, file := range sourceFiles {
+		taskNum := i + 2
+		content.WriteString(fmt.Sprintf("- [ ] **%d. Analyze `%s`**  \n", taskNum, file))
+		content.WriteString(fmt.Sprintf("      → Create report: `./aid/analysis.%s/%s/%s.md`  \n", basename, currentDate, file))
+		content.WriteString(fmt.Sprintf("      → Add summary row to ANALYSIS-SUMMARY file\n\n"))
+	}
+	
+	// Final task: Generate conclusion
+	finalTaskNum := len(sourceFiles) + 2
+	content.WriteString(fmt.Sprintf("- [ ] **%d. Generate Project Conclusion**  \n", finalTaskNum))
+	content.WriteString(fmt.Sprintf("      Read completed ANALYSIS-SUMMARY file and write comprehensive conclusion\n\n"))
+	
+	// Write workflow notes
+	content.WriteString("## 🔄 Workflow Notes\n\n")
+	content.WriteString("- Check off each task **[x]** only after completing BOTH the individual report AND the summary row\n")
+	content.WriteString("- Follow the exact file naming conventions specified\n")
+	content.WriteString("- Use the standardized analysis format provided in the prompt\n")
+	content.WriteString("- Maintain consistent scoring across all files\n")
+	content.WriteString("- The final conclusion should synthesize findings from the entire summary table\n\n")
+	content.WriteString("## 💡 Scope Control Tips\n\n")
+	content.WriteString("If this task list is too large:\n")
+	content.WriteString("- **Analyze specific directories**: `aid internal/cli --ai-analysis-task-list`\n")
+	content.WriteString("- **Exclude test files**: `aid --exclude \"*test*,*spec*\" --ai-analysis-task-list`\n")
+	content.WriteString("- **Focus on core languages**: `aid --include \"*.go,*.py,*.ts,*.php\" --ai-analysis-task-list`\n")
+	content.WriteString("- **Multiple exclusions**: `aid --exclude \"*.json\" --exclude \"*.yml\" --ai-analysis-task-list`\n")
+	content.WriteString("- **Only Vue/Svelte**: `aid --include \"*.vue,*.svelte\" --ai-analysis-task-list`\n")
+	content.WriteString("- **Template files**: `aid --include \"*.twig,*.latte,*.j2\" --ai-analysis-task-list`\n")
+	content.WriteString("- **Skip config files**: `aid --exclude \"*.json,*.yaml,*.yml,*.env,*.ini\" --ai-analysis-task-list`\n")
+	content.WriteString("- **Skip large directories**: Use directory selection instead of --exclude for dirs\n\n")
+	
+	content.WriteString("---\n")
+	content.WriteString("*Generated by AI Distiller – Comprehensive Code Analysis System*\n")
+	
+	return os.WriteFile(taskListFile, []byte(content.String()), 0644)
+}
+
+// generateSummaryFile creates the summary file with headers and initial content
+func generateSummaryFile(summaryFile, basename, currentDate string) error {
+	var content strings.Builder
+	
+	content.WriteString(fmt.Sprintf("# Project Analysis Summary – %s (%s)\n\n", basename, currentDate))
+	
+	content.WriteString("## 📊 Overview\n\n")
+	content.WriteString("This document provides a comprehensive analysis summary of the entire codebase. ")
+	content.WriteString("Each file has been individually analyzed for security, maintainability, performance, ")
+	content.WriteString("and readability. The results are compiled in the table below.\n\n")
+	
+	content.WriteString("## 📈 Analysis Results\n\n")
+	content.WriteString("| File | Security % | Maintainability % | Performance % | Readability % | Critical | High | Medium | Low |\n")
+	content.WriteString("|------|:----------:|:-----------------:|:-------------:|:-------------:|:--------:|:----:|:------:|:---:|\n")
+	
+	// Note: Individual file rows will be appended here during analysis
+	// The final conclusion section will be added by the last task
+	
+	return os.WriteFile(summaryFile, []byte(content.String()), 0644)
+}
+
+// getAIAnalysisPrompt returns the comprehensive prompt for AI-driven code analysis
+func getAIAnalysisPrompt(basename, currentDate string) string {
+	infrastructureInfo := "### 🚀 Pre-Created Infrastructure\n" +
+		"- **All report directories have been pre-created** - no need to run mkdir commands\n" +
+		"- **Individual reports go to**: `.aid/analysis." + basename + "/" + currentDate + "/[file-path].md`\n" +
+		"- **Summary table updates**: `.aid/ANALYSIS-SUMMARY." + basename + "." + currentDate + ".md`"
+
+	return fmt.Sprintf(`## 🤖 AI Analysis Instructions
+
+You are an **Expert Senior Staff Engineer and Security Auditor** conducting a comprehensive file-by-file analysis of the **%s** project. Follow these instructions precisely:
+
+### 📋 Your Mission
+1. **Analyze each file individually** using the standardized template below
+2. **Score each file** across 4 dimensions: Security, Maintainability, Performance, Readability
+3. **Generate two outputs** for each file:
+   - Detailed analysis report (saved as individual .md file)
+   - Summary table row (appended to ANALYSIS-SUMMARY file)
+
+%s
+
+### 🎯 Analysis Dimensions & Scoring
+
+**Scoring Scale**: 0-100%% (start at 100%%, deduct points for issues)
+
+**Deduction Guide**:
+- **Critical Issue**: -30 points (exposed secrets, clear RCE, unreadable god functions)
+- **High Issue**: -15 points (SQL injection risk, complex unmaintainable code)  
+- **Medium Issue**: -5 points (inefficient patterns, poor naming, missing docs)
+- **Low Issue**: -2 points (minor style issues, trivial improvements)
+- **Info**: 0 points (observations, TODO comments)
+
+**Categories**:
+1. **Security**: Vulnerabilities, exposed secrets, dangerous patterns
+2. **Maintainability**: Code complexity, structure, documentation quality
+3. **Performance**: Efficiency, scalability concerns, resource usage
+4. **Readability**: Code clarity, naming, organization, comments
+
+### 📝 Required Report Template
+
+For each file, create the corresponding report file:
+
+` + "```markdown" + `
+# File Analysis: [FILEPATH]
+*Analysis Date: 2025-06-17*  
+*Analyst: AI Distiller*
+
+| Metric | Score |
+|--------|-------|
+| Security (%%) | **[SCORE]** |
+| Maintainability (%%) | **[SCORE]** |
+| Performance (%%) | **[SCORE]** |
+| Readability (%%) | **[SCORE]** |
+
+## 🔍 Executive Summary
+One paragraph overview of file purpose and critical findings.
+
+## 🛡️ Security Analysis
+List vulnerabilities with severity, line numbers, and mitigations.
+
+## ⚡ Performance Analysis  
+Identify bottlenecks, complexity issues, optimization opportunities.
+
+## 🔧 Maintainability Analysis
+Code structure, complexity, documentation, technical debt.
+
+## 📖 Readability Analysis
+Code clarity, naming conventions, organization, comments.
+
+## 🎯 Recommendations
+Prioritized action items with impact assessment.
+
+### Scoring Rationale
+Explain how each percentage was calculated.
+` + "```" + `
+
+### 📊 Required Summary Row
+
+After completing each file analysis, append ONE row to the ANALYSIS-SUMMARY file:
+
+| filepath | sec%% | maint%% | perf%% | read%% | critical | high | medium | low |
+
+### 🎨 Visual Formatting Guidelines
+
+**For Critical/High Issue Counts** (use HTML spans for color):
+- **Critical issues**: ` + "`" + `<span style="color:#ff0000; font-weight: bold">3</span>` + "`" + ` (red + bold)
+- **High issues**: ` + "`" + `<span style="color:#ff6600; font-weight: bold">2</span>` + "`" + ` (orange + bold)
+- **Medium issues**: ` + "`" + `<span style="color:#ffaa00">1</span>` + "`" + ` (yellow)
+- **Low issues**: regular text
+
+**For Low Scores** (< 70%):
+- **Scores < 50%**: ` + "`" + `<span style="color:#ff0000; font-weight: bold">45</span>` + "`" + ` (red + bold)
+- **Scores 50-69%**: ` + "`" + `<span style="color:#ff6600; font-weight: bold">65</span>` + "`" + ` (orange + bold)
+- **Scores 70-89%**: regular text
+- **Scores 90-100%**: ` + "`" + `<span style="color:#00aa00; font-weight: bold">95</span>` + "`" + ` (green + bold)
+
+**Project-Level Conclusion Section** should use larger fonts and colors:
+- ` + "`" + `<h2 style="color:#ff0000;">🚨 CRITICAL ISSUES FOUND</h2>` + "`" + `
+- ` + "`" + `<h3 style="color:#00aa00;">✅ Overall Project Health: <span style="font-size: 1.5em; color:#00aa00;">GOOD</span></h3>` + "`" + `
+
+### ⚡ Workflow Rules
+
+1. **Process files in task list order**
+2. **Complete BOTH outputs before checking off task**
+3. **Use consistent scoring methodology**
+4. **All directories are pre-created** - just write files directly
+5. **Apply visual formatting** to summary rows for better readability
+6. **After all files: write colorful project conclusion in SUMMARY file**
+
+### 🏁 Final Task
+
+After analyzing all files, read the complete ANALYSIS-SUMMARY table and write a comprehensive "Project-Level Conclusion" section covering:
+- Overall project health scores (averages)
+- Top 3-5 highest-risk files requiring immediate attention  
+- Recurring patterns and systemic issues
+- Strategic recommendations for the development team
+
+---
+
+**Ready to begin comprehensive codebase analysis!**`, basename, infrastructureInfo)
+}
+
+// loadGitSubmodules loads git submodules from .gitmodules file to exclude them from analysis
+func loadGitSubmodules(projectPath string) (map[string]bool, error) {
+	submodules := make(map[string]bool)
+	
+	gitmodulesPath := filepath.Join(projectPath, ".gitmodules")
+	
+	// Check if .gitmodules file exists
+	if _, err := os.Stat(gitmodulesPath); os.IsNotExist(err) {
+		return submodules, nil // No submodules
+	}
+	
+	// Read .gitmodules file
+	content, err := os.ReadFile(gitmodulesPath)
+	if err != nil {
+		return submodules, err
+	}
+	
+	// Parse .gitmodules file to extract submodule paths
+	lines := strings.Split(string(content), "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		
+		// Look for path = ... lines
+		if strings.HasPrefix(line, "path = ") {
+			path := strings.TrimSpace(strings.TrimPrefix(line, "path = "))
+			if path != "" {
+				submodules[path] = true
+			}
+		}
+	}
+	
+	return submodules, nil
+}
+
+// shouldIncludeFile checks if a file should be included based on include/exclude patterns
+func shouldIncludeFile(filePath string, includePatterns, excludePatterns []string) bool {
+	// If exclude patterns are specified and any matches, exclude the file
+	for _, excludePattern := range excludePatterns {
+		if excludePattern != "" {
+			matched, err := filepath.Match(excludePattern, filePath)
+			if err == nil && matched {
+				return false
+			}
+			// Also check if the pattern matches the filename only
+			matched, err = filepath.Match(excludePattern, filepath.Base(filePath))
+			if err == nil && matched {
+				return false
+			}
+		}
+	}
+	
+	// If include patterns are specified, only include files that match any pattern
+	if len(includePatterns) > 0 {
+		for _, includePattern := range includePatterns {
+			if includePattern != "" {
+				matched, err := filepath.Match(includePattern, filePath)
+				if err == nil && matched {
+					return true
+				}
+				// Also check if the pattern matches the filename only
+				matched, err = filepath.Match(includePattern, filepath.Base(filePath))
+				if err == nil && matched {
+					return true
+				}
+			}
+		}
+		// If include patterns are specified but none match, exclude
+		return false
+	}
+	
+	// No patterns specified or exclude patterns don't match, include the file
+	return true
 }

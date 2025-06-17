@@ -31,6 +31,12 @@ aid --private=0 --protected=0 --internal=0 --stdout       # Print only public me
 aid .git                              # Show full git history
 aid .git --git-limit=50              # Show last 50 commits
 aid .git --with-analysis-prompt      # Include AI analysis prompt for insights
+
+# AI analysis mode (generates comprehensive task lists):
+aid --ai-analysis-task-list                    # Complete project analysis workflow
+aid src/ --ai-analysis-task-list              # Analyze specific directory
+aid --include "*.go,*.py" --ai-analysis-task-list   # Filter by file types
+aid --exclude "*test*,*.json" --ai-analysis-task-list   # Exclude patterns
 ```
 
 ### Important Flags
@@ -55,6 +61,12 @@ The new flag system provides precise control over what to include:
 **Group Filtering** (alternative syntax):
 - `--include-only=public,protected,imports` - Include only these categories
 - `--exclude-items=private,comments` - Exclude these categories
+
+**File Pattern Filtering** (NEW - supports multiple syntaxes):
+- `--include "*.go,*.py,*.ts"` - Comma-separated patterns
+- `--include "*.go" --include "*.py"` - Multiple flags  
+- `--exclude "*test*,*spec*,*.json"` - Exclude patterns
+- `--exclude "*test*" --exclude "*.json"` - Multiple exclusions
 
 **Examples:**
 ```bash

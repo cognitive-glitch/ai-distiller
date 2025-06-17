@@ -3,6 +3,8 @@ test_repos/
 differential_testing_results.json
 coverage.txt
 aid
+.aid/
+tmp/
 .*.aid.txt
 *.tmp
 *.log

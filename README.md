@@ -96,6 +96,10 @@ aid --format text --strip "non-public,comments,implementation"
 
 # Full structural analysis
 aid --format json --output structure.json
+
+# Generate AI analysis workflow (NEW!)
+aid --ai-analysis-task-list                    # Complete project analysis
+aid src/ --include "*.go,*.py" --ai-analysis-task-list  # Focus on specific languages
 ```
 
 ### 🤖 Use with Claude Desktop (MCP)
@@ -337,6 +341,19 @@ Control exactly what to include with our new granular flag system:
 
 **Default behavior**: Shows only public API signatures with documentation - perfect for AI understanding while maintaining maximum compression.
 
+### 🤖 AI-Powered Analysis Workflows
+
+Generate comprehensive code analysis task lists for AI assistants:
+
+- **`--ai-analysis-task-list`** - Create structured workflows for security, performance, and maintainability audits
+- **Multi-pattern filtering** - `--include "*.go,*.py"` or `--include "*.go" --include "*.py"`  
+- **Smart scope control** - Focus on specific directories, file types, or exclude test files
+- **Pre-generated infrastructure** - Ready-to-use directories, task lists, and summary tables
+- **Color-coded results** - Visual HTML formatting for critical issues and excellent scores
+- **4-dimensional scoring** - Security, Performance, Maintainability, Readability (0-100%)
+
+Perfect for systematic code reviews, security audits, and onboarding new team members.
+
 ### 📝 Multiple Output Formats
 - **Text** (`--format text`) - Ultra-compact for AI consumption (default)
 - **Markdown** (`--format md`) - Human-readable with emojis
@@ -452,6 +469,109 @@ export class UserService {
 
 </details>
 
+## 🤖 AI-Driven Code Analysis Workflow
+
+AI Distiller now includes a powerful workflow for comprehensive codebase analysis using AI assistants like Claude or ChatGPT. Generate structured task lists and detailed security/performance audits automatically.
+
+### 🎯 Generate Analysis Task Lists
+
+Create comprehensive analysis workflows for any codebase:
+
+```bash
+# Generate complete project analysis task list
+aid --ai-analysis-task-list
+
+# Analyze specific directories only  
+aid internal/api --ai-analysis-task-list
+
+# Focus on specific file types
+aid --include "*.go,*.py,*.ts" --ai-analysis-task-list
+
+# Exclude test files and configs
+aid --exclude "*test*,*.json,*.yml" --ai-analysis-task-list
+```
+
+**What gets generated**:
+- 📋 **Task list** with checkboxes for each file (`.aid/ANALYSIS-TASK-LIST.PROJECT.DATE.md`)
+- 📊 **Summary table** for collecting results (`.aid/ANALYSIS-SUMMARY.PROJECT.DATE.md`)
+- 📁 **Pre-created directories** for individual file reports
+- 🎨 **Color-coded output** with HTML styling for critical issues
+
+### 🔍 Comprehensive Analysis Coverage
+
+Each file gets analyzed across **4 dimensions**:
+
+| Dimension | Focus Areas |
+|-----------|-------------|
+| **🛡️ Security** | Vulnerabilities, exposed secrets, dangerous patterns |
+| **⚡ Performance** | Efficiency, scalability concerns, resource usage |
+| **🔧 Maintainability** | Code complexity, structure, documentation quality |
+| **📖 Readability** | Code clarity, naming, organization, comments |
+
+**Scoring system**: 0-100% with specific point deductions:
+- Critical issues: -30 points
+- High issues: -15 points  
+- Medium issues: -5 points
+- Low issues: -2 points
+
+### 🎨 Visual Results with Color Coding
+
+The analysis generates beautiful reports with automatic color coding:
+
+```markdown
+| File | Security % | Performance % | Critical | High |
+|------|:----------:|:-------------:|:--------:|:----:|
+| auth.go | 45 | 78 | 2 | 1 |
+| cache.go | 92 | 65 | 0 | 0 |
+```
+
+Becomes:
+- **Critical scores** (<50%): <span style="color:#ff0000; font-weight: bold">45</span>
+- **High issues**: <span style="color:#ff6600; font-weight: bold">2</span>
+- **Excellent scores** (90%+): <span style="color:#00aa00; font-weight: bold">92</span>
+
+### 🔧 Flexible Scope Control
+
+Control exactly what gets analyzed using multiple pattern syntaxes:
+
+```bash
+# Comma-separated patterns
+aid --include "*.go,*.py,*.ts" --exclude "*test*,*spec*" --ai-analysis-task-list
+
+# Multiple flags (same result)
+aid --include "*.go" --include "*.py" --exclude "*test*" --ai-analysis-task-list
+
+# Language-specific analysis
+aid --include "*.vue,*.svelte" --ai-analysis-task-list  # Frontend components
+aid --include "*.twig,*.latte,*.j2" --ai-analysis-task-list  # Templates
+aid --exclude "*.json,*.yaml,*.env" --ai-analysis-task-list  # Skip configs
+```
+
+### 📈 Example Workflow
+
+1. **Generate task list**:
+   ```bash
+   aid src/ --exclude "*test*" --ai-analysis-task-list
+   ```
+
+2. **Follow the generated instructions** in `.aid/ANALYSIS-TASK-LIST.PROJECT.DATE.md`
+
+3. **Get structured results** with:
+   - Individual detailed reports for each file
+   - Centralized summary table with scores  
+   - Color-coded visualization of critical issues
+   - Final project-level conclusions and recommendations
+
+### 🎯 Perfect for AI Assistants
+
+The generated workflow is designed to work seamlessly with:
+- **Claude Code** - Direct file analysis and report generation
+- **ChatGPT/Claude Web** - Copy-paste friendly format  
+- **Custom AI tools** - Structured JSON/markdown output
+- **Code review processes** - Comprehensive audit trails
+
+**Pro tip**: Use `aid internal/ --include "*.go" --ai-analysis-task-list` to focus analysis on your core business logic and skip test files for faster results.
+
 ## 🛠️ Advanced Usage
 
 ### ⚡ Parallel Processing
@@ -552,7 +672,7 @@ AI Distiller includes a special mode for analyzing git repositories. When you pa
 # View formatted git history
 aid .git
 
-# Limit to recent commits
+# Limit to recent commits (default is 200)
 aid .git --git-limit=100
 
 # Include AI analysis prompt for comprehensive insights
@@ -567,6 +687,30 @@ The `--with-analysis-prompt` flag adds a sophisticated prompt that guides AI to 
 - **Actionable recommendations** based on discovered patterns
 
 Perfect for understanding project history, identifying knowledge silos, or generating impressive development reports.
+
+## 🤖 AI-Driven Code Analysis Workflow
+
+AI Distiller includes a revolutionary feature for comprehensive codebase analysis. Generate structured task lists that guide AI assistants through systematic file-by-file analysis:
+
+```bash
+# Generate comprehensive analysis task list
+aid --ai-analysis-task-list ./my-project
+```
+
+This creates:
+- **📋 Task List**: Structured checklist with AI analysis instructions
+- **📊 Summary Table**: Centralized results with security, performance, and maintainability scores
+- **📁 Analysis Reports**: Individual detailed reports for each file
+- **🎯 Project Conclusion**: Synthesized findings and recommendations
+
+**Perfect for**:
+- Security audits and vulnerability assessments
+- Code quality reviews and technical debt analysis  
+- Onboarding new team members to complex codebases
+- Pre-deployment health checks
+- AI-assisted refactoring planning
+
+**Workflow**: AI assistants like Claude Code follow the generated task list, analyzing each file systematically, scoring security/performance/maintainability, and building a comprehensive project health dashboard. The result? Professional-grade analysis reports that would typically require senior engineers weeks to produce.
 
 ## 🔗 Documentation
 
