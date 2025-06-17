@@ -30,6 +30,7 @@ aid --private=0 --protected=0 --internal=0 --stdout       # Print only public me
 # Special git mode (activated when path is .git):
 aid .git                              # Show full git history
 aid .git --git-limit=50              # Show last 50 commits
+aid .git --with-analysis-prompt      # Include AI analysis prompt for insights
 ```
 
 ### Important Flags
@@ -93,9 +94,11 @@ aid src/ --include-only=public,protected,imports
 
 **Git Mode:**
 - `--git-limit <n>` - Number of commits to show (default: 0 = all)
+- `--with-analysis-prompt` - Prepend AI analysis prompt for comprehensive insights
   - Activated automatically when path is `.git`
   - Shows commit history in clean format: `[hash] date time | author | subject`
   - Multi-line commit messages are properly indented
+  - With analysis prompt: Guides AI to generate statistics, patterns, and insights
 
 Example output:
 ```
@@ -111,6 +114,13 @@ Example output:
         - Fix protocol/class/struct inheritance regex to exclude opening braces
         - Fix protocol property regex to be optional
 ```
+
+With `--with-analysis-prompt`, the output includes a comprehensive AI prompt that guides analysis of:
+- Contributor statistics and expertise areas
+- Timeline analysis and development patterns
+- Functional categorization of commits
+- Codebase evolution insights
+- Interesting discoveries and recommendations
 
 ## Quick Testing with stdin
 

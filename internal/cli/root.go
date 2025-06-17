@@ -63,6 +63,7 @@ var (
 	
 	// Git mode flags
 	gitCommitLimit        int
+	withAnalysisPrompt    bool
 )
 
 // rootCmd represents the base command
@@ -230,6 +231,7 @@ func initFlags() {
 	
 	// Git mode flags
 	rootCmd.Flags().IntVar(&gitCommitLimit, "git-limit", 0, "Limit number of commits in git mode (0=all)")
+	rootCmd.Flags().BoolVar(&withAnalysisPrompt, "with-analysis-prompt", false, "Prepend AI analysis prompt to git output")
 
 	// Handle version flag specially
 	rootCmd.PreRun = func(cmd *cobra.Command, args []string) {
@@ -849,6 +851,13 @@ func handleGitMode(ctx context.Context, gitPath string) error {
 	
 	// Format and output the commits
 	var output strings.Builder
+	
+	// Add analysis prompt if requested
+	if withAnalysisPrompt {
+		output.WriteString(getGitAnalysisPrompt())
+		output.WriteString("\n\n=== BEGIN GIT LOG ===\n")
+	}
+	
 	for i, commit := range commits {
 		if i > 0 {
 			output.WriteString("\n")
@@ -893,6 +902,11 @@ func handleGitMode(ctx context.Context, gitPath string) error {
 		}
 	}
 	
+	// Add closing tag if analysis prompt was used
+	if withAnalysisPrompt {
+		output.WriteString("\n=== END GIT LOG ===\n")
+	}
+	
 	// Write to file if specified
 	if outputFile != "" && !outputToStdout {
 		if err := os.WriteFile(outputFile, []byte(output.String()), 0644); err != nil {
@@ -913,4 +927,69 @@ type GitCommit struct {
 	Date    string
 	Author  string
 	Message string
+}
+
+// getGitAnalysisPrompt returns the AI analysis prompt for git history
+func getGitAnalysisPrompt() string {
+	return `You are a seasoned software archeologist and senior engineer.
+Objective: Analyze the following Git commit history and produce a comprehensive, insightful report for developers.
+
+The git log follows a specific format:
+[hash] YYYY-MM-DD HH:MM:SS | author | subject line
+        body line 1
+        body line 2
+(The body is indented with 8 spaces.)
+
+Output requirements - create these sections using Markdown:
+
+## 1. Executive Summary
+- Project lifespan: First and last commit dates
+- Total commits analyzed
+- Total contributors (normalize similar names/emails)
+- Overall activity level assessment
+
+## 2. Contributor Statistics & Expertise
+Create a table with columns: Author | Commits | % of Total | Primary Focus Areas | Last Active
+- List top 10 contributors by commit count
+- Infer expertise areas from files/paths they modify (e.g., "Backend API", "UI Components", "Documentation")
+- Identify potential bus factor risks (knowledge concentration)
+- Note collaboration patterns
+
+## 3. Timeline & Development Patterns
+- Activity visualization (ASCII graph or timeline description)
+- Identify major development phases, release cycles, or refactoring periods
+- Highlight periods of high activity vs maintenance mode
+- Note any interesting day/time patterns if evident
+
+## 4. Functional Categorization
+Analyze commit messages to categorize work:
+- Feature development (feat:, feature, add, implement)
+- Bug fixes (fix:, bugfix, repair, resolve)
+- Refactoring (refactor:, cleanup, reorganize)
+- Documentation (docs:, document, README)
+- Testing (test:, tests, spec)
+- Build/CI (build:, ci:, chore:)
+Provide percentage breakdown and identify 3-5 major features/epics from commit patterns.
+
+## 5. Codebase Evolution Insights
+- Language/technology shifts based on file extensions and paths
+- Architectural changes inferred from directory restructuring
+- Technical debt indicators (TODO, FIXME, HACK, workaround mentions)
+- Code health trends
+
+## 6. Interesting Discoveries
+3-5 "wow" insights that aren't immediately obvious:
+- Unusual patterns in development
+- Hidden connections between features
+- Surprising contributor behaviors
+- Potential areas of concern
+
+## 7. Actionable Recommendations
+Based on the analysis, suggest 3-5 concrete next steps for the team.
+
+Guidelines:
+- Prioritize signal over noise
+- Use specific examples from commits
+- Keep total output concise but insightful
+- Quantify findings where possible`
 }
