@@ -1387,10 +1387,10 @@ After completing each file analysis, append ONE row to the ANALYSIS-SUMMARY file
 - **Low issues**: regular text
 
 **For Low Scores** (< 70%%):
-- **Scores < 50%**: ` + "`" + `<span style="color:#ff0000; font-weight: bold">45</span>` + "`" + ` (red + bold)
-- **Scores 50-69%**: ` + "`" + `<span style="color:#ff6600; font-weight: bold">65</span>` + "`" + ` (orange + bold)
-- **Scores 70-89%**: regular text
-- **Scores 90-100%**: ` + "`" + `<span style="color:#00aa00; font-weight: bold">95</span>` + "`" + ` (green + bold)
+- **Scores < 50%%**: ` + "`" + `<span style="color:#ff0000; font-weight: bold">45</span>` + "`" + ` (red + bold)
+- **Scores 50-69%%**: ` + "`" + `<span style="color:#ff6600; font-weight: bold">65</span>` + "`" + ` (orange + bold)
+- **Scores 70-89%%**: regular text
+- **Scores 90-100%%**: ` + "`" + `<span style="color:#00aa00; font-weight: bold">95</span>` + "`" + ` (green + bold)
 
 **Project-Level Conclusion Section** should use larger fonts and colors:
 - ` + "`" + `<h2 style="color:#ff0000;">🚨 CRITICAL ISSUES FOUND</h2>` + "`" + `
