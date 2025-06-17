@@ -142,7 +142,7 @@ func addTestFiles(suite *performance.BenchmarkSuite, testDir string, verbose boo
 	for _, filename := range specificFiles {
 		fullPath := filepath.Join(testDir, filename)
 		if _, err := os.Stat(fullPath); err == nil {
-			suite.AddTestFile(fullPath)
+			_ = suite.AddTestFile(fullPath)
 			if verbose {
 				fmt.Printf("  Added: %s\n", filename)
 			}

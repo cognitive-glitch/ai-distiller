@@ -389,6 +389,6 @@ func (p *PerformanceProcessor) ResetMetrics() {
 	p.concurrentProcessor.ResetMetrics()
 	if p.config.CacheEnabled {
 		// Cache metrics are reset by clearing the cache
-		p.cachedProcessor.GetCache().Clear()
+		_ = p.cachedProcessor.GetCache().Clear()
 	}
 }

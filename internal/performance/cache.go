@@ -64,7 +64,7 @@ func NewCache(cacheDir string) *Cache {
 	}
 
 	// Create cache directory
-	os.MkdirAll(cacheDir, 0755)
+	_ = os.MkdirAll(cacheDir, 0755)
 
 	// Load existing cache index
 	cache.loadIndex()
@@ -109,14 +109,14 @@ func (c *Cache) Get(filePath string, opts processor.ProcessOptions) (*ir.Distill
 	info, err := os.Stat(filePath)
 	if err != nil || info.ModTime().After(entry.FileModTime) {
 		// File modified, invalidate cache
-		c.Remove(key)
+		_ = c.Remove(key)
 		c.recordMiss()
 		return nil, false
 	}
 
 	// Check if cache entry is too old
 	if time.Since(entry.CachedAt) > c.maxAge {
-		c.Remove(key)
+		_ = c.Remove(key)
 		c.recordMiss()
 		return nil, false
 	}
@@ -124,7 +124,7 @@ func (c *Cache) Get(filePath string, opts processor.ProcessOptions) (*ir.Distill
 	// Load cached result
 	result, err := c.loadCachedResult(entry)
 	if err != nil {
-		c.Remove(key)
+		_ = c.Remove(key)
 		c.recordMiss()
 		return nil, false
 	}
@@ -458,7 +458,7 @@ func (c *Cache) saveIndex() {
 		return
 	}
 
-	os.WriteFile(indexPath, data, 0644)
+	_ = os.WriteFile(indexPath, data, 0644)
 }
 
 // GetHitRate returns the cache hit rate as a percentage
