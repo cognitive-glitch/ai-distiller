@@ -1494,7 +1494,7 @@ After analyzing all files, read the complete ANALYSIS-SUMMARY table and write a 
 
 ---
 
-**Ready to begin comprehensive codebase analysis!**`, basename, infrastructureInfo, basename)
+**Ready to begin comprehensive codebase analysis!**`, basename, infrastructureInfo)
 }
 
 // loadGitSubmodules loads git submodules from .gitmodules file to exclude them from analysis
