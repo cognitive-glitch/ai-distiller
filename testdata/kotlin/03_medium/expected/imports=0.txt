@@ -1,10 +1,10 @@
 <file path="source.kt">
-class Repository {
+interface Repository {
     suspend fun findById(id: String): T?
     suspend fun findAll(): List<T>
     suspend fun count(): Long
 }
-class MutableRepository {
+interface MutableRepository {
     suspend fun save(entity: T): T
     suspend fun update(entity: T): T
     suspend fun delete(id: String): Boolean
@@ -17,9 +17,7 @@ abstract class BaseService {
     suspend fun <U> findAndMap(id: String, mapper: (T) -> U): U?
     abstract suspend fun validateEntity(entity: T): ValidationResult
 }
-class Entity {
-    var id: String
-    var version: Long
+interface Entity {
     override fun compareTo(other: Entity): Int
 }
 data class User(val id: String, val version: Long, val name: String, val email: String, val role: UserRole) {

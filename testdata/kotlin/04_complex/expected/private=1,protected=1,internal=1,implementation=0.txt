@@ -9,7 +9,7 @@ import kotlin.properties.ReadOnlyProperty
 import kotlin.properties.ReadWriteProperty
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
-class DatabaseDsl {
+annotation class DatabaseDsl {
 }
 class QueryBuilder {
     private val entityClass: KClass
@@ -59,7 +59,7 @@ enum class SortDirection {
 }
 data class Query(val entityClass: KClass, val conditions: List, val orderBy: List, val limit: Int?, val offset: Int?) {
 }
-class AdvancedRepository {
+interface AdvancedRepository {
     suspend fun findByQuery(query: Query): Flow<T>
     suspend fun executeQuery(builder: QueryBuilder<T>.() -> Unit): Flow<T>
 }

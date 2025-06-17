@@ -11,7 +11,7 @@ import (
 type Cache[K comparable, V any] struct {}
 // New creates a new Cache.
 
-func New() *Cache[K, V]
+func New[K comparable, V any]() *Cache[K, V]
     return &Cache[K, V]{
     		data: make(map[K]V),
     	}

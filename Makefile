@@ -50,8 +50,8 @@ test-regenerate:
 # Generate expected test data for all languages (includes building aid)
 generate-expected-testdata: build
 	@echo "==> Building aid and regenerating all expected test files"
-	@chmod +x regenerate_expected.sh
-	@./regenerate_expected.sh
+	@chmod +x scripts/regenerate-expected.sh
+	@./scripts/regenerate-expected.sh really-all
 
 # Audit test structure for consistency issues
 test-audit:

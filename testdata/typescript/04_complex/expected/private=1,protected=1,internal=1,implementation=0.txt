@@ -4,15 +4,17 @@ type PluginSettings = {
 }
 function LogExecution(target: any, propertyKey: string, descriptor: PropertyDescriptor)
 
-interface IPlugin:
+export interface IPlugin {
     property name: string
     method execute(data: any): void
+}
 
-class PluginManager:
+export class PluginManager {
     private plugins: Map<string, IPlugin> = new Map()
     private settings: PluginSettings
     public constructor(settings: PluginSettings)
     @LogExecution
-    public registerPlugin(plugin: IPlugin) -> void
-    public runAll(data: any) -> void
+    public registerPlugin(plugin: IPlugin): void
+    public runAll(data: any): void
+}
 </file>

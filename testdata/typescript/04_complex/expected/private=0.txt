@@ -3,13 +3,15 @@ type PluginSettings = {
   [K in 'timeout' | 'retries']?: K extends 'timeout' ? number : number;
 }
 
-interface IPlugin:
+export interface IPlugin {
     property name: string
     method execute(data: any): void
+}
 
-class PluginManager:
+export class PluginManager {
     public constructor(settings: PluginSettings)
     @LogExecution
-    public registerPlugin(plugin: IPlugin) -> void
-    public runAll(data: any) -> void
+    public registerPlugin(plugin: IPlugin): void
+    public runAll(data: any): void
+}
 </file>

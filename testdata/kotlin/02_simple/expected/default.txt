@@ -1,15 +1,11 @@
 <file path="source.kt">
 import kotlin.properties.Delegates
 import kotlin.random.Random
-class Entity {
-    var id: String
-    var createdAt: Long
+interface Entity {
     fun getAge(): Long
     fun getEntityType(): String
 }
-class Auditable {
-    var lastModified: Long
-    var modifiedBy: String?
+interface Auditable {
     fun markModified(by: String)
 }
 abstract class BaseEntity {

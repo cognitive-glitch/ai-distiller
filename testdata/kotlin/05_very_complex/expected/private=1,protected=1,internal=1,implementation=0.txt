@@ -9,7 +9,7 @@ import kotlin.experimental.ExperimentalTypeInference
 import kotlin.properties.PropertyDelegateProvider
 import kotlin.properties.ReadOnlyProperty
 import kotlin.time.Duration.Companion.seconds
-class AutoGenerate {
+annotation class AutoGenerate {
     val strategy: GenerationStrategy
     val includeMethods: Array
     val excludeMethods: Array
@@ -22,19 +22,17 @@ enum class GenerationStrategy {
     OBSERVER
     PROXY
 }
-class ConfigurationDsl {
+annotation class ConfigurationDsl {
 }
-class DatabaseContext {
-    var connectionPool: ConnectionPool
+interface DatabaseContext {
     suspend fun <T> withTransaction(block: TransactionScope.() -> T): T
 }
-class TransactionScope {
-    var transactionId: String
+interface TransactionScope {
     suspend fun <T> execute(query: String, params: Any): T
     suspend fun rollback()
     suspend fun commit()
 }
-class ConnectionPool {
+interface ConnectionPool {
     suspend fun borrowConnection(): DatabaseConnection
     suspend fun returnConnection(connection: DatabaseConnection)
     fun getStatistics(): PoolStatistics
@@ -44,21 +42,17 @@ abstract class AdvancedGenericRepository {
     abstract suspend fun <K, V> aggregateBy(query: Q, keySelector: (E) -> K, valueSelector: (E) -> V, aggregator: (K, List<V>) -> V): Map<K, V>
     inline fun <T, U> transformAndValidate(entities: List, transformer: (E) -> T, validator: (T) -> U): List<U>
 }
-class Entity {
-    var id: ID
-    var version: Long
-    var metadata: EntityMetadata
+interface Entity {
 }
-class Auditable {
-    var auditInfo: AuditInfo
+interface Auditable {
     fun updateAuditInfo(actor: String, action: String)
 }
-class Validatable {
+interface Validatable {
     suspend fun validate(context: ValidationContext): ValidationResult
 }
 data class ValidationContext(val rules: List, val services: ServiceLocator, val currentUser: UserContext?, val environment: Environment) {
 }
-class ServiceLocator {
+interface ServiceLocator {
     suspend fun <T> resolve(type: KClass): T
     suspend fun <T> resolveOptional(type: KClass): T?
     suspend fun <T> resolveAll(type: KClass): List<T>
@@ -69,7 +63,7 @@ class ManagedProperty {
     fun constructor(factory, lifecycle: PropertyLifecycle)
     override fun provideDelegate(thisRef: Any?, property: KProperty): ReadOnlyProperty<Any?, T>
 }
-class PropertyLifecycle {
+interface PropertyLifecycle {
     suspend fun onCreate(name: String, value: T): T
     suspend fun onAccess(name: String, value: T): T
     suspend fun onDestroy(name: String, value: T)
@@ -93,10 +87,7 @@ class PlatformSpecificRepository {
     suspend fun performNativeOperation(): String
     fun getPlatformCapabilities(): PlatformCapabilities
 }
-class PlatformCapabilities {
-    var supportsAdvancedFeatures: Boolean
-    var nativeLibraryVersion: String
-    var platformIdentifier: String
+interface PlatformCapabilities {
 }
 sealed class ProcessingState {
     object Idle {
@@ -190,7 +181,7 @@ sealed class DomainEvent {
         }
     }
 }
-class EventStore {
+interface EventStore {
     suspend fun append(events: List): EventAppendResult
     suspend fun getEvents(streamId: String, fromVersion: Long): Flow<DomainEvent>
     suspend fun getEventsByType(eventType: KClass): Flow<DomainEvent>
@@ -228,15 +219,15 @@ sealed class ValidationResult {
 class ValidationException {
     fun constructor(message: String)
 }
-class Query {
+interface Query {
 }
-class QueryResult {
+interface QueryResult {
 }
-class ValidationRule {
+interface ValidationRule {
 }
-class UserContext {
+interface UserContext {
 }
-class Environment {
+interface Environment {
 }
 data class AuditInfo(val createdBy: String, val createdAt: Long) {
 }
@@ -244,7 +235,7 @@ data class EntityMetadata(val tags: Set) {
 }
 data class PoolStatistics(val activeConnections: Int, val idleConnections: Int) {
 }
-class DatabaseConnection {
+interface DatabaseConnection {
 }
 fun String.capitalize(): String
 </file>
