@@ -32,11 +32,14 @@ aid .git                              # Show full git history
 aid .git --git-limit=50              # Show last 50 commits
 aid .git --with-analysis-prompt      # Include AI analysis prompt for insights
 
-# AI analysis mode (generates comprehensive task lists):
-aid --ai-analysis-task-list                    # Complete project analysis workflow
-aid src/ --ai-analysis-task-list              # Analyze specific directory
-aid --include "*.go,*.py" --ai-analysis-task-list   # Filter by file types
-aid --exclude "*test*,*.json" --ai-analysis-task-list   # Exclude patterns
+# AI-powered analysis modes:
+aid --ai-action=flow-for-deep-file-to-file-analysis     # Generate comprehensive task list
+aid --ai-action=prompt-for-refactoring-suggestion      # Generate refactoring analysis prompt
+aid --ai-action=prompt-for-security-analysis           # Security-focused analysis prompt
+aid --ai-action=prompt-for-complex-codebase-analysis   # Full codebase analysis with diagrams
+
+# Legacy mode (deprecated):
+aid --ai-analysis-task-list                    # Use --ai-action=flow-for-deep-file-to-file-analysis instead
 ```
 
 ### Important Flags
@@ -103,6 +106,15 @@ aid src/ --include-only=public,protected,imports
 - `-o, --output <file>` - Output file (default: auto-generated)
   - Default pattern: `.<dirname>.[options].aid.txt`
   - Example: `.MyProject.prot.int.impl.aid.txt` (includes protected, internal, implementation)
+
+**AI Actions:**
+- `--ai-action <action>` - AI-powered analysis action
+  - `flow-for-deep-file-to-file-analysis` - Generate task list for systematic analysis
+  - `prompt-for-refactoring-suggestion` - Refactoring analysis prompt
+  - `prompt-for-complex-codebase-analysis` - Comprehensive analysis with architecture diagrams
+  - `prompt-for-security-analysis` - Security audit prompt with vulnerability detection
+- `--ai-output <path>` - Custom output path for AI action (default: action-specific)
+  - Each action has sensible defaults like `./.aid/ACTION-NAME.%YYYY-MM-DD.HH-MM-SS%.%folder-basename%.md`
 
 **Git Mode:**
 - `--git-limit <n>` - Number of commits to show (default: 0 = all)

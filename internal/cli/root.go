@@ -14,6 +14,8 @@ import (
 	"time"
 	
 	"github.com/spf13/cobra"
+	"github.com/janreges/ai-distiller/internal/ai"
+	"github.com/janreges/ai-distiller/internal/aiactions"
 	"github.com/janreges/ai-distiller/internal/debug"
 	"github.com/janreges/ai-distiller/internal/formatter"
 	"github.com/janreges/ai-distiller/internal/ir"
@@ -66,8 +68,12 @@ var (
 	gitCommitLimit        int
 	withAnalysisPrompt    bool
 	
-	// AI analysis task list flag
+	// AI analysis task list flag (deprecated)
 	aiAnalysisTaskList    bool
+	
+	// New AI action system
+	aiAction             string
+	aiOutput             string
 )
 
 // rootCmd represents the base command
@@ -179,6 +185,10 @@ func Execute() error {
 
 func init() {
 	initFlags()
+	
+	// Register all built-in AI actions
+	// This is done here to avoid import cycles
+	registerAIActions()
 }
 
 func initFlags() {
@@ -237,8 +247,13 @@ func initFlags() {
 	rootCmd.Flags().IntVar(&gitCommitLimit, "git-limit", 200, "Limit number of commits in git mode (default: 200, 0=all)")
 	rootCmd.Flags().BoolVar(&withAnalysisPrompt, "with-analysis-prompt", false, "Prepend AI analysis prompt to git output")
 	
-	// AI analysis task list flag
-	rootCmd.Flags().BoolVar(&aiAnalysisTaskList, "ai-analysis-task-list", false, "Generate structured task list for comprehensive AI-driven code analysis")
+	// AI analysis task list flag (deprecated)
+	rootCmd.Flags().BoolVar(&aiAnalysisTaskList, "ai-analysis-task-list", false, "DEPRECATED: Use --ai-action=flow-for-deep-file-to-file-analysis instead")
+	rootCmd.Flags().MarkDeprecated("ai-analysis-task-list", "use --ai-action=flow-for-deep-file-to-file-analysis instead")
+	
+	// New AI action system
+	rootCmd.Flags().StringVar(&aiAction, "ai-action", "", "AI action to perform on distilled output")
+	rootCmd.Flags().StringVar(&aiOutput, "ai-output", "", "Output path for AI action (default: action-specific)")
 
 	// Handle version flag specially
 	rootCmd.PreRun = func(cmd *cobra.Command, args []string) {
@@ -313,9 +328,16 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 		return handleGitMode(ctx, absPath)
 	}
 	
-	// Check if AI analysis task list flag is set
+	// Check if AI analysis task list flag is set (deprecated)
 	if aiAnalysisTaskList {
-		return handleAIAnalysisTaskList(ctx, absPath)
+		// Convert to new AI action system
+		aiAction = "flow-for-deep-file-to-file-analysis"
+		dbg.Logf(debug.LevelBasic, "Using deprecated --ai-analysis-task-list, converting to --ai-action=%s", aiAction)
+	}
+	
+	// Check if AI action is specified
+	if aiAction != "" {
+		return handleAIAction(ctx, absPath)
 	}
 
 	// Generate output filename if not specified and not using stdout
@@ -1299,6 +1321,19 @@ func getAIAnalysisPrompt(basename, currentDate string) string {
 
 	return fmt.Sprintf(`## 🤖 AI Analysis Instructions
 
+# CRITICAL EXECUTION MANDATE: Unbreakable Sequential Processing
+
+This is a FORMAL PROTOCOL implementing Chain-of-Thought (CoT) analysis with ZERO tolerance for deviations.
+
+## ABSOLUTE PROHIBITIONS ⛔
+
+1. **PROHIBITED**: Batch processing multiple files simultaneously
+2. **PROHIBITED**: Using any "time-saving" shortcuts or optimizations  
+3. **PROHIBITED**: Skipping individual file analysis for "efficiency"
+4. **PROHIBITED**: Marking tasks complete before ALL outputs are verified
+5. **PROHIBITED**: Referencing or planning for files not yet in scope
+6. **VIOLATION CONSEQUENCE**: Any deviation = IMMEDIATE PROTOCOL FAILURE
+
 You are an **Expert Senior Staff Engineer and Security Auditor** conducting a comprehensive file-by-file analysis of the **%s** project. Follow these instructions precisely:
 
 ### 📋 Your Mission
@@ -1398,6 +1433,85 @@ After completing each file analysis, append ONE row to the ANALYSIS-SUMMARY file
 5. **Apply visual formatting** to summary rows for better readability
 6. **After all files: write colorful project conclusion in SUMMARY file**
 
+## MANDATORY EXECUTION LOOP WITH ERROR HANDLING
+
+` + "```python" + `
+# REQUIRED BEHAVIOR - MUST BE FOLLOWED EXACTLY
+current_file_only = True  # INVARIANT: Only process the current file
+
+for task in task_list:
+    if task.status in ["completed", "failed"]:
+        continue
+    
+    try:
+        # CHECKPOINT 1: Acknowledge current file
+        print(f"[CHECKPOINT] Starting analysis for: {task.file_path}")
+        update_task_status(task.file_path, "in_progress")
+        
+        # STEP 1: Read ONLY current file
+        file_content = read_file(task.file_path)
+        file_hash = compute_sha256(file_content)
+        
+        # STEP 2: Analyze THIS file comprehensively
+        detailed_report = analyze_file_comprehensively(file_content)
+        assert detailed_report is not None
+        
+        # STEP 3: Save detailed report
+        save_report(detailed_report, task.report_path)
+        print(f"[CHECKPOINT] Saved report: {task.report_path}")
+        
+        # STEP 4: Extract and append summary
+        summary_row = extract_summary_metrics(detailed_report)
+        append_to_summary_table(summary_row)
+        print(f"[CHECKPOINT] Added summary row for: {task.file_path}")
+        
+        # STEP 5: Verify outputs exist
+        assert file_exists(task.report_path)
+        assert summary_row_in_table(task.file_name)
+        
+        # STEP 6: Mark complete ONLY after verification
+        update_task_status(task.file_path, "completed")
+        print(f"[CHECKPOINT] Completed: {task.file_path}")
+        
+        # MANDATORY: Acknowledge completion before next file
+        print(f"[CONFIRMATION] File {task.file_path} fully processed.")
+        print(f"[CONFIRMATION] Moving to next file in sequence.")
+        
+    except Exception as e:
+        # FAILURE PATH - Log and continue
+        log_error(task.file_path, str(e))
+        update_task_status(task.file_path, "failed")
+        print(f"[ERROR] Failed to process {task.file_path}: {e}")
+        continue
+` + "```" + `
+
+## PROGRESSIVE VALIDATION REQUIREMENTS
+
+After EACH file, you MUST output:
+1. "[CHECKPOINT] Starting analysis for: [filename]"
+2. "[CHECKPOINT] Saved report: [path]"
+3. "[CHECKPOINT] Added summary row for: [filename]"
+4. "[CONFIRMATION] File [filename] fully processed."
+5. "[CONFIRMATION] Moving to next file in sequence."
+
+## WHY THIS PROTOCOL EXISTS
+
+Individual sequential analysis ensures:
+- Consistent scoring methodology across all files
+- Detailed insights not possible in batch processing
+- Progressive understanding of codebase patterns
+- Traceable audit path for each decision
+- Error isolation (one file failure doesn't affect others)
+
+## CONTEXT LIMITATION
+
+You will NOT be shown:
+- The full list of remaining files
+- Directory listings beyond current scope
+- Any information that enables planning ahead
+
+This is BY DESIGN to enforce sequential processing.
+
 ### 🏁 Final Task
 
 After analyzing all files, read the complete ANALYSIS-SUMMARY table and write a comprehensive "Project-Level Conclusion" section covering:
@@ -1483,4 +1597,227 @@ func shouldIncludeFile(filePath string, includePatterns, excludePatterns []strin
 	
 	// No patterns specified or exclude patterns don't match, include the file
 	return true
+}
+
+// handleAIAction processes AI actions on distilled content
+func handleAIAction(ctx context.Context, projectPath string) error {
+	dbg := debug.FromContext(ctx).WithSubsystem("ai-action")
+	dbg.Logf(debug.LevelBasic, "AI Action mode: %s", aiAction)
+	
+	// Get the AI action from registry
+	registry := ai.GetRegistry()
+	action, err := registry.Get(aiAction)
+	if err != nil {
+		return fmt.Errorf("failed to get AI action: %w", err)
+	}
+	
+	// Validate the action
+	if err := action.Validate(); err != nil {
+		return fmt.Errorf("action validation failed: %w", err)
+	}
+	
+	// Create action context
+	baseName := filepath.Base(projectPath)
+	if baseName == "." || baseName == "/" {
+		baseName = "project"
+	}
+	
+	actionCtx := &ai.ActionContext{
+		ProjectPath:     projectPath,
+		BaseName:        baseName,
+		Timestamp:       time.Now(),
+		IncludePatterns: includeGlob,
+		ExcludePatterns: excludeGlob,
+		Config: &ai.ActionConfig{
+			OutputPath: aiOutput,
+		},
+	}
+	
+	// Handle different action types
+	switch action.Type() {
+	case ai.ActionTypeFlow:
+		// Flow actions don't need distilled content
+		flowAction, ok := action.(ai.FlowAction)
+		if !ok {
+			return fmt.Errorf("action %s claims to be flow type but doesn't implement FlowAction interface", aiAction)
+		}
+		
+		return executeFlowAction(ctx, flowAction, actionCtx)
+		
+	case ai.ActionTypePrompt:
+		// Prompt actions need distilled content
+		contentAction, ok := action.(ai.ContentAction)
+		if !ok {
+			return fmt.Errorf("action %s claims to be prompt type but doesn't implement ContentAction interface", aiAction)
+		}
+		
+		// First, distill the content
+		distilledContent, err := distillForAction(ctx, projectPath)
+		if err != nil {
+			return fmt.Errorf("failed to distill content: %w", err)
+		}
+		
+		actionCtx.DistilledContent = distilledContent
+		return executeContentAction(ctx, contentAction, actionCtx)
+		
+	default:
+		return fmt.Errorf("unknown action type: %s", action.Type())
+	}
+}
+
+// distillForAction runs the distiller to get content for AI actions
+func distillForAction(ctx context.Context, projectPath string) (string, error) {
+	dbg := debug.FromContext(ctx).WithSubsystem("distill-for-action")
+	
+	// Create processor options from flags
+	procOpts := createProcessOptionsFromFlags()
+	procOpts.BasePath = projectPath
+	procOpts.FilePathType = "relative"
+	
+	// Create the processor
+	proc := processor.NewWithContext(ctx)
+	
+	// Process the input
+	result, err := proc.ProcessPath(projectPath, procOpts)
+	if err != nil {
+		return "", fmt.Errorf("failed to process: %w", err)
+	}
+	
+	// Always use text format for AI actions
+	formatterOpts := formatter.Options{}
+	formatter, err := formatter.Get("text", formatterOpts)
+	if err != nil {
+		return "", fmt.Errorf("failed to get formatter: %w", err)
+	}
+	
+	// Format the output
+	var output strings.Builder
+	
+	switch r := result.(type) {
+	case *ir.DistilledFile:
+		if err := formatter.Format(&output, r); err != nil {
+			return "", fmt.Errorf("failed to format output: %w", err)
+		}
+	case *ir.DistilledDirectory:
+		var files []*ir.DistilledFile
+		for _, child := range r.Children {
+			if file, ok := child.(*ir.DistilledFile); ok {
+				files = append(files, file)
+			}
+		}
+		if err := formatter.FormatMultiple(&output, files); err != nil {
+			return "", fmt.Errorf("failed to format output: %w", err)
+		}
+	default:
+		return "", fmt.Errorf("unexpected result type: %T", result)
+	}
+	
+	dbg.Logf(debug.LevelBasic, "Distilled %d bytes of content", output.Len())
+	return output.String(), nil
+}
+
+// executeFlowAction executes a flow-type AI action
+func executeFlowAction(ctx context.Context, action ai.FlowAction, actionCtx *ai.ActionContext) error {
+	dbg := debug.FromContext(ctx).WithSubsystem("flow-action")
+	
+	// Determine output path
+	outputPath := actionCtx.Config.OutputPath
+	if outputPath == "" {
+		outputPath = action.DefaultOutput()
+	}
+	outputPath = ai.ExpandTemplate(outputPath, actionCtx)
+	
+	// Ensure output path is within project
+	if err := ai.ValidateOutputPath(outputPath, actionCtx.ProjectPath); err != nil {
+		return fmt.Errorf("invalid output path: %w", err)
+	}
+	
+	// Execute the flow
+	result, err := action.ExecuteFlow(actionCtx)
+	if err != nil {
+		return fmt.Errorf("flow execution failed: %w", err)
+	}
+	
+	// Create output directory
+	if err := os.MkdirAll(outputPath, 0755); err != nil {
+		return fmt.Errorf("failed to create output directory: %w", err)
+	}
+	
+	// Write all files
+	for relPath, content := range result.Files {
+		fullPath := filepath.Join(outputPath, relPath)
+		
+		// Create parent directory
+		parentDir := filepath.Dir(fullPath)
+		if err := os.MkdirAll(parentDir, 0755); err != nil {
+			return fmt.Errorf("failed to create directory %s: %w", parentDir, err)
+		}
+		
+		// Write file
+		if err := os.WriteFile(fullPath, []byte(content), 0644); err != nil {
+			return fmt.Errorf("failed to write file %s: %w", fullPath, err)
+		}
+		
+		dbg.Logf(debug.LevelDetailed, "Wrote file: %s", fullPath)
+	}
+	
+	// Print messages
+	for _, msg := range result.Messages {
+		fmt.Println(msg)
+	}
+	
+	return nil
+}
+
+// executeContentAction executes a content-type AI action
+func executeContentAction(ctx context.Context, action ai.ContentAction, actionCtx *ai.ActionContext) error {
+	dbg := debug.FromContext(ctx).WithSubsystem("content-action")
+	
+	// Generate content
+	result, err := action.GenerateContent(actionCtx)
+	if err != nil {
+		return fmt.Errorf("content generation failed: %w", err)
+	}
+	
+	// Determine output path
+	outputPath := actionCtx.Config.OutputPath
+	if outputPath == "" {
+		outputPath = action.DefaultOutput()
+	}
+	outputPath = ai.ExpandTemplate(outputPath, actionCtx)
+	
+	// Ensure output path is within project
+	if err := ai.ValidateOutputPath(outputPath, actionCtx.ProjectPath); err != nil {
+		return fmt.Errorf("invalid output path: %w", err)
+	}
+	
+	// Build final content
+	var finalContent strings.Builder
+	finalContent.WriteString(result.ContentBefore)
+	finalContent.WriteString(actionCtx.DistilledContent)
+	finalContent.WriteString(result.ContentAfter)
+	
+	// Create parent directory
+	parentDir := filepath.Dir(outputPath)
+	if err := os.MkdirAll(parentDir, 0755); err != nil {
+		return fmt.Errorf("failed to create directory %s: %w", parentDir, err)
+	}
+	
+	// Write output file
+	if err := os.WriteFile(outputPath, []byte(finalContent.String()), 0644); err != nil {
+		return fmt.Errorf("failed to write output file: %w", err)
+	}
+	
+	dbg.Logf(debug.LevelBasic, "Wrote AI action output to %s (%d bytes)", outputPath, finalContent.Len())
+	fmt.Printf("✅ AI action '%s' completed successfully!\n", action.Name())
+	fmt.Printf("📄 Output saved to: %s\n", outputPath)
+	
+	return nil
+}
+
+// registerAIActions registers all built-in AI actions
+// This is done in the CLI package to avoid import cycles
+func registerAIActions() {
+	registry := ai.GetRegistry()
+	aiactions.Register(registry)
 }
