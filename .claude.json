@@ -1,10 +1,10 @@
 {
   "mcpServers": {
     "aid": {
-      "command": "/home/janreges/ai-distiller/mcp-npm/bin/aid-mcp",
+      "command": "~/ai-distiller/mcp-npm/bin/aid-mcp",
       "args": [],
       "env": {
-        "AID_ROOT": "/home/janreges/ai-distiller",
+        "AID_ROOT": "~/ai-distiller",
         "AID_CACHE_DIR": "~/.cache/aid"
       }
     },
