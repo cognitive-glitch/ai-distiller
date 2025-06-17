@@ -8,17 +8,22 @@ import (
 func Register(registry *ai.ActionRegistry) {
 	// Flow actions (complex, multi-file output)
 	registry.Register(&DeepAnalysisFlowAction{})
+	registry.Register(&MultiFileDocsFlowAction{})
 	
-	// Prompt actions (simple, content generation)
-	registry.Register(&RefactoringPromptAction{})
-	registry.Register(&ComplexCodebasePromptAction{})
-	registry.Register(&SecurityPromptAction{})
-	registry.Register(&PerformancePromptAction{})
+	// Template-based prompt actions (using external markdown templates)
+	registry.Register(&TemplateRefactoringPromptAction{})
+	registry.Register(&TemplateComplexCodebasePromptAction{})
+	registry.Register(&TemplateSecurityPromptAction{})
+	registry.Register(&TemplatePerformancePromptAction{})
+	registry.Register(&TemplateBestPracticesPromptAction{})
+	registry.Register(&TemplateBugHuntingPromptAction{})
+	registry.Register(&TemplateSingleFileDocsPromptAction{})
+	registry.Register(&TemplateDiagramsPromptAction{})
 	
-	// TODO: Register other actions as they are implemented:
-	// - prompt-for-best-practices-analysis
-	// - prompt-for-bug-hunting
-	// - prompt-for-single-file-docs
-	// - flow-for-multi-file-docs
+	// Original embedded prompt actions (kept as fallback)
+	// registry.Register(&RefactoringPromptAction{})
+	// registry.Register(&ComplexCodebasePromptAction{})
+	// registry.Register(&SecurityPromptAction{})
+	// registry.Register(&PerformancePromptAction{})
 }
 
