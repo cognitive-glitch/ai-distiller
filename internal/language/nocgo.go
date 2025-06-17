@@ -6,6 +6,7 @@ package language
 import (
 	"context"
 	"fmt"
+	"io"
 
 	"github.com/janreges/ai-distiller/internal/ir"
 	"github.com/janreges/ai-distiller/internal/processor"
@@ -81,10 +82,10 @@ func (p *stubProcessor) CanProcess(filename string) bool {
 	return false // Always return false when CGO is disabled
 }
 
-func (p *stubProcessor) Process(ctx context.Context, reader processor.Reader, filename string) (*ir.DistilledFile, error) {
+func (p *stubProcessor) Process(ctx context.Context, reader io.Reader, filename string) (*ir.DistilledFile, error) {
 	return nil, fmt.Errorf("%s parser requires CGO to be enabled", p.language)
 }
 
-func (p *stubProcessor) ProcessWithOptions(ctx context.Context, reader processor.Reader, filename string, opts processor.ProcessOptions) (*ir.DistilledFile, error) {
+func (p *stubProcessor) ProcessWithOptions(ctx context.Context, reader io.Reader, filename string, opts processor.ProcessOptions) (*ir.DistilledFile, error) {
 	return nil, fmt.Errorf("%s parser requires CGO to be enabled", p.language)
 }
