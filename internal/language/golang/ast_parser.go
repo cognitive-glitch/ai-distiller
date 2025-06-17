@@ -984,7 +984,7 @@ func (p *ASTParser) processFunction(fn *ast.FuncDecl) *ir.DistilledFunction {
 		distilledFn.Implementation = p.extractImplementationWithConcurrency(fn.Body)
 
 		// Check for interesting constructs for modifiers
-		var goroutines int
+		var goroutines, defers int
 		ast.Inspect(fn.Body, func(n ast.Node) bool {
 			switch n.(type) {
 			case *ast.GoStmt:
