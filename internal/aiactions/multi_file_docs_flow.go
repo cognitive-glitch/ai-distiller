@@ -52,24 +52,12 @@ func (a *MultiFileDocsFlowAction) ExecuteFlow(ctx *ai.ActionContext) (*ai.FlowRe
 	docsIndexPath := fmt.Sprintf("DOCS-INDEX.%s.%s.md", basename, currentDate)
 	docsDir := fmt.Sprintf("docs.%s/%s", basename, currentDate)
 
-	// Generate task list content
-	taskListContent := a.generateDocsTaskList(basename, currentDate, sourceFiles, docsDir, ctx.ProjectPath)
-
-	// Generate documentation index
-	indexContent := a.generateDocsIndex(basename, currentDate, sourceFiles, ctx.ProjectPath)
-
-	// Generate API reference template
-	apiRefContent := a.generateAPIReferenceTemplate(basename, currentDate)
-
-	// Generate README template
-	readmeContent := a.generateREADMETemplate(basename, currentDate)
-
 	// Create the file map
 	files := map[string]string{
-		docsTaskListPath: taskListContent,
-		docsIndexPath:    indexContent,
-		filepath.Join(docsDir, "API-REFERENCE.md"): apiRefContent,
-		filepath.Join(docsDir, "README.md"):        readmeContent,
+		docsTaskListPath:                            a.generateDocsTaskList(basename, currentDate, sourceFiles, docsDir, ctx.ProjectPath),
+		docsIndexPath:                               a.generateDocsIndex(basename, currentDate, sourceFiles, ctx.ProjectPath),
+		filepath.Join(docsDir, "API-REFERENCE.md"): a.generateAPIReferenceTemplate(basename, currentDate),
+		filepath.Join(docsDir, "README.md"):        a.generateREADMETemplate(basename, currentDate),
 	}
 
 	// Generate individual file documentation templates

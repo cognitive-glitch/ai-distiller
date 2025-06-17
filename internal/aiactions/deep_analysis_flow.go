@@ -52,17 +52,11 @@ func (a *DeepAnalysisFlowAction) ExecuteFlow(ctx *ai.ActionContext) (*ai.FlowRes
 	summaryPath := fmt.Sprintf("ANALYSIS-SUMMARY.%s.%s.md", basename, currentDate)
 	analysisDir := fmt.Sprintf("analysis.%s/%s", basename, currentDate)
 
-	// Generate task list content
-	taskListContent := a.generateTaskList(basename, currentDate, sourceFiles, analysisDir)
-
-	// Generate summary file content
-	summaryContent := a.generateSummaryFile(basename, currentDate)
-
 	// Create result with all files to be created
 	result := &ai.FlowResult{
 		Files: map[string]string{
-			taskListPath: taskListContent,
-			summaryPath:  summaryContent,
+			taskListPath: a.generateTaskList(basename, currentDate, sourceFiles, analysisDir),
+			summaryPath:  a.generateSummaryFile(basename, currentDate),
 		},
 		Messages: []string{
 			fmt.Sprintf("✅ AI Analysis Task List generated successfully!"),

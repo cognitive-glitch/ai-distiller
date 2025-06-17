@@ -431,7 +431,7 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 
 	// Create formatter based on format
 	formatterOpts := formatter.Options{}
-	formatter, err := formatter.Get(outputFormat, formatterOpts)
+	outputFormatter, err := formatter.Get(outputFormat, formatterOpts)
 	if err != nil {
 		return fmt.Errorf("failed to get formatter: %w", err)
 	}
@@ -453,7 +453,7 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 			d.Dump(debug.LevelTrace, "IR being formatted", r)
 		})
 		
-		if err := formatter.Format(&output, r); err != nil {
+		if err := outputFormatter.Format(&output, r); err != nil {
 			return fmt.Errorf("failed to format output: %w", err)
 		}
 	case *ir.DistilledDirectory:
@@ -467,7 +467,7 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 		
 		dbg.Logf(debug.LevelDetailed, "Formatting %d files from directory", len(files))
 		
-		if err := formatter.FormatMultiple(&output, files); err != nil {
+		if err := outputFormatter.FormatMultiple(&output, files); err != nil {
 			return fmt.Errorf("failed to format output: %w", err)
 		}
 	default:
@@ -624,14 +624,14 @@ func processStdinWithContext(ctx context.Context) error {
 	
 	// Create formatter based on format
 	formatterOpts := formatter.Options{}
-	formatter, err := formatter.Get(outputFormat, formatterOpts)
+	outputFormatter, err := formatter.Get(outputFormat, formatterOpts)
 	if err != nil {
 		return fmt.Errorf("failed to get formatter: %w", err)
 	}
 	
 	// Format and output
 	var output strings.Builder
-	if err := formatter.Format(&output, result); err != nil {
+	if err := outputFormatter.Format(&output, result); err != nil {
 		return fmt.Errorf("failed to format output: %w", err)
 	}
 	
@@ -1657,7 +1657,7 @@ func distillForAction(ctx context.Context, projectPath string) (string, error) {
 	
 	// Always use text format for AI actions
 	formatterOpts := formatter.Options{}
-	formatter, err := formatter.Get("text", formatterOpts)
+	outputFormatter, err := formatter.Get("text", formatterOpts)
 	if err != nil {
 		return "", fmt.Errorf("failed to get formatter: %w", err)
 	}
@@ -1667,7 +1667,7 @@ func distillForAction(ctx context.Context, projectPath string) (string, error) {
 	
 	switch r := result.(type) {
 	case *ir.DistilledFile:
-		if err := formatter.Format(&output, r); err != nil {
+		if err := outputFormatter.Format(&output, r); err != nil {
 			return "", fmt.Errorf("failed to format output: %w", err)
 		}
 	case *ir.DistilledDirectory:
@@ -1677,7 +1677,7 @@ func distillForAction(ctx context.Context, projectPath string) (string, error) {
 				files = append(files, file)
 			}
 		}
-		if err := formatter.FormatMultiple(&output, files); err != nil {
+		if err := outputFormatter.FormatMultiple(&output, files); err != nil {
 			return "", fmt.Errorf("failed to format output: %w", err)
 		}
 	default:

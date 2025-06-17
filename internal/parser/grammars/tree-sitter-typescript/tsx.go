@@ -1,8 +1,8 @@
 package tree_sitter_typescript
 
 // #cgo CFLAGS: -std=c11 -fPIC -I./source/tsx/src -I./source/common
-// #include "source/tsx/src/parser.c"
-// #include "source/tsx/src/scanner.c"
+// #include "./source/tsx/src/parser.c"
+// #include "./source/tsx/src/scanner.c"
 import "C"
 
 import "unsafe"
