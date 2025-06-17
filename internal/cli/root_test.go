@@ -24,42 +24,42 @@ func TestGenerateOutputFilename(t *testing.T) {
 			path:         "/home/user/myproject",
 			stripOptions: []string{},
 			setupFlags:   func() { resetAllFlags() },
-			expected:     ".myproject.aid.txt",
+			expected:     ".aid.myproject.txt",
 		},
 		{
 			name:         "WithComments",
 			path:         "/home/user/myproject",
 			stripOptions: []string{"comments"},
 			setupFlags:   func() { resetAllFlags() },
-			expected:     ".myproject.ncom.aid.txt",
+			expected:     ".aid.myproject.ncom.txt",
 		},
 		{
 			name:         "MultipleOptions",
 			path:         "/home/user/myproject",
 			stripOptions: []string{"comments", "imports", "implementation"},
 			setupFlags:   func() { resetAllFlags() },
-			expected:     ".myproject.ncom.nimp.nimpl.aid.txt",
+			expected:     ".aid.myproject.ncom.nimp.nimpl.txt",
 		},
 		{
 			name:         "AllOptions",
 			path:         "/home/user/myproject",
 			stripOptions: []string{"comments", "imports", "implementation", "non-public"},
 			setupFlags:   func() { resetAllFlags() },
-			expected:     ".myproject.ncom.nimp.nimpl.npub.aid.txt",
+			expected:     ".aid.myproject.ncom.nimp.nimpl.npub.txt",
 		},
 		{
 			name:         "CurrentDirectory",
 			path:         ".",
 			stripOptions: []string{},
 			setupFlags:   func() { resetAllFlags() },
-			expected:     ".current.aid.txt",
+			expected:     ".aid.current.txt",
 		},
 		{
 			name:         "RootDirectory",
 			path:         "/",
 			stripOptions: []string{},
 			setupFlags:   func() { resetAllFlags() },
-			expected:     ".current.aid.txt",
+			expected:     ".aid.current.txt",
 		},
 		{
 			name:         "NewFlagsWithPrivate",
@@ -69,7 +69,7 @@ func TestGenerateOutputFilename(t *testing.T) {
 				resetAllFlags()
 				includePrivate = boolPtr(true)
 			},
-			expected:     ".myproject.priv.aid.txt",
+			expected:     ".aid.myproject.priv.txt",
 		},
 		{
 			name:         "NewFlagsWithProtectedAndImplementation",
@@ -80,7 +80,7 @@ func TestGenerateOutputFilename(t *testing.T) {
 				includeProtected = boolPtr(true)
 				includeImplementation = boolPtr(true)
 			},
-			expected:     ".myproject.prot.impl.aid.txt",
+			expected:     ".aid.myproject.prot.impl.txt",
 		},
 		{
 			name:         "NewFlagsWithComments",
@@ -90,7 +90,7 @@ func TestGenerateOutputFilename(t *testing.T) {
 				resetAllFlags()
 				includeComments = boolPtr(true)
 			},
-			expected:     ".myproject.com.aid.txt",
+			expected:     ".aid.myproject.com.txt",
 		},
 	}
 
@@ -166,8 +166,8 @@ func TestCLIFlags(t *testing.T) {
 		outputToStdout = false
 		outputFormat = "text"
 		stripOptions = nil
-		includeGlob = ""
-		excludeGlob = ""
+		includeGlob = []string{}
+		excludeGlob = []string{}
 		recursiveStr = "1"
 		filePathType = "relative"
 		strict = false

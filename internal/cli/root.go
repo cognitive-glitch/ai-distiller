@@ -186,6 +186,9 @@ func Execute() error {
 func init() {
 	initFlags()
 	
+	// Initialize help system with custom templates and commands
+	initializeHelpSystem()
+	
 	// Register all built-in AI actions
 	// This is done here to avoid import cycles
 	registerAIActions()
@@ -193,7 +196,7 @@ func init() {
 
 func initFlags() {
 	// Output flags
-	rootCmd.Flags().StringVarP(&outputFile, "output", "o", "", "Output file path (default: .<dir>.[options].aid.txt)")
+	rootCmd.Flags().StringVarP(&outputFile, "output", "o", "", "Output file path (default: .aid.<dir>.[options].txt)")
 	rootCmd.Flags().BoolVar(&outputToStdout, "stdout", false, "Print to stdout (in addition to file)")
 	rootCmd.Flags().StringVar(&outputFormat, "format", "text", "Output format: md|text|jsonl|json-structured|xml (default: text)")
 
@@ -544,7 +547,7 @@ func generateOutputFilename(path string, stripOptions []string) string {
 		optionsSuffix = "." + strings.Join(abbrev, ".")
 	}
 
-	return fmt.Sprintf(".%s%s.aid.txt", dirName, optionsSuffix)
+	return fmt.Sprintf(".aid.%s%s.txt", dirName, optionsSuffix)
 }
 
 func contains(slice []string, item string) bool {
@@ -1204,8 +1207,7 @@ func collectSourceFiles(projectPath string) ([]string, error) {
 				fileName := filepath.Base(relPath)
 				
 				// Skip generated files and AI Distiller output files
-				if strings.HasSuffix(fileName, ".aid.txt") || 
-				   strings.HasSuffix(fileName, ".aid.md") ||
+				if strings.HasPrefix(fileName, ".aid.") ||
 				   strings.HasPrefix(fileName, ".") ||
 				   strings.Contains(fileName, "generated") ||
 				   strings.Contains(fileName, ".generated.") ||
@@ -1414,7 +1416,7 @@ After completing each file analysis, append ONE row to the ANALYSIS-SUMMARY file
 - **Medium issues**: ` + "`" + `<span style="color:#ffaa00">1</span>` + "`" + ` (yellow)
 - **Low issues**: regular text
 
-**For Low Scores** (< 70%):
+**For Low Scores** (< 70%%):
 - **Scores < 50%**: ` + "`" + `<span style="color:#ff0000; font-weight: bold">45</span>` + "`" + ` (red + bold)
 - **Scores 50-69%**: ` + "`" + `<span style="color:#ff6600; font-weight: bold">65</span>` + "`" + ` (orange + bold)
 - **Scores 70-89%**: regular text
@@ -1522,7 +1524,7 @@ After analyzing all files, read the complete ANALYSIS-SUMMARY table and write a 
 
 ---
 
-**Ready to begin comprehensive codebase analysis!**`, basename, infrastructureInfo)
+**Ready to begin comprehensive codebase analysis!**`, basename, infrastructureInfo, basename)
 }
 
 // loadGitSubmodules loads git submodules from .gitmodules file to exclude them from analysis
