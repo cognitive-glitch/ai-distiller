@@ -50,10 +50,21 @@ func (p *Processor) processDirectoryConcurrent(dir string, opts ProcessOptions) 
 
 		// Skip directories
 		if info.IsDir() {
+			// Skip .aid directories completely
+			if filepath.Base(path) == ".aid" {
+				return filepath.SkipDir
+			}
+			
 			// If not recursive and not the root directory, skip subdirectories
 			if !opts.Recursive && path != dir {
 				return filepath.SkipDir
 			}
+			return nil
+		}
+
+		// Skip files containing '.aid.' anywhere in filename
+		basename := filepath.Base(path)
+		if strings.Contains(basename, ".aid.") {
 			return nil
 		}
 

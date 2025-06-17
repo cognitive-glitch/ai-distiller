@@ -102,7 +102,7 @@ ARGUMENTS:
   [path]   Path to the source directory or file. (default: current directory)
 
 FLAGS:  
-  -o, --output <file>         Path to the output file. (default: .<dir_name>.[options].aid.txt)  
+  -o, --output <file>         Path to the output file. (default: .aid.<dir_name>.[options].txt)  
       --stdout                Print output to stdout in addition to writing to a file.  
       --strip <items>         Comma-separated list of items to strip: 'comments', 'imports', 'whitespaces', 'newlines', 'implementation', 'non-public'  
       --include <glob>        Glob pattern for files to include (e.g., "*.go,*.js"). (default: all supported)  
@@ -138,7 +138,7 @@ The output must be a well-structured text file, using a simple XML-like format t
 ### **5.3. Default Behaviors**
 
 * **No Path Argument:** Use the current working directory (.).  
-* **No Output Argument:** Generate filename automatically in the format .DIRECTORY_NAME.[flags].aid.txt. Example: aid --comments=0,implementation in folder MyProject creates .MyProject.ncom.nimpl.aid.txt. The flag abbreviations must be deterministic and documented.  
+* **No Output Argument:** Generate filename automatically in the format .aid.DIRECTORY_NAME.[flags].txt. Example: aid --comments=0,implementation in folder MyProject creates .aid.MyProject.ncom.nimpl.txt. The flag abbreviations must be deterministic and documented.  
 * **Processing:** Default to recursive.
 
 ## **6. Language Support & Testing**

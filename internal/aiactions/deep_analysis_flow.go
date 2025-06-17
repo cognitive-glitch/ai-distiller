@@ -147,8 +147,7 @@ func (a *DeepAnalysisFlowAction) collectSourceFiles(projectPath string, includeP
 			if err == nil {
 				// Skip generated files
 				fileName := filepath.Base(relPath)
-				if strings.HasSuffix(fileName, ".aid.txt") || 
-				   strings.HasSuffix(fileName, ".aid.md") ||
+				if strings.HasPrefix(fileName, ".aid.") ||
 				   strings.HasPrefix(fileName, ".") ||
 				   strings.Contains(fileName, "generated") {
 					return nil

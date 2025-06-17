@@ -34,9 +34,15 @@ aid .git --with-analysis-prompt      # Include AI analysis prompt for insights
 
 # AI-powered analysis modes:
 aid --ai-action=flow-for-deep-file-to-file-analysis     # Generate comprehensive task list
-aid --ai-action=prompt-for-refactoring-suggestion      # Generate refactoring analysis prompt
-aid --ai-action=prompt-for-security-analysis           # Security-focused analysis prompt
-aid --ai-action=prompt-for-complex-codebase-analysis   # Full codebase analysis with diagrams
+aid --ai-action=flow-for-multi-file-docs                # Generate documentation workflow
+aid --ai-action=prompt-for-refactoring-suggestion       # Generate refactoring analysis prompt
+aid --ai-action=prompt-for-complex-codebase-analysis    # Full codebase analysis with diagrams
+aid --ai-action=prompt-for-security-analysis            # Security-focused analysis prompt
+aid --ai-action=prompt-for-performance-analysis         # Performance optimization analysis
+aid --ai-action=prompt-for-best-practices-analysis      # Best practices and code quality analysis
+aid --ai-action=prompt-for-bug-hunting                  # Systematic bug hunting analysis
+aid --ai-action=prompt-for-single-file-docs             # Single file documentation analysis
+aid --ai-action=prompt-for-diagrams                     # Generate 10 beneficial Mermaid diagrams
 
 # Legacy mode (deprecated):
 aid --ai-analysis-task-list                    # Use --ai-action=flow-for-deep-file-to-file-analysis instead
@@ -104,8 +110,8 @@ aid src/ --include-only=public,protected,imports
 
 **Output File:**
 - `-o, --output <file>` - Output file (default: auto-generated)
-  - Default pattern: `.<dirname>.[options].aid.txt`
-  - Example: `.MyProject.prot.int.impl.aid.txt` (includes protected, internal, implementation)
+  - Default pattern: `.aid.<dirname>.[options].txt`
+  - Example: `.aid.MyProject.prot.int.impl.txt` (includes protected, internal, implementation)
 
 **AI Actions:**
 - `--ai-action <action>` - AI-powered analysis action
@@ -675,7 +681,7 @@ For data dumps at level 3:
 2. **Check for and remove:**
    - Temporary debug files (*.tmp, *.log, debug.*)
    - Built test binaries (aid, test executables)
-   - Test output files (.*.aid.txt in root directory)
+   - Test output files (.aid.*.txt in root directory)
    - IDE/editor files (.vscode/, .idea/, *.swp)
    - Personal test files not meant for the repo
    - Any one-off debugging scripts

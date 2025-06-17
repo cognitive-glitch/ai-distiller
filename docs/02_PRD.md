@@ -108,7 +108,7 @@ ARGUMENTS:
   [path]   Path to source directory or file (default: current directory)
 
 FLAGS:
-  -o, --output <file>      Output file path (default: .<dir>.[options].aid.txt)
+  -o, --output <file>      Output file path (default: .aid.<dir>.[options].txt)
       --stdout             Print to stdout (in addition to file)
       --format <fmt>       Output format: md|jsonl|json-structured|xml (default: md)
       --strip <items>      Remove items: comments,imports,implementation,non-public
