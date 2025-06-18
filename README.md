@@ -865,8 +865,44 @@ make test-integration  # Integration tests
 
 # Build binary
 make build        # Build for current platform
-make cross-compile  # Build for all platforms
 ```
+
+### Building Release Binaries
+
+AI Distiller requires CGO for full language support via tree-sitter parsers. To build release binaries for all supported platforms:
+
+#### Prerequisites
+
+**Ubuntu/Debian:**
+```bash
+# Install cross-compilation toolchains
+sudo apt-get update
+sudo apt-get install -y gcc-aarch64-linux-gnu gcc-mingw-w64-x86-64
+
+# For macOS cross-compilation, you need osxcross:
+# 1. Clone osxcross: git clone https://github.com/tpoechtrager/osxcross tools/osxcross
+# 2. Obtain macOS SDK (see https://github.com/tpoechtrager/osxcross#packaging-the-sdk)
+# 3. Place SDK in tools/osxcross/tarballs/
+# 4. Build osxcross: cd tools/osxcross && ./build.sh
+```
+
+#### Build All Platforms
+
+```bash
+# Build release archives for all platforms
+./scripts/build-releases.sh
+
+# This creates:
+# - aid-linux-amd64.tar.gz    (Linux 64-bit)
+# - aid-linux-arm64.tar.gz    (Linux ARM64)
+# - aid-darwin-amd64.tar.gz   (macOS Intel)
+# - aid-darwin-arm64.tar.gz   (macOS Apple Silicon)
+# - aid-windows-amd64.zip     (Windows 64-bit)
+```
+
+The script automatically detects available toolchains and builds for all possible platforms. Each archive contains the `aid` binary (or `aid.exe` for Windows) with full language support.
+
+**Note**: Without proper toolchains, only the native platform will be built.
 
 ## 📄 License
 
