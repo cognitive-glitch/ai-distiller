@@ -45,10 +45,10 @@ build_platform() {
     
     if [ -z "$CC" ]; then
         # Native build
-        CGO_ENABLED=1 GOOS=$GOOS GOARCH=$GOARCH go build -ldflags "$LDFLAGS" -o "$TEMP_OUTPUT" ./cmd/aid
+        CGO_ENABLED=1 GOOS=$GOOS GOARCH=$GOARCH go build -tags "cgo" -ldflags "$LDFLAGS" -o "$TEMP_OUTPUT" ./cmd/aid
     else
         # Cross-compile with specific compiler
-        CC=$CC CGO_ENABLED=1 GOOS=$GOOS GOARCH=$GOARCH go build -ldflags "$LDFLAGS" -o "$TEMP_OUTPUT" ./cmd/aid
+        CC=$CC CGO_ENABLED=1 GOOS=$GOOS GOARCH=$GOARCH go build -tags "cgo" -ldflags "$LDFLAGS" -o "$TEMP_OUTPUT" ./cmd/aid
     fi
     
     if [ $? -eq 0 ]; then
