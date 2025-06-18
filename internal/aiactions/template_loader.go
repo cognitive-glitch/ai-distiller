@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"text/template"
 	"time"
@@ -17,22 +18,12 @@ type TemplateData struct {
 
 // LoadTemplate loads and renders a template from the templates directory
 func LoadTemplate(templateName string, data TemplateData) (string, error) {
-	// Get executable path to find templates directory
-	execPath, err := os.Executable()
-	if err != nil {
-		return "", fmt.Errorf("failed to get executable path: %w", err)
+	templatePath := findTemplatePath(templateName)
+	if templatePath == "" {
+		cwd, _ := os.Getwd()
+		return "", fmt.Errorf("template file not found: %s (searched from %s)", templateName+".md", cwd)
 	}
-
-	// Try relative to executable first (for production)
-	templatesDir := filepath.Join(filepath.Dir(execPath), "internal", "aiactions", "templates")
-	templatePath := filepath.Join(templatesDir, templateName+".md")
-
-	// If not found, try relative to current directory (for development)
-	if _, err := os.Stat(templatePath); os.IsNotExist(err) {
-		templatesDir = filepath.Join("internal", "aiactions", "templates")
-		templatePath = filepath.Join(templatesDir, templateName+".md")
-	}
-
+	
 	// Load template file
 	content, err := os.ReadFile(templatePath)
 	if err != nil {
@@ -52,6 +43,62 @@ func LoadTemplate(templateName string, data TemplateData) (string, error) {
 	}
 
 	return buf.String(), nil
+}
+
+// findTemplatePath searches for the template file in multiple locations
+func findTemplatePath(templateName string) string {
+	// Strategy 1: Use runtime.Caller to find the source file location
+	if _, filename, _, ok := runtime.Caller(1); ok {
+		// Go up from template_loader.go to aiactions dir, then to templates
+		aiactionsDir := filepath.Dir(filename)
+		templatePath := filepath.Join(aiactionsDir, "templates", templateName+".md")
+		if _, err := os.Stat(templatePath); err == nil {
+			return templatePath
+		}
+	}
+	
+	// Strategy 2: Get executable path to find templates directory
+	if execPath, err := os.Executable(); err == nil {
+		// Try relative to executable first (for production)
+		templatesDir := filepath.Join(filepath.Dir(execPath), "internal", "aiactions", "templates")
+		templatePath := filepath.Join(templatesDir, templateName+".md")
+		if _, err := os.Stat(templatePath); err == nil {
+			return templatePath
+		}
+		
+		// Try going up from executable to find project root
+		execDir := filepath.Dir(execPath)
+		for i := 0; i < 5; i++ {
+			templatesDir := filepath.Join(execDir, "internal", "aiactions", "templates")
+			templatePath := filepath.Join(templatesDir, templateName+".md")
+			if _, err := os.Stat(templatePath); err == nil {
+				return templatePath
+			}
+			parent := filepath.Dir(execDir)
+			if parent == execDir {
+				break
+			}
+			execDir = parent
+		}
+	}
+
+	// Strategy 3: Try relative to current directory (for development)
+	cwd, _ := os.Getwd()
+	currentDir := cwd
+	for i := 0; i < 10; i++ {
+		templatesDir := filepath.Join(currentDir, "internal", "aiactions", "templates")
+		templatePath := filepath.Join(templatesDir, templateName+".md")
+		if _, err := os.Stat(templatePath); err == nil {
+			return templatePath
+		}
+		parent := filepath.Dir(currentDir)
+		if parent == currentDir {
+			break
+		}
+		currentDir = parent
+	}
+	
+	return ""
 }
 
 // CreateTemplateData creates template data with common values

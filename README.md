@@ -361,6 +361,34 @@ Perfect for systematic code reviews, security audits, and onboarding new team me
 - **JSONL** (`--format jsonl`) - Streaming format
 - **XML** (`--format xml`) - Legacy system compatible
 
+### 📁 Smart Project Root Detection
+
+AI Distiller automatically detects your project root and centralizes all outputs in a `.aid/` directory:
+
+- **Automatic detection**: Searches upward for `.aidrc`, `go.mod`, `package.json`, `.git`, etc.
+- **Consistent location**: All outputs go to `<project-root>/.aid/` regardless of where you run `aid`
+- **Cache management**: MCP cache stored in `.aid/cache/` for better organization
+- **Easy cleanup**: Add `.aid/` to `.gitignore` to keep outputs out of version control
+
+**Detection priority:**
+1. **`.aidrc` file** - Create this empty file to explicitly mark your project root
+2. **Language markers** - `go.mod`, `package.json`, `pyproject.toml`, etc.
+3. **Version control** - `.git` directory
+4. **Environment variable** - `AID_PROJECT_ROOT` (fallback if no markers found)
+5. **Current directory** - Final fallback with warning
+
+```bash
+# Mark a specific directory as project root (recommended)
+touch /my/project/.aidrc
+
+# Run from anywhere in your project - outputs always go to project root
+cd deep/nested/directory
+aid ../../../src  # Output: <project-root>/.aid/aid.src.txt
+
+# Use environment variable as fallback (useful for CI/CD)
+AID_PROJECT_ROOT=/build/workspace aid src/
+```
+
 ### 🌍 Language Support
 Currently supports 12+ languages via tree-sitter:
 - **Full Support**: Python, TypeScript, JavaScript, Go, Java, C#, Rust
@@ -716,7 +744,8 @@ This creates:
 
 - [Installation Guide](docs/installation.md)
 - [CLI Reference](docs/cli-reference.md)
-- [MCP Integration Guide](docs/mcp-integration.md) 🆕
+- [Project Root Detection](docs/user/project-root-detection.md) - How `.aid/` directory location is determined 🆕
+- [MCP Integration Guide](docs/mcp-integration.md)
 - [Language Support](docs/lang/)
   - [Python](docs/lang/python.md)
   - [C#](docs/lang/csharp.md)

@@ -207,6 +207,29 @@ This mode is useful for:
 - Understanding project evolution
 - Creating release notes
 
+## Project Root Detection and Output Organization
+
+AI Distiller automatically detects your project root directory to centralize all outputs:
+
+### Detection Strategy (in order of priority):
+1. **`.aidrc` file** - Empty marker file to explicitly define project root (highest priority)
+2. **Language markers** - `go.mod`, `package.json`, `pyproject.toml`, `Cargo.toml`, etc.
+3. **Version control** - `.git` directory
+4. **AID_PROJECT_ROOT** environment variable (fallback if no markers found)
+5. **Current working directory** - Final fallback with warning
+
+### Implementation Details:
+- Searches up to 12 parent directories from current location
+- Stops at home directory for security (won't traverse above ~)
+- All outputs go to `<project-root>/.aid/` regardless of where `aid` is run
+- MCP cache goes to `<project-root>/.aid/cache/mcp/`
+- Cache TTL: 5 minutes for MCP operations
+
+### Key Files:
+- `internal/project/root.go` - Project root detection logic
+- `internal/project/root_test.go` - Comprehensive tests for detection
+- Detection happens once per process and is cached
+
 ## Expected Output Examples
 
 ### Text Format (Ultra-Compact for AI)

@@ -20,6 +20,7 @@ import (
 	"github.com/janreges/ai-distiller/internal/formatter"
 	"github.com/janreges/ai-distiller/internal/ir"
 	"github.com/janreges/ai-distiller/internal/processor"
+	"github.com/janreges/ai-distiller/internal/project"
 	"github.com/janreges/ai-distiller/internal/language"
 	"github.com/janreges/ai-distiller/internal/version"
 	_ "github.com/janreges/ai-distiller/internal/language" // Register language processors
@@ -493,6 +494,14 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 }
 
 func generateOutputFilename(path string, stripOptions []string) string {
+	// Get project root and ensure .aid directory exists
+	aidDir, err := project.EnsureAidDir()
+	if err != nil {
+		// Fallback to current directory
+		aidDir = ".aid"
+		os.MkdirAll(aidDir, 0755)
+	}
+	
 	// Get directory name
 	dirName := filepath.Base(path)
 	if dirName == "." || dirName == "/" {
@@ -557,7 +566,9 @@ func generateOutputFilename(path string, stripOptions []string) string {
 		optionsSuffix = "." + strings.Join(abbrev, ".")
 	}
 
-	return fmt.Sprintf(".aid.%s%s.txt", dirName, optionsSuffix)
+	// Generate filename within .aid directory
+	filename := fmt.Sprintf("aid.%s%s.txt", dirName, optionsSuffix)
+	return filepath.Join(aidDir, filename)
 }
 
 func contains(slice []string, item string) bool {

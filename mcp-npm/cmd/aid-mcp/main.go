@@ -11,6 +11,7 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 	"github.com/janreges/ai-distiller/mcp-npm/internal/service"
+	"github.com/janreges/ai-distiller/internal/project"
 )
 
 const (
@@ -44,8 +45,14 @@ func main() {
 	rootPath, _ = filepath.Abs(rootPath)
 
 	if cacheDir == "" {
-		home, _ := os.UserHomeDir()
-		cacheDir = filepath.Join(home, ".cache", "aid")
+		// Try to get project root cache directory
+		if projectCacheDir := getProjectCacheDir(); projectCacheDir != "" {
+			cacheDir = projectCacheDir
+		} else {
+			// Fallback to user home cache
+			home, _ := os.UserHomeDir()
+			cacheDir = filepath.Join(home, ".cache", "aid")
+		}
 	}
 
 	// Create cache directory if it doesn't exist
@@ -77,6 +84,15 @@ func main() {
 	if err := server.ServeStdio(s); err != nil {
 		log.Fatalf("Server error: %v", err)
 	}
+}
+
+// getProjectCacheDir attempts to get the project root cache directory
+func getProjectCacheDir() string {
+	cacheDir, err := project.GetCacheDir()
+	if err != nil {
+		return ""
+	}
+	return cacheDir
 }
 
 func registerTools(s *server.MCPServer, svc *service.DistillerService) {

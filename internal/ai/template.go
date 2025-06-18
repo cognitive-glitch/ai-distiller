@@ -4,11 +4,24 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"github.com/janreges/ai-distiller/internal/project"
 )
 
 // ExpandTemplate expands template variables in a path template
 func ExpandTemplate(template string, ctx *ActionContext) string {
 	result := template
+	
+	// Replace ./.aid/ with project root .aid/
+	if strings.HasPrefix(result, "./.aid/") || strings.HasPrefix(result, ".aid/") {
+		aidDir, err := project.GetAidDir()
+		if err == nil {
+			if strings.HasPrefix(result, "./.aid/") {
+				result = filepath.Join(aidDir, strings.TrimPrefix(result, "./.aid/"))
+			} else {
+				result = filepath.Join(aidDir, strings.TrimPrefix(result, ".aid/"))
+			}
+		}
+	}
 	
 	// Time-based replacements
 	now := ctx.Timestamp
@@ -40,15 +53,35 @@ func ExpandTemplate(template string, ctx *ActionContext) string {
 
 // ValidateOutputPath validates that an output path is safe
 func ValidateOutputPath(path string, projectPath string) error {
-	// Ensure the path is not absolute (unless it's within project)
-	if filepath.IsAbs(path) {
-		absProject, _ := filepath.Abs(projectPath)
-		absPath, _ := filepath.Abs(path)
-		
-		// Check if the absolute path is within the project directory
-		if !strings.HasPrefix(absPath, absProject) {
-			return fmt.Errorf("output path must be within project directory")
+	// Get absolute paths for comparison
+	absProject, err := filepath.Abs(projectPath)
+	if err != nil {
+		return fmt.Errorf("failed to get absolute project path: %w", err)
+	}
+	
+	absPath := path
+	if !filepath.IsAbs(path) {
+		// If relative, make it relative to project path
+		absPath = filepath.Join(projectPath, path)
+	}
+	absPath, err = filepath.Abs(absPath)
+	if err != nil {
+		return fmt.Errorf("failed to get absolute output path: %w", err)
+	}
+	
+	// Ensure paths have consistent separators
+	absProject = filepath.Clean(absProject)
+	absPath = filepath.Clean(absPath)
+	
+	// Check if the output path is within the project directory
+	// Add separator to ensure we're checking directory boundaries
+	if !strings.HasPrefix(absPath, absProject+string(filepath.Separator)) && absPath != absProject {
+		// Special case: if path is in .aid directory at project root, it's allowed
+		projectRoot, _ := project.FindRoot()
+		if projectRoot != nil && strings.HasPrefix(absPath, filepath.Join(projectRoot.Path, project.AidDirName)) {
+			return nil
 		}
+		return fmt.Errorf("output path must be within project directory")
 	}
 	
 	// Check for path traversal attempts
