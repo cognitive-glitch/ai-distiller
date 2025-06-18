@@ -141,8 +141,17 @@ ALTERNATIVE FILTERING:
 ───────────────────────────────────────────────────────────────────────────────
 
 FILE SELECTION:
-  --include <pattern>          Include file patterns (e.g., "*.py")
-  --exclude <pattern>          Exclude file patterns (e.g., "*test*")
+  --include <pattern>          Include file patterns (comma-separated)
+                              Examples: "*.go", "*.go,*.py", "src/**/*.js"
+  --exclude <pattern>          Exclude file patterns (comma-separated)
+                              Examples: "*_test.go", "vendor/**", "*/tmp/*"
+                              
+                              Pattern types:
+                              - Simple: "*.go" (matches Go files)
+                              - Multiple: "*.go,*.py,*.js" (multiple extensions)
+                              - Directory: "vendor/**" (exclude vendor tree)
+                              - Path: "*/internal/*" (match path segments)
+                              - Complex: "src/**/*.js" (recursive directory)
 
 PROCESSING MODE:
   --raw                        Process all text files without parsing
@@ -175,7 +184,13 @@ EXAMPLES:
   aid -w 1                     # Force serial processing
   aid --relative-path-prefix="module/" docs/  # Add custom prefix to paths
   aid .git                     # Show git commit history (special mode)
-  aid .git --git-limit=50      # Show latest 50 commits`,
+  aid .git --git-limit=50      # Show latest 50 commits
+  
+  # File filtering examples:
+  aid --exclude "*_test.go"    # Exclude test files
+  aid --include "*.go,*.py"    # Only Go and Python files
+  aid --exclude "vendor/**,node_modules/**"  # Skip dependency directories
+  aid src/ --include "**/*.ts" --exclude "**/*.spec.ts"  # TypeScript without tests`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: runDistiller,
 }

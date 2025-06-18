@@ -309,7 +309,7 @@ func registerFileOperations(s *server.MCPServer, svc *service.DistillerService) 
 
 	// distill_directory tool (backwards compatibility with pagination support)
 	distillDirTool := mcp.NewTool("distill_directory",
-		mcp.WithDescription("Extracts code structure from directories with automatic pagination for large results. Returns paginated responses when content exceeds ~20000 tokens. Use page_token to get subsequent pages.\n\nCACHING STRATEGY for large codebases:\n- First page: Call with no_cache=true to ensure fresh data and populate cache\n- Subsequent pages: Use cached data (default) for consistency\n- Cache TTL: 5 minutes\n- Alternative: For very large analyses, consider using aid_analyze which saves results to files that can be read directly"),
+		mcp.WithDescription("Extracts code structure from directories with automatic pagination for large results. Returns paginated responses when content exceeds ~20000 tokens. Use page_token to get subsequent pages.\n\nFILE PATTERN FILTERING:\n- Include patterns: \"*.go\", \"*.go,*.py\", \"src/**/*.js\"\n- Exclude patterns: \"*_test.go\", \"vendor/**\", \"*/tmp/*\", \"node_modules/**\"\n- Supports multiple patterns (comma-separated)\n- Supports ** for recursive directory matching\n- Examples:\n  - Exclude tests: exclude_patterns=\"*_test.go,*.spec.js\"\n  - Only source files: include_patterns=\"src/**/*.ts\", exclude_patterns=\"**/*.d.ts\"\n  - Skip dependencies: exclude_patterns=\"vendor/**,node_modules/**,build/**\"\n\nCACHING STRATEGY for large codebases:\n- First page: Call with no_cache=true to ensure fresh data and populate cache\n- Subsequent pages: Use cached data (default) for consistency\n- Cache TTL: 5 minutes\n- Alternative: For very large analyses, consider using aid_analyze which saves results to files that can be read directly"),
 		mcp.WithString("directory_path",
 			mcp.Required(),
 			mcp.Description("Path to directory"),
@@ -324,10 +324,10 @@ func registerFileOperations(s *server.MCPServer, svc *service.DistillerService) 
 			mcp.Description("Include function bodies (default: false)"),
 		),
 		mcp.WithString("include_patterns",
-			mcp.Description("File patterns to include"),
+			mcp.Description("File patterns to include (comma-separated): '*.go,*.py' or 'src/**/*.js'"),
 		),
 		mcp.WithString("exclude_patterns",
-			mcp.Description("File patterns to exclude"),
+			mcp.Description("File patterns to exclude (comma-separated): '*_test.go,vendor/**'"),
 		),
 		mcp.WithString("output_format",
 			mcp.Description("Output format"),

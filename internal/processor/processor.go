@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/janreges/ai-distiller/internal/debug"
@@ -336,41 +337,105 @@ func (p *Processor) GetLanguage(filename string) string {
 
 // shouldIncludeFile checks if a file should be included based on include/exclude patterns
 func shouldIncludeFile(filePath string, includePatterns, excludePatterns []string) bool {
-	// If exclude patterns are specified and any matches, exclude the file
-	for _, excludePattern := range excludePatterns {
-		if excludePattern != "" {
-			matched, err := filepath.Match(excludePattern, filePath)
-			if err == nil && matched {
+	// Normalize path separators for consistent matching
+	normalizedPath := filepath.ToSlash(filePath)
+	
+	// Check exclude patterns first
+	for _, pattern := range excludePatterns {
+		if pattern == "" {
+			continue
+		}
+		
+		// Normalize pattern for cross-platform compatibility
+		normalizedPattern := filepath.ToSlash(pattern)
+		
+		// Check for directory exclusion patterns (e.g., "vendor/**", "*/test/*")
+		if strings.Contains(normalizedPattern, "/") {
+			if matchesPathPattern(normalizedPath, normalizedPattern) {
 				return false
 			}
-			// Also check if the pattern matches the filename only
-			matched, err = filepath.Match(excludePattern, filepath.Base(filePath))
-			if err == nil && matched {
+		} else {
+			// Simple filename pattern
+			if matched, _ := filepath.Match(pattern, filepath.Base(filePath)); matched {
 				return false
 			}
 		}
 	}
 	
-	// If include patterns are specified, only include files that match any pattern
+	// If include patterns specified, file must match at least one
 	if len(includePatterns) > 0 {
-		for _, includePattern := range includePatterns {
-			if includePattern != "" {
-				matched, err := filepath.Match(includePattern, filePath)
-				if err == nil && matched {
+		for _, pattern := range includePatterns {
+			if pattern == "" {
+				continue
+			}
+			
+			// Normalize pattern
+			normalizedPattern := filepath.ToSlash(pattern)
+			
+			// Check for path patterns
+			if strings.Contains(normalizedPattern, "/") {
+				if matchesPathPattern(normalizedPath, normalizedPattern) {
 					return true
 				}
-				// Also check if the pattern matches the filename only
-				matched, err = filepath.Match(includePattern, filepath.Base(filePath))
-				if err == nil && matched {
+			} else {
+				// Simple filename pattern
+				if matched, _ := filepath.Match(pattern, filepath.Base(filePath)); matched {
 					return true
 				}
 			}
 		}
-		// If include patterns are specified but none match, exclude
 		return false
 	}
 	
-	// No patterns specified or exclude patterns don't match, include the file
 	return true
+}
+
+// matchesPathPattern checks if a path matches a pattern that may contain directory components
+func matchesPathPattern(path, pattern string) bool {
+	// Handle ** for recursive directory matching
+	if strings.Contains(pattern, "**") {
+		// Convert ** to a regex pattern
+		regexPattern := strings.ReplaceAll(pattern, "**", ".*")
+		regexPattern = strings.ReplaceAll(regexPattern, "*", "[^/]*")
+		
+		// If pattern doesn't start with **, check if it's a relative path pattern
+		if !strings.HasPrefix(pattern, "**") && !strings.HasPrefix(pattern, "/") {
+			// For patterns like "internal/**/*.go", we need to match the path suffix
+			// Check if path contains the pattern as a suffix match
+			re, err := regexp.Compile(regexPattern)
+			if err == nil {
+				// Check if any suffix of the path matches
+				parts := strings.Split(path, "/")
+				for i := 0; i < len(parts); i++ {
+					subPath := strings.Join(parts[i:], "/")
+					if re.MatchString(subPath) {
+						return true
+					}
+				}
+			}
+			return false
+		}
+		
+		// For patterns starting with ** or /, do full path match
+		regexPattern = "^" + regexPattern + "$"
+		matched, _ := regexp.MatchString(regexPattern, path)
+		return matched
+	}
+	
+	// Handle patterns with specific directory paths
+	if strings.HasSuffix(pattern, "/*") {
+		// Pattern like "vendor/*" - check if path is directly under this directory
+		dir := strings.TrimSuffix(pattern, "/*")
+		return strings.HasPrefix(path, dir+"/") && !strings.Contains(strings.TrimPrefix(path, dir+"/"), "/")
+	}
+	
+	// Handle exact directory prefix patterns
+	if strings.HasSuffix(pattern, "/") {
+		return strings.HasPrefix(path, pattern)
+	}
+	
+	// Try standard glob matching on full path
+	matched, _ := filepath.Match(pattern, path)
+	return matched
 }
 
