@@ -21,28 +21,18 @@
     "url": "https://github.com/janreges/ai-distiller/issues"
   },
   "homepage": "https://github.com/janreges/ai-distiller#readme",
-  "main": "index.js",
+  "main": "mcp-server.js",
   "bin": {
-    "aid-mcp": "./bin/aid-mcp"
+    "aid-mcp": "./mcp-server.js"
   },
   "scripts": {
-    "postinstall": "go-npm install",
-    "preuninstall": "go-npm uninstall",
-    "build": "cd .. && go build -o mcp-npm/bin/aid-mcp ./mcp-npm/cmd/aid-mcp",
-    "test": "echo \"No tests yet\"",
-    "prepublishOnly": "npm run build"
-  },
-  "dependencies": {
-    "go-npm": "^0.1.9"
-  },
-  "goBinary": {
-    "name": "aid-mcp",
-    "path": "./bin",
-    "url": "https://github.com/janreges/ai-distiller/releases/download/v{{version}}/aid-mcp_{{version}}_{{platform}}_{{arch}}.tar.gz"
+    "postinstall": "node scripts/postinstall.js",
+    "test": "echo \"No tests yet\""
   },
   "files": [
     "bin/",
-    "index.js",
+    "scripts/",
+    "mcp-server.js",
     "README.md",
     "LICENSE"
   ],

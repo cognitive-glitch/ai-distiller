@@ -1,0 +1,20 @@
+# Ignore binaries - they will be downloaded during installation
+bin/aid
+bin/aid.exe
+
+# Development files
+test-npm-install/
+*.tgz
+test-*.sh
+install-local.sh
+
+# Go files (not needed for NPM package)
+go.mod
+go.sum
+cmd/
+internal/
+aid-mcp
+
+# Test and example files
+examples/
+claude-desktop-config.json
