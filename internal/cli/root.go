@@ -582,7 +582,7 @@ func processStdinWithContext(ctx context.Context) error {
 	var buffer bytes.Buffer
 	tee := io.TeeReader(os.Stdin, &buffer)
 	
-	// Read up to 64KB for detection
+	// Read up to 64kB for detection
 	detectBuf := make([]byte, 64*1024)
 	n, _ := tee.Read(detectBuf)
 	detectBuf = detectBuf[:n]
@@ -1690,6 +1690,7 @@ func distillForAction(ctx context.Context, projectPath string) (string, error) {
 
 // executeFlowAction executes a flow-type AI action
 func executeFlowAction(ctx context.Context, action ai.FlowAction, actionCtx *ai.ActionContext) error {
+	startTime := time.Now()
 	dbg := debug.FromContext(ctx).WithSubsystem("flow-action")
 	
 	// Determine output path
@@ -1715,7 +1716,9 @@ func executeFlowAction(ctx context.Context, action ai.FlowAction, actionCtx *ai.
 		return fmt.Errorf("failed to create output directory: %w", err)
 	}
 	
-	// Write all files
+	// Write all files and track total size
+	var totalSize int64
+	fileCount := 0
 	for relPath, content := range result.Files {
 		fullPath := filepath.Join(outputPath, relPath)
 		
@@ -1726,23 +1729,36 @@ func executeFlowAction(ctx context.Context, action ai.FlowAction, actionCtx *ai.
 		}
 		
 		// Write file
-		if err := os.WriteFile(fullPath, []byte(content), 0644); err != nil {
+		contentBytes := []byte(content)
+		if err := os.WriteFile(fullPath, contentBytes, 0644); err != nil {
 			return fmt.Errorf("failed to write file %s: %w", fullPath, err)
 		}
 		
-		dbg.Logf(debug.LevelDetailed, "Wrote file: %s", fullPath)
+		totalSize += int64(len(contentBytes))
+		fileCount++
+		sizeKB := float64(len(contentBytes)) / 1024.0
+		dbg.Logf(debug.LevelDetailed, "Wrote file: %s (%.1f kB)", fullPath, sizeKB)
 	}
+	
+	// Calculate duration and total size
+	duration := time.Since(startTime)
+	totalSizeKB := float64(totalSize) / 1024.0
 	
 	// Print messages
 	for _, msg := range result.Messages {
 		fmt.Println(msg)
 	}
 	
+	// Print summary
+	fmt.Printf("✅ AI flow action '%s' completed successfully! (%.2fs)\n", action.Name(), duration.Seconds())
+	fmt.Printf("📄 Output saved to: %s (%d files, %.1f kB total)\n", outputPath, fileCount, totalSizeKB)
+	
 	return nil
 }
 
 // executeContentAction executes a content-type AI action
 func executeContentAction(ctx context.Context, action ai.ContentAction, actionCtx *ai.ActionContext) error {
+	startTime := time.Now()
 	dbg := debug.FromContext(ctx).WithSubsystem("content-action")
 	
 	// Generate content
@@ -1776,13 +1792,24 @@ func executeContentAction(ctx context.Context, action ai.ContentAction, actionCt
 	}
 	
 	// Write output file
-	if err := os.WriteFile(outputPath, []byte(finalContent.String()), 0644); err != nil {
+	content := []byte(finalContent.String())
+	if err := os.WriteFile(outputPath, content, 0644); err != nil {
 		return fmt.Errorf("failed to write output file: %w", err)
 	}
 	
-	dbg.Logf(debug.LevelBasic, "Wrote AI action output to %s (%d bytes)", outputPath, finalContent.Len())
-	fmt.Printf("✅ AI action '%s' completed successfully!\n", action.Name())
-	fmt.Printf("📄 Output saved to: %s\n", outputPath)
+	// Get file info for size
+	fileInfo, err := os.Stat(outputPath)
+	if err != nil {
+		return fmt.Errorf("failed to stat output file: %w", err)
+	}
+	
+	// Calculate size in kB
+	sizeKB := float64(fileInfo.Size()) / 1024.0
+	duration := time.Since(startTime)
+	
+	dbg.Logf(debug.LevelBasic, "Wrote AI action output to %s (%d bytes, %.1f kB) in %v", outputPath, fileInfo.Size(), sizeKB, duration)
+	fmt.Printf("✅ AI action '%s' completed successfully! (%.2fs)\n", action.Name(), duration.Seconds())
+	fmt.Printf("📄 Output saved to: %s (%.1f kB)\n", outputPath, sizeKB)
 	
 	return nil
 }

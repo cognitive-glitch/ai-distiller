@@ -100,7 +100,7 @@ func registerTools(s *server.MCPServer, svc *service.DistillerService) {
 // Core base tool for all AI analysis
 func registerAidAnalyze(s *server.MCPServer, svc *service.DistillerService) {
 	tool := mcp.NewTool("aid_analyze",
-		mcp.WithDescription("Core AI Distiller analysis engine. Use specialized tools (aid_hunt_bugs, aid_suggest_refactoring, etc.) when available. This tool directly maps to aid --ai-action for advanced or custom analysis flows not covered by specialized tools."),
+		mcp.WithDescription("Core AI Distiller analysis engine with automatic pagination for large outputs. Use specialized tools (aid_hunt_bugs, aid_suggest_refactoring, etc.) when available. This tool directly maps to aid --ai-action for advanced or custom analysis flows. Responses are automatically paginated when exceeding ~20000 tokens.\n\nIMPORTANT: This tool generates analysis files on disk. The output includes file paths to the generated analysis. For best results, read these files directly instead of trying to process the entire analysis through MCP responses."),
 		mcp.WithString("ai_action",
 			mcp.Required(),
 			mcp.Description("The specific AI action to execute"),
@@ -147,7 +147,7 @@ func registerAidAnalyze(s *server.MCPServer, svc *service.DistillerService) {
 // Specialized tool for bug hunting
 func registerAidHuntBugs(s *server.MCPServer, svc *service.DistillerService) {
 	tool := mcp.NewTool("aid_hunt_bugs",
-		mcp.WithDescription("Systematically scans code files to identify potential bugs, logical errors, race conditions, and quality issues. Use when you suspect hidden bugs or want a comprehensive code health check. Returns detailed bug analysis with explanations and fix suggestions."),
+		mcp.WithDescription("Systematically scans code files to identify potential bugs, logical errors, race conditions, and quality issues. Use when you suspect hidden bugs or want a comprehensive code health check. Returns detailed bug analysis with explanations and fix suggestions.\n\nOUTPUT: Generates a detailed markdown file with bug analysis. The response includes the file path - read this file directly for the complete analysis rather than processing through MCP pagination."),
 		mcp.WithString("target_path",
 			mcp.Required(),
 			mcp.Description("Path to directory or file to scan for bugs"),
@@ -171,7 +171,7 @@ func registerAidHuntBugs(s *server.MCPServer, svc *service.DistillerService) {
 // Specialized tool for refactoring suggestions
 func registerAidSuggestRefactoring(s *server.MCPServer, svc *service.DistillerService) {
 	tool := mcp.NewTool("aid_suggest_refactoring",
-		mcp.WithDescription("Analyzes code to identify and suggest specific refactoring opportunities with concrete examples. Use to improve code quality, readability, maintainability, or performance. Returns actionable refactoring suggestions with before/after code examples."),
+		mcp.WithDescription("Analyzes code to identify and suggest specific refactoring opportunities with concrete examples. Use to improve code quality, readability, maintainability, or performance. Returns actionable refactoring suggestions with before/after code examples.\n\nOUTPUT: Generates a comprehensive refactoring analysis markdown file. The response includes the file path - read this file directly for detailed suggestions with code examples."),
 		mcp.WithString("target_path",
 			mcp.Required(),
 			mcp.Description("Path to directory or file to analyze for refactoring opportunities"),
@@ -196,7 +196,7 @@ func registerAidSuggestRefactoring(s *server.MCPServer, svc *service.DistillerSe
 // Specialized tool for diagram generation
 func registerAidGenerateDiagram(s *server.MCPServer, svc *service.DistillerService) {
 	tool := mcp.NewTool("aid_generate_diagram",
-		mcp.WithDescription("Generates architectural diagrams from source code using Mermaid format. Creates 10 beneficial diagrams including flowcharts, sequence diagrams, class diagrams, and architecture overviews. Perfect for understanding complex systems and documenting architecture."),
+		mcp.WithDescription("Generates architectural diagrams from source code using Mermaid format. Creates 10 beneficial diagrams including flowcharts, sequence diagrams, class diagrams, and architecture overviews. Perfect for understanding complex systems and documenting architecture.\n\nOUTPUT: Generates a markdown file with multiple Mermaid diagrams. The response includes the file path - read this file to view and render all diagrams."),
 		mcp.WithString("target_path",
 			mcp.Required(),
 			mcp.Description("Path to directory or files to generate diagrams from"),
@@ -217,7 +217,7 @@ func registerAidGenerateDiagram(s *server.MCPServer, svc *service.DistillerServi
 // Specialized tool for security analysis
 func registerAidAnalyzeSecurity(s *server.MCPServer, svc *service.DistillerService) {
 	tool := mcp.NewTool("aid_analyze_security",
-		mcp.WithDescription("Performs comprehensive security analysis with OWASP Top 10 focus. Identifies potential vulnerabilities, security anti-patterns, and weak points. Use for security audits, compliance checks, or before production deployment. Returns security findings with risk levels and remediation steps."),
+		mcp.WithDescription("Performs comprehensive security analysis with OWASP Top 10 focus. Identifies potential vulnerabilities, security anti-patterns, and weak points. Use for security audits, compliance checks, or before production deployment. Returns security findings with risk levels and remediation steps.\n\nOUTPUT: Generates a detailed security audit markdown file. The response includes the file path - read this file for complete vulnerability analysis and remediation recommendations."),
 		mcp.WithString("target_path",
 			mcp.Required(),
 			mcp.Description("Path to directory or file to analyze for security issues"),
@@ -244,7 +244,7 @@ func registerAidAnalyzeSecurity(s *server.MCPServer, svc *service.DistillerServi
 // Specialized tool for documentation generation
 func registerAidGenerateDocs(s *server.MCPServer, svc *service.DistillerService) {
 	tool := mcp.NewTool("aid_generate_docs",
-		mcp.WithDescription("Generates comprehensive documentation for source code including API references, usage examples, and developer guides. Creates structured documentation workflows for single files or entire projects. Perfect for creating technical documentation from code."),
+		mcp.WithDescription("Generates comprehensive documentation for source code including API references, usage examples, and developer guides. Creates structured documentation workflows for single files or entire projects. Perfect for creating technical documentation from code.\n\nOUTPUT: Generates one or more markdown documentation files. The response includes file paths - read these files directly for the complete documentation."),
 		mcp.WithString("target_path",
 			mcp.Required(),
 			mcp.Description("Path to directory or file to generate documentation for"),
@@ -270,7 +270,7 @@ func registerAidGenerateDocs(s *server.MCPServer, svc *service.DistillerService)
 func registerFileOperations(s *server.MCPServer, svc *service.DistillerService) {
 	// distill_file tool (backwards compatibility)
 	distillFileTool := mcp.NewTool("distill_file",
-		mcp.WithDescription("Extracts essential code structure from a single file. Legacy tool - prefer aid_analyze or specialized tools for new workflows."),
+		mcp.WithDescription("Extracts essential code structure from a single file. Legacy tool - prefer aid_analyze or specialized tools for new workflows.\n\nNOTE: For files that might exceed token limits, the tool will warn you. Consider using more restrictive parameters (include_implementation=false, include_private=false) or using aid_analyze tools that save results to files."),
 		mcp.WithString("file_path",
 			mcp.Required(),
 			mcp.Description("Path to source file"),
@@ -291,9 +291,9 @@ func registerFileOperations(s *server.MCPServer, svc *service.DistillerService) 
 	)
 	s.AddTool(distillFileTool, svc.HandleDistillFile)
 
-	// distill_directory tool (backwards compatibility)
+	// distill_directory tool (backwards compatibility with pagination support)
 	distillDirTool := mcp.NewTool("distill_directory",
-		mcp.WithDescription("Extracts code structure from directories. Legacy tool - prefer aid_analyze or specialized tools for new workflows."),
+		mcp.WithDescription("Extracts code structure from directories with automatic pagination for large results. Returns paginated responses when content exceeds ~20000 tokens. Use page_token to get subsequent pages.\n\nCACHING STRATEGY for large codebases:\n- First page: Call with no_cache=true to ensure fresh data and populate cache\n- Subsequent pages: Use cached data (default) for consistency\n- Cache TTL: 5 minutes\n- Alternative: For very large analyses, consider using aid_analyze which saves results to files that can be read directly"),
 		mcp.WithString("directory_path",
 			mcp.Required(),
 			mcp.Description("Path to directory"),
@@ -316,6 +316,15 @@ func registerFileOperations(s *server.MCPServer, svc *service.DistillerService) 
 		mcp.WithString("output_format",
 			mcp.Description("Output format"),
 			mcp.Enum("text", "md", "json"),
+		),
+		mcp.WithNumber("page_size",
+			mcp.Description("Maximum tokens per page (1000-20000, default: 20000)"),
+		),
+		mcp.WithString("page_token",
+			mcp.Description("Token for retrieving next page of results"),
+		),
+		mcp.WithBoolean("no_cache",
+			mcp.Description("Disable caching (default: false, cache TTL: 5 minutes)"),
 		),
 	)
 	s.AddTool(distillDirTool, svc.HandleDistillDirectory)
@@ -391,6 +400,23 @@ func registerMetaTools(s *server.MCPServer, svc *service.DistillerService) {
 				"ai_actions", "pattern_filtering", "specialized_analysis",
 				"diagram_generation", "security_analysis", "bug_hunting",
 				"refactoring_suggestions", "documentation_generation",
+				"pagination", "caching",
+			},
+			"caching_strategy": map[string]interface{}{
+				"ttl_seconds": 300,
+				"cache_dir": filepath.Join(cacheDir, "mcp"),
+				"recommendations": []string{
+					"For large codebases: First call with no_cache=true to ensure fresh data",
+					"Subsequent pages will use cache for consistency",
+					"For AI analysis tools: Read generated files directly from disk",
+					"Cache is automatically invalidated after 5 minutes",
+				},
+			},
+			"pagination": map[string]interface{}{
+				"default_page_size": 20000,
+				"max_page_size": 20000,
+				"token_limit": 25000,
+				"usage": "Use page_token from response to get next page",
 			},
 		}
 		jsonBytes, _ := json.Marshal(capabilities)

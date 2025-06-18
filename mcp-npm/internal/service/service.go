@@ -24,6 +24,7 @@ type DistillerService struct {
 	maxFiles   int
 	maxTimeout int
 	aidBinary  string
+	cache      *ResponseCache
 }
 
 // NewDistillerService creates a new distiller service
@@ -40,6 +41,7 @@ func NewDistillerService(rootPath, cacheDir string, maxFiles, maxTimeout int) (*
 		maxFiles:   maxFiles,
 		maxTimeout: maxTimeout,
 		aidBinary:  aidBinary,
+		cache:      NewResponseCache(cacheDir),
 	}, nil
 }
 
@@ -265,8 +267,14 @@ type DistillFileResponse struct {
 	Statistics   map[string]interface{} `json:"statistics"`
 }
 
-// HandleDistillFile processes a single file using AI Distiller (aid)
+// HandleDistillFile processes a single file using AI Distiller (aid) with size checking
 func (s *DistillerService) HandleDistillFile(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	// Use the paginated version which includes size checking
+	return s.HandleDistillFilePaginated(ctx, req)
+}
+
+// handleDistillFileLegacy is the original implementation
+func (s *DistillerService) handleDistillFileLegacy(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	startTime := time.Now()
 	toolName := "distill_file"
 	
@@ -345,8 +353,29 @@ type DistillDirectoryResponse struct {
 	FilterSettings  map[string]interface{} `json:"filter_settings"`
 }
 
-// HandleDistillDirectory processes an entire directory using AI Distiller (aid) 
+// HandleDistillDirectory processes an entire directory using AI Distiller (aid) with pagination support
 func (s *DistillerService) HandleDistillDirectory(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	// Check if pagination parameters are present
+	args, _ := req.Params.Arguments.(map[string]interface{})
+	if _, hasPageToken := args["page_token"]; hasPageToken {
+		return s.HandleDistillDirectoryPaginated(ctx, req)
+	}
+	if _, hasPageSize := args["page_size"]; hasPageSize {
+		return s.HandleDistillDirectoryPaginated(ctx, req)
+	}
+	
+	// Try the paginated version first to check size
+	result, err := s.HandleDistillDirectoryPaginated(ctx, req)
+	if err == nil {
+		return result, nil
+	}
+	
+	// Fallback to original implementation if needed
+	return s.handleDistillDirectoryLegacy(ctx, req)
+}
+
+// handleDistillDirectoryLegacy is the original implementation (kept for compatibility)
+func (s *DistillerService) handleDistillDirectoryLegacy(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	startTime := time.Now()
 	toolName := "distill_directory"
 	
