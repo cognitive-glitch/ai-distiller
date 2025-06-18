@@ -63,6 +63,12 @@ func parseParametersFromFilename(filename string) []string {
 		"no_impl":        {"--implementation=0"},
 		"public.no_impl": {"--private=0", "--implementation=0"},
 		"no_private.no_impl": {"--private=0", "--implementation=0"},
+		// Rust special cases
+		"fixed_full":      {"--private=1", "--protected=1", "--internal=1", "--implementation=1"},
+		"fixed_no_impl":   {"--private=1", "--protected=1", "--internal=1", "--implementation=0"},
+		"fixed_no_private": {"--private=0", "--protected=0", "--internal=0", "--implementation=1"},
+		// PHP special case
+		"ideal_psr19_output": {"--private=0", "--protected=0", "--internal=0", "--implementation=0"},
 	}
 	
 	if flags, exists := simpleAliases[name]; exists {
