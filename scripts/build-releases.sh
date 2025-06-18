@@ -58,12 +58,12 @@ build_platform() {
         cd "$BUILD_DIR/temp-$GOOS-$GOARCH"
         if [ "$GOOS" = "windows" ]; then
             # Create ZIP for Windows
-            zip -q "../aid-$GOOS-$GOARCH.zip" "$BINARY_NAME"
-            echo -e "${GREEN}✓ Created: aid-$GOOS-$GOARCH.zip${NC}"
+            zip -q "../aid-$GOOS-$GOARCH-v$VERSION.zip" "$BINARY_NAME"
+            echo -e "${GREEN}✓ Created: aid-$GOOS-$GOARCH-v$VERSION.zip${NC}"
         else
             # Create tar.gz for Unix systems
-            tar -czf "../aid-$GOOS-$GOARCH.tar.gz" "$BINARY_NAME"
-            echo -e "${GREEN}✓ Created: aid-$GOOS-$GOARCH.tar.gz${NC}"
+            tar -czf "../aid-$GOOS-$GOARCH-v$VERSION.tar.gz" "$BINARY_NAME"
+            echo -e "${GREEN}✓ Created: aid-$GOOS-$GOARCH-v$VERSION.tar.gz${NC}"
         fi
         cd - > /dev/null
         
