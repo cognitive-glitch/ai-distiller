@@ -212,7 +212,7 @@ func migrateFeatureFile(oldFile, newDir, sourceFile string) error {
 		parts := strings.Split(filepath.Base(match), "_")
 		if len(parts) >= 3 {
 			mode := strings.TrimSuffix(parts[len(parts)-1], ".txt")
-			newName := transformModeName(mode) + ".expected"
+			newName := transformModeName(mode) + ".txt"
 			newPath := filepath.Join(newDir, "expected", newName)
 			
 			if err := copyFile(match, newPath); err != nil {
@@ -225,20 +225,20 @@ func migrateFeatureFile(oldFile, newDir, sourceFile string) error {
 }
 
 func transformExpectedName(oldName string) string {
-	// expected_full.txt -> default.expected
-	// expected_no_impl.txt -> no_impl.expected
-	// expected_no_private.txt -> public.expected
+	// expected_full.txt -> default.txt
+	// expected_no_impl.txt -> no_impl.txt
+	// expected_no_private.txt -> public.txt
 	
 	name := strings.TrimPrefix(oldName, "expected_")
 	name = strings.TrimSuffix(name, ".txt")
 	
 	switch name {
 	case "full":
-		return "default.expected"
+		return "default.txt"
 	case "no_private":
-		return "public.expected"
+		return "public.txt"
 	default:
-		return name + ".expected"
+		return name + ".txt"
 	}
 }
 

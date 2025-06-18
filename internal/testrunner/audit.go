@@ -84,16 +84,16 @@ func (r *Runner) Audit() (*AuditResult, error) {
 			
 			hasExpectedFiles := false
 			for _, expFile := range expectedFiles {
-				if !strings.HasSuffix(expFile.Name(), ".expected") {
+				if !strings.HasSuffix(expFile.Name(), ".txt") {
 					continue
 				}
 				hasExpectedFiles = true
 				
 				// Test if filename can be parsed
 				flags := parseParametersFromFilename(expFile.Name())
-				if len(flags) == 0 && expFile.Name() != "default.expected" {
+				if len(flags) == 0 && expFile.Name() != "default.txt" {
 					// Check if it's a simple alias we don't recognize
-					name := strings.TrimSuffix(expFile.Name(), ".expected")
+					name := strings.TrimSuffix(expFile.Name(), ".txt")
 					simpleAliases := []string{"default", "public", "no_private", "no_impl", "public.no_impl", "no_private.no_impl"}
 					isKnownAlias := false
 					for _, alias := range simpleAliases {

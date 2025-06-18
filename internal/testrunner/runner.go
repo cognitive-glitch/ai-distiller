@@ -52,8 +52,8 @@ func NewWithGoRun(testDataDir, projectRoot string) *Runner {
 // e.g., "Test5-Complex.implementation=0.comments=0.public=1.expected" -> ["--implementation=0", "--comments=0", "--public=1"]
 // Also supports simple aliases: "public.expected" -> ["--private=0"], "no_impl.expected" -> ["--implementation=0"]
 func parseParametersFromFilename(filename string) []string {
-	// Remove the .expected extension
-	name := strings.TrimSuffix(filename, ".expected")
+	// Remove the .txt extension
+	name := strings.TrimSuffix(filename, ".txt")
 	
 	// Handle simple aliases first (legacy naming support)
 	simpleAliases := map[string][]string{
@@ -71,22 +71,30 @@ func parseParametersFromFilename(filename string) []string {
 		return flags
 	}
 	
-	// Find first dot to separate test name from parameters
-	parts := strings.Split(name, ".")
-	if len(parts) < 2 {
-		// No parameters, use defaults
-		return []string{}
-	}
+	// Parse parameters from filename
+	// The filename can be in formats like:
+	// - "default.txt" -> no flags
+	// - "implementation=1.txt" -> single parameter
+	// - "private=0,protected=0.txt" -> comma-separated parameters
+	// - "private=1,protected=1,internal=1,implementation=0.txt" -> multiple parameters
 	
 	var flags []string
-	// Start from second part (skip test name)
-	for i := 1; i < len(parts); i++ {
-		param := parts[i]
-		// Check if it's a parameter=value format
-		if strings.Contains(param, "=") {
-			flags = append(flags, "--"+param)
+	
+	// Handle comma-separated parameters
+	if strings.Contains(name, ",") {
+		// Split by comma first
+		params := strings.Split(name, ",")
+		for _, param := range params {
+			param = strings.TrimSpace(param)
+			if strings.Contains(param, "=") {
+				flags = append(flags, "--"+param)
+			}
 		}
+	} else if strings.Contains(name, "=") {
+		// Single parameter
+		flags = append(flags, "--"+name)
 	}
+	// else: no parameters (e.g., "default")
 	
 	// Sort flags for consistency with flagsToFilename
 	sort.Strings(flags)
@@ -145,7 +153,7 @@ func (r *Runner) DiscoverTests() ([]TestCase, error) {
 						Language:     language,
 						ScenarioName: scenarioName,
 						SourceFile:   sourceFile,
-						ExpectedFile: filepath.Join(expectedDir, "default.expected"),
+						ExpectedFile: filepath.Join(expectedDir, "default.txt"),
 						Flags:        []string{},
 					})
 				}
@@ -159,7 +167,7 @@ func (r *Runner) DiscoverTests() ([]TestCase, error) {
 			}
 			
 			for _, expFile := range expectedFiles {
-				if !strings.HasSuffix(expFile.Name(), ".expected") {
+				if !strings.HasSuffix(expFile.Name(), ".txt") {
 					continue
 				}
 				
@@ -235,21 +243,34 @@ func (r *Runner) RunTest(tc TestCase) error {
 	// Build command
 	var cmd *exec.Cmd
 	
+	// Make source file path relative to testdata directory
+	relSourceFile, err := filepath.Rel(r.testDataDir, tc.SourceFile)
+	if err != nil {
+		// If we can't make it relative, just use the basename
+		relSourceFile = filepath.Base(tc.SourceFile)
+	}
+	
 	if r.useGoRun {
 		// Use go run mode
-		goArgs := []string{"run", "./cmd/aid"}
-		goArgs = append(goArgs, tc.SourceFile)
+		// Calculate relative path from testdata to project root
+		relProjectPath, err := filepath.Rel(r.testDataDir, r.projectRoot)
+		if err != nil {
+			return fmt.Errorf("calculating relative project path: %w", err)
+		}
+		goArgs := []string{"run", filepath.Join(relProjectPath, "cmd/aid")}
+		goArgs = append(goArgs, relSourceFile)
 		goArgs = append(goArgs, tc.Flags...)
 		goArgs = append(goArgs, "--format", "text", "--stdout")
 		
 		cmd = exec.Command("go", goArgs...)
-		cmd.Dir = r.projectRoot
+		cmd.Dir = r.testDataDir
 	} else {
 		// Use binary mode
-		args := append([]string{tc.SourceFile}, tc.Flags...)
+		args := append([]string{relSourceFile}, tc.Flags...)
 		args = append(args, "--format", "text", "--stdout")
 		
 		cmd = exec.Command(r.aidBinary, args...)
+		cmd.Dir = r.testDataDir
 	}
 	
 	// Capture output
@@ -258,8 +279,7 @@ func (r *Runner) RunTest(tc TestCase) error {
 	cmd.Stderr = &stderr
 	
 	// Run the command
-	err := cmd.Run()
-	if err != nil {
+	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("running aid: %w\nstderr: %s", err, stderr.String())
 	}
 	
