@@ -91,6 +91,12 @@ type ProcessOptions struct {
 	
 	// RelativePathPrefix is a custom prefix for relative paths (e.g., "src/")
 	RelativePathPrefix string
+	
+	// IncludePatterns are file patterns to include (e.g., "*.go", "*.py")
+	IncludePatterns []string
+	
+	// ExcludePatterns are file patterns to exclude (e.g., "*test*", "*.json")
+	ExcludePatterns []string
 }
 
 // DefaultProcessOptions returns default processing options

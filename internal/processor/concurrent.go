@@ -68,6 +68,11 @@ func (p *Processor) processDirectoryConcurrent(dir string, opts ProcessOptions) 
 			return nil
 		}
 
+		// Check include/exclude patterns
+		if !shouldIncludeFile(path, opts.IncludePatterns, opts.ExcludePatterns) {
+			return nil
+		}
+
 		// Check if we can process this file
 		if opts.RawMode {
 			// In raw mode, process all files

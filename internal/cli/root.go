@@ -743,6 +743,10 @@ func createProcessOptionsFromFlags() processor.ProcessOptions {
 	// Set recursive - parse from global recursiveStr
 	opts.Recursive = recursiveStr != "0"
 	
+	// Set include/exclude patterns
+	opts.IncludePatterns = includeGlob
+	opts.ExcludePatterns = excludeGlob
+	
 	return opts
 }
 

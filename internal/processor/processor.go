@@ -273,6 +273,11 @@ func (p *Processor) processDirectory(dir string, opts ProcessOptions) (*ir.Disti
 			return nil
 		}
 
+		// Check include/exclude patterns
+		if !shouldIncludeFile(path, opts.IncludePatterns, opts.ExcludePatterns) {
+			return nil
+		}
+
 		// Check if we can process this file
 		if opts.RawMode {
 			// In raw mode, process all files
@@ -327,5 +332,45 @@ func (p *Processor) GetLanguage(filename string) string {
 		return ""
 	}
 	return proc.Language()
+}
+
+// shouldIncludeFile checks if a file should be included based on include/exclude patterns
+func shouldIncludeFile(filePath string, includePatterns, excludePatterns []string) bool {
+	// If exclude patterns are specified and any matches, exclude the file
+	for _, excludePattern := range excludePatterns {
+		if excludePattern != "" {
+			matched, err := filepath.Match(excludePattern, filePath)
+			if err == nil && matched {
+				return false
+			}
+			// Also check if the pattern matches the filename only
+			matched, err = filepath.Match(excludePattern, filepath.Base(filePath))
+			if err == nil && matched {
+				return false
+			}
+		}
+	}
+	
+	// If include patterns are specified, only include files that match any pattern
+	if len(includePatterns) > 0 {
+		for _, includePattern := range includePatterns {
+			if includePattern != "" {
+				matched, err := filepath.Match(includePattern, filePath)
+				if err == nil && matched {
+					return true
+				}
+				// Also check if the pattern matches the filename only
+				matched, err = filepath.Match(includePattern, filepath.Base(filePath))
+				if err == nil && matched {
+					return true
+				}
+			}
+		}
+		// If include patterns are specified but none match, exclude
+		return false
+	}
+	
+	// No patterns specified or exclude patterns don't match, include the file
+	return true
 }
 
