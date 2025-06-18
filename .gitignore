@@ -12,3 +12,9 @@ tmp/
 # Binary files
 aid
 aid-*
+
+# Build directories
+build/
+
+# Tools (osxcross is large)
+tools/osxcross/

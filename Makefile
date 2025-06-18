@@ -29,13 +29,13 @@ GOLINT = golangci-lint
 # Platforms for cross-compilation
 PLATFORMS = linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64
 
-all: test build
+all: build
 
-# Build for current platform
+# Build for current platform (with CGO - full language support)
 build:
-	@echo "==> Building $(BINARY_NAME) $(VERSION)"
+	@echo "==> Building $(BINARY_NAME) $(VERSION) with full language support"
 	@mkdir -p $(BUILD_DIR)
-	$(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/aid
+	CGO_ENABLED=1 $(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/aid
 
 # Run tests
 test:
@@ -99,13 +99,13 @@ deps:
 	$(GOMOD) download
 	$(GOMOD) tidy
 
-# Cross-compile for all platforms
+# Cross-compile for all platforms (requires proper toolchains)
 cross-compile: $(PLATFORMS)
 
 $(PLATFORMS):
 	@echo "==> Building for $@"
 	@mkdir -p $(BUILD_DIR)
-	@GOOS=$(word 1,$(subst /, ,$@)) GOARCH=$(word 2,$(subst /, ,$@)) \
+	@CGO_ENABLED=1 GOOS=$(word 1,$(subst /, ,$@)) GOARCH=$(word 2,$(subst /, ,$@)) \
 		$(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-$(word 1,$(subst /, ,$@))-$(word 2,$(subst /, ,$@))$(if $(findstring windows,$(word 1,$(subst /, ,$@))),.exe) ./cmd/aid
 
 # Build WASM modules
