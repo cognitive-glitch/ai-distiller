@@ -917,6 +917,13 @@ func (p *ASTParser) processFunction(fn *ast.FuncDecl) *ir.DistilledFunction {
 
 		// Mark as method
 		distilledFn.Modifiers = append(distilledFn.Modifiers, ir.ModifierAbstract) // Using Abstract as "method" marker
+		
+		// CRITICAL FIX: For methods, visibility should be the minimum of method name visibility 
+		// and receiver type visibility (Go rule: a method can't be more visible than its receiver type)
+		methodVisibility := p.getVisibility(fn.Name.Name)
+		receiverVisibility := p.getReceiverTypeVisibility(recvType)
+		distilledFn.Visibility = p.getMinimumVisibility(methodVisibility, receiverVisibility)
+		
 	}
 
 	// Process type parameters (generics)
@@ -1075,7 +1082,34 @@ func (p *ASTParser) getVisibility(name string) ir.Visibility {
 	if name == "" || name[0] >= 'A' && name[0] <= 'Z' {
 		return ir.VisibilityPublic
 	}
-	return ir.VisibilityPrivate
+	// In Go, lowercase names are package-private (internal), not truly private
+	return ir.VisibilityInternal
+}
+
+// getReceiverTypeVisibility determines the visibility of a receiver type
+func (p *ASTParser) getReceiverTypeVisibility(recvType string) ir.Visibility {
+	// Strip pointer prefix if present (*User -> User)
+	if strings.HasPrefix(recvType, "*") {
+		recvType = recvType[1:]
+	}
+	
+	// Extract base type name for generic types (Cache[K,V] -> Cache)
+	if bracketIndex := strings.Index(recvType, "["); bracketIndex != -1 {
+		recvType = recvType[:bracketIndex]
+	}
+	
+	// Determine visibility based on Go naming convention
+	return p.getVisibility(recvType)
+}
+
+// getMinimumVisibility returns the more restrictive visibility
+func (p *ASTParser) getMinimumVisibility(vis1, vis2 ir.Visibility) ir.Visibility {
+	// In Go, package-private (internal) is more restrictive than public
+	// If either is internal, the result is internal
+	if vis1 == ir.VisibilityInternal || vis2 == ir.VisibilityInternal {
+		return ir.VisibilityInternal
+	}
+	return ir.VisibilityPublic
 }
 
 // typeToString converts an AST expression to a string representation
