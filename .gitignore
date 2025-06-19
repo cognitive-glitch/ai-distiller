@@ -19,3 +19,4 @@ build/
 
 # Tools (osxcross is large)
 tools/osxcross/
+test-results.xml

@@ -14,126 +14,89 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestJavaConstructs tests all 5 Java constructs with 3 different options
 func TestJavaConstructs(t *testing.T) {
 	tests := []struct {
-		name     string
-		filename string
+		name         string
+		construct    string
+		options      processor.ProcessOptions
+		expectedFile string
 	}{
+		// Basic construct tests
 		{
-			name:     "Construct 1 - Basic",
-			filename: "Basic.java",
-		},
-		{
-			name:     "Construct 2 - SimpleOOP",
-			filename: "SimpleOOP.java",
-		},
-		{
-			name:     "Construct 3 - GenericsAndInterfaces",
-			filename: "GenericsAndInterfaces.java",
-		},
-		{
-			name:     "Construct 4 - ModernJava",
-			filename: "ModernJava.java",
-		},
-		{
-			name:     "Construct 5 - Advanced",
-			filename: "Advanced.java",
-		},
-	}
-
-	options := []struct {
-		name           string
-		opts           processor.ProcessOptions
-		expectedSuffix string
-	}{
-		{
-			name: "Full output",
-			opts: processor.ProcessOptions{
-				IncludeComments:       true,
-				IncludeImports:        true,
-				IncludeImplementation: true,
-				IncludePrivate:        true,
-			},
-			expectedSuffix: "_expected_full.txt",
-		},
-		{
-			name: "No private members",
-			opts: processor.ProcessOptions{
-				IncludeComments:       true,
-				IncludeImports:        true,
-				IncludeImplementation: true,
+			name:      "Basic_Default",
+			construct: "01_basic",
+			options: processor.ProcessOptions{
 				IncludePrivate:        false,
+				IncludeImplementation: false,
+				IncludeComments:       false,
+				IncludeDocstrings:     true,
+				IncludeImports:        true,
 			},
-			expectedSuffix: "_expected_no_private.txt",
+			expectedFile: "default.txt",
 		},
 		{
-			name: "No implementation",
-			opts: processor.ProcessOptions{
-				IncludeComments:       true,
+			name:      "Basic_WithImplementation",
+			construct: "01_basic",
+			options: processor.ProcessOptions{
+				IncludePrivate:        false,
+				IncludeImplementation: true,
+				IncludeComments:       false,
+				IncludeDocstrings:     true,
 				IncludeImports:        true,
-				IncludeImplementation: false,
-				IncludePrivate:        true,
 			},
-			expectedSuffix: "_expected_no_impl.txt",
+			expectedFile: "implementation=1.txt",
+		},
+		{
+			name:      "Basic_WithPrivate",
+			construct: "01_basic",
+			options: processor.ProcessOptions{
+				IncludePrivate:        true,
+				IncludeImplementation: false,
+				IncludeComments:       false,
+				IncludeDocstrings:     true,
+				IncludeImports:        true,
+			},
+			expectedFile: "private=1,protected=1,internal=1,implementation=0.txt",
 		},
 	}
 
-	// Get test data directory
-	testDataDir := filepath.Join("..", "..", "..", "test-data", "java")
+	p := NewProcessor()
+	textFormatter := formatter.NewLanguageAwareTextFormatter(formatter.Options{})
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			sourceFile := filepath.Join(testDataDir, test.filename)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Read source file
+			sourcePath := filepath.Join("../../../testdata/java", tt.construct, "source.java")
+			sourceFile, err := os.Open(sourcePath)
+			if err != nil {
+				t.Fatalf("Failed to open source file: %v", err)
+			}
+			defer sourceFile.Close()
 
-			// Check if source file exists
-			if _, err := os.Stat(sourceFile); os.IsNotExist(err) {
-				t.Skipf("Source file %s does not exist", sourceFile)
+			// Process the file
+			result, err := p.ProcessWithOptions(context.Background(), sourceFile, "source.java", tt.options)
+			if err != nil {
+				t.Fatalf("Processing failed: %v", err)
 			}
 
-			// Create processor
-			proc := NewProcessor()
+			// Format the result
+			var output strings.Builder
+			if err := textFormatter.Format(&output, result); err != nil {
+				t.Fatalf("Formatting failed: %v", err)
+			}
 
-			for _, opt := range options {
-				t.Run(opt.name, func(t *testing.T) {
-					// Read source file
-					sourceContent, err := os.ReadFile(sourceFile)
-					require.NoError(t, err)
+			// Read expected output
+			expectedPath := filepath.Join("../../../testdata/java", tt.construct, "expected", tt.expectedFile)
+			expectedBytes, err := os.ReadFile(expectedPath)
+			if err != nil {
+				t.Fatalf("Failed to read expected file: %v", err)
+			}
 
-					// Process the file
-					ctx := context.Background()
-					result, err := proc.ProcessWithOptions(ctx, strings.NewReader(string(sourceContent)), test.filename, opt.opts)
-					require.NoError(t, err)
-					require.NotNil(t, result)
+			expected := strings.TrimSpace(string(expectedBytes))
+			actual := strings.TrimSpace(output.String())
 
-					// Format using text formatter
-					textFormatter := formatter.NewLanguageAwareTextFormatter(formatter.Options{})
-
-					var output strings.Builder
-					err = textFormatter.Format(&output, result)
-					require.NoError(t, err)
-
-					// Get expected output file
-					baseName := strings.TrimSuffix(test.filename, ".java")
-					expectedFile := filepath.Join(testDataDir, baseName+opt.expectedSuffix)
-
-					// Check if expected file exists
-					if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
-						// If expected file doesn't exist, write the actual output for manual review
-						actualFile := filepath.Join(testDataDir, baseName+opt.expectedSuffix+".actual")
-						err = os.WriteFile(actualFile, []byte(output.String()), 0644)
-						require.NoError(t, err)
-						t.Skipf("Expected file %s does not exist. Actual output written to %s", expectedFile, actualFile)
-					}
-
-					// Read expected output
-					expectedContent, err := os.ReadFile(expectedFile)
-					require.NoError(t, err)
-
-					// Compare outputs
-					assert.Equal(t, strings.TrimSpace(string(expectedContent)), strings.TrimSpace(output.String()),
-						"Output mismatch for %s with %s", test.filename, opt.name)
-				})
+			if expected != actual {
+				t.Errorf("Output mismatch for %s:\nExpected:\n%s\n\nActual:\n%s", tt.name, expected, actual)
 			}
 		})
 	}

@@ -1,0 +1,1113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites tests="919" failures="0" errors="0" time="4.220179">
+	<testsuite tests="0" failures="0" time="0.008000" name="github.com/janreges/ai-distiller/cmd/ai-distiller" timestamp="2025-06-19T20:10:09+02:00">
+		<properties>
+			<property name="go.version" value="go1.23.8 linux/amd64"></property>
+		</properties>
+	</testsuite>
+	<testsuite tests="0" failures="0" time="0.007000" name="github.com/janreges/ai-distiller/cmd/aid" timestamp="2025-06-19T20:10:09+02:00">
+		<properties>
+			<property name="go.version" value="go1.23.8 linux/amd64"></property>
+		</properties>
+	</testsuite>
+	<testsuite tests="0" failures="0" time="0.008000" name="github.com/janreges/ai-distiller/cmd/debug-typescript" timestamp="2025-06-19T20:10:09+02:00">
+		<properties>
+			<property name="go.version" value="go1.23.8 linux/amd64"></property>
+		</properties>
+	</testsuite>
+	<testsuite tests="0" failures="0" time="0.008000" name="github.com/janreges/ai-distiller/cmd/parser-test" timestamp="2025-06-19T20:10:09+02:00">
+		<properties>
+			<property name="go.version" value="go1.23.8 linux/amd64"></property>
+		</properties>
+	</testsuite>
+	<testsuite tests="0" failures="0" time="0.009000" name="github.com/janreges/ai-distiller/cmd/performance-test" timestamp="2025-06-19T20:10:09+02:00">
+		<properties>
+			<property name="go.version" value="go1.23.8 linux/amd64"></property>
+		</properties>
+	</testsuite>
+	<testsuite tests="0" failures="0" time="0.008000" name="github.com/janreges/ai-distiller/cmd/semantic-resolver-test" timestamp="2025-06-19T20:10:09+02:00">
+		<properties>
+			<property name="go.version" value="go1.23.8 linux/amd64"></property>
+		</properties>
+	</testsuite>
+	<testsuite tests="0" failures="0" time="0.009000" name="github.com/janreges/ai-distiller/cmd/semantic-test" timestamp="2025-06-19T20:10:09+02:00">
+		<properties>
+			<property name="go.version" value="go1.23.8 linux/amd64"></property>
+		</properties>
+	</testsuite>
+	<testsuite tests="0" failures="0" time="0.007000" name="github.com/janreges/ai-distiller/cmd/test-audit" timestamp="2025-06-19T20:10:09+02:00">
+		<properties>
+			<property name="go.version" value="go1.23.8 linux/amd64"></property>
+		</properties>
+	</testsuite>
+	<testsuite tests="0" failures="0" time="0.011000" name="github.com/janreges/ai-distiller/internal/ai" timestamp="2025-06-19T20:10:09+02:00">
+		<properties>
+			<property name="go.version" value="go1.23.8 linux/amd64"></property>
+		</properties>
+	</testsuite>
+	<testsuite tests="0" failures="0" time="0.008000" name="github.com/janreges/ai-distiller/internal/aiactions" timestamp="2025-06-19T20:10:09+02:00">
+		<properties>
+			<property name="go.version" value="go1.23.8 linux/amd64"></property>
+		</properties>
+	</testsuite>
+	<testsuite tests="39" failures="0" time="1.051000" name="github.com/janreges/ai-distiller/internal/cli" timestamp="2025-06-19T20:10:10+02:00">
+		<properties>
+			<property name="go.version" value="go1.23.8 linux/amd64"></property>
+		</properties>
+		<testcase classname="github.com/janreges/ai-distiller/internal/cli" name="TestGenerateOutputFilename/NoStripOptions" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/cli" name="TestGenerateOutputFilename/WithComments" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/cli" name="TestGenerateOutputFilename/MultipleOptions" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/cli" name="TestGenerateOutputFilename/AllOptions" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/cli" name="TestGenerateOutputFilename/CurrentDirectory" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/cli" name="TestGenerateOutputFilename/RootDirectory" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/cli" name="TestGenerateOutputFilename/NewFlagsWithPrivate" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/cli" name="TestGenerateOutputFilename/NewFlagsWithProtectedAndImplementation" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/cli" name="TestGenerateOutputFilename/NewFlagsWithComments" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/cli" name="TestGenerateOutputFilename" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/cli" name="TestContains/ItemExists" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/cli" name="TestContains/ItemDoesNotExist" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/cli" name="TestContains/EmptySlice" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/cli" name="TestContains/EmptyString" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/cli" name="TestContains" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/cli" name="TestCLIFlags/DefaultFlags" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/cli" name="TestCLIFlags/ParseFlags" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/cli" name="TestCLIFlags/ParseNewFilterFlags" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/cli" name="TestCLIFlags/ParseGroupFilterFlags" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/cli" name="TestCLIFlags" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/cli" name="TestVersionFlag" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/cli" name="TestRunDistillerValidation/InvalidOutputFormat" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/cli" name="TestRunDistillerValidation/NonExistentPath" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/cli" name="TestRunDistillerValidation/ValidPath" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/cli" name="TestRunDistillerValidation" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/cli" name="TestCLIHelp" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/cli" name="TestStripOptionsAbbreviation" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/cli" name="TestVerboseOutput" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/cli" name="TestGetBoolFlag/NilFlagReturnsDefault" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/cli" name="TestGetBoolFlag/TrueFlag" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/cli" name="TestGetBoolFlag/FalseFlag" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/cli" name="TestGetBoolFlag" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/cli" name="TestProcessIncludeList/IncludePublicOnly" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/cli" name="TestProcessIncludeList/IncludePublicAndPrivate" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/cli" name="TestProcessIncludeList/IncludeAllContent" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/cli" name="TestProcessIncludeList" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/cli" name="TestProcessExcludeList/ExcludePrivate" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/cli" name="TestProcessExcludeList/ExcludeCommentsAndImplementation" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/cli" name="TestProcessExcludeList" time="0.000000"></testcase>
+	</testsuite>
+	<testsuite tests="0" failures="0" time="0.008000" name="github.com/janreges/ai-distiller/internal/debug" timestamp="2025-06-19T20:10:10+02:00">
+		<properties>
+			<property name="go.version" value="go1.23.8 linux/amd64"></property>
+		</properties>
+	</testsuite>
+	<testsuite tests="80" failures="0" time="1.070000" name="github.com/janreges/ai-distiller/internal/formatter" timestamp="2025-06-19T20:10:10+02:00">
+		<properties>
+			<property name="go.version" value="go1.23.8 linux/amd64"></property>
+		</properties>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestJSONStructuredFormatter_Format/basic_file_with_structured_output" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestJSONStructuredFormatter_Format/with_location_info" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestJSONStructuredFormatter_Format/with_metadata_and_errors" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestJSONStructuredFormatter_Format/compact_mode" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestJSONStructuredFormatter_Format/complex_class_hierarchy" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestJSONStructuredFormatter_Format/all_node_types" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestJSONStructuredFormatter_Format" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestJSONStructuredFormatter_FormatMultiple" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestJSONStructuredFormatter_Extension" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestJSONStructuredFormatter_Parameters" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestJSONStructuredFormatter_EmptyStructure" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestJSONStructuredFormatter_NestedClasses" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestJSONStructuredFormatter_ImportSymbols" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestJSONLFormatter_Format/basic_file_with_class_and_function" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestJSONLFormatter_Format/with_location_info" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestJSONLFormatter_Format/imports_and_symbols" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestJSONLFormatter_Format/with_metadata_and_errors" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestJSONLFormatter_Format/function_with_implementation" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestJSONLFormatter_Format/compact_mode" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestJSONLFormatter_Format" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestJSONLFormatter_FormatMultiple" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestJSONLFormatter_Extension" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestJSONLFormatter_AllNodeTypes" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestJSONLFormatter_NestedPaths" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestJSONLFormatter_Parameters" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestMarkdownFormatter_Format/basic_file_with_class_and_function" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestMarkdownFormatter_Format/file_with_location_info" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestMarkdownFormatter_Format/file_with_errors" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestMarkdownFormatter_Format/imports_formatting" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestMarkdownFormatter_Format/modifiers_and_visibility" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestMarkdownFormatter_Format/class_inheritance" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestMarkdownFormatter_Format/function_with_implementation" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestMarkdownFormatter_Format/compact_mode_hides_implementation" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestMarkdownFormatter_Format" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestMarkdownFormatter_FormatMultiple" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestMarkdownFormatter_Extension" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestMarkdownFormatter_AllNodeTypes" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestMarkdownFormatter_Metadata" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestMarkdownFormatter_NestedStructures" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestRegistry" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestDefaultRegistry/markdown" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestDefaultRegistry/md" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestDefaultRegistry/jsonl" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestDefaultRegistry/json-lines" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestDefaultRegistry/xml" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestDefaultRegistry/json" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestDefaultRegistry/json-structured" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestDefaultRegistry" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestTextFormatter_VisibilityPrefixes/public_function_no_prefix" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestTextFormatter_VisibilityPrefixes/private_function_with_prefix" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestTextFormatter_VisibilityPrefixes/protected_function_with_prefix" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestTextFormatter_VisibilityPrefixes/mixed_visibility_in_class" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestTextFormatter_VisibilityPrefixes/internal_visibility_distinct_from_private" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestTextFormatter_VisibilityPrefixes" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestGetVisibilityPrefix/public" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestGetVisibilityPrefix/private" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestGetVisibilityPrefix/protected" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestGetVisibilityPrefix/internal" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestGetVisibilityPrefix/fileprivate" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestGetVisibilityPrefix/open" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestGetVisibilityPrefix/protected_internal" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestGetVisibilityPrefix/private_protected" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestGetVisibilityPrefix/#00" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestGetVisibilityPrefix" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestXMLFormatter_Format/basic_file_with_class_and_function" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestXMLFormatter_Format/with_location_info" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestXMLFormatter_Format/with_errors" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestXMLFormatter_Format/with_metadata" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestXMLFormatter_Format/imports_with_symbols" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestXMLFormatter_Format/function_with_implementation" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestXMLFormatter_Format/modifiers_and_visibility" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestXMLFormatter_Format/escaped_XML_content" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestXMLFormatter_Format" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestXMLFormatter_FormatMultiple" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestXMLFormatter_Extension" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestXMLFormatter_AllNodeTypes" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestXMLFormatter_NestedStructures" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestXMLFormatter_Parameters" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestXMLFormatter_EmptyElements" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/formatter" name="TestXMLFormatter_SpecialCharacters" time="0.000000"></testcase>
+	</testsuite>
+	<testsuite tests="27" failures="0" time="1.034000" name="github.com/janreges/ai-distiller/internal/ir" timestamp="2025-06-19T20:10:10+02:00">
+		<properties>
+			<property name="go.version" value="go1.23.8 linux/amd64"></property>
+		</properties>
+		<testcase classname="github.com/janreges/ai-distiller/internal/ir" name="TestLocation" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/ir" name="TestSymbolRef" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/ir" name="TestBaseNode" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/ir" name="TestDistilledFile" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/ir" name="TestDistilledError" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/ir" name="TestNodeKindConstants" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/ir" name="TestVisibilityConstants" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/ir" name="TestModifierConstants" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/ir" name="TestDistilledFileJSON" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/ir" name="TestDistilledErrorJSON" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/ir" name="TestLanguageExtensions/GoExtensions" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/ir" name="TestLanguageExtensions/PythonExtensions" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/ir" name="TestLanguageExtensions/JavaScriptExtensions" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/ir" name="TestLanguageExtensions" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/ir" name="TestBaseVisitor" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/ir" name="TestWalker/WalkSimpleNode" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/ir" name="TestWalker/WalkWithChildren" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/ir" name="TestWalker/WalkWithNodeRemoval" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/ir" name="TestWalker/WalkNilNode" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/ir" name="TestWalker" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/ir" name="TestFuncVisitor" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/ir" name="TestChainVisitor/ChainMultipleVisitors" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/ir" name="TestChainVisitor/ChainStopsOnNil" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/ir" name="TestChainVisitor" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/ir" name="TestUpdateChildren/UpdateDistilledFileChildren" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/ir" name="TestUpdateChildren/UpdateUnknownNodeType" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/ir" name="TestUpdateChildren" time="0.000000"></testcase>
+	</testsuite>
+	<testsuite tests="0" failures="0" time="0.009000" name="github.com/janreges/ai-distiller/internal/language" timestamp="2025-06-19T20:10:10+02:00">
+		<properties>
+			<property name="go.version" value="go1.23.8 linux/amd64"></property>
+		</properties>
+	</testsuite>
+	<testsuite tests="7" failures="0" time="1.039000" name="github.com/janreges/ai-distiller/internal/language/cpp" timestamp="2025-06-19T20:10:10+02:00">
+		<properties>
+			<property name="go.version" value="go1.23.8 linux/amd64"></property>
+		</properties>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/cpp" name="TestProcessor_Basic/simple_class" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/cpp" name="TestProcessor_Basic/namespace" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/cpp" name="TestProcessor_Basic/struct_with_methods" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/cpp" name="TestProcessor_Basic/virtual_functions" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/cpp" name="TestProcessor_Basic/template_function" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/cpp" name="TestProcessor_Basic" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/cpp" name="TestProcessor_ComplexFeatures" time="0.000000"></testcase>
+	</testsuite>
+	<testsuite tests="18" failures="0" time="1.043000" name="github.com/janreges/ai-distiller/internal/language/csharp" timestamp="2025-06-19T20:10:10+02:00">
+		<properties>
+			<property name="go.version" value="go1.23.8 linux/amd64"></property>
+		</properties>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/csharp" name="TestProcessor_Basic/simple_class" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/csharp" name="TestProcessor_Basic/namespace" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/csharp" name="TestProcessor_Basic/interface" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/csharp" name="TestProcessor_Basic/properties" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/csharp" name="TestProcessor_Basic/enum" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/csharp" name="TestProcessor_Basic/struct" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/csharp" name="TestProcessor_Basic/generic_class" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/csharp" name="TestProcessor_Basic/async_method" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/csharp" name="TestProcessor_Basic" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/csharp" name="TestProcessor_ModernFeatures/record" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/csharp" name="TestProcessor_ModernFeatures/file_scoped_namespace" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/csharp" name="TestProcessor_ModernFeatures/init_only_property" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/csharp" name="TestProcessor_ModernFeatures/pattern_matching" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/csharp" name="TestProcessor_ModernFeatures/nullable_reference_types" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/csharp" name="TestProcessor_ModernFeatures" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/csharp" name="TestProcessor_ComplexFeatures" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/csharp" name="TestProcessor_NullableDebug" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/csharp" name="TestProcessor_Visibility" time="0.000000"></testcase>
+	</testsuite>
+	<testsuite tests="4" failures="0" time="1.032000" name="github.com/janreges/ai-distiller/internal/language/golang" timestamp="2025-06-19T20:10:10+02:00">
+		<properties>
+			<property name="go.version" value="go1.23.8 linux/amd64"></property>
+		</properties>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/golang" name="TestGoConstructs/Basic_Default" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/golang" name="TestGoConstructs/Basic_WithImplementation" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/golang" name="TestGoConstructs/Basic_WithPrivate" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/golang" name="TestGoConstructs" time="0.000000"></testcase>
+	</testsuite>
+	<testsuite tests="9" failures="0" time="1.040000" name="github.com/janreges/ai-distiller/internal/language/java" timestamp="2025-06-19T20:10:10+02:00">
+		<properties>
+			<property name="go.version" value="go1.23.8 linux/amd64"></property>
+		</properties>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/java" name="TestJavaConstructs/Basic_Default" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/java" name="TestJavaConstructs/Basic_WithImplementation" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/java" name="TestJavaConstructs/Basic_WithPrivate" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/java" name="TestJavaConstructs" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/java" name="TestJavaParserFeatures/Generics" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/java" name="TestJavaParserFeatures/Annotations" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/java" name="TestJavaParserFeatures/Sealed_Classes" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/java" name="TestJavaParserFeatures/Records" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/java" name="TestJavaParserFeatures" time="0.000000"></testcase>
+	</testsuite>
+	<testsuite tests="11" failures="0" time="1.039000" name="github.com/janreges/ai-distiller/internal/language/javascript" timestamp="2025-06-19T20:10:10+02:00">
+		<properties>
+			<property name="go.version" value="go1.23.8 linux/amd64"></property>
+		</properties>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/javascript" name="TestProcessorGeneratorFunctions/generator_function" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/javascript" name="TestProcessorGeneratorFunctions/async_generator_function" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/javascript" name="TestProcessorGeneratorFunctions/generator_expression" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/javascript" name="TestProcessorGeneratorFunctions/mixed_functions" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/javascript" name="TestProcessorGeneratorFunctions" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/javascript" name="TestProcessorImports/default_import" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/javascript" name="TestProcessorImports/named_imports" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/javascript" name="TestProcessorImports/aliased_imports" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/javascript" name="TestProcessorImports/namespace_import" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/javascript" name="TestProcessorImports/mixed_imports" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/javascript" name="TestProcessorImports" time="0.000000"></testcase>
+	</testsuite>
+	<testsuite tests="18" failures="0" time="1.043000" name="github.com/janreges/ai-distiller/internal/language/kotlin" timestamp="2025-06-19T20:10:10+02:00">
+		<properties>
+			<property name="go.version" value="go1.23.8 linux/amd64"></property>
+		</properties>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/kotlin" name="TestProcessor_Basic/simple_class" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/kotlin" name="TestProcessor_Basic/data_class" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/kotlin" name="TestProcessor_Basic/interface" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/kotlin" name="TestProcessor_Basic/object_declaration" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/kotlin" name="TestProcessor_Basic/companion_object" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/kotlin" name="TestProcessor_Basic/enum_class" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/kotlin" name="TestProcessor_Basic/sealed_class" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/kotlin" name="TestProcessor_Basic/extension_function" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/kotlin" name="TestProcessor_Basic" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/kotlin" name="TestProcessor_AdvancedFeatures/coroutines" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/kotlin" name="TestProcessor_AdvancedFeatures/generics" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/kotlin" name="TestProcessor_AdvancedFeatures/properties_with_accessors" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/kotlin" name="TestProcessor_AdvancedFeatures/inline_functions" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/kotlin" name="TestProcessor_AdvancedFeatures/operator_overloading" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/kotlin" name="TestProcessor_AdvancedFeatures/lambdas_and_higher_order" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/kotlin" name="TestProcessor_AdvancedFeatures" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/kotlin" name="TestProcessor_ComplexFeatures" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/kotlin" name="TestProcessor_Visibility" time="0.000000"></testcase>
+	</testsuite>
+	<testsuite tests="15" failures="0" time="1.048000" name="github.com/janreges/ai-distiller/internal/language/php" timestamp="2025-06-19T20:10:10+02:00">
+		<properties>
+			<property name="go.version" value="go1.23.8 linux/amd64"></property>
+		</properties>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/php" name="TestPHPConstruct1Basic/full" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/php" name="TestPHPConstruct1Basic/no_impl" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/php" name="TestPHPConstruct1Basic" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/php" name="TestPHPConstruct2PropertyPromotion/full" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/php" name="TestPHPConstruct2PropertyPromotion/no_private" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/php" name="TestPHPConstruct2PropertyPromotion" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/php" name="TestPHPConstruct3InterfacesAbstract" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/php" name="TestPHPConstruct4TraitsUnionTypes" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/php" name="TestPHPConstruct5Attributes" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/php" name="TestProcessorBasicClass" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/php" name="TestProcessorPHP8Features" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/php" name="TestProcessorNamespaceAndUse" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/php" name="TestProcessorTraits" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/php" name="TestProcessorInterfaces" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/php" name="TestProcessorFallbackToLineBased" time="0.000000"></testcase>
+	</testsuite>
+	<testsuite tests="68" failures="0" skipped="3" time="1.062000" name="github.com/janreges/ai-distiller/internal/language/python" timestamp="2025-06-19T20:10:10+02:00">
+		<properties>
+			<property name="go.version" value="go1.23.8 linux/amd64"></property>
+		</properties>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestErrorRecovery" time="0.000000">
+			<skipped message="=== RUN   TestErrorRecovery&#xA;    error_recovery_test.go:15: Skipping error recovery test - tree-sitter is robust and doesn&#39;t generate expected warnings&#xA;--- SKIP: TestErrorRecovery (0.00s)&#xA;"></skipped>
+		</testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestIndentationWarnings" time="0.000000">
+			<skipped message="=== RUN   TestIndentationWarnings&#xA;    error_recovery_test.go:175: Skipping indentation warnings test - tree-sitter doesn&#39;t generate expected warnings&#xA;--- SKIP: TestIndentationWarnings (0.00s)&#xA;"></skipped>
+		</testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestErrorRecoveryOnRealFile" time="0.000000">
+			<skipped message="=== RUN   TestErrorRecoveryOnRealFile&#xA;    error_recovery_test.go:232: Skipping error recovery test - not essential for core functionality&#xA;--- SKIP: TestErrorRecoveryOnRealFile (0.00s)&#xA;"></skipped>
+		</testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestPythonConstructs/Construct_1_-_Basic_validation_utils/Full_output" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestPythonConstructs/Construct_1_-_Basic_validation_utils/No_private_members" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestPythonConstructs/Construct_1_-_Basic_validation_utils/No_implementation" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestPythonConstructs/Construct_1_-_Basic_validation_utils" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestPythonConstructs/Construct_2_-_Simple_user_model/Full_output" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestPythonConstructs/Construct_2_-_Simple_user_model/No_private_members" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestPythonConstructs/Construct_2_-_Simple_user_model/No_implementation" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestPythonConstructs/Construct_2_-_Simple_user_model" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestPythonConstructs/Construct_3_-_Medium_notification_service/Full_output" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestPythonConstructs/Construct_3_-_Medium_notification_service/No_private_members" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestPythonConstructs/Construct_3_-_Medium_notification_service/No_implementation" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestPythonConstructs/Construct_3_-_Medium_notification_service" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestPythonConstructs/Construct_4_-_Complex_plugin_manager/Full_output" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestPythonConstructs/Construct_4_-_Complex_plugin_manager/No_private_members" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestPythonConstructs/Construct_4_-_Complex_plugin_manager/No_implementation" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestPythonConstructs/Construct_4_-_Complex_plugin_manager" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestPythonConstructs/Construct_5_-_Very_complex_dynamic_config/Full_output" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestPythonConstructs/Construct_5_-_Very_complex_dynamic_config/No_private_members" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestPythonConstructs/Construct_5_-_Very_complex_dynamic_config/No_implementation" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestPythonConstructs/Construct_5_-_Very_complex_dynamic_config" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestPythonConstructs" time="0.020000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestNewProcessor" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestProcessorCanProcess/main.py" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestProcessorCanProcess/script.pyw" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestProcessorCanProcess/types.pyi" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestProcessorCanProcess/test.PY" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestProcessorCanProcess/main.go" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestProcessorCanProcess/script.js" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestProcessorCanProcess/README.md" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestProcessorCanProcess" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestProcessMock" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestProcessWithOptions/ExcludeComments" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestProcessWithOptions/ExcludeImports" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestProcessWithOptions/ExcludePrivate" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestProcessWithOptions" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestCountLines/#00" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestCountLines/single_line" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestCountLines/line1_line2" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestCountLines/line1_line2_" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestCountLines/line1_line2_line3" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestCountLines" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestIsPrivate/public_function" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestIsPrivate/_private_function" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestIsPrivate/__dunder_method__" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestIsPrivate/#00" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestIsPrivate/normal_name" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestIsPrivate/_" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestIsPrivate" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestInitializeWASM" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestProcessorImplementsInterface" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="TestReadError" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="FuzzProcess/seed#0" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="FuzzProcess/seed#1" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="FuzzProcess/seed#2" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="FuzzProcess/seed#3" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="FuzzProcess/seed#4" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="FuzzProcess/seed#5" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="FuzzProcess/seed#6" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="FuzzProcess/seed#7" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="FuzzProcess/seed#8" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="FuzzProcess/seed#9" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="FuzzProcess/seed#10" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="FuzzProcess/seed#11" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="FuzzProcess/seed#12" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/python" name="FuzzProcess" time="0.000000"></testcase>
+	</testsuite>
+	<testsuite tests="0" failures="0" time="0.010000" name="github.com/janreges/ai-distiller/internal/language/ruby" timestamp="2025-06-19T20:10:10+02:00">
+		<properties>
+			<property name="go.version" value="go1.23.8 linux/amd64"></property>
+		</properties>
+	</testsuite>
+	<testsuite tests="16" failures="0" time="1.041000" name="github.com/janreges/ai-distiller/internal/language/rust" timestamp="2025-06-19T20:10:10+02:00">
+		<properties>
+			<property name="go.version" value="go1.23.8 linux/amd64"></property>
+		</properties>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/rust" name="TestProcessor_Process/basic_struct" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/rust" name="TestProcessor_Process/basic_function" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/rust" name="TestProcessor_Process/use_statements" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/rust" name="TestProcessor_Process/enum" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/rust" name="TestProcessor_Process/impl_block" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/rust" name="TestProcessor_Process/function_with_lifetime_parameters" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/rust" name="TestProcessor_Process/complex_lifetime_parameters" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/rust" name="TestProcessor_Process" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/rust" name="TestProcessor_SupportedExtensions" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/rust" name="TestProcessor_CanProcess/main.rs" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/rust" name="TestProcessor_CanProcess/lib.rs" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/rust" name="TestProcessor_CanProcess/mod.rs" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/rust" name="TestProcessor_CanProcess/test.py" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/rust" name="TestProcessor_CanProcess/main.go" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/rust" name="TestProcessor_CanProcess/file.js" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/rust" name="TestProcessor_CanProcess" time="0.000000"></testcase>
+	</testsuite>
+	<testsuite tests="1" failures="0" skipped="1" time="1.030000" name="github.com/janreges/ai-distiller/internal/language/swift" timestamp="2025-06-19T20:10:10+02:00">
+		<properties>
+			<property name="go.version" value="go1.23.8 linux/amd64"></property>
+		</properties>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/swift" name="TestSwiftProcessor_Constructs" time="0.000000">
+			<skipped message="=== RUN   TestSwiftProcessor_Constructs&#xA;    processor_test.go:15: Skipping comprehensive swift tests - expected files need updating&#xA;--- SKIP: TestSwiftProcessor_Constructs (0.00s)&#xA;"></skipped>
+		</testcase>
+	</testsuite>
+	<testsuite tests="22" failures="0" skipped="1" time="1.048000" name="github.com/janreges/ai-distiller/internal/language/typescript" timestamp="2025-06-19T20:10:10+02:00">
+		<properties>
+			<property name="go.version" value="go1.23.8 linux/amd64"></property>
+		</properties>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/typescript" name="TestTypeScriptConstructs/Construct_4b_-_Modern_decorators_plugin_manager" time="0.000000">
+			<skipped message="=== RUN   TestTypeScriptConstructs/Construct_4b_-_Modern_decorators_plugin_manager&#xA;    processor_comprehensive_test.go:99: Source file ../../../testdata/typescript/04b_modern_decorators/source.ts does not exist&#xA;--- SKIP: TestTypeScriptConstructs/Construct_4b_-_Modern_decorators_plugin_manager (0.00s)&#xA;"></skipped>
+		</testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/typescript" name="TestTypeScriptConstructs/Construct_1_-_Basic_validation_utilities/Full_output" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/typescript" name="TestTypeScriptConstructs/Construct_1_-_Basic_validation_utilities/No_private_members" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/typescript" name="TestTypeScriptConstructs/Construct_1_-_Basic_validation_utilities/No_implementation" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/typescript" name="TestTypeScriptConstructs/Construct_1_-_Basic_validation_utilities" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/typescript" name="TestTypeScriptConstructs/Construct_2_-_Simple_user_model_class/Full_output" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/typescript" name="TestTypeScriptConstructs/Construct_2_-_Simple_user_model_class/No_private_members" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/typescript" name="TestTypeScriptConstructs/Construct_2_-_Simple_user_model_class/No_implementation" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/typescript" name="TestTypeScriptConstructs/Construct_2_-_Simple_user_model_class" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/typescript" name="TestTypeScriptConstructs/Construct_3_-_Medium_notification_service/Full_output" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/typescript" name="TestTypeScriptConstructs/Construct_3_-_Medium_notification_service/No_private_members" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/typescript" name="TestTypeScriptConstructs/Construct_3_-_Medium_notification_service/No_implementation" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/typescript" name="TestTypeScriptConstructs/Construct_3_-_Medium_notification_service" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/typescript" name="TestTypeScriptConstructs/Construct_4_-_Complex_plugin_manager/Full_output" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/typescript" name="TestTypeScriptConstructs/Construct_4_-_Complex_plugin_manager/No_private_members" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/typescript" name="TestTypeScriptConstructs/Construct_4_-_Complex_plugin_manager/No_implementation" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/typescript" name="TestTypeScriptConstructs/Construct_4_-_Complex_plugin_manager" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/typescript" name="TestTypeScriptConstructs/Construct_5_-_Very_complex_event_emitter/Full_output" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/typescript" name="TestTypeScriptConstructs/Construct_5_-_Very_complex_event_emitter/No_private_members" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/typescript" name="TestTypeScriptConstructs/Construct_5_-_Very_complex_event_emitter/No_implementation" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/typescript" name="TestTypeScriptConstructs/Construct_5_-_Very_complex_event_emitter" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/language/typescript" name="TestTypeScriptConstructs" time="0.020000"></testcase>
+	</testsuite>
+	<testsuite tests="10" failures="0" time="1.043000" name="github.com/janreges/ai-distiller/internal/parser" timestamp="2025-06-19T20:10:10+02:00">
+		<properties>
+			<property name="go.version" value="go1.23.8 linux/amd64"></property>
+		</properties>
+		<testcase classname="github.com/janreges/ai-distiller/internal/parser" name="TestNewConverter" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/parser" name="TestConverterHelpers/ByteToLineCol" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/parser" name="TestConverterHelpers/CountLines" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/parser" name="TestConverterHelpers/LastLineLength" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/parser" name="TestConverterHelpers" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/parser" name="TestGetNodeLocation" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/parser" name="TestNewWASMRuntime" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/parser" name="TestWASMRuntimeLoadModule" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/parser" name="TestWASMRuntimeGetModule" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/parser" name="TestWASMModuleLoadFunctions" time="0.000000"></testcase>
+	</testsuite>
+	<testsuite tests="0" failures="0" time="0.012000" name="github.com/janreges/ai-distiller/internal/performance" timestamp="2025-06-19T20:10:10+02:00">
+		<properties>
+			<property name="go.version" value="go1.23.8 linux/amd64"></property>
+		</properties>
+	</testsuite>
+	<testsuite tests="23" failures="0" time="1.034000" name="github.com/janreges/ai-distiller/internal/processor" timestamp="2025-06-19T20:10:10+02:00">
+		<properties>
+			<property name="go.version" value="go1.23.8 linux/amd64"></property>
+		</properties>
+		<testcase classname="github.com/janreges/ai-distiller/internal/processor" name="TestDefaultProcessOptions" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/processor" name="TestProcessorError/WithLineInfo" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/processor" name="TestProcessorError/WithoutLineInfo" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/processor" name="TestProcessorError" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/processor" name="TestMultiError/NoErrors" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/processor" name="TestMultiError/SingleError" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/processor" name="TestMultiError/MultipleErrors" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/processor" name="TestMultiError" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/processor" name="TestBaseProcessor" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/processor" name="TestMockProcessor" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/processor" name="TestNewRegistry" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/processor" name="TestRegistryRegister" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/processor" name="TestRegistryGet" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/processor" name="TestRegistryGetByFilename/main.go" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/processor" name="TestRegistryGetByFilename/test.GO" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/processor" name="TestRegistryGetByFilename/script.py" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/processor" name="TestRegistryGetByFilename/script.PY" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/processor" name="TestRegistryGetByFilename/app.js" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/processor" name="TestRegistryGetByFilename/README.md" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/processor" name="TestRegistryGetByFilename/noextension" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/processor" name="TestRegistryGetByFilename" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/processor" name="TestDefaultRegistry" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/processor" name="TestMustRegister" time="0.000000"></testcase>
+	</testsuite>
+	<testsuite tests="8" failures="0" time="1.038000" name="github.com/janreges/ai-distiller/internal/project" timestamp="2025-06-19T20:10:10+02:00">
+		<properties>
+			<property name="go.version" value="go1.23.8 linux/amd64"></property>
+		</properties>
+		<testcase classname="github.com/janreges/ai-distiller/internal/project" name="TestFindRoot/EnvVarOverride" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/project" name="TestFindRoot/AidrcMarker" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/project" name="TestFindRoot/GoModMarker" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/project" name="TestFindRoot/FallbackToCWD" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/project" name="TestFindRoot/Caching" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/project" name="TestFindRoot" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/project" name="TestGetAidDir" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/project" name="TestEnsureAidDir" time="0.000000"></testcase>
+	</testsuite>
+	<testsuite tests="9" failures="0" skipped="3" time="1.279000" name="github.com/janreges/ai-distiller/internal/semantic" timestamp="2025-06-19T20:10:10+02:00">
+		<properties>
+			<property name="go.version" value="go1.23.8 linux/amd64"></property>
+		</properties>
+		<testcase classname="github.com/janreges/ai-distiller/internal/semantic" name="TestEnhancedResolver_BuiltinResolution" time="0.000000">
+			<skipped message="=== RUN   TestEnhancedResolver_BuiltinResolution&#xA;    resolver_enhanced_test.go:10: Skipping advanced semantic resolution test - not fully implemented yet&#xA;--- SKIP: TestEnhancedResolver_BuiltinResolution (0.00s)&#xA;"></skipped>
+		</testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/semantic" name="TestEnhancedResolver_MemberAccessResolution" time="0.000000">
+			<skipped message="=== RUN   TestEnhancedResolver_MemberAccessResolution&#xA;    resolver_enhanced_test.go:92: Skipping advanced semantic resolution test - not fully implemented yet&#xA;--- SKIP: TestEnhancedResolver_MemberAccessResolution (0.00s)&#xA;"></skipped>
+		</testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/semantic" name="TestEnhancedResolver_CrossFileResolution" time="0.000000">
+			<skipped message="=== RUN   TestEnhancedResolver_CrossFileResolution&#xA;    resolver_enhanced_test.go:296: Skipping advanced semantic resolution test - not fully implemented yet&#xA;--- SKIP: TestEnhancedResolver_CrossFileResolution (0.00s)&#xA;"></skipped>
+		</testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/semantic" name="TestEnhancedResolver_TypeInference" time="0.050000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/semantic" name="TestEnhancedResolver_ComplexInheritance" time="0.040000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/semantic" name="TestTypeScriptAnalyzer_AnalyzeFile" time="0.040000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/semantic" name="TestTypeScriptAnalyzer_ExtractGenericTypes" time="0.040000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/semantic" name="TestTypeScriptAnalyzer_ModernLanguageFeatures" time="0.040000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/semantic" name="TestTypeScriptAnalyzer_ErrorHandling" time="0.040000"></testcase>
+	</testsuite>
+	<testsuite tests="29" failures="0" time="1.032000" name="github.com/janreges/ai-distiller/internal/stripper" timestamp="2025-06-19T20:10:10+02:00">
+		<properties>
+			<property name="go.version" value="go1.23.8 linux/amd64"></property>
+		</properties>
+		<testcase classname="github.com/janreges/ai-distiller/internal/stripper" name="TestNewStripper" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/stripper" name="TestShouldRemoveByVisibility/LegacyPrivate" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/stripper" name="TestShouldRemoveByVisibility/LegacyProtected" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/stripper" name="TestShouldRemoveByVisibility/LegacyInternal" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/stripper" name="TestShouldRemoveByVisibility/LegacyFilePrivate" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/stripper" name="TestShouldRemoveByVisibility/LegacyPublic" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/stripper" name="TestShouldRemoveByVisibility/LegacyOpen" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/stripper" name="TestShouldRemoveByVisibility/PrivateOnlyPrivate" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/stripper" name="TestShouldRemoveByVisibility/PrivateOnlyProtected" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/stripper" name="TestShouldRemoveByVisibility/PrivateOnlyPublic" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/stripper" name="TestShouldRemoveByVisibility/ProtectedOnlyPrivate" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/stripper" name="TestShouldRemoveByVisibility/ProtectedOnlyProtected" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/stripper" name="TestShouldRemoveByVisibility/ProtectedOnlyPublic" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/stripper" name="TestShouldRemoveByVisibility/PythonPrivate" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/stripper" name="TestShouldRemoveByVisibility/PythonDunder" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/stripper" name="TestShouldRemoveByVisibility/PythonPublic" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/stripper" name="TestShouldRemoveByVisibility/PythonPrivateOnly" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/stripper" name="TestShouldRemoveByVisibility/PythonPublicOnly" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/stripper" name="TestShouldRemoveByVisibility/NoRemoval" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/stripper" name="TestShouldRemoveByVisibility/EmptyName" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/stripper" name="TestShouldRemoveByVisibility/Underscore" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/stripper" name="TestShouldRemoveByVisibility" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/stripper" name="TestVisit/StripComments" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/stripper" name="TestVisit/StripImports" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/stripper" name="TestVisit/StripPrivate" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/stripper" name="TestVisit/StripImplementation" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/stripper" name="TestVisit/StripPrivateOnly" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/stripper" name="TestVisit/StripProtectedOnly" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/stripper" name="TestVisit" time="0.000000"></testcase>
+	</testsuite>
+	<testsuite tests="505" failures="0" time="3.419000" name="github.com/janreges/ai-distiller/internal/testrunner" timestamp="2025-06-19T20:10:10+02:00">
+		<properties>
+			<property name="go.version" value="go1.23.8 linux/amd64"></property>
+		</properties>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/cpp/01_basic/comments=1.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/cpp/01_basic/default.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/cpp/01_basic/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/cpp/01_basic/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/cpp/01_basic/private=0,protected=0,internal=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/cpp/01_basic/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/cpp/01_basic/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/cpp/01_basic/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/cpp/02_simple/comments=1.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/cpp/02_simple/default.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/cpp/02_simple/implementation=1.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/cpp/02_simple/imports=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/cpp/02_simple/private=0,protected=0,internal=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/cpp/02_simple/private=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/cpp/02_simple/private=1,protected=1,internal=1,implementation=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/cpp/02_simple/protected=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/cpp/03_medium/comments=1.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/cpp/03_medium/default.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/cpp/03_medium/implementation=1.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/cpp/03_medium/imports=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/cpp/03_medium/private=0,protected=0,internal=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/cpp/03_medium/private=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/cpp/03_medium/private=1,protected=1,internal=1,implementation=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/cpp/03_medium/protected=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/cpp/04_complex/comments=1.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/cpp/04_complex/default.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/cpp/04_complex/implementation=1.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/cpp/04_complex/imports=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/cpp/04_complex/private=0,protected=0,internal=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/cpp/04_complex/private=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/cpp/04_complex/private=1,protected=1,internal=1,implementation=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/cpp/04_complex/protected=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/cpp/05_very_complex/comments=1.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/cpp/05_very_complex/default.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/cpp/05_very_complex/implementation=1.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/cpp/05_very_complex/imports=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/cpp/05_very_complex/private=0,protected=0,internal=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/cpp/05_very_complex/private=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/cpp/05_very_complex/private=1,protected=1,internal=1,implementation=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/cpp/05_very_complex/protected=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/csharp/01_basic/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/csharp/01_basic/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/csharp/01_basic/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/csharp/01_basic/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/csharp/01_basic/private=0,protected=0,internal=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/csharp/01_basic/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/csharp/01_basic/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/csharp/01_basic/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/csharp/02_simple/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/csharp/02_simple/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/csharp/02_simple/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/csharp/02_simple/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/csharp/02_simple/private=0,protected=0,internal=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/csharp/02_simple/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/csharp/02_simple/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/csharp/02_simple/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/csharp/03_medium/comments=1.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/csharp/03_medium/default.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/csharp/03_medium/implementation=1.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/csharp/03_medium/imports=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/csharp/03_medium/private=0,protected=0,internal=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/csharp/03_medium/private=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/csharp/03_medium/private=1,protected=1,internal=1,implementation=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/csharp/03_medium/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/csharp/04_complex/comments=1.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/csharp/04_complex/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/csharp/04_complex/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/csharp/04_complex/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/csharp/04_complex/private=0,protected=0,internal=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/csharp/04_complex/private=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/csharp/04_complex/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/csharp/04_complex/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/csharp/05_very_complex/comments=1.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/csharp/05_very_complex/default.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/csharp/05_very_complex/implementation=1.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/csharp/05_very_complex/imports=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/csharp/05_very_complex/private=0,protected=0,internal=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/csharp/05_very_complex/private=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/csharp/05_very_complex/private=1,protected=1,internal=1,implementation=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/csharp/05_very_complex/protected=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/go/01_basic/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/go/01_basic/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/go/01_basic/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/go/01_basic/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/go/01_basic/private=0,protected=0,internal=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/go/01_basic/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/go/01_basic/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/go/01_basic/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/go/02_simple/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/go/02_simple/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/go/02_simple/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/go/02_simple/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/go/02_simple/private=0,protected=0,internal=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/go/02_simple/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/go/02_simple/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/go/02_simple/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/go/03_medium/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/go/03_medium/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/go/03_medium/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/go/03_medium/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/go/03_medium/private=0,protected=0,internal=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/go/03_medium/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/go/03_medium/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/go/03_medium/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/go/04_complex/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/go/04_complex/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/go/04_complex/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/go/04_complex/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/go/04_complex/private=0,protected=0,internal=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/go/04_complex/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/go/04_complex/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/go/04_complex/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/go/05_very_complex/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/go/05_very_complex/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/go/05_very_complex/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/go/05_very_complex/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/go/05_very_complex/private=0,protected=0,internal=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/go/05_very_complex/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/go/05_very_complex/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/go/05_very_complex/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/java/01_basic/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/java/01_basic/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/java/01_basic/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/java/01_basic/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/java/01_basic/private=0,protected=0,internal=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/java/01_basic/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/java/01_basic/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/java/01_basic/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/java/02_simple/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/java/02_simple/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/java/02_simple/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/java/02_simple/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/java/02_simple/private=0,protected=0,internal=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/java/02_simple/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/java/02_simple/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/java/02_simple/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/java/03_medium/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/java/03_medium/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/java/03_medium/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/java/03_medium/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/java/03_medium/private=0,protected=0,internal=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/java/03_medium/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/java/03_medium/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/java/03_medium/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/java/04_complex/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/java/04_complex/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/java/04_complex/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/java/04_complex/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/java/04_complex/private=0,protected=0,internal=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/java/04_complex/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/java/04_complex/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/java/04_complex/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/java/05_very_complex/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/java/05_very_complex/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/java/05_very_complex/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/java/05_very_complex/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/java/05_very_complex/private=0,protected=0,internal=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/java/05_very_complex/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/java/05_very_complex/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/java/05_very_complex/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/javascript/01_basic/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/javascript/01_basic/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/javascript/01_basic/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/javascript/01_basic/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/javascript/01_basic/private=0,protected=0,internal=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/javascript/01_basic/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/javascript/01_basic/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/javascript/01_basic/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/javascript/02_simple/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/javascript/02_simple/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/javascript/02_simple/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/javascript/02_simple/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/javascript/02_simple/private=0,protected=0,internal=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/javascript/02_simple/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/javascript/02_simple/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/javascript/02_simple/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/javascript/03_medium/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/javascript/03_medium/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/javascript/03_medium/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/javascript/03_medium/imports=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/javascript/03_medium/private=0,protected=0,internal=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/javascript/03_medium/private=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/javascript/03_medium/private=1,protected=1,internal=1,implementation=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/javascript/03_medium/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/javascript/04_complex/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/javascript/04_complex/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/javascript/04_complex/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/javascript/04_complex/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/javascript/04_complex/private=0,protected=0,internal=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/javascript/04_complex/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/javascript/04_complex/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/javascript/04_complex/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/javascript/05_very_complex/comments=1.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/javascript/05_very_complex/default.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/javascript/05_very_complex/implementation=1.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/javascript/05_very_complex/imports=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/javascript/05_very_complex/private=0,protected=0,internal=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/javascript/05_very_complex/private=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/javascript/05_very_complex/private=1,protected=1,internal=1,implementation=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/javascript/05_very_complex/protected=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/kotlin/01_basic/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/kotlin/01_basic/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/kotlin/01_basic/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/kotlin/01_basic/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/kotlin/01_basic/private=0,protected=0,internal=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/kotlin/01_basic/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/kotlin/01_basic/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/kotlin/01_basic/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/kotlin/02_simple/comments=1.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/kotlin/02_simple/default.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/kotlin/02_simple/implementation=1.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/kotlin/02_simple/imports=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/kotlin/02_simple/private=0,protected=0,internal=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/kotlin/02_simple/private=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/kotlin/02_simple/private=1,protected=1,internal=1,implementation=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/kotlin/02_simple/protected=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/kotlin/03_medium/comments=1.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/kotlin/03_medium/default.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/kotlin/03_medium/implementation=1.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/kotlin/03_medium/imports=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/kotlin/03_medium/private=0,protected=0,internal=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/kotlin/03_medium/private=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/kotlin/03_medium/private=1,protected=1,internal=1,implementation=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/kotlin/03_medium/protected=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/kotlin/04_complex/comments=1.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/kotlin/04_complex/default.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/kotlin/04_complex/implementation=1.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/kotlin/04_complex/imports=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/kotlin/04_complex/private=0,protected=0,internal=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/kotlin/04_complex/private=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/kotlin/04_complex/private=1,protected=1,internal=1,implementation=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/kotlin/04_complex/protected=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/kotlin/05_very_complex/comments=1.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/kotlin/05_very_complex/default.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/kotlin/05_very_complex/implementation=1.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/kotlin/05_very_complex/imports=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/kotlin/05_very_complex/private=0,protected=0,internal=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/kotlin/05_very_complex/private=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/kotlin/05_very_complex/private=1,protected=1,internal=1,implementation=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/kotlin/05_very_complex/protected=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/01_basic/comments=1.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/01_basic/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/01_basic/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/01_basic/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/01_basic/private=0,protected=0,internal=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/01_basic/private=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/01_basic/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/01_basic/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/02_simple/comments=1.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/02_simple/default.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/02_simple/implementation=1.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/02_simple/imports=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/02_simple/private=0,protected=0,internal=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/02_simple/private=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/02_simple/private=1,protected=1,internal=1,implementation=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/02_simple/protected=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/03_medium/comments=1.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/03_medium/default.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/03_medium/implementation=1.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/03_medium/imports=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/03_medium/private=0,protected=0,internal=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/03_medium/private=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/03_medium/private=1,protected=1,internal=1,implementation=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/03_medium/protected=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/04_complex/comments=1.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/04_complex/default.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/04_complex/implementation=1.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/04_complex/imports=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/04_complex/private=0,protected=0,internal=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/04_complex/private=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/04_complex/private=1,protected=1,internal=1,implementation=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/04_complex/protected=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/05_very_complex/comments=1.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/05_very_complex/default.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/05_very_complex/implementation=1.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/05_very_complex/imports=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/05_very_complex/private=0,protected=0,internal=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/05_very_complex/private=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/05_very_complex/private=1,protected=1,internal=1,implementation=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/05_very_complex/protected=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/06_edge_cases/comments=1.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/06_edge_cases/default.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/06_edge_cases/implementation=1.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/06_edge_cases/imports=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/06_edge_cases/private=0,protected=0,internal=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/06_edge_cases/private=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/06_edge_cases/private=1,protected=1,internal=1,implementation=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/06_edge_cases/protected=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/07_psr19_showcase/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/07_psr19_showcase/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/07_psr19_showcase/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/07_psr19_showcase/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/07_psr19_showcase/private=0,protected=0,internal=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/07_psr19_showcase/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/07_psr19_showcase/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/php/07_psr19_showcase/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/01_basic/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/01_basic/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/01_basic/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/01_basic/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/01_basic/private=0,protected=0,internal=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/01_basic/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/01_basic/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/01_basic/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/02_simple/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/02_simple/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/02_simple/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/02_simple/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/02_simple/private=0,protected=0,internal=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/02_simple/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/02_simple/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/02_simple/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/03_medium/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/03_medium/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/03_medium/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/03_medium/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/03_medium/private=0,protected=0,internal=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/03_medium/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/03_medium/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/03_medium/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/04_complex/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/04_complex/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/04_complex/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/04_complex/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/04_complex/private=0,protected=0,internal=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/04_complex/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/04_complex/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/04_complex/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/05_very_complex/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/05_very_complex/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/05_very_complex/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/05_very_complex/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/05_very_complex/private=0,protected=0,internal=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/05_very_complex/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/05_very_complex/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/05_very_complex/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/example_new_format/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/example_new_format/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/example_new_format/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/example_new_format/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/example_new_format/private=0,protected=0,internal=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/example_new_format/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/example_new_format/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/python/example_new_format/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/ruby/01_basic/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/ruby/01_basic/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/ruby/01_basic/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/ruby/01_basic/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/ruby/01_basic/private=0,protected=0,internal=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/ruby/01_basic/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/ruby/01_basic/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/ruby/01_basic/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/ruby/02_simple/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/ruby/02_simple/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/ruby/02_simple/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/ruby/02_simple/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/ruby/02_simple/private=0,protected=0,internal=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/ruby/02_simple/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/ruby/02_simple/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/ruby/02_simple/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/ruby/03_medium/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/ruby/03_medium/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/ruby/03_medium/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/ruby/03_medium/imports=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/ruby/03_medium/private=0,protected=0,internal=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/ruby/03_medium/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/ruby/03_medium/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/ruby/03_medium/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/ruby/04_complex/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/ruby/04_complex/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/ruby/04_complex/implementation=1.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/ruby/04_complex/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/ruby/04_complex/private=0,protected=0,internal=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/ruby/04_complex/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/ruby/04_complex/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/ruby/04_complex/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/ruby/05_very_complex/comments=1.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/ruby/05_very_complex/default.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/ruby/05_very_complex/implementation=1.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/ruby/05_very_complex/imports=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/ruby/05_very_complex/private=0,protected=0,internal=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/ruby/05_very_complex/private=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/ruby/05_very_complex/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/ruby/05_very_complex/protected=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/rust/01_basic/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/rust/01_basic/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/rust/01_basic/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/rust/01_basic/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/rust/01_basic/private=0,protected=0,internal=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/rust/01_basic/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/rust/01_basic/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/rust/01_basic/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/rust/02_simple/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/rust/02_simple/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/rust/02_simple/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/rust/02_simple/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/rust/02_simple/private=0,protected=0,internal=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/rust/02_simple/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/rust/02_simple/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/rust/02_simple/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/rust/03_medium/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/rust/03_medium/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/rust/03_medium/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/rust/03_medium/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/rust/03_medium/private=0,protected=0,internal=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/rust/03_medium/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/rust/03_medium/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/rust/03_medium/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/rust/04_complex/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/rust/04_complex/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/rust/04_complex/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/rust/04_complex/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/rust/04_complex/private=0,protected=0,internal=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/rust/04_complex/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/rust/04_complex/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/rust/04_complex/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/rust/05_very_complex/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/rust/05_very_complex/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/rust/05_very_complex/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/rust/05_very_complex/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/rust/05_very_complex/private=0,protected=0,internal=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/rust/05_very_complex/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/rust/05_very_complex/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/rust/05_very_complex/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/swift/01_basic/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/swift/01_basic/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/swift/01_basic/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/swift/01_basic/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/swift/01_basic/private=0,protected=0,internal=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/swift/01_basic/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/swift/01_basic/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/swift/01_basic/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/swift/02_simple/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/swift/02_simple/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/swift/02_simple/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/swift/02_simple/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/swift/02_simple/private=0,protected=0,internal=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/swift/02_simple/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/swift/02_simple/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/swift/02_simple/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/swift/03_medium/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/swift/03_medium/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/swift/03_medium/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/swift/03_medium/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/swift/03_medium/private=0,protected=0,internal=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/swift/03_medium/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/swift/03_medium/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/swift/03_medium/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/swift/04_complex/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/swift/04_complex/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/swift/04_complex/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/swift/04_complex/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/swift/04_complex/private=0,protected=0,internal=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/swift/04_complex/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/swift/04_complex/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/swift/04_complex/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/swift/05_very_complex/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/swift/05_very_complex/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/swift/05_very_complex/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/swift/05_very_complex/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/swift/05_very_complex/private=0,protected=0,internal=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/swift/05_very_complex/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/swift/05_very_complex/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/swift/05_very_complex/protected=0.txt" time="0.010000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/typescript/01_basic/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/typescript/01_basic/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/typescript/01_basic/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/typescript/01_basic/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/typescript/01_basic/private=0,protected=0,internal=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/typescript/01_basic/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/typescript/01_basic/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/typescript/01_basic/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/typescript/02_simple/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/typescript/02_simple/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/typescript/02_simple/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/typescript/02_simple/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/typescript/02_simple/private=0,protected=0,internal=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/typescript/02_simple/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/typescript/02_simple/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/typescript/02_simple/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/typescript/03_medium/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/typescript/03_medium/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/typescript/03_medium/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/typescript/03_medium/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/typescript/03_medium/private=0,protected=0,internal=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/typescript/03_medium/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/typescript/03_medium/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/typescript/03_medium/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/typescript/04_complex/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/typescript/04_complex/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/typescript/04_complex/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/typescript/04_complex/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/typescript/04_complex/private=0,protected=0,internal=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/typescript/04_complex/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/typescript/04_complex/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/typescript/04_complex/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/typescript/05_very_complex/comments=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/typescript/05_very_complex/default.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/typescript/05_very_complex/implementation=1.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/typescript/05_very_complex/imports=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/typescript/05_very_complex/private=0,protected=0,internal=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/typescript/05_very_complex/private=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/typescript/05_very_complex/private=1,protected=1,internal=1,implementation=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration/typescript/05_very_complex/protected=0.txt" time="0.000000"></testcase>
+		<testcase classname="github.com/janreges/ai-distiller/internal/testrunner" name="TestIntegration" time="2.390000"></testcase>
+	</testsuite>
+	<testsuite tests="0" failures="0" time="0.012000" name="github.com/janreges/ai-distiller/internal/version" timestamp="2025-06-19T20:10:10+02:00">
+		<properties>
+			<property name="go.version" value="go1.23.8 linux/amd64"></property>
+		</properties>
+	</testsuite>
+</testsuites>
