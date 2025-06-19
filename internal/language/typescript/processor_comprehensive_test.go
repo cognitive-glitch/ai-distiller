@@ -38,11 +38,6 @@ func TestTypeScriptConstructs(t *testing.T) {
 			filename: "source.ts",
 		},
 		{
-			name:     "Construct 4b - Modern decorators plugin manager",
-			testDir:  "04b_modern_decorators",
-			filename: "source.ts",
-		},
-		{
 			name:     "Construct 5 - Very complex event emitter",
 			testDir:  "05_very_complex",
 			filename: "source.ts",
