@@ -37,9 +37,104 @@ build:
 	@mkdir -p $(BUILD_DIR)
 	CGO_ENABLED=1 $(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/aid
 
-# Run tests
+# Run tests with enhanced output
 test:
 	@echo "==> Running tests"
+	@export PATH="$$PATH:$$(go env GOPATH)/bin"; \
+	if command -v gotestsum >/dev/null 2>&1; then \
+		gotestsum --format testname --junitfile test-results.xml -- -race -coverprofile=coverage.txt -covermode=atomic ./...; \
+	else \
+		echo "📝 For prettier test output, install gotestsum: go install gotest.tools/gotestsum@latest"; \
+		$(GOTEST) -v -race -coverprofile=coverage.txt -covermode=atomic ./...; \
+	fi
+
+# Run tests with different output formats
+test-pretty:
+	@echo "==> Running tests with pretty output"
+	@export PATH="$$PATH:$$(go env GOPATH)/bin"; \
+	if command -v gotestsum >/dev/null 2>&1; then \
+		gotestsum --format pkgname-and-test-fails --junitfile test-results.xml -- -race -coverprofile=coverage.txt -covermode=atomic ./...; \
+	else \
+		echo "❌ gotestsum not found. Installing..."; \
+		go install gotest.tools/gotestsum@latest; \
+		gotestsum --format pkgname-and-test-fails --junitfile test-results.xml -- -race -coverprofile=coverage.txt -covermode=atomic ./...; \
+	fi
+
+# Run tests with dots progress
+test-dots:
+	@echo "==> Running tests with dots progress"
+	@export PATH="$$PATH:$$(go env GOPATH)/bin"; \
+	if command -v gotestsum >/dev/null 2>&1; then \
+		gotestsum --format dots-v2 -- -race -coverprofile=coverage.txt -covermode=atomic ./...; \
+	else \
+		echo "❌ gotestsum not found. Installing..."; \
+		go install gotest.tools/gotestsum@latest; \
+		gotestsum --format dots-v2 -- -race -coverprofile=coverage.txt -covermode=atomic ./...; \
+	fi
+
+# Run tests with short format (just pass/fail)
+test-short:
+	@echo "==> Running tests with short output"
+	@export PATH="$$PATH:$$(go env GOPATH)/bin"; \
+	if command -v gotestsum >/dev/null 2>&1; then \
+		gotestsum --format short-verbose -- -race -coverprofile=coverage.txt -covermode=atomic ./...; \
+	else \
+		echo "❌ gotestsum not found. Installing..."; \
+		go install gotest.tools/gotestsum@latest; \
+		gotestsum --format short-verbose -- -race -coverprofile=coverage.txt -covermode=atomic ./...; \
+	fi
+
+# Run tests with standard format and progress
+test-standard:
+	@echo "==> Running tests with standard format"
+	@export PATH="$$PATH:$$(go env GOPATH)/bin"; \
+	if command -v gotestsum >/dev/null 2>&1; then \
+		gotestsum --format standard-verbose -- -race -coverprofile=coverage.txt -covermode=atomic ./...; \
+	else \
+		echo "❌ gotestsum not found. Installing..."; \
+		go install gotest.tools/gotestsum@latest; \
+		gotestsum --format standard-verbose -- -race -coverprofile=coverage.txt -covermode=atomic ./...; \
+	fi
+
+# Run tests with GitHub Actions format  
+test-github:
+	@echo "==> Running tests with GitHub Actions format"
+	@export PATH="$$PATH:$$(go env GOPATH)/bin"; \
+	if command -v gotestsum >/dev/null 2>&1; then \
+		gotestsum --format github-actions -- -race -coverprofile=coverage.txt -covermode=atomic ./...; \
+	else \
+		echo "❌ gotestsum not found. Installing..."; \
+		go install gotest.tools/gotestsum@latest; \
+		gotestsum --format github-actions -- -race -coverprofile=coverage.txt -covermode=atomic ./...; \
+	fi
+
+# Run tests in watch mode (rerun on file changes)
+test-watch:
+	@echo "==> Running tests in watch mode"
+	@export PATH="$$PATH:$$(go env GOPATH)/bin"; \
+	if command -v gotestsum >/dev/null 2>&1; then \
+		gotestsum --watch --format testname -- -race ./...; \
+	else \
+		echo "❌ gotestsum not found. Installing..."; \
+		go install gotest.tools/gotestsum@latest; \
+		gotestsum --watch --format testname -- -race ./...; \
+	fi
+
+# Run tests with BDD-style output (testdox)
+test-bdd:
+	@echo "==> Running tests with BDD-style output"
+	@export PATH="$$PATH:$$(go env GOPATH)/bin"; \
+	if command -v gotestsum >/dev/null 2>&1; then \
+		gotestsum --format testdox -- -race -coverprofile=coverage.txt -covermode=atomic ./...; \
+	else \
+		echo "❌ gotestsum not found. Installing..."; \
+		go install gotest.tools/gotestsum@latest; \
+		gotestsum --format testdox -- -race -coverprofile=coverage.txt -covermode=atomic ./...; \
+	fi
+
+# Original test command for compatibility
+test-basic:
+	@echo "==> Running tests (basic output)"
 	$(GOTEST) -v -race -coverprofile=coverage.txt -covermode=atomic ./...
 
 # Run integration tests with new test runner
@@ -131,6 +226,7 @@ dev-init:
 	@go install golang.org/x/tools/cmd/goimports@latest
 	@go install github.com/segmentio/golines@latest
 	@go install github.com/air-verse/air@latest
+	@go install gotest.tools/gotestsum@latest
 	@echo "  - Running go mod tidy"
 	@$(GOMOD) tidy
 	@echo "==> Development environment initialized successfully!"
@@ -251,7 +347,18 @@ npm-release: npm-prepare npm-build-binaries
 help:
 	@echo "Available targets:"
 	@echo "  build           - Build the application"
-	@echo "  test            - Run tests"
+	@echo ""
+	@echo "✨ Test commands (with gotestsum - pretty output):"
+	@echo "  test            - Run tests with enhanced output (default)"
+	@echo "  test-pretty     - Run tests with pretty package output ✓✖"
+	@echo "  test-dots       - Run tests with dots progress indicator ···"
+	@echo "  test-short      - Run tests with short verbose output"
+	@echo "  test-bdd        - Run tests with BDD-style output (testdox)"
+	@echo "  test-standard   - Run tests with standard format"
+	@echo "  test-github     - Run tests with GitHub Actions format"
+	@echo "  test-watch      - Run tests in watch mode (rerun on changes) 👀"
+	@echo "  test-basic      - Run tests with basic Go output (no gotestsum)"
+	@echo ""
 	@echo "  bench           - Run benchmarks"
 	@echo "  lint            - Run linter"
 	@echo "  fmt             - Format code"
