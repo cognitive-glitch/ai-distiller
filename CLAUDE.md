@@ -93,6 +93,11 @@ aid src/ --exclude-items=comments
 
 # Only public and protected members with imports
 aid src/ --include-only=public,protected,imports
+
+# Performance control
+aid large-project/ --workers=1        # Single-threaded for debugging
+aid huge-codebase/ --workers=8        # Use 8 parallel workers
+aid . --recursive=0                   # Only current directory, no subdirs
 ```
 
 **Legacy Flag (Deprecated):**
@@ -113,6 +118,15 @@ aid src/ --include-only=public,protected,imports
   - Default pattern: `.aid.<dirname>.[options].txt`
   - Example: `.aid.MyProject.prot.int.impl.txt` (includes protected, internal, implementation)
 
+**Performance & Processing:**
+- `-w, --workers <num>` - Parallel workers (default: 0)
+  - `0` = auto (80% CPU cores)
+  - `1` = serial processing
+  - `2+` = specific number of parallel workers
+- `-r, --recursive <0/1>` - Process directories recursively (default: 1)
+  - `1` = process subdirectories (default)
+  - `0` = only process files in specified directory
+
 **AI Actions:**
 - `--ai-action <action>` - AI-powered analysis action
   - `flow-for-deep-file-to-file-analysis` - Generate task list for systematic analysis
@@ -123,7 +137,7 @@ aid src/ --include-only=public,protected,imports
   - Each action has sensible defaults like `./.aid/ACTION-NAME.%YYYY-MM-DD.HH-MM-SS%.%folder-basename%.md`
 
 **Git Mode:**
-- `--git-limit <n>` - Number of commits to show (default: 0 = all)
+- `--git-limit <n>` - Number of commits to show (default: 200, 0=all)
 - `--with-analysis-prompt` - Prepend AI analysis prompt for comprehensive insights
   - Activated automatically when path is `.git`
   - Shows commit history in clean format: `[hash] date time | author | subject`

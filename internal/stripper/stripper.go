@@ -54,16 +54,23 @@ func (s *Stripper) Visit(node ir.DistilledNode) ir.DistilledNode {
 		if n.Extensions != nil && n.Extensions.PHP != nil && n.Extensions.PHP.IsAPIDocblock {
 			return n
 		}
+		
 		// Check if it's a docstring/docblock
 		isDocstring := n.Format == "docblock" || n.Format == "doc"
 		
-		// Handle based on type
-		if isDocstring && s.options.RemoveDocstrings {
-			return nil
+		// Handle docstrings vs regular comments separately
+		if isDocstring {
+			// For docstrings, only remove if RemoveDocstrings is true
+			if s.options.RemoveDocstrings {
+				return nil
+			}
+		} else {
+			// For regular comments, only remove if RemoveComments is true
+			if s.options.RemoveComments {
+				return nil
+			}
 		}
-		if !isDocstring && s.options.RemoveComments {
-			return nil
-		}
+		
 		return n
 		
 	case *ir.DistilledImport:

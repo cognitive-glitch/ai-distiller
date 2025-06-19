@@ -4,14 +4,21 @@ import (
 	"bytes"
 	"io"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/janreges/ai-distiller/internal/processor"
+	"github.com/janreges/ai-distiller/internal/project"
 )
 
 func TestGenerateOutputFilename(t *testing.T) {
+	// Get the project root dynamically for test expectations
+	rootInfo, err := project.FindRoot()
+	require.NoError(t, err)
+	aidDir := filepath.Join(rootInfo.Path, ".aid")
+	
 	tests := []struct {
 		name         string
 		path         string
@@ -24,42 +31,42 @@ func TestGenerateOutputFilename(t *testing.T) {
 			path:         "/home/user/myproject",
 			stripOptions: []string{},
 			setupFlags:   func() { resetAllFlags() },
-			expected:     ".aid.myproject.txt",
+			expected:     filepath.Join(aidDir, "aid.myproject.txt"),
 		},
 		{
 			name:         "WithComments",
 			path:         "/home/user/myproject",
 			stripOptions: []string{"comments"},
 			setupFlags:   func() { resetAllFlags() },
-			expected:     ".aid.myproject.ncom.txt",
+			expected:     filepath.Join(aidDir, "aid.myproject.ncom.txt"),
 		},
 		{
 			name:         "MultipleOptions",
 			path:         "/home/user/myproject",
 			stripOptions: []string{"comments", "imports", "implementation"},
 			setupFlags:   func() { resetAllFlags() },
-			expected:     ".aid.myproject.ncom.nimp.nimpl.txt",
+			expected:     filepath.Join(aidDir, "aid.myproject.ncom.nimp.nimpl.txt"),
 		},
 		{
 			name:         "AllOptions",
 			path:         "/home/user/myproject",
 			stripOptions: []string{"comments", "imports", "implementation", "non-public"},
 			setupFlags:   func() { resetAllFlags() },
-			expected:     ".aid.myproject.ncom.nimp.nimpl.npub.txt",
+			expected:     filepath.Join(aidDir, "aid.myproject.ncom.nimp.nimpl.npub.txt"),
 		},
 		{
 			name:         "CurrentDirectory",
 			path:         ".",
 			stripOptions: []string{},
 			setupFlags:   func() { resetAllFlags() },
-			expected:     ".aid.current.txt",
+			expected:     filepath.Join(aidDir, "aid.current.txt"),
 		},
 		{
 			name:         "RootDirectory",
 			path:         "/",
 			stripOptions: []string{},
 			setupFlags:   func() { resetAllFlags() },
-			expected:     ".aid.current.txt",
+			expected:     filepath.Join(aidDir, "aid.current.txt"),
 		},
 		{
 			name:         "NewFlagsWithPrivate",
@@ -69,7 +76,7 @@ func TestGenerateOutputFilename(t *testing.T) {
 				resetAllFlags()
 				includePrivate = boolPtr(true)
 			},
-			expected:     ".aid.myproject.priv.txt",
+			expected:     filepath.Join(aidDir, "aid.myproject.priv.txt"),
 		},
 		{
 			name:         "NewFlagsWithProtectedAndImplementation",
@@ -80,7 +87,7 @@ func TestGenerateOutputFilename(t *testing.T) {
 				includeProtected = boolPtr(true)
 				includeImplementation = boolPtr(true)
 			},
-			expected:     ".aid.myproject.prot.impl.txt",
+			expected:     filepath.Join(aidDir, "aid.myproject.prot.impl.txt"),
 		},
 		{
 			name:         "NewFlagsWithComments",
@@ -90,7 +97,7 @@ func TestGenerateOutputFilename(t *testing.T) {
 				resetAllFlags()
 				includeComments = boolPtr(true)
 			},
-			expected:     ".aid.myproject.com.txt",
+			expected:     filepath.Join(aidDir, "aid.myproject.com.txt"),
 		},
 	}
 

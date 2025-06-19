@@ -1,5 +1,6 @@
 benchmark/
 test_repos/
+test_project/
 differential_testing_results.json
 coverage.txt
 aid

@@ -41,6 +41,7 @@ build:
 test:
 	@echo "==> Running tests"
 	@export PATH="$$PATH:$$(go env GOPATH)/bin"; \
+	export CGO_CFLAGS="-w"; \
 	if command -v gotestsum >/dev/null 2>&1; then \
 		gotestsum --format testname --junitfile test-results.xml -- -race -coverprofile=coverage.txt -covermode=atomic $$(go list ./... | grep -v '/tools/' | grep -v '/test_project/'); \
 	else \
@@ -52,6 +53,7 @@ test:
 test-pretty:
 	@echo "==> Running tests with pretty output"
 	@export PATH="$$PATH:$$(go env GOPATH)/bin"; \
+	export CGO_CFLAGS="-w"; \
 	if command -v gotestsum >/dev/null 2>&1; then \
 		gotestsum --format pkgname-and-test-fails --junitfile test-results.xml -- -race -coverprofile=coverage.txt -covermode=atomic $$(go list ./... | grep -v '/tools/' | grep -v '/test_project/'); \
 	else \
@@ -64,6 +66,7 @@ test-pretty:
 test-dots:
 	@echo "==> Running tests with dots progress"
 	@export PATH="$$PATH:$$(go env GOPATH)/bin"; \
+	export CGO_CFLAGS="-w"; \
 	if command -v gotestsum >/dev/null 2>&1; then \
 		gotestsum --format dots-v2 -- -race -coverprofile=coverage.txt -covermode=atomic $$(go list ./... | grep -v '/tools/' | grep -v '/test_project/'); \
 	else \
@@ -76,6 +79,7 @@ test-dots:
 test-short:
 	@echo "==> Running tests with short output"
 	@export PATH="$$PATH:$$(go env GOPATH)/bin"; \
+	export CGO_CFLAGS="-w"; \
 	if command -v gotestsum >/dev/null 2>&1; then \
 		gotestsum --format short-verbose -- -race -coverprofile=coverage.txt -covermode=atomic $$(go list ./... | grep -v '/tools/' | grep -v '/test_project/'); \
 	else \
@@ -88,6 +92,7 @@ test-short:
 test-standard:
 	@echo "==> Running tests with standard format"
 	@export PATH="$$PATH:$$(go env GOPATH)/bin"; \
+	export CGO_CFLAGS="-w"; \
 	if command -v gotestsum >/dev/null 2>&1; then \
 		gotestsum --format standard-verbose -- -race -coverprofile=coverage.txt -covermode=atomic $$(go list ./... | grep -v '/tools/' | grep -v '/test_project/'); \
 	else \
@@ -100,6 +105,7 @@ test-standard:
 test-github:
 	@echo "==> Running tests with GitHub Actions format"
 	@export PATH="$$PATH:$$(go env GOPATH)/bin"; \
+	export CGO_CFLAGS="-w"; \
 	if command -v gotestsum >/dev/null 2>&1; then \
 		gotestsum --format github-actions -- -race -coverprofile=coverage.txt -covermode=atomic $$(go list ./... | grep -v '/tools/' | grep -v '/test_project/'); \
 	else \
@@ -112,6 +118,7 @@ test-github:
 test-watch:
 	@echo "==> Running tests in watch mode"
 	@export PATH="$$PATH:$$(go env GOPATH)/bin"; \
+	export CGO_CFLAGS="-w"; \
 	if command -v gotestsum >/dev/null 2>&1; then \
 		gotestsum --watch --format testname -- -race $$(go list ./... | grep -v '/tools/' | grep -v '/test_project/'); \
 	else \
@@ -124,6 +131,7 @@ test-watch:
 test-bdd:
 	@echo "==> Running tests with BDD-style output"
 	@export PATH="$$PATH:$$(go env GOPATH)/bin"; \
+	export CGO_CFLAGS="-w"; \
 	if command -v gotestsum >/dev/null 2>&1; then \
 		gotestsum --format testdox -- -race -coverprofile=coverage.txt -covermode=atomic $$(go list ./... | grep -v '/tools/' | grep -v '/test_project/'); \
 	else \
@@ -135,12 +143,14 @@ test-bdd:
 # Original test command for compatibility
 test-basic:
 	@echo "==> Running tests (basic output)"
+	@export CGO_CFLAGS="-w"; \
 	$(GOTEST) -v -race -coverprofile=coverage.txt -covermode=atomic $$(go list ./... | grep -v '/tools/' | grep -v '/test_project/')
 
 # Run only passing tests (exclude known failing packages)
 test-passing:
 	@echo "==> Running tests (only passing packages)"
 	@export PATH="$$PATH:$$(go env GOPATH)/bin"; \
+	export CGO_CFLAGS="-w"; \
 	if command -v gotestsum >/dev/null 2>&1; then \
 		gotestsum --format testname --junitfile test-results.xml -- -race -coverprofile=coverage.txt -covermode=atomic $$(go list ./... | grep -v '/tools/' | grep -v '/test_project/' | grep -v '/cli' | grep -v '/language/golang'); \
 	else \
