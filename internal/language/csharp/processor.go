@@ -13,7 +13,6 @@ import (
 // Processor handles C# source code processing
 type Processor struct {
 	processor.BaseProcessor
-	tsProcessor *TreeSitterProcessor // Reuse parser instance
 }
 
 // NewProcessor creates a new C# processor
@@ -24,7 +23,6 @@ func NewProcessor() *Processor {
 			"1.0.0",
 			[]string{".cs"},
 		),
-		tsProcessor: NewTreeSitterProcessor(), // Initialize once
 	}
 }
 
@@ -36,14 +34,22 @@ func (p *Processor) Process(ctx context.Context, reader io.Reader, filename stri
 		return nil, fmt.Errorf("failed to read source: %w", err)
 	}
 
-	// Use the shared tree-sitter parser instance
-	return p.tsProcessor.ProcessSource(ctx, source, filename)
+	// Create a new tree-sitter processor for each call to ensure thread-safety
+	tsProcessor := NewTreeSitterProcessor()
+	return tsProcessor.ProcessSource(ctx, source, filename)
 }
 
 // ProcessWithOptions implements processor.LanguageProcessor
 func (p *Processor) ProcessWithOptions(ctx context.Context, reader io.Reader, filename string, opts processor.ProcessOptions) (*ir.DistilledFile, error) {
-	// Process using tree-sitter
-	result, err := p.Process(ctx, reader, filename)
+	// Read source code
+	source, err := io.ReadAll(reader)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read source: %w", err)
+	}
+
+	// Create a new tree-sitter processor for each call to ensure thread-safety
+	tsProcessor := NewTreeSitterProcessor()
+	result, err := tsProcessor.ProcessSource(ctx, source, filename)
 	if err != nil {
 		return nil, err
 	}

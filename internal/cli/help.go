@@ -328,13 +328,13 @@ func initializeHelpSystem() {
 		// Check for extended help
 		if extended, _ := cmd.Flags().GetBool("help-extended"); extended {
 			showExtendedHelp()
-			return
+			os.Exit(0)
 		}
 		
 		// Check for cheat sheet
 		if cheat, _ := cmd.Flags().GetBool("cheat"); cheat {
 			showCheatSheet()
-			return
+			os.Exit(0)
 		}
 		
 		// Call original PreRun if it exists

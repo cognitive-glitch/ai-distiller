@@ -13,7 +13,6 @@ import (
 // Processor handles Kotlin source code processing
 type Processor struct {
 	processor.BaseProcessor
-	tsProcessor *TreeSitterProcessor // Reuse parser instance
 }
 
 // NewProcessor creates a new Kotlin processor
@@ -24,7 +23,6 @@ func NewProcessor() *Processor {
 			"1.0.0",
 			[]string{".kt", ".kts"},
 		),
-		tsProcessor: NewTreeSitterProcessor(), // Initialize once
 	}
 }
 
@@ -36,8 +34,9 @@ func (p *Processor) Process(ctx context.Context, reader io.Reader, filename stri
 		return nil, fmt.Errorf("failed to read source: %w", err)
 	}
 
-	// Use the shared tree-sitter parser instance
-	return p.tsProcessor.ProcessSource(ctx, source, filename)
+	// Create a new tree-sitter processor for each call to ensure thread-safety
+	tsProcessor := NewTreeSitterProcessor()
+	return tsProcessor.ProcessSource(ctx, source, filename)
 }
 
 // ProcessWithOptions implements processor.LanguageProcessor
@@ -48,8 +47,9 @@ func (p *Processor) ProcessWithOptions(ctx context.Context, reader io.Reader, fi
 		return nil, fmt.Errorf("failed to read source: %w", err)
 	}
 
-	// Use the shared tree-sitter parser instance
-	file, err := p.tsProcessor.ProcessSource(ctx, source, filename)
+	// Create a new tree-sitter processor for each call to ensure thread-safety
+	tsProcessor := NewTreeSitterProcessor()
+	file, err := tsProcessor.ProcessSource(ctx, source, filename)
 	if err != nil {
 		return nil, err
 	}
