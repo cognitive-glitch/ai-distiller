@@ -517,7 +517,8 @@ func (p *ASTParser) processComments(file *ast.File, distilledFile *ir.DistilledF
 						BaseNode: ir.BaseNode{
 							Location: p.getLocation(c.Pos(), c.End()),
 						},
-						Text: text,
+						Text:   text,
+						Format: "inline", // Mark as regular/inline comment
 					}
 					// Insert comment at the appropriate position based on line number
 					p.insertCommentAtPosition(distilledFile, distilledComment)
