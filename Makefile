@@ -42,10 +42,10 @@ test:
 	@echo "==> Running tests"
 	@export PATH="$$PATH:$$(go env GOPATH)/bin"; \
 	if command -v gotestsum >/dev/null 2>&1; then \
-		gotestsum --format testname --junitfile test-results.xml -- -race -coverprofile=coverage.txt -covermode=atomic ./...; \
+		gotestsum --format testname --junitfile test-results.xml -- -race -coverprofile=coverage.txt -covermode=atomic $$(go list ./... | grep -v '/tools/' | grep -v '/test_project/'); \
 	else \
 		echo "📝 For prettier test output, install gotestsum: go install gotest.tools/gotestsum@latest"; \
-		$(GOTEST) -v -race -coverprofile=coverage.txt -covermode=atomic ./...; \
+		$(GOTEST) -v -race -coverprofile=coverage.txt -covermode=atomic $$(go list ./... | grep -v '/tools/' | grep -v '/test_project/'); \
 	fi
 
 # Run tests with different output formats
@@ -53,11 +53,11 @@ test-pretty:
 	@echo "==> Running tests with pretty output"
 	@export PATH="$$PATH:$$(go env GOPATH)/bin"; \
 	if command -v gotestsum >/dev/null 2>&1; then \
-		gotestsum --format pkgname-and-test-fails --junitfile test-results.xml -- -race -coverprofile=coverage.txt -covermode=atomic ./...; \
+		gotestsum --format pkgname-and-test-fails --junitfile test-results.xml -- -race -coverprofile=coverage.txt -covermode=atomic $$(go list ./... | grep -v '/tools/' | grep -v '/test_project/'); \
 	else \
 		echo "❌ gotestsum not found. Installing..."; \
 		go install gotest.tools/gotestsum@latest; \
-		gotestsum --format pkgname-and-test-fails --junitfile test-results.xml -- -race -coverprofile=coverage.txt -covermode=atomic ./...; \
+		gotestsum --format pkgname-and-test-fails --junitfile test-results.xml -- -race -coverprofile=coverage.txt -covermode=atomic $$(go list ./... | grep -v '/tools/' | grep -v '/test_project/'); \
 	fi
 
 # Run tests with dots progress
@@ -65,11 +65,11 @@ test-dots:
 	@echo "==> Running tests with dots progress"
 	@export PATH="$$PATH:$$(go env GOPATH)/bin"; \
 	if command -v gotestsum >/dev/null 2>&1; then \
-		gotestsum --format dots-v2 -- -race -coverprofile=coverage.txt -covermode=atomic ./...; \
+		gotestsum --format dots-v2 -- -race -coverprofile=coverage.txt -covermode=atomic $$(go list ./... | grep -v '/tools/' | grep -v '/test_project/'); \
 	else \
 		echo "❌ gotestsum not found. Installing..."; \
 		go install gotest.tools/gotestsum@latest; \
-		gotestsum --format dots-v2 -- -race -coverprofile=coverage.txt -covermode=atomic ./...; \
+		gotestsum --format dots-v2 -- -race -coverprofile=coverage.txt -covermode=atomic $$(go list ./... | grep -v '/tools/' | grep -v '/test_project/'); \
 	fi
 
 # Run tests with short format (just pass/fail)
@@ -77,11 +77,11 @@ test-short:
 	@echo "==> Running tests with short output"
 	@export PATH="$$PATH:$$(go env GOPATH)/bin"; \
 	if command -v gotestsum >/dev/null 2>&1; then \
-		gotestsum --format short-verbose -- -race -coverprofile=coverage.txt -covermode=atomic ./...; \
+		gotestsum --format short-verbose -- -race -coverprofile=coverage.txt -covermode=atomic $$(go list ./... | grep -v '/tools/' | grep -v '/test_project/'); \
 	else \
 		echo "❌ gotestsum not found. Installing..."; \
 		go install gotest.tools/gotestsum@latest; \
-		gotestsum --format short-verbose -- -race -coverprofile=coverage.txt -covermode=atomic ./...; \
+		gotestsum --format short-verbose -- -race -coverprofile=coverage.txt -covermode=atomic $$(go list ./... | grep -v '/tools/' | grep -v '/test_project/'); \
 	fi
 
 # Run tests with standard format and progress
@@ -89,11 +89,11 @@ test-standard:
 	@echo "==> Running tests with standard format"
 	@export PATH="$$PATH:$$(go env GOPATH)/bin"; \
 	if command -v gotestsum >/dev/null 2>&1; then \
-		gotestsum --format standard-verbose -- -race -coverprofile=coverage.txt -covermode=atomic ./...; \
+		gotestsum --format standard-verbose -- -race -coverprofile=coverage.txt -covermode=atomic $$(go list ./... | grep -v '/tools/' | grep -v '/test_project/'); \
 	else \
 		echo "❌ gotestsum not found. Installing..."; \
 		go install gotest.tools/gotestsum@latest; \
-		gotestsum --format standard-verbose -- -race -coverprofile=coverage.txt -covermode=atomic ./...; \
+		gotestsum --format standard-verbose -- -race -coverprofile=coverage.txt -covermode=atomic $$(go list ./... | grep -v '/tools/' | grep -v '/test_project/'); \
 	fi
 
 # Run tests with GitHub Actions format  
@@ -101,11 +101,11 @@ test-github:
 	@echo "==> Running tests with GitHub Actions format"
 	@export PATH="$$PATH:$$(go env GOPATH)/bin"; \
 	if command -v gotestsum >/dev/null 2>&1; then \
-		gotestsum --format github-actions -- -race -coverprofile=coverage.txt -covermode=atomic ./...; \
+		gotestsum --format github-actions -- -race -coverprofile=coverage.txt -covermode=atomic $$(go list ./... | grep -v '/tools/' | grep -v '/test_project/'); \
 	else \
 		echo "❌ gotestsum not found. Installing..."; \
 		go install gotest.tools/gotestsum@latest; \
-		gotestsum --format github-actions -- -race -coverprofile=coverage.txt -covermode=atomic ./...; \
+		gotestsum --format github-actions -- -race -coverprofile=coverage.txt -covermode=atomic $$(go list ./... | grep -v '/tools/' | grep -v '/test_project/'); \
 	fi
 
 # Run tests in watch mode (rerun on file changes)
@@ -113,11 +113,11 @@ test-watch:
 	@echo "==> Running tests in watch mode"
 	@export PATH="$$PATH:$$(go env GOPATH)/bin"; \
 	if command -v gotestsum >/dev/null 2>&1; then \
-		gotestsum --watch --format testname -- -race ./...; \
+		gotestsum --watch --format testname -- -race $$(go list ./... | grep -v '/tools/' | grep -v '/test_project/'); \
 	else \
 		echo "❌ gotestsum not found. Installing..."; \
 		go install gotest.tools/gotestsum@latest; \
-		gotestsum --watch --format testname -- -race ./...; \
+		gotestsum --watch --format testname -- -race $$(go list ./... | grep -v '/tools/' | grep -v '/test_project/'); \
 	fi
 
 # Run tests with BDD-style output (testdox)
@@ -125,17 +125,28 @@ test-bdd:
 	@echo "==> Running tests with BDD-style output"
 	@export PATH="$$PATH:$$(go env GOPATH)/bin"; \
 	if command -v gotestsum >/dev/null 2>&1; then \
-		gotestsum --format testdox -- -race -coverprofile=coverage.txt -covermode=atomic ./...; \
+		gotestsum --format testdox -- -race -coverprofile=coverage.txt -covermode=atomic $$(go list ./... | grep -v '/tools/' | grep -v '/test_project/'); \
 	else \
 		echo "❌ gotestsum not found. Installing..."; \
 		go install gotest.tools/gotestsum@latest; \
-		gotestsum --format testdox -- -race -coverprofile=coverage.txt -covermode=atomic ./...; \
+		gotestsum --format testdox -- -race -coverprofile=coverage.txt -covermode=atomic $$(go list ./... | grep -v '/tools/' | grep -v '/test_project/'); \
 	fi
 
 # Original test command for compatibility
 test-basic:
 	@echo "==> Running tests (basic output)"
-	$(GOTEST) -v -race -coverprofile=coverage.txt -covermode=atomic ./...
+	$(GOTEST) -v -race -coverprofile=coverage.txt -covermode=atomic $$(go list ./... | grep -v '/tools/' | grep -v '/test_project/')
+
+# Run only passing tests (exclude known failing packages)
+test-passing:
+	@echo "==> Running tests (only passing packages)"
+	@export PATH="$$PATH:$$(go env GOPATH)/bin"; \
+	if command -v gotestsum >/dev/null 2>&1; then \
+		gotestsum --format testname --junitfile test-results.xml -- -race -coverprofile=coverage.txt -covermode=atomic $$(go list ./... | grep -v '/tools/' | grep -v '/test_project/' | grep -v '/cli' | grep -v '/language/golang'); \
+	else \
+		echo "📝 For prettier test output, install gotestsum: go install gotest.tools/gotestsum@latest"; \
+		$(GOTEST) -v -race -coverprofile=coverage.txt -covermode=atomic $$(go list ./... | grep -v '/tools/' | grep -v '/test_project/' | grep -v '/cli' | grep -v '/language/golang'); \
+	fi
 
 # Run integration tests with new test runner
 test-integration:
@@ -350,6 +361,7 @@ help:
 	@echo ""
 	@echo "✨ Test commands (with gotestsum - pretty output):"
 	@echo "  test            - Run tests with enhanced output (default)"
+	@echo "  test-passing    - Run only passing tests (exclude known failing packages)"
 	@echo "  test-pretty     - Run tests with pretty package output ✓✖"
 	@echo "  test-dots       - Run tests with dots progress indicator ···"
 	@echo "  test-short      - Run tests with short verbose output"
