@@ -258,7 +258,7 @@ Path Control:
 Git Mode (when path is .git):
     --git-limit NUM            Limit number of commits (default: 200, 0=all)
     --with-analysis-prompt     Prepend AI analysis prompt for comprehensive insights:
-                              - Commit quality scoring (0-100%) with individual feedback
+                              - Commit quality scoring (0-100%%) with individual feedback
                               - Development timeline Gantt charts (10-25 items)
                               - Complexity analysis with Mermaid visualizations
                               - Bug pattern detection and problem area identification
@@ -269,7 +269,7 @@ Performance:
 Summary Output:
     --summary-type TYPE        Summary output format (default: visual-progress-bar)
                                visual-progress-bar: Progress bar with compression ratio (default)
-                               stock-ticker: Stock market style (📊 AID 97.5% ▲)
+                               stock-ticker: Stock market style (📊 AID 97.5%% ▲)
                                speedometer-dashboard: Multi-line dashboard with metrics
                                minimalist-sparkline: Compact single line format
                                ci-friendly: Clean format for CI/CD pipelines
