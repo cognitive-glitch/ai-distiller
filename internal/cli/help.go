@@ -133,10 +133,10 @@ OUTPUT FILE NAMING:
 
 For complete documentation and examples: aid --help-extended
 
-%s---
+---
 AI Distiller (aid) v%s - %s
 Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic, www.siteone.io)
-Explore the project on GitHub: https://github.com/janreges/ai-distiller%s
+Explore the project on GitHub: %s%s
 `, versionInfo, gray, version.Version, version.WebsiteURL, reset)
 }
 
@@ -348,11 +348,11 @@ AUTHOR
 COPYRIGHT
     Licensed under MIT License
 
-%s---
+---
 AI Distiller (aid) v%s - %s
 Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic, www.siteone.io)
 Explore the project on GitHub: https://github.com/janreges/ai-distiller%s
-`, gray, reset, version.WebsiteURL, gray, version.Version, version.WebsiteURL, reset)
+`, gray, reset, gray, version.Version, version.WebsiteURL, reset)
 }
 
 // initializeHelpSystem sets up custom help templates and commands
@@ -652,7 +652,7 @@ CUSTOMIZING AI ACTION OUTPUT:
                            Supports template variables:
                            %%YYYY-MM-DD%% - Current date
                            %%HH-MM-SS%%   - Current time  
-                           %%%folder-basename%% - Directory name
+                           %%folder-basename%% - Directory name
     
     EXAMPLES:
         aid ./src --ai-action prompt-for-refactoring-suggestion \
@@ -716,11 +716,11 @@ EXAMPLES:
 
 For more examples: aid --help-extended
 
-%s---
+---
 AI Distiller (aid) v%s - %s
 Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic, www.siteone.io)
-Explore the project on GitHub: https://github.com/janreges/ai-distiller%s
-`, gray, version.Version, version.WebsiteURL, reset)
+Explore the project on GitHub: %s%s
+`, gray, reset, gray, version.Version, version.WebsiteURL, reset)
 	fmt.Print(output)
 }
 
@@ -875,11 +875,11 @@ Common mistakes:
 
 For complete examples: aid --help-extended
 
-%s---
+---
 AI Distiller (aid) v%s - %s
 Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic, www.siteone.io)
-Explore the project on GitHub: https://github.com/janreges/ai-distiller%s
-`, gray, version.Version, version.WebsiteURL, reset)
+Explore the project on GitHub: %s%s
+`, gray, reset, gray, version.Version, version.WebsiteURL, reset)
 }
 
 // showGitHelp displays git mode documentation
@@ -990,7 +990,7 @@ When using --with-analysis-prompt, the output includes guidance for:
     • How has team composition changed?
 
     Commit Message Quality:
-    • Overall project quality score (0-100%)
+    • Overall project quality score (0-100%%)
     • Individual contributor scores and feedback
     • Best/worst examples for learning
     • Personalized improvement recommendations
@@ -1021,11 +1021,11 @@ When using --with-analysis-prompt, the output includes guidance for:
 
 For complete examples: aid --help-extended
 
-%s---
+---
 AI Distiller (aid) v%s - %s
 Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic, www.siteone.io)
-Explore the project on GitHub: https://github.com/janreges/ai-distiller%s
-`, gray, version.Version, version.WebsiteURL, reset)
+Explore the project on GitHub: %s%s
+`, gray, reset, gray, version.Version, version.WebsiteURL, reset)
 }
 
 // showCheatSheet displays a quick reference card
@@ -1080,16 +1080,16 @@ QUICK COMBINATIONS:
 
 OUTPUT FORMATS:
   --format text        # Compact (default)
-  --format md          # Human-readable markdown
+  --format md          # Clean, structured markdown
   --format jsonl       # One JSON per file
   --format json-structured  # Rich semantic data
 
 SUMMARY FORMATS:
-  --summary-type visual-progress-bar   # Visual progress bar: [████████░░] 97.5% saved! (default)
-  --summary-type stock-ticker          # Stock ticker: 📊 AID 97.5% ▲ | 5MB→128KB | ~1.2M tokens saved
+  --summary-type visual-progress-bar   # Visual progress bar: [████████░░] 97.5%% saved! (default)
+  --summary-type stock-ticker          # Stock ticker: 📊 AID 97.5%% ▲ | 5MB→128KB | ~1.2M tokens saved
   --summary-type speedometer-dashboard # Dashboard with dual progress bars
-  --summary-type minimalist-sparkline  # Minimalist: ✨ 5MB → 128KB (97.5% saved)
-  --summary-type ci-friendly           # CI/log friendly: [aid] ✓ 97.5% saved | 5MB → 128KB | 450ms
+  --summary-type minimalist-sparkline  # Minimalist: ✨ 5MB → 128KB (97.5%% saved)
+  --summary-type ci-friendly           # CI/log friendly: [aid] ✓ 97.5%% saved | 5MB → 128KB | 450ms
   --summary-type json                  # Machine-readable JSON output
   --summary-type off                   # Disable summary output
   --no-emoji                           # Remove emojis from summary
@@ -1104,11 +1104,11 @@ HELP:
   aid help filtering   # Filtering reference
   aid help git         # Git mode help
 
-%s---
+---
 AI Distiller (aid) v%s - %s
 Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic, www.siteone.io)
-Explore the project on GitHub: https://github.com/janreges/ai-distiller%s
-`, gray, version.Version, version.WebsiteURL, reset)
+Explore the project on GitHub: %s%s
+`, gray, reset, gray, version.Version, version.WebsiteURL, reset)
 }
 
 // getAIActionsList returns a list of available AI actions with descriptions
