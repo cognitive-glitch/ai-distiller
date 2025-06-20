@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -554,9 +555,21 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 	
 	dbg.Logf(debug.LevelDetailed, "Formatted output size: %d bytes", output.Len())
 
+	// Clean up empty file tags for text format
+	outputStr := output.String()
+	dbg.Logf(debug.LevelDetailed, "Output format: %s", outputFormat)
+	if outputFormat == "text" {
+		// Remove empty file tags with only whitespace between them
+		emptyFilePattern := regexp.MustCompile(`(?s)<file path="[^"]+">\s*</file>\s*`)
+		cleanedStr := emptyFilePattern.ReplaceAllString(outputStr, "")
+		dbg.Logf(debug.LevelDetailed, "Regex cleanup: before=%d bytes, after=%d bytes, pattern matches=%d", 
+			len(outputStr), len(cleanedStr), len(emptyFilePattern.FindAllString(outputStr, -1)))
+		outputStr = cleanedStr
+	}
+
 	// Write to file if not stdout-only
 	if outputFile != "" && !outputToStdout {
-		if err := os.WriteFile(outputFile, []byte(output.String()), 0644); err != nil {
+		if err := os.WriteFile(outputFile, []byte(outputStr), 0644); err != nil {
 			return fmt.Errorf("failed to write output file: %w", err)
 		}
 		dbg.Logf(debug.LevelBasic, "Wrote output to %s", outputFile)
@@ -564,7 +577,7 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 
 	// Write to stdout if requested
 	if outputToStdout || outputFile == "" {
-		fmt.Print(output.String())
+		fmt.Print(outputStr)
 	}
 
 	// Print advanced summary to stderr (only when not in raw mode and not using stdin)

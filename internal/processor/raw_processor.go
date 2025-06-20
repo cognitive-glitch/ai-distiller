@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -95,7 +96,9 @@ func (p *RawProcessor) Process(ctx context.Context, reader io.Reader, filename s
 	
 	for _, binExt := range binaryExtensions {
 		if ext == binExt {
-			return nil, fmt.Errorf("binary file not supported: %s", filename)
+			// Log warning and skip binary file
+			fmt.Fprintf(os.Stderr, "Warning: skipping binary file: %s\n", filename)
+			return nil, nil
 		}
 	}
 	

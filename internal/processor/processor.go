@@ -351,7 +351,10 @@ func (p *Processor) processDirectory(dir string, opts ProcessOptions) (*ir.Disti
 			return nil
 		}
 
-		result.Children = append(result.Children, file)
+		// Skip nil files (e.g., binary files in RawMode)
+		if file != nil {
+			result.Children = append(result.Children, file)
+		}
 		return nil
 	})
 

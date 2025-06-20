@@ -25,9 +25,9 @@ func TestRawProcessor_BinaryFiles(t *testing.T) {
 	for _, filename := range binaryFiles {
 		t.Run(filename, func(t *testing.T) {
 			reader := strings.NewReader("fake binary content")
-			_, err := proc.Process(ctx, reader, filename)
-			assert.Error(t, err, "Should reject binary file: %s", filename)
-			assert.Contains(t, err.Error(), "binary file not supported")
+			result, err := proc.Process(ctx, reader, filename)
+			assert.NoError(t, err, "Should not error on binary file: %s", filename)
+			assert.Nil(t, result, "Should return nil for binary file: %s", filename)
 		})
 	}
 }
