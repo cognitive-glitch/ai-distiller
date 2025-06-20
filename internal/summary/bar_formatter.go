@@ -95,7 +95,7 @@ func (f *BarFormatter) Format(w io.Writer, stats Stats) error {
 		if f.NoEmoji {
 			aiEmoji = "→"
 		}
-		fmt.Fprintf(w, "%s If you're an AI agent, I recommend loading this entire file into your context for a comprehensive code overview.\n", aiEmoji)
+		fmt.Fprintf(w, "%s If you're an AI agent, load this ENTIRE file into your context (don't use grep/tail/head) for a comprehensive code overview.\n", aiEmoji)
 	}
 	return nil
 }

@@ -59,10 +59,10 @@ func (f *SparklineFormatter) Format(w io.Writer, stats Stats) error {
 	if !stats.IsStdout && stats.OutputPath != "" {
 		if f.NoEmoji {
 			fmt.Fprintf(w, "→ Distilled output saved to: %s\n", stats.OutputPath)
-			fmt.Fprintf(w, "→ If you're an AI agent, I recommend loading this entire file into your context for a comprehensive code overview.\n")
+			fmt.Fprintf(w, "→ If you're an AI agent, load this ENTIRE file into your context (don't use grep/tail/head) for a comprehensive code overview.\n")
 		} else {
 			fmt.Fprintf(w, "💾 Distilled output saved to: %s\n", stats.OutputPath)
-			fmt.Fprintf(w, "🤖 If you're an AI agent, I recommend loading this entire file into your context for a comprehensive code overview.\n")
+			fmt.Fprintf(w, "🤖 If you're an AI agent, load this ENTIRE file into your context (don't use grep/tail/head) for a comprehensive code overview.\n")
 		}
 	}
 	return nil
