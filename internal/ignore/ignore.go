@@ -125,7 +125,10 @@ func (m *IgnoreMatcher) ShouldIgnore(path string) bool {
 	// 	fmt.Fprintf(os.Stderr, "[DEBUG] Pattern: %s (isDir: %v)\n", p.pattern, p.isDir)
 	// }
 
-	// Check if there's a more specific .aidignore file in a parent directory
+	// First check our own patterns
+	ignored := m.matches(relPath)
+
+	// Then check if there's a more specific .aidignore file that might override
 	dir := filepath.Dir(absPath)
 	if dir != m.baseDir && strings.HasPrefix(dir, m.baseDir) {
 		// Check if we need to load a nested .aidignore
@@ -144,19 +147,21 @@ func (m *IgnoreMatcher) ShouldIgnore(path string) bool {
 		submatcher := m.submatchers[dir]
 		m.mu.Unlock()
 
-		// If there's a submatcher, check it first
+		// If there's a submatcher, let it potentially override our decision
 		if submatcher != nil {
-			if submatcher.ShouldIgnore(absPath) {
-				m.mu.Lock()
-				m.cache[path] = true
-				m.mu.Unlock()
-				return true
+			// Get relative path from submatcher's perspective
+			subRelPath, err := filepath.Rel(dir, absPath)
+			if err == nil {
+				// Check if submatcher has a specific match (positive or negative)
+				hasMatch, subIgnored := submatcher.matchesWithInfo(subRelPath)
+				if hasMatch {
+					// Submatcher has a specific pattern that matches, use its decision
+					ignored = subIgnored
+				}
+				// If no match in submatcher, keep the inherited decision
 			}
 		}
 	}
-
-	// Check patterns
-	ignored := m.matches(relPath)
 
 	// Cache the result
 	m.mu.Lock()
@@ -166,59 +171,19 @@ func (m *IgnoreMatcher) ShouldIgnore(path string) bool {
 	return ignored
 }
 
-// matches checks if a relative path matches any pattern
-func (m *IgnoreMatcher) matches(relPath string) bool {
+// matchesWithInfo checks if a relative path matches any pattern and returns whether there was a match
+func (m *IgnoreMatcher) matchesWithInfo(relPath string) (hasMatch bool, ignored bool) {
 	// Normalize path separators
 	relPath = filepath.ToSlash(relPath)
 	
 	info, err := os.Stat(filepath.Join(m.baseDir, relPath))
 	isDir := err == nil && info.IsDir()
 
-	ignored := false
-
 	// Process patterns in order (last match wins for overlapping patterns)
 	for _, p := range m.patterns {
-		matched := false
-		pattern := p.pattern
-		
-		// For directory patterns, check if the path is within that directory
-		if p.isDir {
-			if isDir && relPath == pattern {
-				// Directory itself matches
-				matched = true
-			} else if strings.HasPrefix(relPath, pattern+"/") {
-				// Path is inside the directory
-				matched = true
-			}
-		} else {
-			// Regular pattern matching
-			matched = false // Will be set below
-		}
-		
-		// If not already matched by directory logic, do regular pattern matching
-		if !matched && !p.isDir {
-			// Handle different pattern types
-			if strings.Contains(pattern, "/") {
-				// Path pattern
-				if strings.HasPrefix(pattern, "/") {
-					// Absolute pattern (relative to base dir)
-					pattern = strings.TrimPrefix(pattern, "/")
-					matched = matchPath(relPath, pattern)
-				} else if strings.HasPrefix(pattern, "**/") {
-					// Match anywhere in tree
-					pattern = strings.TrimPrefix(pattern, "**/")
-					matched = matchAnywhere(relPath, pattern)
-				} else {
-					// Relative pattern - can match at any level
-					matched = matchRelative(relPath, pattern)
-				}
-			} else {
-				// Simple name pattern - matches anywhere
-				matched = matchName(relPath, pattern)
-			}
-		}
-
+		matched := m.matchPattern(relPath, p, isDir)
 		if matched {
+			hasMatch = true
 			if p.isNegation {
 				ignored = false
 			} else {
@@ -227,7 +192,52 @@ func (m *IgnoreMatcher) matches(relPath string) bool {
 		}
 	}
 
+	return hasMatch, ignored
+}
+
+// matches checks if a relative path matches any pattern
+func (m *IgnoreMatcher) matches(relPath string) bool {
+	_, ignored := m.matchesWithInfo(relPath)
 	return ignored
+}
+
+// matchPattern checks if a path matches a single pattern
+func (m *IgnoreMatcher) matchPattern(relPath string, p pattern, isDir bool) bool {
+	matched := false
+	pattern := p.pattern
+	
+	// For directory patterns, check if the path is within that directory
+	if p.isDir {
+		if isDir && relPath == pattern {
+			// Directory itself matches
+			matched = true
+		} else if strings.HasPrefix(relPath, pattern+"/") {
+			// Path is inside the directory
+			matched = true
+		}
+	} else {
+		// Handle different pattern types
+		if strings.Contains(pattern, "/") {
+			// Path pattern
+			if strings.HasPrefix(pattern, "/") {
+				// Absolute pattern (relative to base dir)
+				pattern = strings.TrimPrefix(pattern, "/")
+				matched = matchPath(relPath, pattern)
+			} else if strings.HasPrefix(pattern, "**/") {
+				// Match anywhere in tree
+				pattern = strings.TrimPrefix(pattern, "**/")
+				matched = matchAnywhere(relPath, pattern)
+			} else {
+				// Relative pattern - can match at any level
+				matched = matchRelative(relPath, pattern)
+			}
+		} else {
+			// Simple name pattern - matches anywhere
+			matched = matchName(relPath, pattern)
+		}
+	}
+
+	return matched
 }
 
 // matchPath matches a path against a pattern
