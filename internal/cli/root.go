@@ -583,13 +583,19 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 		fmt.Print(outputStr)
 	}
 
-	// Print advanced summary to stderr (only when not in raw mode and not using stdin)
-	if !rawMode && len(args) > 0 && args[0] != "-" && summaryFormat != "off" {
+	// Print advanced summary to stderr (only when not using stdin)
+	if len(args) > 0 && args[0] != "-" && summaryFormat != "off" {
 		// Calculate processing duration
 		duration := time.Since(startTime)
 		
-		// Get original size (we need to implement this)
-		originalSize := getOriginalSize(result)
+		// Get original size
+		var originalSize int64
+		if rawMode {
+			// For raw mode, the original size equals distilled size (no compression)
+			originalSize = int64(output.Len())
+		} else {
+			originalSize = getOriginalSize(result)
+		}
 		distilledSize := int64(output.Len())
 		
 		// Create summary stats

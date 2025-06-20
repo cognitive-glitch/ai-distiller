@@ -12,6 +12,20 @@ import (
 	"github.com/janreges/ai-distiller/internal/version"
 )
 
+// Color codes for terminal output
+const (
+	colorReset  = "\033[0m"
+	colorDim    = "\033[2m"
+	colorCyan   = "\033[36m"
+	colorGray   = "\033[90m"
+	colorYellow = "\033[33m"
+)
+
+// shouldUseColor determines if colors should be used in output
+func shouldUseColor() bool {
+	return os.Getenv("NO_COLOR") == ""
+}
+
 // getVersionInfo returns formatted version string with build date
 func getVersionInfo() string {
 	versionInfo := fmt.Sprintf("v%s", Version)
@@ -30,12 +44,22 @@ func getVersionInfo() string {
 func getHelpTemplate() string {
 	versionInfo := getVersionInfo()
 	
-	return fmt.Sprintf(`{{.Short}} (%s)
+	// Determine if we should use colors
+	cyan := ""
+	gray := ""
+	reset := ""
+	if shouldUseColor() {
+		cyan = colorCyan
+		gray = colorGray
+		reset = colorReset
+	}
+	
+	return fmt.Sprintf(`%s{{.Short}} (%s)
 
 AI Distiller transforms source code into optimized formats for Large Language Models.
 Compress codebases by 60-90%% while preserving all semantic information needed for AI analysis.
 Generate complete AI prompts and workflows - copy the output directly to Gemini 2.5 Pro,
-ChatGPT-o3/4o, or Claude for perfect AI-powered code analysis.
+ChatGPT-o3/4o, or Claude for perfect AI-powered code analysis.%s
 
 USAGE:
   {{.UseLine}}{{if .HasAvailableSubCommands}}
@@ -111,16 +135,28 @@ OUTPUT FILE NAMING:
 
 For complete documentation and examples: aid --help-extended
 
----
-AI Distiller (aid) - ` + version.WebsiteURL + `
+%s---
+AI Distiller (aid) v%s - %s
 Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic)
-Explore the project on GitHub: https://github.com/janreges/ai-distiller
-`, versionInfo)
+Explore the project on GitHub: https://github.com/janreges/ai-distiller%s
+`, versionInfo, cyan, versionInfo, gray, version.WebsiteURL, reset)
 }
 
 // getExtendedHelpContent returns the extended help content for --help-extended
 func getExtendedHelpContent() string {
-	return `AI DISTILLER - COMPLETE REFERENCE
+	// Determine if we should use colors
+	cyan := ""
+	gray := ""
+	reset := ""
+	if shouldUseColor() {
+		cyan = colorCyan
+		gray = colorGray
+		reset = colorReset
+	}
+	
+	versionInfo := getVersionInfo()
+	
+	return fmt.Sprintf(`%sAI DISTILLER - COMPLETE REFERENCE%s
 
 NAME
     aid - AI Distiller: Extract essential code structure for LLMs
@@ -317,7 +353,12 @@ AUTHOR
 
 COPYRIGHT
     Licensed under MIT License
-`
+
+%s---
+AI Distiller (aid) v%s - %s
+Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic)
+Explore the project on GitHub: https://github.com/janreges/ai-distiller%s
+`, cyan, versionInfo, gray, version.WebsiteURL, reset)
 }
 
 // initializeHelpSystem sets up custom help templates and commands
@@ -385,7 +426,19 @@ func runHelpCommand(cmd *cobra.Command, args []string) error {
 
 // showAIActionsHelp displays detailed AI actions documentation
 func showAIActionsHelp() {
-	output := `AI ACTIONS - DETAILED REFERENCE
+	// Determine if we should use colors
+	cyan := ""
+	gray := ""
+	reset := ""
+	if shouldUseColor() {
+		cyan = colorCyan
+		gray = colorGray
+		reset = colorReset
+	}
+	
+	versionInfo := getVersionInfo()
+	
+	output := fmt.Sprintf(`%sAI ACTIONS - DETAILED REFERENCE%s
 
 AI Actions are pre-configured analysis workflows that format the distilled output
 for specific AI/LLM tasks. Each action includes optimized prompts, filtering
@@ -673,17 +726,29 @@ EXAMPLES:
 
 For more examples: aid --help-extended
 
----
-AI Distiller (aid) - ` + version.WebsiteURL + `
+%s---
+AI Distiller (aid) v%s - %s
 Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic)
-Explore the project on GitHub: https://github.com/janreges/ai-distiller
-`
+Explore the project on GitHub: https://github.com/janreges/ai-distiller%s
+`, cyan, versionInfo, gray, version.WebsiteURL, reset)
 	fmt.Print(output)
 }
 
 // showFilteringHelp displays complete filtering documentation
 func showFilteringHelp() {
-	fmt.Print(`FILTERING - COMPLETE REFERENCE
+	// Determine if we should use colors
+	cyan := ""
+	gray := ""
+	reset := ""
+	if shouldUseColor() {
+		cyan = colorCyan
+		gray = colorGray
+		reset = colorReset
+	}
+	
+	versionInfo := getVersionInfo()
+	
+	fmt.Printf(`%sFILTERING - COMPLETE REFERENCE%s
 
 AI Distiller provides flexible filtering to control exactly what code elements
 are included in the distilled output. This allows you to focus on specific
@@ -824,16 +889,28 @@ Common mistakes:
 
 For complete examples: aid --help-extended
 
----
-AI Distiller (aid) - ` + version.WebsiteURL + `
+%s---
+AI Distiller (aid) v%s - %s
 Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic)
-Explore the project on GitHub: https://github.com/janreges/ai-distiller
-`)
+Explore the project on GitHub: https://github.com/janreges/ai-distiller%s
+`, cyan, versionInfo, gray, version.WebsiteURL, reset)
 }
 
 // showGitHelp displays git mode documentation
 func showGitHelp() {
-	fmt.Print(`GIT MODE - COMPLETE REFERENCE
+	// Determine if we should use colors
+	cyan := ""
+	gray := ""
+	reset := ""
+	if shouldUseColor() {
+		cyan = colorCyan
+		gray = colorGray
+		reset = colorReset
+	}
+	
+	versionInfo := getVersionInfo()
+	
+	fmt.Printf(`%sGIT MODE - COMPLETE REFERENCE%s
 
 When you target a .git directory, AI Distiller switches to a special git analysis
 mode that formats commit history for LLM consumption. This is useful for
@@ -962,16 +1039,28 @@ When using --with-analysis-prompt, the output includes guidance for:
 
 For complete examples: aid --help-extended
 
----
-AI Distiller (aid) - ` + version.WebsiteURL + `
+%s---
+AI Distiller (aid) v%s - %s
 Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic)
-Explore the project on GitHub: https://github.com/janreges/ai-distiller
-`)
+Explore the project on GitHub: https://github.com/janreges/ai-distiller%s
+`, cyan, versionInfo, gray, version.WebsiteURL, reset)
 }
 
 // showCheatSheet displays a quick reference card
 func showCheatSheet() {
-	fmt.Print(`AI DISTILLER - QUICK REFERENCE
+	// Determine if we should use colors
+	cyan := ""
+	gray := ""
+	reset := ""
+	if shouldUseColor() {
+		cyan = colorCyan
+		gray = colorGray
+		reset = colorReset
+	}
+	
+	versionInfo := getVersionInfo()
+	
+	fmt.Printf(`%sAI DISTILLER - QUICK REFERENCE%s
 
 Transform source code into AI-optimized formats. Compress codebases 60-90%% while preserving
 semantic information. Generate complete prompts - copy output directly to Gemini 2.5 Pro, 
@@ -1037,11 +1126,11 @@ HELP:
   aid help filtering   # Filtering reference
   aid help git         # Git mode help
 
----
-AI Distiller (aid) - ` + version.WebsiteURL + `
+%s---
+AI Distiller (aid) v%s - %s
 Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic)
-Explore the project on GitHub: https://github.com/janreges/ai-distiller
-`)
+Explore the project on GitHub: https://github.com/janreges/ai-distiller%s
+`, cyan, versionInfo, gray, version.WebsiteURL, reset)
 }
 
 // getAIActionsList returns a list of available AI actions with descriptions
