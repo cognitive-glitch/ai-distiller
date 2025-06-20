@@ -32,7 +32,7 @@ PLATFORMS = linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 wind
 all: build
 
 # Build for current platform (with CGO - full language support)
-build:
+build: clean
 	@echo "==> Building $(BINARY_NAME) $(VERSION) with full language support"
 	@mkdir -p $(BUILD_DIR)
 	CGO_ENABLED=1 $(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/aid
