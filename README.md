@@ -79,7 +79,11 @@ All tree-sitter grammars are compiled into the `aid` binary - zero external depe
 
 **macOS / Linux / WSL:**
 ```bash
+# Install to ~/.aid/bin (recommended, no sudo required)
 curl -sSL https://raw.githubusercontent.com/janreges/ai-distiller/main/install.sh | bash
+
+# Install to /usr/local/bin (requires sudo)
+curl -sSL https://raw.githubusercontent.com/janreges/ai-distiller/main/install.sh | bash -s -- --sudo
 ```
 
 **Windows PowerShell:**
@@ -90,7 +94,8 @@ iwr https://raw.githubusercontent.com/janreges/ai-distiller/main/install.ps1 -us
 The installer will:
 - Detect your OS and architecture automatically
 - Download the appropriate pre-built binary
-- Install to `~/.aid/bin` (no sudo required)
+- Install to `~/.aid/bin` by default (no sudo required)
+- Or to `/usr/local/bin` with `--sudo` flag
 - Guide you through PATH configuration if needed
 
 ### Other Installation Methods

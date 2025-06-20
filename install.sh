@@ -4,7 +4,12 @@
 #
 # Usage:
 #   curl -sSL https://raw.githubusercontent.com/janreges/ai-distiller/main/install.sh | bash
+#   curl -sSL https://raw.githubusercontent.com/janreges/ai-distiller/main/install.sh | bash -s -- --sudo
 #   curl -sSL https://raw.githubusercontent.com/janreges/ai-distiller/main/install.sh | bash -s -- v1.0.0
+#   curl -sSL https://raw.githubusercontent.com/janreges/ai-distiller/main/install.sh | bash -s -- --sudo v1.0.0
+#
+# Options:
+#   --sudo    Install to /usr/local/bin instead of ~/.aid/bin (requires sudo)
 #
 # This script is designed to be idempotent and safe to run multiple times.
 
@@ -12,11 +17,35 @@ set -e # Exit immediately if a command exits with a non-zero status
 set -u # Treat unset variables as an error when substituting
 set -o pipefail # Pipeline fails on first command failure
 
+# --- Parse arguments ---
+USE_SUDO=false
+VERSION="1.0.0"
+
+for arg in "$@"; do
+    case "$arg" in
+        --sudo)
+            USE_SUDO=true
+            ;;
+        v*)
+            VERSION="${arg#v}"  # Remove 'v' prefix if present
+            ;;
+        *)
+            if [ -z "${VERSION}" ]; then
+                VERSION="$arg"
+            fi
+            ;;
+    esac
+done
+
 # --- Configuration ---
-VERSION="${1:-"1.0.0"}"
 REPO="janreges/ai-distiller"
-AID_INSTALL_ROOT="${AID_INSTALL_ROOT:-"$HOME/.aid"}"
-INSTALL_DIR="$AID_INSTALL_ROOT/bin"
+if [ "$USE_SUDO" = true ]; then
+    INSTALL_DIR="/usr/local/bin"
+    AID_INSTALL_ROOT="/usr/local"
+else
+    AID_INSTALL_ROOT="${AID_INSTALL_ROOT:-"$HOME/.aid"}"
+    INSTALL_DIR="$AID_INSTALL_ROOT/bin"
+fi
 
 # --- Helper Functions ---
 
@@ -125,8 +154,21 @@ main() {
 
     # 9. Install binary
     say "Installing 'aid' to $INSTALL_DIR..."
-    mkdir -p "$INSTALL_DIR"
-    install -m 755 "$tmp_dir/aid" "$INSTALL_DIR/aid"
+    
+    # Handle sudo installation if needed
+    if [ "$USE_SUDO" = true ]; then
+        if ! [ -w "$INSTALL_DIR" ]; then
+            say "Root privileges required for installation to $INSTALL_DIR"
+            sudo mkdir -p "$INSTALL_DIR"
+            sudo install -m 755 "$tmp_dir/aid" "$INSTALL_DIR/aid"
+        else
+            mkdir -p "$INSTALL_DIR"
+            install -m 755 "$tmp_dir/aid" "$INSTALL_DIR/aid"
+        fi
+    else
+        mkdir -p "$INSTALL_DIR"
+        install -m 755 "$tmp_dir/aid" "$INSTALL_DIR/aid"
+    fi
 
     # 10. Success message with PATH guidance
     say "Installation successful!"
@@ -141,15 +183,21 @@ main() {
             say "  You can start using 'aid' right away!"
             ;;
         *)
-            say "⚠ The installation directory is not in your PATH."
-            say ""
-            say "To use 'aid', add this line to your shell configuration file"
-            say "(~/.bashrc, ~/.zshrc, ~/.profile, etc.):"
-            say ""
-            say "  export PATH=\"$INSTALL_DIR:\$PATH\""
-            say ""
-            say "Then restart your shell or run:"
-            say "  source ~/.bashrc  # or your shell's config file"
+            if [ "$USE_SUDO" = true ]; then
+                # /usr/local/bin is usually in PATH, but let's make sure
+                say "✓ Installed to system directory $INSTALL_DIR"
+                say "  This directory should already be in your PATH."
+            else
+                say "⚠ The installation directory is not in your PATH."
+                say ""
+                say "To use 'aid', add this line to your shell configuration file"
+                say "(~/.bashrc, ~/.zshrc, ~/.profile, etc.):"
+                say ""
+                say "  export PATH=\"$INSTALL_DIR:\$PATH\""
+                say ""
+                say "Then restart your shell or run:"
+                say "  source ~/.bashrc  # or your shell's config file"
+            fi
             ;;
     esac
     say ""
