@@ -75,6 +75,26 @@ All tree-sitter grammars are compiled into the `aid` binary - zero external depe
 
 ## 🚀 Quick Start
 
+### One-Line Installation
+
+**macOS / Linux / WSL:**
+```bash
+curl -sSL https://raw.githubusercontent.com/janreges/ai-distiller/main/install.sh | bash
+```
+
+**Windows PowerShell:**
+```powershell
+iwr https://raw.githubusercontent.com/janreges/ai-distiller/main/install.ps1 -useb | iex
+```
+
+The installer will:
+- Detect your OS and architecture automatically
+- Download the appropriate pre-built binary
+- Install to `~/.aid/bin` (no sudo required)
+- Guide you through PATH configuration if needed
+
+### Other Installation Methods
+
 ```bash
 # Install via Go
 go install github.com/janreges/ai-distiller/cmd/aid@latest
