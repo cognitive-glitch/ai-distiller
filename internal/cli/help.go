@@ -118,8 +118,9 @@ Explore the project on GitHub: https://github.com/janreges/ai-distiller
 `, versionInfo)
 }
 
-// Extended help content for --help-extended
-const extendedHelpContent = `AI DISTILLER - COMPLETE REFERENCE
+// getExtendedHelpContent returns the extended help content for --help-extended
+func getExtendedHelpContent() string {
+	return `AI DISTILLER - COMPLETE REFERENCE
 
 NAME
     aid - AI Distiller: Extract essential code structure for LLMs
@@ -317,6 +318,7 @@ AUTHOR
 COPYRIGHT
     Licensed under MIT License
 `
+}
 
 // initializeHelpSystem sets up custom help templates and commands
 func initializeHelpSystem() {
@@ -1080,5 +1082,5 @@ func showExtendedHelp() {
 	}
 	
 	// Fallback to embedded content
-	fmt.Print(extendedHelpContent)
+	fmt.Print(getExtendedHelpContent())
 }

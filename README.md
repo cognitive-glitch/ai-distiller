@@ -110,7 +110,7 @@ cd ai-distiller
 make build
 
 # Basic usage
-aid                                      # Current directory (parallel by default)
+aid .                                    # Current directory (parallel by default)
 aid src/                                 # Specific directory
 aid main.py utils.py                     # Specific files
 aid -w 1 src/                           # Force serial processing

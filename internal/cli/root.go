@@ -190,11 +190,12 @@ DIAGNOSTICS:
 ═══════════════════════════════════════════════════════════════════════════════
 
 EXAMPLES:
-  aid                          # Process current dir, public APIs only
+  aid                          # Show this help message
+  aid .                        # Process current dir, public APIs only
   aid src/ --private=1         # Include private members
-  aid --file-path-type=absolute # Use absolute paths in output
+  aid --file-path-type=absolute . # Use absolute paths in output
   aid docs/ --raw              # Process text files without parsing
-  aid -w 1                     # Force serial processing
+  aid . -w 1                   # Force serial processing
   aid --relative-path-prefix="module/" docs/  # Add custom prefix to paths
   aid .git                     # Show git commit history (special mode)
   aid .git --git-limit=50      # Show latest 50 commits
@@ -236,7 +237,7 @@ func Execute() error {
 		fmt.Fprintln(os.Stderr, "  aid [path] [flags]")
 		fmt.Fprintln(os.Stderr)
 		fmt.Fprintln(os.Stderr, "Examples:")
-		fmt.Fprintln(os.Stderr, "  aid                    # Process current directory")
+		fmt.Fprintln(os.Stderr, "  aid .                  # Process current directory")
 		fmt.Fprintln(os.Stderr, "  aid src/               # Process src directory")
 		fmt.Fprintln(os.Stderr, "  aid main.py            # Process single file")
 		fmt.Fprintln(os.Stderr, "  aid --help             # Show full help")
@@ -390,11 +391,13 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 		return processStdinWithContext(ctx)
 	}
 	
-	// Handle file/directory input
-	inputPath := "."
-	if len(args) > 0 {
-		inputPath = args[0]
+	// If no arguments provided, show help
+	if len(args) == 0 {
+		return cmd.Help()
 	}
+	
+	// Handle file/directory input
+	inputPath := args[0]
 
 	// Resolve absolute path
 	absPath, err := filepath.Abs(inputPath)
