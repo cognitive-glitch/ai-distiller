@@ -141,10 +141,21 @@ type ToolError struct {
 
 // executeAid runs the aid binary with the given arguments and tracks performance
 func (s *DistillerService) executeAid(ctx context.Context, toolName string, args []string) ([]byte, error) {
+	return s.executeAidWithTimeout(ctx, toolName, args, 0)
+}
+
+// executeAidWithTimeout runs the aid binary with a custom timeout
+func (s *DistillerService) executeAidWithTimeout(ctx context.Context, toolName string, args []string, customTimeout int) ([]byte, error) {
 	startTime := time.Now()
 	
+	// Use custom timeout if provided, otherwise use default
+	timeoutSeconds := s.maxTimeout
+	if customTimeout > 0 {
+		timeoutSeconds = customTimeout
+	}
+	
 	// Create command with timeout
-	timeout := time.Duration(s.maxTimeout) * time.Second
+	timeout := time.Duration(timeoutSeconds) * time.Second
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
@@ -218,27 +229,85 @@ func (s *DistillerService) createErrorResponse(toolName string, code string, mes
 func (s *DistillerService) buildAidArgs(args map[string]interface{}, basePath string) []string {
 	cmdArgs := []string{basePath, "--stdout"}
 
+	// Performance and resource controls
+	if workers, ok := args["workers"].(float64); ok && workers >= 0 {
+		cmdArgs = append(cmdArgs, "--workers", fmt.Sprintf("%d", int(workers)))
+	}
+	
+	if recursive, hasRecursive := args["recursive"].(bool); hasRecursive {
+		if recursive {
+			cmdArgs = append(cmdArgs, "--recursive=1")
+		} else {
+			cmdArgs = append(cmdArgs, "--recursive=0")
+		}
+	}
+	
 	// Add options based on parameters
+	// Legacy parameter for backward compatibility
 	includePrivate, _ := args["include_private"].(bool)
+	
+	// New granular visibility parameters
+	includePublic, hasPublic := args["include_public"].(bool)
+	includeProtected, _ := args["include_protected"].(bool)
+	includeInternal, _ := args["include_internal"].(bool)
+	includePrivateNew, hasPrivateNew := args["include_private_new"].(bool)
+	
+	// New granular content parameters
 	includeImpl, _ := args["include_implementation"].(bool)
 	includeComments, _ := args["include_comments"].(bool)
-	includeImports, _ := args["include_imports"].(bool)
+	includeDocstrings, hasDocstrings := args["include_docstrings"].(bool)
+	includeImports, hasImports := args["include_imports"].(bool)
+	includeAnnotations, hasAnnotations := args["include_annotations"].(bool)
+	
 	outputFormat, _ := args["output_format"].(string)
 
-	// Set visibility flags
+	// Handle visibility flags
 	if includePrivate {
+		// Legacy behavior: include_private includes all non-public
 		cmdArgs = append(cmdArgs, "--private=1", "--protected=1", "--internal=1")
+	} else {
+		// New granular control
+		if hasPublic && !includePublic {
+			cmdArgs = append(cmdArgs, "--public=0")
+		}
+		if includeProtected {
+			cmdArgs = append(cmdArgs, "--protected=1")
+		}
+		if includeInternal {
+			cmdArgs = append(cmdArgs, "--internal=1")
+		}
+		if hasPrivateNew && includePrivateNew {
+			cmdArgs = append(cmdArgs, "--private=1")
+		}
 	}
 
-	// Set content flags
+	// Handle content flags
 	if includeImpl {
 		cmdArgs = append(cmdArgs, "--implementation=1")
 	}
 	if includeComments {
 		cmdArgs = append(cmdArgs, "--comments=1")
 	}
-	if includeImports == false {
-		cmdArgs = append(cmdArgs, "--imports=0")
+	if hasDocstrings {
+		if includeDocstrings {
+			cmdArgs = append(cmdArgs, "--docstrings=1")
+		} else {
+			cmdArgs = append(cmdArgs, "--docstrings=0")
+		}
+	}
+	if hasImports {
+		if includeImports {
+			cmdArgs = append(cmdArgs, "--imports=1")
+		} else {
+			cmdArgs = append(cmdArgs, "--imports=0")
+		}
+	}
+	if hasAnnotations {
+		if includeAnnotations {
+			cmdArgs = append(cmdArgs, "--annotations=1")
+		} else {
+			cmdArgs = append(cmdArgs, "--annotations=0")
+		}
 	}
 
 	// Set format
@@ -567,8 +636,26 @@ func (s *DistillerService) HandleAnalyzeGitHistory(ctx context.Context, req mcp.
 		args = make(map[string]interface{})
 	}
 
+	// Get repository path (default to current directory)
+	repoPath, _ := args["repository_path"].(string)
+	if repoPath == "" {
+		repoPath = "."
+	}
+	
+	// Sanitize repository path
+	absRepoPath, err := s.sanitizePath(repoPath)
+	if err != nil {
+		return s.createErrorResponse(toolName, "INVALID_PATH", fmt.Sprintf("Invalid repository path: %s", err)), nil
+	}
+	
+	// Verify .git directory exists
+	gitPath := filepath.Join(absRepoPath, ".git")
+	if _, err := os.Stat(gitPath); err != nil {
+		return s.createErrorResponse(toolName, "NOT_A_GIT_REPO", fmt.Sprintf("Not a git repository (no .git directory found): %s", repoPath)), nil
+	}
+
 	// Build aid command for git history analysis
-	cmdArgs := []string{".git", "--stdout"}
+	cmdArgs := []string{filepath.Join(repoPath, ".git"), "--stdout"}
 
 	// Add git-specific options
 	gitLimit, _ := args["git_limit"].(float64)
@@ -580,6 +667,12 @@ func (s *DistillerService) HandleAnalyzeGitHistory(ctx context.Context, req mcp.
 	withAnalysisPrompt, exists := args["with_analysis_prompt"].(bool)
 	if !exists || withAnalysisPrompt { // Default true
 		cmdArgs = append(cmdArgs, "--with-analysis-prompt")
+	}
+	
+	// Add output format if specified
+	outputFormat, _ := args["output_format"].(string)
+	if outputFormat == "json" {
+		cmdArgs = append(cmdArgs, "--format", "json")
 	}
 
 	// Execute aid
