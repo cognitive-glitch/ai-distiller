@@ -104,7 +104,7 @@ func TestGenerateOutputFilename(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setupFlags()
-			result := generateOutputFilename(tt.path, tt.stripOptions)
+			result := generateOutputFilename(tt.path, tt.stripOptions, "text")
 			assert.Equal(t, tt.expected, result)
 		})
 	}
@@ -436,7 +436,7 @@ func TestStripOptionsAbbreviation(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		filename := generateOutputFilename("/test", tt.options)
+		filename := generateOutputFilename("/test", tt.options, "text")
 		if tt.expected != "" {
 			assert.Contains(t, filename, tt.expected)
 		}

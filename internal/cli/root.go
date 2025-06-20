@@ -427,7 +427,7 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 
 	// Generate output filename if not specified and not using stdout
 	if outputFile == "" && !outputToStdout {
-		outputFile = generateOutputFilename(absPath, stripOptions)
+		outputFile = generateOutputFilename(absPath, stripOptions, outputFormat)
 	}
 
 	// Validate output format
@@ -601,7 +601,7 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func generateOutputFilename(path string, stripOptions []string) string {
+func generateOutputFilename(path string, stripOptions []string, format string) string {
 	// Get project root and ensure .aid directory exists
 	aidDir, err := project.EnsureAidDir()
 	if err != nil {
@@ -674,8 +674,21 @@ func generateOutputFilename(path string, stripOptions []string) string {
 		optionsSuffix = "." + strings.Join(abbrev, ".")
 	}
 
+	// Determine file extension based on format
+	ext := ".txt"
+	switch format {
+	case "md":
+		ext = ".md"
+	case "jsonl":
+		ext = ".jsonl"
+	case "json-structured":
+		ext = ".json"
+	case "xml":
+		ext = ".xml"
+	}
+	
 	// Generate filename within .aid directory
-	filename := fmt.Sprintf("aid.%s%s.txt", dirName, optionsSuffix)
+	filename := fmt.Sprintf("aid.%s%s%s", dirName, optionsSuffix, ext)
 	return filepath.Join(aidDir, filename)
 }
 
