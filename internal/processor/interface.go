@@ -97,6 +97,9 @@ type ProcessOptions struct {
 	
 	// ExcludePatterns are file patterns to exclude (e.g., "*test*", "*.json")
 	ExcludePatterns []string
+	
+	// ExplicitInclude indicates this file was explicitly included via !pattern
+	ExplicitInclude bool
 }
 
 // DefaultProcessOptions returns default processing options

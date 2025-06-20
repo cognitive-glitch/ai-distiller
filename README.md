@@ -723,6 +723,146 @@ exclude:
   - "**/__pycache__/**"
 ```
 
+## 🚫 Ignoring Files with .aidignore
+
+AI Distiller respects `.aidignore` files for excluding files and directories from processing. The syntax is similar to `.gitignore`.
+
+### Important: What AI Distiller Processes
+
+AI Distiller only processes source code files with these extensions:
+- **Python**: `.py`, `.pyw`, `.pyi`
+- **JavaScript**: `.js`, `.mjs`, `.cjs`, `.jsx`
+- **TypeScript**: `.ts`, `.tsx`, `.d.ts`
+- **Go**: `.go`
+- **Rust**: `.rs`
+- **Ruby**: `.rb`, `.rake`, `.gemspec`
+- **Java**: `.java`
+- **C#**: `.cs`
+- **Kotlin**: `.kt`, `.kts`
+- **C++**: `.cpp`, `.cc`, `.cxx`, `.c++`, `.h`, `.hpp`, `.hh`, `.hxx`, `.h++`
+- **PHP**: `.php`, `.phtml`, `.php3`, `.php4`, `.php5`, `.php7`, `.phps`, `.inc`
+- **Swift**: `.swift`
+
+**Note**: Files like `.log`, `.txt`, `.md`, images, PDFs, and other non-source files are automatically ignored by AI Distiller, so you don't need to add them to `.aidignore`.
+
+### Default Ignored Directories
+
+AI Distiller automatically ignores these common dependency and build directories:
+- `node_modules/` - npm packages
+- `vendor/` - Go and PHP dependencies
+- `target/` - Rust build output
+- `build/`, `dist/` - Common build directories
+- `__pycache__/`, `.pytest_cache/`, `venv/`, `.venv/`, `env/`, `.env/` - Python
+- `.gradle/`, `gradle/` - Java/Kotlin
+- `Pods/` - Swift/iOS dependencies
+- `.bundle/` - Ruby bundler
+- `bin/`, `obj/` - Compiled binaries
+- `.vs/`, `.idea/`, `.vscode/` - IDE directories
+- `coverage/`, `.nyc_output/` - Test coverage
+- `bower_components/` - Legacy JavaScript
+- `.terraform/` - Terraform
+- `.git/`, `.svn/`, `.hg/` - Version control
+
+You can override these defaults using `!` patterns in `.aidignore` (see Advanced Usage below).
+
+### Basic Syntax
+
+Create a `.aidignore` file in your project root or any subdirectory:
+
+```bash
+# Comments start with hash
+*.test.js          # Ignore test files
+*.spec.ts          # Ignore spec files
+temp/              # Ignore temp directory
+build/             # Ignore build directory
+/secrets.py        # Ignore secrets.py only in root
+node_modules/      # Ignore node_modules everywhere
+**/*.bak           # Ignore .bak files in any directory
+src/test_*         # Ignore test_* files in src/
+!important.test.js # Don't ignore important.test.js (negation)
+```
+
+### How It Works
+
+- `.aidignore` files work recursively - place them in any directory
+- Patterns are relative to the directory containing the `.aidignore` file
+- Use `/` prefix for patterns relative to the `.aidignore` location
+- Use `**` for recursive matching
+- Directory patterns should end with `/`
+- Use `!` prefix to negate a pattern (re-include previously ignored files)
+
+### Examples
+
+```bash
+# .aidignore in project root
+node_modules/       # Excludes all node_modules directories
+*.test.js          # Excludes all test files
+*.spec.ts          # Excludes all spec files
+dist/              # Excludes dist directory
+.env.py            # Excludes environment config files
+vendor/            # Excludes vendor directory
+
+# More specific patterns
+src/**/test_*.py   # Test files in src subdirectories
+!src/test_utils.py # But include this specific test file
+/config/*.local.py # Local config files in root config dir
+**/*_generated.go  # Generated Go files anywhere
+```
+
+### Advanced Usage: Including Normally Ignored Content
+
+#### Include Default-Ignored Directories
+
+Use `!` patterns to include directories that are ignored by default:
+
+```bash
+# Include vendor directory for analysis
+!vendor/
+
+# Include specific node_modules package
+!node_modules/my-local-package/
+
+# Include Python virtual environment
+!venv/
+```
+
+#### Include Non-Source Files
+
+You can also include files that AI Distiller normally doesn't process:
+
+```bash
+# Include all markdown files
+!*.md
+!**/*.md
+
+# Include configuration files
+!*.yaml
+!*.json
+!.env
+
+# Include specific documentation
+!docs/**/*.txt
+!README.md
+!CHANGELOG.md
+```
+
+When you include non-source files with `!` patterns, AI Distiller will include their raw content in the output.
+
+### Nested .aidignore Files
+
+You can place `.aidignore` files in subdirectories for more specific control:
+
+```bash
+# project/.aidignore
+*.test.py
+!vendor/            # Include vendor in this project
+
+# project/src/.aidignore
+test_*.go
+*.mock.ts
+!test_helpers.ts   # Exception: include test_helpers.ts
+```
+
 ## 🎯 Git History Analysis Mode
 
 AI Distiller includes a special mode for analyzing git repositories. When you pass a `.git` directory, it switches to git log mode:

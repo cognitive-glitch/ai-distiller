@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/janreges/ai-distiller/internal/debug"
+	"github.com/janreges/ai-distiller/internal/ignore"
 	"github.com/janreges/ai-distiller/internal/ir"
 	"github.com/janreges/ai-distiller/internal/stripper"
 )
@@ -107,6 +108,14 @@ func (p *Processor) ProcessFile(filename string, opts ProcessOptions) (*ir.Disti
 	} else {
 		// Normal mode - get processor for file
 		proc, ok = GetByFilename(filename)
+		
+		// If no processor found, check if file is explicitly included
+		if !ok && opts.ExplicitInclude {
+			// Use RawProcessor for explicitly included files
+			rawProc := NewRawProcessor()
+			proc = rawProc
+			ok = true
+		}
 	}
 	
 	if !ok && !opts.RawMode {
@@ -218,6 +227,14 @@ func (p *Processor) processDirectory(dir string, opts ProcessOptions) (*ir.Disti
 		return p.processDirectoryConcurrent(dir, opts)
 	}
 
+	// Create ignore matcher for the directory
+	ignoreMatcher, ignoreErr := ignore.New(dir)
+	if ignoreErr != nil {
+		// Log warning but continue without ignore functionality
+		fmt.Fprintf(os.Stderr, "Warning: failed to create ignore matcher: %v\n", ignoreErr)
+		ignoreMatcher = nil
+	}
+
 	// Calculate display path for directory
 	displayPath := dir
 	if opts.FilePathType == "relative" && opts.BasePath != "" {
@@ -254,10 +271,36 @@ func (p *Processor) processDirectory(dir string, opts ProcessOptions) (*ir.Disti
 			return err
 		}
 
+		// Check if path should be ignored
+		if ignoreMatcher != nil && ignoreMatcher.ShouldIgnore(path) {
+			if info.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
 		// Skip directories
 		if info.IsDir() {
+			basename := filepath.Base(path)
+			
 			// Skip .aid directories completely
-			if filepath.Base(path) == ".aid" {
+			if basename == ".aid" {
+				return filepath.SkipDir
+			}
+			
+			// Skip default ignored directories unless explicitly included in .aidignore
+			// or unless they contain explicitly included files
+			if isDefaultIgnoredDir(basename) && ignoreMatcher != nil {
+				// Check if directory is explicitly included
+				if ignoreMatcher.IsExplicitlyIncluded(path) {
+					return nil // Don't skip, process the directory
+				}
+				// Check if any files within this directory might be explicitly included
+				if !ignoreMatcher.MightContainExplicitIncludes(path) {
+					return filepath.SkipDir
+				}
+			} else if isDefaultIgnoredDir(basename) && ignoreMatcher == nil {
+				// No .aidignore, skip default ignored dirs
 				return filepath.SkipDir
 			}
 			
@@ -285,13 +328,23 @@ func (p *Processor) processDirectory(dir string, opts ProcessOptions) (*ir.Disti
 			// Skip directories which are already filtered out above
 		} else {
 			// Normal mode - check if we have a processor
-			if _, ok := GetByFilename(path); !ok {
+			_, hasProcessor := GetByFilename(path)
+			
+			// Check if file is explicitly included via !pattern in .aidignore
+			explicitlyIncluded := ignoreMatcher != nil && ignoreMatcher.IsExplicitlyIncluded(path)
+			
+			if !hasProcessor && !explicitlyIncluded {
 				return nil
 			}
 		}
 
 		// Process file
-		file, err := p.ProcessFile(path, opts)
+		fileOpts := opts
+		// Check if file is explicitly included
+		if ignoreMatcher != nil && ignoreMatcher.IsExplicitlyIncluded(path) {
+			fileOpts.ExplicitInclude = true
+		}
+		file, err := p.ProcessFile(path, fileOpts)
 		if err != nil {
 			// Log error but continue
 			fmt.Fprintf(os.Stderr, "Warning: failed to process %s: %v\n", path, err)
@@ -459,5 +512,45 @@ func matchesPathPattern(path, pattern string) bool {
 	// Try standard glob matching on full path
 	matched, _ := filepath.Match(pattern, path)
 	return matched
+}
+
+// isDefaultIgnoredDir checks if a directory should be ignored by default
+func isDefaultIgnoredDir(dirname string) bool {
+	defaultIgnored := []string{
+		"node_modules",     // JavaScript/TypeScript
+		"vendor",           // Go, PHP
+		"target",           // Rust
+		"build",            // Various
+		"dist",             // JavaScript/TypeScript build output
+		".gradle",          // Java/Kotlin
+		"gradle",           // Java/Kotlin
+		"__pycache__",      // Python
+		".pytest_cache",    // Python
+		"venv",             // Python virtual environment
+		".venv",            // Python virtual environment
+		"env",              // Python virtual environment
+		".env",             // Python virtual environment
+		"Pods",             // Swift/iOS
+		".bundle",          // Ruby
+		"bin",              // Various compiled binaries
+		"obj",              // C#/.NET
+		".vs",              // Visual Studio
+		".idea",            // JetBrains IDEs
+		".vscode",          // VS Code
+		"coverage",         // Test coverage
+		".nyc_output",      // JavaScript test coverage
+		"bower_components", // Legacy JavaScript
+		".terraform",       // Terraform
+		".git",             // Git repository
+		".svn",             // SVN
+		".hg",              // Mercurial
+	}
+	
+	for _, ignored := range defaultIgnored {
+		if dirname == ignored {
+			return true
+		}
+	}
+	return false
 }
 

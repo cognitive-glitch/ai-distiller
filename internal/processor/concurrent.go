@@ -10,14 +10,16 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/janreges/ai-distiller/internal/ignore"
 	"github.com/janreges/ai-distiller/internal/ir"
 )
 
 // FileTask represents a file to be processed with its order index
 type FileTask struct {
-	Index    int
-	Path     string
-	FileInfo os.FileInfo
+	Index           int
+	Path            string
+	FileInfo        os.FileInfo
+	ExplicitInclude bool
 }
 
 // FileResult represents the result of processing a file
@@ -29,6 +31,14 @@ type FileResult struct {
 
 // processDirectoryConcurrent processes directory using multiple workers
 func (p *Processor) processDirectoryConcurrent(dir string, opts ProcessOptions) (*ir.DistilledDirectory, error) {
+	// Create ignore matcher for the directory
+	ignoreMatcher, ignoreErr := ignore.New(dir)
+	if ignoreErr != nil {
+		// Log warning but continue without ignore functionality
+		fmt.Fprintf(os.Stderr, "Warning: failed to create ignore matcher: %v\n", ignoreErr)
+		ignoreMatcher = nil
+	}
+
 	// Calculate number of workers
 	numWorkers := opts.Workers
 	if numWorkers == 0 {
@@ -48,10 +58,36 @@ func (p *Processor) processDirectoryConcurrent(dir string, opts ProcessOptions) 
 			return err
 		}
 
+		// Check if path should be ignored
+		if ignoreMatcher != nil && ignoreMatcher.ShouldIgnore(path) {
+			if info.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
 		// Skip directories
 		if info.IsDir() {
+			basename := filepath.Base(path)
+			
 			// Skip .aid directories completely
-			if filepath.Base(path) == ".aid" {
+			if basename == ".aid" {
+				return filepath.SkipDir
+			}
+			
+			// Skip default ignored directories unless explicitly included in .aidignore
+			// or unless they contain explicitly included files
+			if isDefaultIgnoredDir(basename) && ignoreMatcher != nil {
+				// Check if directory is explicitly included
+				if ignoreMatcher.IsExplicitlyIncluded(path) {
+					return nil // Don't skip, process the directory
+				}
+				// Check if any files within this directory might be explicitly included
+				if !ignoreMatcher.MightContainExplicitIncludes(path) {
+					return filepath.SkipDir
+				}
+			} else if isDefaultIgnoredDir(basename) && ignoreMatcher == nil {
+				// No .aidignore, skip default ignored dirs
 				return filepath.SkipDir
 			}
 			
@@ -73,21 +109,27 @@ func (p *Processor) processDirectoryConcurrent(dir string, opts ProcessOptions) 
 			return nil
 		}
 
+		// Check if file is explicitly included via !pattern in .aidignore
+		explicitlyIncluded := ignoreMatcher != nil && ignoreMatcher.IsExplicitlyIncluded(path)
+		
 		// Check if we can process this file
 		if opts.RawMode {
 			// In raw mode, process all files
 			// Skip directories which are already filtered out above
 		} else {
 			// Normal mode - check if we have a processor
-			if _, ok := GetByFilename(path); !ok {
+			_, hasProcessor := GetByFilename(path)
+			
+			if !hasProcessor && !explicitlyIncluded {
 				return nil
 			}
 		}
 
 		files = append(files, FileTask{
-			Index:    fileIndex,
-			Path:     path,
-			FileInfo: info,
+			Index:           fileIndex,
+			Path:            path,
+			FileInfo:        info,
+			ExplicitInclude: explicitlyIncluded,
 		})
 		fileIndex++
 		return nil
@@ -199,7 +241,9 @@ func (p *Processor) worker(ctx context.Context, workerID int, tasks <-chan FileT
 			return
 		default:
 			// Process the file
-			file, err := p.ProcessFile(task.Path, opts)
+			fileOpts := opts
+			fileOpts.ExplicitInclude = task.ExplicitInclude
+			file, err := p.ProcessFile(task.Path, fileOpts)
 			results <- FileResult{
 				Index:  task.Index,
 				Result: file,
