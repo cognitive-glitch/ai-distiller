@@ -41,6 +41,12 @@ func (f *CIFormatter) Format(w io.Writer, stats Stats) error {
 	}
 	
 	fmt.Fprintln(w)
+	
+	// Add AI agent recommendation for non-stdout output
+	if !stats.IsStdout && stats.OutputPath != "" {
+		fmt.Fprintln(w, "AI agent recommendation: Load the entire output file into your context for a comprehensive code overview.")
+	}
+	
 	return nil
 }
 

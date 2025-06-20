@@ -66,6 +66,13 @@ func (f *DashboardFormatter) Format(w io.Writer, stats Stats) error {
 			fileEmoji = "→"
 		}
 		fmt.Fprintf(w, "%s Distilled output saved to: %s\n", fileEmoji, stats.OutputPath)
+		
+		// Add AI agent recommendation
+		aiEmoji := "🤖"
+		if f.NoEmoji {
+			aiEmoji = "→"
+		}
+		fmt.Fprintf(w, "%s If you're an AI agent, I recommend loading this entire file into your context for a comprehensive code overview.\n", aiEmoji)
 	}
 	
 	return nil
