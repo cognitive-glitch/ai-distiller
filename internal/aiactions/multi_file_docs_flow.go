@@ -78,11 +78,13 @@ func (a *MultiFileDocsFlowAction) ExecuteFlow(ctx *ai.ActionContext) (*ai.FlowRe
 
 	// Generate messages
 	messages := []string{
-		fmt.Sprintf("📚 Documentation workflow generated for %d files", len(sourceFiles)),
+		fmt.Sprintf("\n📚 Documentation workflow generated!"),
 		fmt.Sprintf("📋 Documentation Task List: %s", docsTaskListPath),
 		fmt.Sprintf("📖 Documentation Index: %s", docsIndexPath),
 		fmt.Sprintf("📁 Documentation Files Directory: %s", docsDir),
-		"🤖 Ready for systematic documentation generation!",
+		fmt.Sprintf("📂 Files to document: %d", len(sourceFiles)),
+		fmt.Sprintf("🤖 Ready for systematic documentation generation!\n"),
+		fmt.Sprintf("💡 If you are an AI agent, please read the Documentation Task List above and follow all instructions to systematically document each file."),
 	}
 
 	return &ai.FlowResult{

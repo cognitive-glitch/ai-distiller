@@ -59,12 +59,13 @@ func (a *DeepAnalysisFlowAction) ExecuteFlow(ctx *ai.ActionContext) (*ai.FlowRes
 			summaryPath:  a.generateSummaryFile(basename, currentDate),
 		},
 		Messages: []string{
-			fmt.Sprintf("✅ AI Analysis Task List generated successfully!"),
+			fmt.Sprintf("\n✅ AI Analysis Task List generated successfully!"),
 			fmt.Sprintf("📋 Task List: .aid/%s", taskListPath),
 			fmt.Sprintf("📊 Summary File: .aid/%s", summaryPath),
 			fmt.Sprintf("📁 Analysis Reports Directory: .aid/%s", analysisDir),
 			fmt.Sprintf("🤖 Ready for AI-driven analysis workflow!"),
-			fmt.Sprintf("   Files to analyze: %d", len(sourceFiles)),
+			fmt.Sprintf("📂 Files to analyze: %d\n", len(sourceFiles)),
+			fmt.Sprintf("💡 If you are an AI agent, please read the Task List above and carefully follow all instructions to systematically analyze each file."),
 		},
 	}
 
