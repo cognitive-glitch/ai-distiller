@@ -52,12 +52,12 @@ func getHelpTemplate() string {
 		reset = colorReset
 	}
 	
-	return fmt.Sprintf(`{{.Short}} (%s)
+	return fmt.Sprintf(`%s{{.Short}} (%s)
 
 AI Distiller transforms source code into optimized formats for Large Language Models.
 Compress codebases by 60-90%% while preserving all semantic information needed for AI analysis.
 Generate complete AI prompts and workflows - copy the output directly to Gemini 2.5 Pro,
-ChatGPT-o3/4o, or Claude for perfect AI-powered code analysis.
+ChatGPT-o3/4o, or Claude for perfect AI-powered code analysis.%s
 
 USAGE:
   {{.UseLine}}{{if .HasAvailableSubCommands}}
@@ -133,11 +133,11 @@ OUTPUT FILE NAMING:
 
 For complete documentation and examples: aid --help-extended
 
----
-AI Distiller (aid) v%s - %s
+%s
+AI Distiller (aid) v%s
 Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic, www.siteone.io)
 Explore the project on GitHub: %s%s
-`, versionInfo, gray, version.Version, version.WebsiteURL, reset)
+`, gray, versionInfo, reset, gray, version.Version, version.WebsiteURL, reset)
 }
 
 // getExtendedHelpContent returns the extended help content for --help-extended
@@ -340,19 +340,14 @@ SEE ALSO
     aid help git         - Git mode documentation
     aid --cheat          - Quick reference card
 
-    Online documentation: %s
-
-AUTHOR
-    AI Distiller development team
-
 COPYRIGHT
     Licensed under MIT License
 
----
-AI Distiller (aid) v%s - %s
+%s
+AI Distiller (aid) v%s
 Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic, www.siteone.io)
 Explore the project on GitHub: https://github.com/janreges/ai-distiller%s
-`, gray, reset, gray, version.Version, version.WebsiteURL, reset)
+`, gray, reset, gray, version.Version, reset)
 }
 
 // initializeHelpSystem sets up custom help templates and commands
@@ -717,10 +712,10 @@ EXAMPLES:
 For more examples: aid --help-extended
 
 ---
-AI Distiller (aid) v%s - %s
+AI Distiller (aid) v%s
 Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic, www.siteone.io)
 Explore the project on GitHub: %s%s
-`, gray, reset, gray, version.Version, version.WebsiteURL, reset)
+`, gray, reset, version.Version, version.WebsiteURL, reset)
 	fmt.Print(output)
 }
 
@@ -876,10 +871,10 @@ Common mistakes:
 For complete examples: aid --help-extended
 
 ---
-AI Distiller (aid) v%s - %s
+AI Distiller (aid) v%s
 Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic, www.siteone.io)
 Explore the project on GitHub: %s%s
-`, gray, reset, gray, version.Version, version.WebsiteURL, reset)
+`, gray, reset, version.Version, version.WebsiteURL, reset)
 }
 
 // showGitHelp displays git mode documentation
@@ -1022,10 +1017,10 @@ When using --with-analysis-prompt, the output includes guidance for:
 For complete examples: aid --help-extended
 
 ---
-AI Distiller (aid) v%s - %s
+AI Distiller (aid) v%s
 Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic, www.siteone.io)
 Explore the project on GitHub: %s%s
-`, gray, reset, gray, version.Version, version.WebsiteURL, reset)
+`, gray, reset, version.Version, version.WebsiteURL, reset)
 }
 
 // showCheatSheet displays a quick reference card
@@ -1105,10 +1100,10 @@ HELP:
   aid help git         # Git mode help
 
 ---
-AI Distiller (aid) v%s - %s
+AI Distiller (aid) v%s
 Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic, www.siteone.io)
 Explore the project on GitHub: %s%s
-`, gray, reset, gray, version.Version, version.WebsiteURL, reset)
+`, gray, reset, version.Version, version.WebsiteURL, reset)
 }
 
 // getAIActionsList returns a list of available AI actions with descriptions

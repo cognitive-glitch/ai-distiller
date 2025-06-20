@@ -108,7 +108,7 @@ aid . --recursive=0                   # Only current directory, no subdirs
 **Output Format:**
 - `--format <fmt>` - Output format
   - `text` (default) - Ultra-compact plaintext (best for AI)
-  - `md` - Human-readable Markdown with emojis
+  - `md` - Clean, structured Markdown
   - `jsonl` - One JSON object per file
   - `json-structured` - Rich semantic data
   - `xml` - Structured XML
