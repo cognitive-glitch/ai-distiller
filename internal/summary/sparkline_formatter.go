@@ -46,7 +46,7 @@ func (f *SparklineFormatter) Format(w io.Writer, stats Stats) error {
 	
 	// Add token info if available
 	if stats.OriginalTokens > 0 && stats.DistilledTokens > 0 {
-		fmt.Fprintf(w, "%s Tokens: ~%s → ~%s.",
+		fmt.Fprintf(w, "%s Tokens: ~%s → ~%s. ",
 			ticketEmoji,
 			formatTokenCount(stats.OriginalTokens),
 			formatTokenCount(stats.DistilledTokens),
@@ -54,5 +54,14 @@ func (f *SparklineFormatter) Format(w io.Writer, stats Stats) error {
 	}
 	
 	fmt.Fprintln(w)
+	
+	// Add output path if not stdout on a new line
+	if !stats.IsStdout && stats.OutputPath != "" {
+		if f.NoEmoji {
+			fmt.Fprintf(w, "Output: %s\n", stats.OutputPath)
+		} else {
+			fmt.Fprintf(w, "📄 %s\n", stats.OutputPath)
+		}
+	}
 	return nil
 }

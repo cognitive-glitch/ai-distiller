@@ -81,6 +81,15 @@ func (f *BarFormatter) Format(w io.Writer, stats Stats) error {
 	}
 	
 	fmt.Fprintln(w)
+	
+	// Add output path if not stdout on a new line
+	if !stats.IsStdout && stats.OutputPath != "" {
+		fileEmoji := "📄"
+		if f.NoEmoji {
+			fileEmoji = ""
+		}
+		fmt.Fprintf(w, "%s %s\n", fileEmoji, stats.OutputPath)
+	}
 	return nil
 }
 
