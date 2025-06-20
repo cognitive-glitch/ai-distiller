@@ -361,6 +361,37 @@ Perfect for systematic code reviews, security audits, and onboarding new team me
 - **JSONL** (`--format jsonl`) - Streaming format
 - **XML** (`--format xml`) - Legacy system compatible
 
+### 📊 Smart Summary Output
+
+After each distillation, AI Distiller displays a summary showing compression efficiency and processing speed:
+
+```bash
+# Default: Visual progress bar for interactive terminals (green dots = saved, red dots = remaining)
+✨ Distilled 970 files [░░░░░░░░░░░░░░░] 98% (10M → 256K) in 231ms 💰 ~2.4M tokens saved (~64k remaining)
+
+# Choose your preferred format with --summary-type
+aid ./src --summary-type=stock-ticker
+📊 AID 97.6% ▲ │ SIZE: 10M→256K │ TIME: 231ms │ EST: ~2.4M tokens saved
+
+aid ./src --summary-type=speedometer-dashboard
+╔═══ AI Distiller ═══╗
+║ Speed: ███████░░░ 77% ║ 231ms
+║ Saved: ██████████ 97.6% ║ 10M→256K
+║ Tokens saved: ~2.4M     ║
+╚═════════════════════╝
+```
+
+**Available formats:**
+- `visual-progress-bar` (default) - Shows compression as a progress bar
+- `stock-ticker` - Compact stock market style display
+- `speedometer-dashboard` - Multi-line dashboard with metrics
+- `minimalist-sparkline` - Single line with all essential info
+- `ci-friendly` - Clean format for CI/CD pipelines
+- `json` - Machine-readable JSON output
+- `off` - Disable summary output
+
+Use `--no-emoji` to remove emojis from any format.
+
 ### 📁 Smart Project Root Detection
 
 AI Distiller automatically detects your project root and centralizes all outputs in a `.aid/` directory:

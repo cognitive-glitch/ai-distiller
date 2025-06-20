@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	
 	"github.com/dustin/go-humanize"
 	"golang.org/x/term"
@@ -28,11 +29,11 @@ func (f *BarFormatter) Format(w io.Writer, stats Stats) error {
 	ratio := getCompressionRatio(stats.OriginalBytes, stats.DistilledBytes)
 	
 	// Get terminal width for responsive bar sizing
-	barWidth := 40
+	barWidth := 15
 	if fd, ok := w.(*os.File); ok {
 		if width, _, err := term.GetSize(int(fd.Fd())); err == nil && width > 80 {
-			// Use up to 50 chars for bar on wide terminals
-			barWidth = min(50, width-60)
+			// Use up to 20 chars for bar on wide terminals
+			barWidth = min(20, width-100)
 		}
 	}
 	
@@ -42,7 +43,7 @@ func (f *BarFormatter) Format(w io.Writer, stats Stats) error {
 		emoji = getEmoji(ratio) + " "
 	}
 	
-	bar := buildProgressBar(ratio, barWidth)
+	bar := f.buildColoredProgressBar(ratio, barWidth)
 	
 	// Determine what was processed
 	subject := "Distilled"
@@ -54,8 +55,13 @@ func (f *BarFormatter) Format(w io.Writer, stats Stats) error {
 		}
 	}
 	
-	// Format the line
-	fmt.Fprintf(w, "%s%s [%s] %.1f%% (%s → %s) in %s",
+	// Format the line - no decimals for high compression ratios
+	ratioFormat := "%.1f%%"
+	if ratio >= 80 {
+		ratioFormat = "%.0f%%"
+	}
+	
+	fmt.Fprintf(w, "%s%s [%s] "+ratioFormat+" (%s → %s) in %s",
 		emoji,
 		subject,
 		bar,
@@ -68,8 +74,9 @@ func (f *BarFormatter) Format(w io.Writer, stats Stats) error {
 	// Add token savings if significant
 	tokensSaved := stats.OriginalTokens - stats.DistilledTokens
 	if tokensSaved > 1000 {
-		fmt.Fprintf(w, " 💰 ~%s tokens saved",
+		fmt.Fprintf(w, " 💰 ~%s tokens saved (~%s remaining)",
 			formatTokenCount(tokensSaved),
+			formatTokenCount(stats.DistilledTokens),
 		)
 	}
 	
@@ -82,4 +89,40 @@ func min(a, b int) int {
 		return a
 	}
 	return b
+}
+
+// buildColoredProgressBar creates a visual progress bar with colors
+func (f *BarFormatter) buildColoredProgressBar(ratio float64, width int) string {
+	if width <= 0 {
+		width = 15
+	}
+	
+	filled := int(float64(width) * ratio / 100)
+	if filled > width {
+		filled = width
+	}
+	if filled < 0 {
+		filled = 0
+	}
+	
+	// ANSI color codes
+	green := "\033[32m"  // Green for saved portion
+	red := "\033[31m"    // Red for remaining portion
+	reset := "\033[0m"   // Reset color
+	
+	// If colors are disabled, use solid blocks for saved and dots for remaining
+	if f.NoColor {
+		return strings.Repeat("█", filled) + strings.Repeat("░", width-filled)
+	}
+	
+	// Build colored bar: green dots for saved, red dots for remaining
+	bar := ""
+	if filled > 0 {
+		bar = green + strings.Repeat("░", filled) + reset
+	}
+	if width-filled > 0 {
+		bar += red + strings.Repeat("░", width-filled) + reset
+	}
+	
+	return bar
 }

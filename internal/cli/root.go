@@ -173,6 +173,13 @@ PERFORMANCE:
                               0=auto (80% CPU), 1=serial, N=use N workers
                               (default: 0)
 
+SUMMARY OUTPUT:
+  --summary-type <type>        Summary format after processing
+                              visual-progress-bar|stock-ticker|speedometer-dashboard|
+                              minimalist-sparkline|ci-friendly|json|off
+                              (default: visual-progress-bar)
+  --no-emoji                   Disable emojis in summary output
+
 DIAGNOSTICS:
   -v, --verbose                Verbose output (use -vv or -vvv for more)
   --strict                     Fail on first syntax error
@@ -281,7 +288,7 @@ func initFlags() {
 	rootCmd.Flags().StringVar(&aiOutput, "ai-output", "", "Output path for AI action (default: action-specific)")
 	
 	// Summary output flags
-	rootCmd.Flags().StringVar(&summaryFormat, "summary", "auto", "Summary output format: auto|bar|ci|json|off (default: auto)")
+	rootCmd.Flags().StringVar(&summaryFormat, "summary-type", "visual-progress-bar", "Summary output format: visual-progress-bar|stock-ticker|speedometer-dashboard|minimalist-sparkline|ci-friendly|json|off (default: visual-progress-bar)")
 	rootCmd.Flags().BoolVar(&noEmoji, "no-emoji", false, "Disable emojis in summary output")
 
 	// Handle version flag specially

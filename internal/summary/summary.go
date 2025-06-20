@@ -22,22 +22,34 @@ func GetFormatter(opts Options) Formatter {
 		return nil
 	case "json":
 		return NewJSONFormatter()
-	case "ci":
+	case "ci", "ci-friendly":
 		return NewCIFormatter()
-	case "bar":
+	case "bar", "visual-progress-bar":
 		formatter := NewBarFormatter()
 		formatter.NoColor = opts.NoColor
 		formatter.NoEmoji = opts.NoEmoji
 		return formatter
+	case "ticker", "stock-ticker":
+		formatter := NewTickerFormatter()
+		formatter.NoEmoji = opts.NoEmoji
+		return formatter
+	case "dashboard", "speedometer-dashboard":
+		formatter := NewDashboardFormatter()
+		formatter.NoEmoji = opts.NoEmoji
+		return formatter
+	case "sparkline", "minimalist-sparkline":
+		formatter := NewSparklineFormatter()
+		formatter.NoEmoji = opts.NoEmoji
+		return formatter
 	}
 	
-	// Auto-detection (default)
+	// Auto-detection (default when using old name like "auto")
 	// Check if we're in a CI environment or output is not a TTY
 	if os.Getenv("CI") != "" || !isatty.IsTerminal(os.Stderr.Fd()) {
 		return NewCIFormatter()
 	}
 	
-	// Interactive terminal - use bar formatter
+	// Interactive terminal - use bar formatter (visual-progress-bar)
 	formatter := NewBarFormatter()
 	formatter.NoColor = opts.NoColor || os.Getenv("NO_COLOR") != ""
 	formatter.NoEmoji = opts.NoEmoji

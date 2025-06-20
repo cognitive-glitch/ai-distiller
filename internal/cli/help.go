@@ -75,6 +75,11 @@ CORE OPTIONS:
   -w, --workers NUM           Parallel workers (0=auto, 1=serial, default: 0)
       --file-path-type TYPE   Path format: relative|absolute (default: relative)
 
+SUMMARY OUTPUT:
+  --summary-type TYPE         Summary format: visual-progress-bar|stock-ticker|speedometer-dashboard|
+                              minimalist-sparkline|ci-friendly|json|off (default: visual-progress-bar)
+      --no-emoji              Disable emojis in summary output
+
 FILTERING (Essential):
   --public/--private/--protected/--internal     Visibility control (0/1, default: public=1)
   --comments/--docstrings/--implementation      Content control (0/1)
@@ -229,6 +234,17 @@ Git Mode (when path is .git):
 
 Performance:
     -w, --workers NUM          Parallel workers (0=auto, 1=serial, default: 0)
+
+Summary Output:
+    --summary-type TYPE        Summary output format (default: visual-progress-bar)
+                               visual-progress-bar: Progress bar with compression ratio (default)
+                               stock-ticker: Stock market style (📊 AID 97.5% ▲)
+                               speedometer-dashboard: Multi-line dashboard with metrics
+                               minimalist-sparkline: Compact single line format
+                               ci-friendly: Clean format for CI/CD pipelines
+                               json: Machine-readable JSON
+                               off: Disable summary output
+    --no-emoji                 Disable emojis in summary output
 
 Diagnostics:
     -v, --verbose              Verbose output (-vv, -vvv for more detail)
@@ -998,6 +1014,16 @@ OUTPUT FORMATS:
   --format md          # Human-readable markdown
   --format jsonl       # One JSON per file
   --format json-structured  # Rich semantic data
+
+SUMMARY FORMATS:
+  --summary-type visual-progress-bar   # Visual progress bar: [████████░░] 97.5% saved! (default)
+  --summary-type stock-ticker          # Stock ticker: 📊 AID 97.5% ▲ | 5MB→128KB | ~1.2M tokens saved
+  --summary-type speedometer-dashboard # Dashboard with dual progress bars
+  --summary-type minimalist-sparkline  # Minimalist: ✨ 5MB → 128KB (97.5% saved)
+  --summary-type ci-friendly           # CI/log friendly: [aid] ✓ 97.5% saved | 5MB → 128KB | 450ms
+  --summary-type json                  # Machine-readable JSON output
+  --summary-type off                   # Disable summary output
+  --no-emoji                           # Remove emojis from summary
 
 OUTPUT FILES:
   Default: .aid/ folder or .aid.*.txt (easy git recognition)
