@@ -23,6 +23,7 @@ import (
 	"github.com/janreges/ai-distiller/internal/project"
 	"github.com/janreges/ai-distiller/internal/language"
 	"github.com/janreges/ai-distiller/internal/version"
+	"github.com/janreges/ai-distiller/internal/summary"
 	_ "github.com/janreges/ai-distiller/internal/language" // Register language processors
 )
 
@@ -76,6 +77,10 @@ var (
 	// New AI action system
 	aiAction             string
 	aiOutput             string
+	
+	// Summary output flags
+	summaryFormat        string
+	noEmoji              bool
 )
 
 // rootCmd represents the base command
@@ -274,6 +279,10 @@ func initFlags() {
 	// New AI action system
 	rootCmd.Flags().StringVar(&aiAction, "ai-action", "", "AI action to perform on distilled output")
 	rootCmd.Flags().StringVar(&aiOutput, "ai-output", "", "Output path for AI action (default: action-specific)")
+	
+	// Summary output flags
+	rootCmd.Flags().StringVar(&summaryFormat, "summary", "auto", "Summary output format: auto|bar|ci|json|off (default: auto)")
+	rootCmd.Flags().BoolVar(&noEmoji, "no-emoji", false, "Disable emojis in summary output")
 
 	// Handle version flag specially
 	rootCmd.PreRun = func(cmd *cobra.Command, args []string) {
@@ -436,6 +445,9 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 		procOpts.FilePathType = "absolute"
 	}
 	
+	// Track processing time
+	startTime := time.Now()
+	
 	// Process the input
 	result, err := proc.ProcessPath(absPath, procOpts)
 	if err != nil {
@@ -459,7 +471,8 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 	dbg.Logf(debug.LevelDetailed, "Starting formatting phase with %s formatter", outputFormat)
 	defer dbg.Timing(debug.LevelDetailed, fmt.Sprintf("formatting to %s", outputFormat))()
 	
-	// Handle different result types
+	// Handle different result types and count files
+	var fileCount int
 	switch r := result.(type) {
 	case *ir.DistilledFile:
 		dbg.Logf(debug.LevelDetailed, "Formatting single file: %s", r.Path)
@@ -472,6 +485,7 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 		if err := outputFormatter.Format(&output, r); err != nil {
 			return fmt.Errorf("failed to format output: %w", err)
 		}
+		fileCount = 1
 	case *ir.DistilledDirectory:
 		// Extract files from directory
 		var files []*ir.DistilledFile
@@ -481,7 +495,8 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 			}
 		}
 		
-		dbg.Logf(debug.LevelDetailed, "Formatting %d files from directory", len(files))
+		fileCount = len(files)
+		dbg.Logf(debug.LevelDetailed, "Formatting %d files from directory", fileCount)
 		
 		if err := outputFormatter.FormatMultiple(&output, files); err != nil {
 			return fmt.Errorf("failed to format output: %w", err)
@@ -503,6 +518,37 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 	// Write to stdout if requested
 	if outputToStdout || outputFile == "" {
 		fmt.Print(output.String())
+	}
+
+	// Print advanced summary to stderr (only when not in raw mode and not using stdin)
+	if !rawMode && len(args) > 0 && args[0] != "-" && summaryFormat != "off" {
+		// Calculate processing duration
+		duration := time.Since(startTime)
+		
+		// Get original size (we need to implement this)
+		originalSize := getOriginalSize(result)
+		distilledSize := int64(output.Len())
+		
+		// Create summary stats
+		stats := summary.Stats{
+			OriginalBytes:   originalSize,
+			DistilledBytes:  distilledSize,
+			OriginalTokens:  summary.EstimateTokens(originalSize),
+			DistilledTokens: summary.EstimateTokens(distilledSize),
+			Duration:        duration,
+			FileCount:       fileCount,
+			OutputPath:      outputFile,
+			IsStdout:        outputToStdout || outputFile == "",
+		}
+		
+		// Print summary
+		summaryOpts := summary.Options{
+			Format:  summaryFormat,
+			NoColor: os.Getenv("NO_COLOR") != "",
+			NoEmoji: noEmoji,
+		}
+		
+		summary.Print(os.Stderr, stats, summaryOpts)
 	}
 
 	return nil
@@ -1842,6 +1888,101 @@ func executeContentAction(ctx context.Context, action ai.ContentAction, actionCt
 	fmt.Printf("📄 Output saved to: %s (%.1f kB)\n", outputPath, sizeKB)
 	
 	return nil
+}
+
+// pluralS returns "s" if count is not 1
+func pluralS(count int) string {
+	if count == 1 {
+		return ""
+	}
+	return "s"
+}
+
+// getOriginalSize calculates the total size of source files in the result
+func getOriginalSize(result interface{}) int64 {
+	var totalSize int64
+	
+	switch r := result.(type) {
+	case *ir.DistilledFile:
+		// For single file, estimate based on content
+		// This is a rough estimate - actual file might be larger
+		totalSize = estimateOriginalSize(r)
+	case *ir.DistilledDirectory:
+		// For directory, sum up all files
+		for _, child := range r.Children {
+			if file, ok := child.(*ir.DistilledFile); ok {
+				totalSize += estimateOriginalSize(file)
+			}
+		}
+	}
+	
+	return totalSize
+}
+
+// estimateOriginalSize estimates the original file size based on distilled content
+func estimateOriginalSize(file *ir.DistilledFile) int64 {
+	// This is a rough estimate based on typical compression ratios
+	// In reality, we should track actual file sizes during processing
+	
+	// Count base structure size
+	size := int64(len(file.Path)) + 100 // File overhead
+	
+	// Process all children recursively
+	for _, child := range file.Children {
+		size += estimateNodeSize(child)
+	}
+	
+	// Apply a multiplier for typical source file overhead (comments, whitespace, etc.)
+	// This is a conservative estimate
+	return size * 3
+}
+
+func estimateNodeSize(node ir.DistilledNode) int64 {
+	if node == nil {
+		return 0
+	}
+	
+	var size int64
+	
+	switch n := node.(type) {
+	case *ir.DistilledImport:
+		size += int64(len(n.Module)) + 20
+		for _, sym := range n.Symbols {
+			size += int64(len(sym.Name)) + 5
+		}
+	case *ir.DistilledClass:
+		size += int64(len(n.Name)) + 50
+		for _, child := range n.Children {
+			size += estimateNodeSize(child)
+		}
+	case *ir.DistilledFunction:
+		size += int64(len(n.Name)) + 30
+		for _, param := range n.Parameters {
+			size += int64(len(param.Name)) + 10
+			size += int64(len(param.Type.Name)) + 5
+		}
+		// If implementation is included, use its actual size
+		if n.Implementation != "" {
+			size += int64(len(n.Implementation))
+		} else {
+			// Estimate typical function body size
+			size += 200
+		}
+	case *ir.DistilledField:
+		size += int64(len(n.Name)) + 20
+		if n.Type != nil {
+			size += int64(len(n.Type.Name)) + 10
+		}
+	case *ir.DistilledComment:
+		size += int64(len(n.Text))
+	default:
+		// For other node types, estimate based on children
+		for _, child := range node.GetChildren() {
+			size += estimateNodeSize(child)
+		}
+	}
+	
+	return size
 }
 
 // registerAIActions registers all built-in AI actions

@@ -1,6 +1,8 @@
 module github.com/janreges/ai-distiller
 
-go 1.23
+go 1.23.0
+
+toolchain go1.23.8
 
 require (
 	github.com/davecgh/go-spew v1.1.1
@@ -26,8 +28,12 @@ replace tree-sitter-typescript => ./internal/parser/grammars/tree-sitter-typescr
 // replace tree-sitter-rust => ./internal/parser/grammars/tree-sitter-rust
 
 require (
+	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
+	golang.org/x/sys v0.33.0 // indirect
+	golang.org/x/term v0.32.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
