@@ -32,8 +32,14 @@ func LoadTemplate(templateName string, data TemplateData) (string, error) {
 		return "", fmt.Errorf("failed to read template file %s: %w", templatePath, err)
 	}
 
+	// Create FuncMap with template functions
+	funcMap := template.FuncMap{
+		"VERSION": func() string { return version.Version },
+		"WEBSITE_URL": func() string { return version.WebsiteURL },
+	}
+
 	// Parse and execute template
-	tmpl, err := template.New(templateName).Parse(string(content))
+	tmpl, err := template.New(templateName).Funcs(funcMap).Parse(string(content))
 	if err != nil {
 		return "", fmt.Errorf("failed to parse template: %w", err)
 	}
@@ -44,12 +50,7 @@ func LoadTemplate(templateName string, data TemplateData) (string, error) {
 		return "", fmt.Errorf("failed to execute template: %w", err)
 	}
 
-	// Replace placeholders with actual values
-	result := buf.String()
-	result = strings.ReplaceAll(result, "{{VERSION}}", version.Version)
-	result = strings.ReplaceAll(result, "{{WEBSITE_URL}}", version.WebsiteURL)
-
-	return result, nil
+	return buf.String(), nil
 }
 
 // findTemplatePath searches for the template file in multiple locations
