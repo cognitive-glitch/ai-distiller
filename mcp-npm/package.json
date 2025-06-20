@@ -33,8 +33,6 @@
   "files": [
     "bin/.gitkeep",
     "scripts/postinstall.js",
-    "scripts/release.js",
-    "scripts/build-all.sh",
     "mcp-server.js",
     "README.md",
     "LICENSE"
