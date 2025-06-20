@@ -209,7 +209,47 @@ EXAMPLES:
 
 // Execute runs the root command
 func Execute() error {
-	return rootCmd.Execute()
+	// Set custom error function for better error display
+	rootCmd.SilenceErrors = true
+	rootCmd.SilenceUsage = true
+	
+	if err := rootCmd.Execute(); err != nil {
+		// Print error in red color
+		red := "\033[31m"
+		bold := "\033[1m"
+		reset := "\033[0m"
+		
+		// Check if we should use colors
+		useColor := os.Getenv("NO_COLOR") == ""
+		if !useColor {
+			red = ""
+			bold = ""
+			reset = ""
+		}
+		
+		fmt.Fprintf(os.Stderr, "%s%sError: %s%s\n", red, bold, err.Error(), reset)
+		
+		// Show helpful usage for common errors
+		fmt.Fprintln(os.Stderr)
+		fmt.Fprintln(os.Stderr, "Usage:")
+		fmt.Fprintln(os.Stderr, "  aid [path] [flags]")
+		fmt.Fprintln(os.Stderr)
+		fmt.Fprintln(os.Stderr, "Examples:")
+		fmt.Fprintln(os.Stderr, "  aid                    # Process current directory")
+		fmt.Fprintln(os.Stderr, "  aid src/               # Process src directory")
+		fmt.Fprintln(os.Stderr, "  aid main.py            # Process single file")
+		fmt.Fprintln(os.Stderr, "  aid --help             # Show full help")
+		fmt.Fprintln(os.Stderr, "  aid --help-extended    # Show extended documentation")
+		fmt.Fprintln(os.Stderr)
+		fmt.Fprintln(os.Stderr, "Common flags:")
+		fmt.Fprintln(os.Stderr, "  --stdout               # Print to stdout instead of file")
+		fmt.Fprintln(os.Stderr, "  --format md            # Output in Markdown format")
+		fmt.Fprintln(os.Stderr, "  --private=1            # Include private members")
+		fmt.Fprintln(os.Stderr, "  --implementation=1     # Include function bodies")
+		
+		return err
+	}
+	return nil
 }
 
 func init() {
