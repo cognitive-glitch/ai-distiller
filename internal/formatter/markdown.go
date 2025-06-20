@@ -8,7 +8,7 @@ import (
 	"github.com/janreges/ai-distiller/internal/ir"
 )
 
-// MarkdownFormatter formats IR as Markdown
+// MarkdownFormatter formats IR as clean, standard Markdown with code blocks
 type MarkdownFormatter struct {
 	BaseFormatter
 }
@@ -25,37 +25,23 @@ func (f *MarkdownFormatter) Extension() string {
 	return ".md"
 }
 
-// Format writes a single file as Markdown
+// Format writes a single file as clean Markdown
 func (f *MarkdownFormatter) Format(w io.Writer, file *ir.DistilledFile) error {
 	// Write file header
 	fmt.Fprintf(w, "# %s\n\n", file.Path)
 
-	if f.options.IncludeMetadata && file.Metadata != nil {
-		fmt.Fprintf(w, "**Language:** %s\n", file.Language)
-		fmt.Fprintf(w, "**Size:** %d bytes\n", file.Metadata.Size)
-		if file.Metadata.LastModified.Unix() > 0 {
-			fmt.Fprintf(w, "**Modified:** %s\n", file.Metadata.LastModified.Format("2006-01-02 15:04:05"))
-		}
-		fmt.Fprintln(w)
-	}
+	// Determine language for syntax highlighting
+	lang := f.getLanguageIdentifier(file.Language)
 
-	// Write errors if any
-	if len(file.Errors) > 0 {
-		fmt.Fprintf(w, "## ⚠️ Errors (%d)\n\n", len(file.Errors))
-		for _, err := range file.Errors {
-			f.formatError(w, &err)
-		}
-		fmt.Fprintln(w)
+	// Write the code block
+	fmt.Fprintf(w, "```%s\n", lang)
+	
+	// Format all nodes as simplified code representation
+	for _, node := range file.Children {
+		f.formatNode(w, node, "")
 	}
-
-	// Write nodes
-	if len(file.Children) > 0 {
-		fmt.Fprintln(w, "## Structure")
-		fmt.Fprintln(w)
-		for _, node := range file.Children {
-			f.formatNode(w, node, 0)
-		}
-	}
+	
+	fmt.Fprintln(w, "```")
 
 	return nil
 }
@@ -65,7 +51,6 @@ func (f *MarkdownFormatter) FormatMultiple(w io.Writer, files []*ir.DistilledFil
 	for i, file := range files {
 		if i > 0 {
 			fmt.Fprintln(w)
-			fmt.Fprintln(w, "---")
 			fmt.Fprintln(w)
 		}
 		if err := f.Format(w, file); err != nil {
@@ -75,216 +60,223 @@ func (f *MarkdownFormatter) FormatMultiple(w io.Writer, files []*ir.DistilledFil
 	return nil
 }
 
-// formatNode formats a single node
-func (f *MarkdownFormatter) formatNode(w io.Writer, node ir.DistilledNode, depth int) {
-	indent := strings.Repeat("  ", depth)
+// getLanguageIdentifier returns the correct language identifier for syntax highlighting
+func (f *MarkdownFormatter) getLanguageIdentifier(language string) string {
+	// Map our language names to common markdown identifiers
+	switch strings.ToLower(language) {
+	case "python":
+		return "python"
+	case "go", "golang":
+		return "go"
+	case "typescript":
+		return "typescript"
+	case "javascript":
+		return "javascript"
+	case "java":
+		return "java"
+	case "csharp", "c#":
+		return "csharp"
+	case "cpp", "c++":
+		return "cpp"
+	case "ruby":
+		return "ruby"
+	case "rust":
+		return "rust"
+	case "swift":
+		return "swift"
+	case "kotlin":
+		return "kotlin"
+	case "php":
+		return "php"
+	default:
+		return language
+	}
+}
 
+// formatNode formats a node in a simplified code representation
+func (f *MarkdownFormatter) formatNode(w io.Writer, node ir.DistilledNode, indent string) {
 	switch n := node.(type) {
 	case *ir.DistilledPackage:
-		fmt.Fprintf(w, "%s📦 **Package** `%s`\n", indent, n.Name)
-		f.formatChildren(w, n.Children, depth+1)
+		fmt.Fprintf(w, "%spackage %s\n\n", indent, n.Name)
+		f.formatChildren(w, n.Children, indent)
 
 	case *ir.DistilledImport:
-		fmt.Fprintf(w, "%s📥 **Import** ", indent)
 		if n.ImportType == "from" {
-			fmt.Fprintf(w, "from `%s` import ", n.Module)
+			fmt.Fprintf(w, "%sfrom %s import ", indent, n.Module)
 			names := make([]string, len(n.Symbols))
 			for i, sym := range n.Symbols {
 				if sym.Alias != "" {
-					names[i] = fmt.Sprintf("`%s` as `%s`", sym.Name, sym.Alias)
+					names[i] = fmt.Sprintf("%s as %s", sym.Name, sym.Alias)
 				} else {
-					names[i] = fmt.Sprintf("`%s`", sym.Name)
+					names[i] = sym.Name
 				}
 			}
-			fmt.Fprintf(w, "%s", strings.Join(names, ", "))
+			fmt.Fprintf(w, "%s\n", strings.Join(names, ", "))
 		} else {
-			fmt.Fprintf(w, "`%s`", n.Module)
+			fmt.Fprintf(w, "%simport %s\n", indent, n.Module)
 		}
-		f.formatLocation(w, n, depth)
-		fmt.Fprintln(w)
+
+	case *ir.DistilledComment:
+		// Skip comments in markdown - they'll be part of docstrings or ignored
+		return
 
 	case *ir.DistilledClass:
-		fmt.Fprintf(w, "%s🏛️ **Class** `%s`", indent, n.Name)
-		f.formatVisibility(w, n.Visibility)
-		f.formatModifiers(w, n.Modifiers)
+		vis := f.getVisibilityMarker(n.Visibility)
+		fmt.Fprintf(w, "%s%sclass %s", indent, vis, n.Name)
+		
+		// Add inheritance
 		if len(n.Extends) > 0 || len(n.Implements) > 0 {
-			fmt.Fprint(w, " (")
-			if len(n.Extends) > 0 {
-				fmt.Fprintf(w, "extends %s", f.formatTypeRefs(n.Extends))
+			parts := []string{}
+			for _, ext := range n.Extends {
+				parts = append(parts, ext.Name)
 			}
-			if len(n.Implements) > 0 {
-				if len(n.Extends) > 0 {
-					fmt.Fprint(w, ", ")
-				}
-				fmt.Fprintf(w, "implements %s", f.formatTypeRefs(n.Implements))
+			for _, impl := range n.Implements {
+				parts = append(parts, impl.Name)
 			}
-			fmt.Fprint(w, ")")
+			fmt.Fprintf(w, "(%s)", strings.Join(parts, ", "))
 		}
-		f.formatLocation(w, n, depth)
-		fmt.Fprintln(w)
-		f.formatChildren(w, n.Children, depth+1)
+		fmt.Fprintln(w, ":")
+		
+		// Add children
+		if len(n.Children) > 0 {
+			f.formatChildren(w, n.Children, indent+"    ")
+		}
 
 	case *ir.DistilledInterface:
-		fmt.Fprintf(w, "%s🔌 **Interface** `%s`", indent, n.Name)
-		f.formatVisibility(w, n.Visibility)
+		vis := f.getVisibilityMarker(n.Visibility)
+		fmt.Fprintf(w, "%s%sinterface %s", indent, vis, n.Name)
+		
 		if len(n.Extends) > 0 {
-			fmt.Fprintf(w, " extends %s", f.formatTypeRefs(n.Extends))
+			names := make([]string, len(n.Extends))
+			for i, ext := range n.Extends {
+				names[i] = ext.Name
+			}
+			fmt.Fprintf(w, " extends %s", strings.Join(names, ", "))
 		}
-		f.formatLocation(w, n, depth)
-		fmt.Fprintln(w)
-		f.formatChildren(w, n.Children, depth+1)
+		fmt.Fprintln(w, ":")
+		
+		if len(n.Children) > 0 {
+			f.formatChildren(w, n.Children, indent+"    ")
+		}
 
 	case *ir.DistilledStruct:
-		fmt.Fprintf(w, "%s📐 **Struct** `%s`", indent, n.Name)
-		f.formatVisibility(w, n.Visibility)
-		f.formatLocation(w, n, depth)
-		fmt.Fprintln(w)
-		f.formatChildren(w, n.Children, depth+1)
+		vis := f.getVisibilityMarker(n.Visibility)
+		fmt.Fprintf(w, "%s%sstruct %s:\n", indent, vis, n.Name)
+		if len(n.Children) > 0 {
+			f.formatChildren(w, n.Children, indent+"    ")
+		}
 
 	case *ir.DistilledEnum:
-		fmt.Fprintf(w, "%s🎲 **Enum** `%s`", indent, n.Name)
-		f.formatVisibility(w, n.Visibility)
-		f.formatLocation(w, n, depth)
-		fmt.Fprintln(w)
-		f.formatChildren(w, n.Children, depth+1)
+		vis := f.getVisibilityMarker(n.Visibility)
+		fmt.Fprintf(w, "%s%senum %s:\n", indent, vis, n.Name)
+		if len(n.Children) > 0 {
+			f.formatChildren(w, n.Children, indent+"    ")
+		}
+
 
 	case *ir.DistilledFunction:
-		fmt.Fprintf(w, "%s🔧 **Function** `%s`", indent, n.Name)
-		f.formatVisibility(w, n.Visibility)
-		f.formatModifiers(w, n.Modifiers)
-
-		// Format parameters
-		fmt.Fprint(w, "(")
+		vis := f.getVisibilityMarker(n.Visibility)
+		
+		// Modifiers
+		mods := ""
+		if len(n.Modifiers) > 0 {
+			modStrings := make([]string, len(n.Modifiers))
+			for i, mod := range n.Modifiers {
+				modStrings[i] = string(mod)
+			}
+			mods = strings.Join(modStrings, " ") + " "
+		}
+		
+		fmt.Fprintf(w, "%s%s%s%s(", indent, vis, mods, n.Name)
+		
+		// Parameters
 		params := make([]string, len(n.Parameters))
 		for i, p := range n.Parameters {
-			params[i] = fmt.Sprintf("`%s`", p.Name)
+			params[i] = p.Name
 			if p.Type.Name != "" && p.Type.Name != "Any" {
-				params[i] += fmt.Sprintf(": `%s`", p.Type.Name)
+				params[i] += ": " + p.Type.Name
 			}
 		}
 		fmt.Fprintf(w, "%s)", strings.Join(params, ", "))
-
-		// Format return type
+		
+		// Return type
 		if n.Returns != nil && n.Returns.Name != "" {
-			fmt.Fprintf(w, " → `%s`", n.Returns.Name)
+			fmt.Fprintf(w, " -> %s", n.Returns.Name)
 		}
-
-		f.formatLocation(w, n, depth)
-		fmt.Fprintln(w)
-
-		// Format implementation if included
+		
+		// Implementation
 		if n.Implementation != "" && !f.options.Compact {
-			fmt.Fprintf(w, "%s  ```\n", indent)
-			lines := strings.Split(n.Implementation, "\n")
+			fmt.Fprintln(w, ":")
+			lines := strings.Split(strings.TrimRight(n.Implementation, "\n"), "\n")
 			for _, line := range lines {
-				fmt.Fprintf(w, "%s  %s\n", indent, line)
+				fmt.Fprintf(w, "%s%s\n", indent+"    ", line)
 			}
-			fmt.Fprintf(w, "%s  ```\n", indent)
-		}
-
-	case *ir.DistilledField:
-		fmt.Fprintf(w, "%s📊 **Field** `%s`", indent, n.Name)
-		f.formatVisibility(w, n.Visibility)
-		f.formatModifiers(w, n.Modifiers)
-		if n.Type != nil && n.Type.Name != "" {
-			fmt.Fprintf(w, ": `%s`", n.Type.Name)
-		}
-		if n.DefaultValue != "" {
-			fmt.Fprintf(w, " = `%s`", n.DefaultValue)
-		}
-		f.formatLocation(w, n, depth)
-		fmt.Fprintln(w)
-
-	case *ir.DistilledTypeAlias:
-		fmt.Fprintf(w, "%s🏷️ **Type** `%s`", indent, n.Name)
-		f.formatVisibility(w, n.Visibility)
-		fmt.Fprintf(w, " = `%s`", n.Type.Name)
-		f.formatLocation(w, n, depth)
-		fmt.Fprintln(w)
-
-	case *ir.DistilledComment:
-		if !f.options.Compact {
-			fmt.Fprintf(w, "%s💬 ", indent)
-			if n.Format == "doc" {
-				fmt.Fprint(w, "**Doc:** ")
-			}
-			fmt.Fprintf(w, "*%s*", strings.TrimSpace(n.Text))
-			f.formatLocation(w, n, depth)
+		} else {
 			fmt.Fprintln(w)
 		}
 
-	case *ir.DistilledError:
-		f.formatError(w, n)
+	case *ir.DistilledField:
+		vis := f.getVisibilityMarker(n.Visibility)
+		
+		// Modifiers
+		mods := ""
+		if len(n.Modifiers) > 0 {
+			modStrings := make([]string, len(n.Modifiers))
+			for i, mod := range n.Modifiers {
+				modStrings[i] = string(mod)
+			}
+			mods = strings.Join(modStrings, " ") + " "
+		}
+		
+		fmt.Fprintf(w, "%s%s%s%s", indent, vis, mods, n.Name)
+		
+		if n.Type != nil && n.Type.Name != "" {
+			fmt.Fprintf(w, ": %s", n.Type.Name)
+		}
+		
+		if n.DefaultValue != "" {
+			fmt.Fprintf(w, " = %s", n.DefaultValue)
+		}
+		
+		fmt.Fprintln(w)
+
+
+	case *ir.DistilledTypeAlias:
+		vis := f.getVisibilityMarker(n.Visibility)
+		fmt.Fprintf(w, "%s%stype %s = %s\n", indent, vis, n.Name, n.Type.Name)
 
 	default:
-		// Generic node handling
-		fmt.Fprintf(w, "%s• %s", indent, node.GetNodeKind())
-		f.formatLocation(w, node, depth)
-		fmt.Fprintln(w)
+		// For other node types, just recurse into children if they have any
+		var children []ir.DistilledNode
+		switch n := node.(type) {
+		case *ir.DistilledDirectory:
+			children = n.Children
+		case *ir.DistilledFile:
+			children = n.Children
+		}
+		if len(children) > 0 {
+			f.formatChildren(w, children, indent)
+		}
 	}
 }
 
 // formatChildren formats child nodes
-func (f *MarkdownFormatter) formatChildren(w io.Writer, children []ir.DistilledNode, depth int) {
+func (f *MarkdownFormatter) formatChildren(w io.Writer, children []ir.DistilledNode, indent string) {
 	for _, child := range children {
-		f.formatNode(w, child, depth)
+		f.formatNode(w, child, indent)
 	}
 }
 
-// formatError formats an error node
-func (f *MarkdownFormatter) formatError(w io.Writer, err *ir.DistilledError) {
-	icon := "⚠️"
-	if err.Severity == "error" {
-		icon = "❌"
-	}
-	severity := err.Severity
-	if len(severity) > 0 {
-		severity = strings.ToUpper(severity[:1]) + severity[1:]
-	}
-	fmt.Fprintf(w, "%s **%s**: %s", icon, severity, err.Message)
-	if err.Code != "" {
-		fmt.Fprintf(w, " [%s]", err.Code)
-	}
-	if f.options.IncludeLocation {
-		loc := err.GetLocation()
-		fmt.Fprintf(w, " (line %d)", loc.StartLine)
-	}
-	fmt.Fprintln(w)
-}
-
-// formatVisibility adds visibility info
-func (f *MarkdownFormatter) formatVisibility(w io.Writer, vis ir.Visibility) {
-	if vis != "" && vis != ir.VisibilityPublic {
-		fmt.Fprintf(w, " _%s_", vis)
-	}
-}
-
-// formatModifiers adds modifier info
-func (f *MarkdownFormatter) formatModifiers(w io.Writer, mods []ir.Modifier) {
-	for _, mod := range mods {
-		fmt.Fprintf(w, " _%s_", mod)
-	}
-}
-
-// formatTypeRefs formats type references
-func (f *MarkdownFormatter) formatTypeRefs(refs []ir.TypeRef) string {
-	names := make([]string, len(refs))
-	for i, ref := range refs {
-		names[i] = fmt.Sprintf("`%s`", ref.Name)
-	}
-	return strings.Join(names, ", ")
-}
-
-// formatLocation adds location info if enabled
-func (f *MarkdownFormatter) formatLocation(w io.Writer, node ir.DistilledNode, depth int) {
-	if f.options.IncludeLocation {
-		loc := node.GetLocation()
-		if loc.StartLine > 0 {
-			fmt.Fprintf(w, " <sub>L%d", loc.StartLine)
-			if loc.EndLine > loc.StartLine {
-				fmt.Fprintf(w, "-%d", loc.EndLine)
-			}
-			fmt.Fprint(w, "</sub>")
-		}
+// getVisibilityMarker returns the visibility marker for the code
+func (f *MarkdownFormatter) getVisibilityMarker(visibility ir.Visibility) string {
+	switch visibility {
+	case ir.VisibilityPrivate:
+		return "-"
+	case ir.VisibilityProtected:
+		return "*"
+	case ir.VisibilityInternal:
+		return "~"
+	default:
+		return ""
 	}
 }
