@@ -120,6 +120,8 @@ func TestAidignoreIntegration(t *testing.T) {
 			opts := ProcessOptions{
 				Recursive: true,
 				RawMode: true, // Use RawProcessor for all files
+				// Limit to text files only for safety
+				IncludePatterns: []string{"*.go", "*.js", "*.tsx", "*.md", ".aidignore"},
 			}
 			
 			result, err := proc.processDirectory(tmpDir, opts)
@@ -191,6 +193,8 @@ func TestAidignoreNestedFiles(t *testing.T) {
 	opts := ProcessOptions{
 		Recursive: true,
 		RawMode: true, // Use RawProcessor for all files
+		// Limit to text files only for safety
+		IncludePatterns: []string{"*.go", "*.js", "*.tsx", "*.md", ".aidignore"},
 	}
 	
 	result, err := proc.processDirectory(tmpDir, opts)

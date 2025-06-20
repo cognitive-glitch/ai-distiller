@@ -3,6 +3,7 @@ package processor
 import (
 	"bufio"
 	"context"
+	"fmt"
 	"io"
 	"path/filepath"
 	"strings"
@@ -79,6 +80,25 @@ func (p *RawProcessor) CanProcessRaw(filename string) bool {
 
 // Process implements LanguageProcessor
 func (p *RawProcessor) Process(ctx context.Context, reader io.Reader, filename string) (*ir.DistilledFile, error) {
+	// Check if this is likely a binary file by extension
+	ext := strings.ToLower(filepath.Ext(filename))
+	binaryExtensions := []string{
+		".exe", ".dll", ".so", ".dylib", ".a", ".lib",
+		".jpg", ".jpeg", ".png", ".gif", ".bmp", ".ico", ".webp", ".svg",
+		".mp3", ".mp4", ".avi", ".mkv", ".mov", ".flv", ".wmv",
+		".zip", ".tar", ".gz", ".bz2", ".7z", ".rar",
+		".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx",
+		".ttf", ".otf", ".woff", ".woff2", ".eot",
+		".pyc", ".pyo", ".class", ".o", ".obj",
+		".db", ".sqlite", ".mdb",
+	}
+	
+	for _, binExt := range binaryExtensions {
+		if ext == binExt {
+			return nil, fmt.Errorf("binary file not supported: %s", filename)
+		}
+	}
+	
 	file := &ir.DistilledFile{
 		BaseNode: ir.BaseNode{
 			Location: ir.Location{
