@@ -147,6 +147,184 @@ Available MCP tools for AI agents:
 
 See [MCP Integration Guide](docs/mcp-integration.md) for detailed setup instructions and advanced usage.
 
+## 📖 Complete CLI Reference
+
+### Command Synopsis
+```bash
+aid [OPTIONS] <path>
+```
+
+### Core Arguments and Options
+
+#### 🎯 Primary Arguments
+
+| Argument | Type | Default | Description |
+|----------|------|---------|-------------|
+| `<path>` | String | *(required)* | Path to source file or directory to analyze. Use `.git` for git history mode, `-` for stdin input |
+
+#### 📁 Output Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `-o, --output` | String | `.aid/<dirname>.[options].txt` | Output file path. Auto-generated based on input directory and options if not specified |
+| `--stdout` | Flag | `false` | Print output to stdout in addition to file. When used alone, no file is created |
+| `--format` | String | `text` | Output format: `text` (ultra-compact), `md` (Markdown with emojis), `jsonl` (one JSON per file), `json-structured` (rich semantic data), `xml` (structured XML) |
+
+#### 🤖 AI Actions
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `--ai-action` | String | *(none)* | Pre-configured AI analysis workflow. See [AI Actions](#ai-actions-detailed) section below |
+| `--ai-output` | String | `./.aid/<action>.<timestamp>.<dirname>.md` | Custom output path for AI action results |
+
+#### 👁️ Visibility Filtering
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `--public` | 0\|1 | `1` | Include public members (methods, functions, classes) |
+| `--protected` | 0\|1 | `0` | Include protected members |
+| `--internal` | 0\|1 | `0` | Include internal/package-private members |
+| `--private` | 0\|1 | `0` | Include private members |
+
+#### 📝 Content Filtering
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `--comments` | 0\|1 | `0` | Include inline and block comments |
+| `--docstrings` | 0\|1 | `1` | Include documentation comments (docstrings, JSDoc, etc.) |
+| `--implementation` | 0\|1 | `0` | Include function/method bodies (implementation details) |
+| `--imports` | 0\|1 | `1` | Include import/require statements |
+| `--annotations` | 0\|1 | `1` | Include decorators and annotations |
+
+#### 🎛️ Alternative Filtering Syntax
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `--include-only` | String | *(none)* | Include ONLY these categories (comma-separated: `public,protected,imports`) |
+| `--exclude-items` | String | *(none)* | Exclude these categories (comma-separated: `private,comments,implementation`) |
+
+#### 📂 File Selection
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `--include` | String | *(all files)* | Include file patterns (comma-separated: `*.go,*.py` or multiple: `--include "*.go" --include "*.py"`) |
+| `--exclude` | String | *(none)* | Exclude file patterns (comma-separated: `*test*,*.json` or multiple: `--exclude "*test*" --exclude "vendor/**"`) |
+| `-r, --recursive` | 0\|1 | `1` | Process directories recursively. Set to 0 to process only immediate directory contents |
+
+#### 🔧 Processing Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `--raw` | Flag | `false` | Process all text files without language parsing. Overrides all content filters |
+| `--lang` | String | `auto` | Force language detection: `auto`, `python`, `typescript`, `javascript`, `go`, `rust`, `java`, `csharp`, `kotlin`, `cpp`, `php`, `ruby`, `swift` |
+| `--tree-sitter` | Flag | `false` | Use tree-sitter parser (experimental, provides more accurate parsing) |
+| `--strict` | Flag | `false` | Fail on first syntax error instead of continuing |
+
+#### 📍 Path Control
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `--file-path-type` | String | `relative` | Path format in output: `relative` or `absolute` |
+| `--relative-path-prefix` | String | *(empty)* | Custom prefix for relative paths (e.g., `module/` → `module/src/file.go`) |
+
+#### ⚡ Performance Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `-w, --workers` | Integer | `0` | Number of parallel workers. `0` = auto (80% of CPU cores), `1` = serial processing, `2+` = specific worker count |
+
+#### 📊 Summary Output Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `--summary-type` | String | `visual-progress-bar` | Summary format after processing. See [Summary Types](#summary-types) below |
+| `--no-emoji` | Flag | `false` | Disable emojis in summary output for plain text terminals |
+
+#### 📜 Git Mode Options (when path is `.git`)
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `--git-limit` | Integer | `200` | Number of commits to analyze. Use `0` for all commits |
+| `--with-analysis-prompt` | Flag | `false` | Add comprehensive AI analysis prompt for commit quality, patterns, and insights |
+
+#### 🐛 Diagnostic Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `-v, --verbose` | Count | `0` | Verbose output. Use `-vv` for detailed info, `-vvv` for full trace with data dumps |
+| `--version` | Flag | `false` | Show version information and exit |
+| `--help` | Flag | `false` | Show help message |
+| `--help-extended` | Flag | `false` | Show complete documentation (man page style) |
+| `--cheat` | Flag | `false` | Show quick reference card |
+
+### AI Actions Detailed
+
+AI actions are pre-configured workflows that format the distilled output for specific AI/LLM tasks:
+
+| Action | Description | Best For |
+|--------|-------------|----------|
+| `prompt-for-refactoring-suggestion` | Comprehensive refactoring analysis with context awareness, effort sizing, and risk assessment | Code improvement, technical debt reduction |
+| `prompt-for-complex-codebase-analysis` | Enterprise-grade analysis with architecture diagrams, compliance checks, and findings | System understanding, architectural reviews |
+| `prompt-for-security-analysis` | Security audit with OWASP Top 10 focus, vulnerability detection, and remediation steps | Security assessments, compliance checks |
+| `prompt-for-performance-analysis` | Performance optimization with complexity analysis and scalability considerations | Performance tuning, bottleneck identification |
+| `prompt-for-best-practices-analysis` | Code quality assessment against industry standards and best practices | Code reviews, quality improvements |
+| `prompt-for-bug-hunting` | Systematic bug detection with pattern analysis and quality metrics | Bug prevention, quality assurance |
+| `prompt-for-single-file-docs` | Comprehensive documentation generation for individual files | API documentation, code explanation |
+| `prompt-for-diagrams` | Generate 10+ Mermaid diagrams for architecture and process visualization | Documentation, presentations |
+| `flow-for-deep-file-to-file-analysis` | Structured task list for systematic codebase analysis | Deep dives, thorough understanding |
+| `flow-for-multi-file-docs` | Documentation workflow for multiple related files | Project documentation, onboarding |
+
+### Summary Types
+
+| Type | Description | Example Output |
+|------|-------------|----------------|
+| `visual-progress-bar` | Default. Shows compression progress bar with colors | `✅ Distilled 150 files [████████░░] 85% (5MB → 750KB)` |
+| `stock-ticker` | Compact stock market style | `📊 AID 97.5% ▲ \| 5MB→128KB \| ~1.2M tokens saved` |
+| `speedometer-dashboard` | Multi-line dashboard with detailed metrics | Shows files, size, tokens, processing time in box format |
+| `minimalist-sparkline` | Single line with sparkline visualization | `▁▃▅▇█ 150 files → 97.5% reduction (750KB) ✓` |
+| `ci-friendly` | Clean format for CI/CD pipelines | `[aid] ✓ 85.9% saved \| 21 kB → 2.9 kB \| 4ms` |
+| `json` | Machine-readable JSON output | `{"original_bytes":5242880,"distilled_bytes":131072,...}` |
+| `off` | Disable summary output | No summary displayed |
+
+### Exit Codes
+
+| Code | Meaning |
+|------|---------|
+| `0` | Success |
+| `1` | General error (file not found, parse error, etc.) |
+| `2` | Invalid arguments or conflicting options |
+
+### Examples
+
+```bash
+# Basic usage - distill with default settings (public APIs only)
+aid ./src
+
+# Include all visibility levels and implementation
+aid ./src --private=1 --protected=1 --internal=1 --implementation=1
+
+# AI-powered security analysis
+aid --ai-action prompt-for-security-analysis ./api --private=1
+
+# Process only Python and Go files, exclude tests
+aid --include "*.py,*.go" --exclude "*test*,*spec*" ./
+
+# Git history analysis with AI insights
+aid .git --with-analysis-prompt --git-limit=500
+
+# Raw text processing for documentation
+aid ./docs --raw --format=md
+
+# Force single-threaded processing for debugging
+aid ./complex-code -w 1 -vvv
+
+# Custom output with absolute paths
+aid ./lib --output=/tmp/analysis.txt --file-path-type=absolute
+
+# CI/CD integration with clean output
+aid . --summary-type=ci-friendly --no-emoji --format=jsonl
+```
+
 ## 🚀 Transform Massive Codebases Into AI-Friendly Context
 
 > **The Problem**: Modern codebases contain thousands of files with millions of lines. But for AI to understand your code architecture, suggest improvements, or help with development, it doesn't need to see every implementation detail - it needs the **structure and public interfaces**.
