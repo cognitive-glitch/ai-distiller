@@ -1921,31 +1921,87 @@ func executeContentAction(ctx context.Context, action ai.ContentAction, actionCt
 	finalContent.WriteString(actionCtx.DistilledContent)
 	finalContent.WriteString(result.ContentAfter)
 	
-	// Create parent directory
-	parentDir := filepath.Dir(outputPath)
-	if err := os.MkdirAll(parentDir, 0755); err != nil {
-		return fmt.Errorf("failed to create directory %s: %w", parentDir, err)
-	}
-	
-	// Write output file
 	content := []byte(finalContent.String())
-	if err := os.WriteFile(outputPath, content, 0644); err != nil {
-		return fmt.Errorf("failed to write output file: %w", err)
+	
+	// If outputToStdout is set, print to stdout
+	if outputToStdout {
+		fmt.Print(string(content))
+		
+		// Also save to file unless explicitly disabled
+		if outputPath != "" && outputPath != "-" {
+			// Create parent directory
+			parentDir := filepath.Dir(outputPath)
+			if err := os.MkdirAll(parentDir, 0755); err != nil {
+				return fmt.Errorf("failed to create directory %s: %w", parentDir, err)
+			}
+			
+			// Write output file
+			if err := os.WriteFile(outputPath, content, 0644); err != nil {
+				return fmt.Errorf("failed to write output file: %w", err)
+			}
+			
+			// Print info message to stderr so it doesn't mix with stdout content
+			fmt.Fprintf(os.Stderr, "\n\n")
+			fmt.Fprintf(os.Stderr, "════════════════════════════════════════════════════════════════════════\n")
+			fmt.Fprintf(os.Stderr, "✅ AI prompt with distilled code has been generated and saved to:\n")
+			fmt.Fprintf(os.Stderr, "📄 %s\n", outputPath)
+			fmt.Fprintf(os.Stderr, "\n")
+			fmt.Fprintf(os.Stderr, "You can now:\n")
+			fmt.Fprintf(os.Stderr, "1. Let your AI agent read and execute this file\n")
+			fmt.Fprintf(os.Stderr, "2. Copy the file content to Gemini 2.5 Pro/Flash (supports 1M+ context)\n")
+			fmt.Fprintf(os.Stderr, "3. Use with any AI tool that supports large context windows\n")
+			fmt.Fprintf(os.Stderr, "\n")
+			if len(content) > 500000 { // If larger than 500KB
+				fmt.Fprintf(os.Stderr, "⚠️  The generated file is quite large (%.1f MB).\n", float64(len(content))/1024.0/1024.0)
+				fmt.Fprintf(os.Stderr, "   Consider analyzing a specific subdirectory for better results.\n")
+			}
+			fmt.Fprintf(os.Stderr, "════════════════════════════════════════════════════════════════════════\n")
+		}
+	} else {
+		// Original behavior: save to file only
+		// Create parent directory
+		parentDir := filepath.Dir(outputPath)
+		if err := os.MkdirAll(parentDir, 0755); err != nil {
+			return fmt.Errorf("failed to create directory %s: %w", parentDir, err)
+		}
+		
+		// Write output file
+		if err := os.WriteFile(outputPath, content, 0644); err != nil {
+			return fmt.Errorf("failed to write output file: %w", err)
+		}
+		
+		// Get file info for size
+		fileInfo, err := os.Stat(outputPath)
+		if err != nil {
+			return fmt.Errorf("failed to stat output file: %w", err)
+		}
+		
+		// Calculate size in kB
+		sizeKB := float64(fileInfo.Size()) / 1024.0
+		sizeMB := sizeKB / 1024.0
+		duration := time.Since(startTime)
+		
+		dbg.Logf(debug.LevelBasic, "Wrote AI action output to %s (%d bytes, %.1f kB) in %v", outputPath, fileInfo.Size(), sizeKB, duration)
+		
+		fmt.Printf("\n")
+		fmt.Printf("════════════════════════════════════════════════════════════════════════\n")
+		fmt.Printf("✅ AI action '%s' completed successfully! (%.2fs)\n", action.Name(), duration.Seconds())
+		fmt.Printf("📄 AI prompt with distilled code saved to:\n")
+		fmt.Printf("   %s (%.1f kB)\n", outputPath, sizeKB)
+		fmt.Printf("\n")
+		fmt.Printf("You can now:\n")
+		fmt.Printf("1. Let your AI agent read and execute this file\n")
+		fmt.Printf("2. Copy the file content to Gemini 2.5 Pro/Flash (supports 1M+ context)\n")
+		fmt.Printf("3. Use with any AI tool that supports large context windows\n")
+		
+		if sizeMB > 0.5 { // If larger than 500KB
+			fmt.Printf("\n")
+			fmt.Printf("⚠️  The generated file is quite large (%.1f MB).\n", sizeMB)
+			fmt.Printf("   Consider analyzing a specific subdirectory for better results:\n")
+			fmt.Printf("   aid <subdirectory> --ai-action=%s\n", action.Name())
+		}
+		fmt.Printf("════════════════════════════════════════════════════════════════════════\n")
 	}
-	
-	// Get file info for size
-	fileInfo, err := os.Stat(outputPath)
-	if err != nil {
-		return fmt.Errorf("failed to stat output file: %w", err)
-	}
-	
-	// Calculate size in kB
-	sizeKB := float64(fileInfo.Size()) / 1024.0
-	duration := time.Since(startTime)
-	
-	dbg.Logf(debug.LevelBasic, "Wrote AI action output to %s (%d bytes, %.1f kB) in %v", outputPath, fileInfo.Size(), sizeKB, duration)
-	fmt.Printf("✅ AI action '%s' completed successfully! (%.2fs)\n", action.Name(), duration.Seconds())
-	fmt.Printf("📄 Output saved to: %s (%.1f kB)\n", outputPath, sizeKB)
 	
 	return nil
 }
