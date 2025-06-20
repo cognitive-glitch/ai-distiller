@@ -342,7 +342,7 @@ func initFlags() {
 					fmt.Printf("built: %s\n", t.Format("2006-01-02"))
 				}
 			}
-			fmt.Printf("https://github.com/janreges/ai-distiller\n")
+			fmt.Printf("%s\n", version.WebsiteURL)
 			os.Exit(0)
 		}
 		

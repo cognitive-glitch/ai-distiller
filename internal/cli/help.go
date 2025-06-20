@@ -112,7 +112,7 @@ OUTPUT FILE NAMING:
 For complete documentation and examples: aid --help-extended
 
 ---
-AI Distiller (aid) - https://github.com/janreges/ai-distiller
+AI Distiller (aid) - ` + version.WebsiteURL + `
 Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic)
 Explore the project on GitHub: https://github.com/janreges/ai-distiller
 `, versionInfo)
@@ -309,7 +309,7 @@ SEE ALSO
     aid help git         - Git mode documentation
     aid --cheat          - Quick reference card
 
-    Online documentation: https://github.com/janreges/ai-distiller
+    Online documentation: ` + version.WebsiteURL + `
 
 AUTHOR
     AI Distiller development team
@@ -672,7 +672,7 @@ EXAMPLES:
 For more examples: aid --help-extended
 
 ---
-AI Distiller (aid) - https://github.com/janreges/ai-distiller
+AI Distiller (aid) - ` + version.WebsiteURL + `
 Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic)
 Explore the project on GitHub: https://github.com/janreges/ai-distiller
 `
@@ -823,7 +823,7 @@ Common mistakes:
 For complete examples: aid --help-extended
 
 ---
-AI Distiller (aid) - https://github.com/janreges/ai-distiller
+AI Distiller (aid) - ` + version.WebsiteURL + `
 Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic)
 Explore the project on GitHub: https://github.com/janreges/ai-distiller
 `)
@@ -961,7 +961,7 @@ When using --with-analysis-prompt, the output includes guidance for:
 For complete examples: aid --help-extended
 
 ---
-AI Distiller (aid) - https://github.com/janreges/ai-distiller
+AI Distiller (aid) - ` + version.WebsiteURL + `
 Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic)
 Explore the project on GitHub: https://github.com/janreges/ai-distiller
 `)
@@ -1036,7 +1036,7 @@ HELP:
   aid help git         # Git mode help
 
 ---
-AI Distiller (aid) - https://github.com/janreges/ai-distiller
+AI Distiller (aid) - ` + version.WebsiteURL + `
 Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic)
 Explore the project on GitHub: https://github.com/janreges/ai-distiller
 `)

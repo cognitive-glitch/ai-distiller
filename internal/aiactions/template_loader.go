@@ -44,9 +44,10 @@ func LoadTemplate(templateName string, data TemplateData) (string, error) {
 		return "", fmt.Errorf("failed to execute template: %w", err)
 	}
 
-	// Replace {{VERSION}} placeholder with actual version
+	// Replace placeholders with actual values
 	result := buf.String()
 	result = strings.ReplaceAll(result, "{{VERSION}}", version.Version)
+	result = strings.ReplaceAll(result, "{{WEBSITE_URL}}", version.WebsiteURL)
 
 	return result, nil
 }

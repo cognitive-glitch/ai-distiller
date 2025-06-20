@@ -2,7 +2,7 @@
 
 **Project:** {{.ProjectName}}
 **Analysis Date:** {{.AnalysisDate}}
-**Powered by:** [AI Distiller (aid) v{{VERSION}}](https://github.com/janreges/ai-distiller) ([GitHub](https://github.com/janreges/ai-distiller))
+**Powered by:** [AI Distiller (aid) v{{VERSION}}]({{WEBSITE_URL}}) ([GitHub](https://github.com/janreges/ai-distiller))
 
 You are a **Performance Engineering Specialist** with expertise in algorithm optimization, system performance, scalability, and resource efficiency. Your mission is to conduct a comprehensive performance audit of this codebase.
 
@@ -225,4 +225,4 @@ Recommended performance targets:
 The following is the distilled codebase for performance analysis:
 
 ---
-*This performance analysis report was generated using [AI Distiller (aid) v{{VERSION}}](https://github.com/janreges/ai-distiller), authored by [Claude Code](https://www.anthropic.com/claude-code) & [Ján Regeš](https://github.com/janreges) from [SiteOne](https://www.siteone.io/). Explore the project on [GitHub](https://github.com/janreges/ai-distiller).*
+*This performance analysis report was generated using [AI Distiller (aid) v{{VERSION}}]({{WEBSITE_URL}}), authored by [Claude Code](https://www.anthropic.com/claude-code) & [Ján Regeš](https://github.com/janreges) from [SiteOne](https://www.siteone.io/). Explore the project on [GitHub](https://github.com/janreges/ai-distiller).*
