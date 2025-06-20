@@ -3,7 +3,7 @@
 > **Note:** This is the very first version of this tool. We would be very grateful for any feedback in the form of a discussion or by creating an issue on [GitHub](https://github.com/janreges/ai-distiller/issues). Thank you\!
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Languages-10+-blue" alt="10+ Languages">
+  <img src="https://img.shields.io/badge/Languages-12+-blue" alt="12+ Languages">
   <img src="https://img.shields.io/badge/Performance-5k+_files/sec-green" alt="Performance">
   <img src="https://img.shields.io/badge/Compression-90%25+-orange" alt="Compression">
   <img src="https://img.shields.io/badge/Tests-988_passed-purple" alt="Tests">
@@ -88,7 +88,7 @@ AI Distiller generates specialized prompts combined with distilled code for AI-d
 ### 📝 Multiple Output Formats
 - **Text** (`--format text`) - Ultra-compact for AI consumption (default)
 - **Markdown** (`--format md`) - Clean, structured Markdown
-- **JSON** (`--format json`) - Structured data for tools
+- **JSON Structured** (`--format json-structured`) - Rich semantic data for tools
 - **JSONL** (`--format jsonl`) - Streaming format
 - **XML** (`--format xml`) - Legacy system compatible
 
@@ -1029,4 +1029,4 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 - Built on [tree-sitter](https://tree-sitter.github.io/) for accurate parsing
 - Inspired by the need for better AI-code interaction
-- Created with ❤️ by Ján Regeš from [SiteOne](https://www.siteone.io/) (Czech Republic).
+- Created with ❤️ by Claude Code & Ján Regeš from [SiteOne](https://www.siteone.io/) (Czech Republic).

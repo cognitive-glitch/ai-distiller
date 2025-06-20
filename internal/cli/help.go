@@ -134,10 +134,10 @@ OUTPUT FILE NAMING:
 For complete documentation and examples: aid --help-extended
 
 %s
-AI Distiller (aid) v%s
+AI Distiller (aid) %s
 Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic, www.siteone.io)
 Explore the project on GitHub: %s%s
-`, gray, versionInfo, reset, gray, version.Version, version.WebsiteURL, reset)
+`, gray, versionInfo, reset, gray, versionInfo, version.WebsiteURL, reset)
 }
 
 // getExtendedHelpContent returns the extended help content for --help-extended
@@ -344,10 +344,10 @@ COPYRIGHT
     Licensed under MIT License
 
 %s
-AI Distiller (aid) v%s
+AI Distiller (aid) %s
 Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic, www.siteone.io)
 Explore the project on GitHub: https://github.com/janreges/ai-distiller%s
-`, gray, reset, gray, version.Version, reset)
+`, gray, reset, gray, getVersionInfo(), reset)
 }
 
 // initializeHelpSystem sets up custom help templates and commands
@@ -712,10 +712,10 @@ EXAMPLES:
 For more examples: aid --help-extended
 
 ---
-AI Distiller (aid) v%s
+AI Distiller (aid) %s
 Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic, www.siteone.io)
 Explore the project on GitHub: %s%s
-`, gray, reset, version.Version, version.WebsiteURL, reset)
+`, gray, reset, getVersionInfo(), version.WebsiteURL, reset)
 	fmt.Print(output)
 }
 
@@ -871,10 +871,10 @@ Common mistakes:
 For complete examples: aid --help-extended
 
 ---
-AI Distiller (aid) v%s
+AI Distiller (aid) %s
 Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic, www.siteone.io)
 Explore the project on GitHub: %s%s
-`, gray, reset, version.Version, version.WebsiteURL, reset)
+`, gray, reset, getVersionInfo(), version.WebsiteURL, reset)
 }
 
 // showGitHelp displays git mode documentation
@@ -1017,10 +1017,10 @@ When using --with-analysis-prompt, the output includes guidance for:
 For complete examples: aid --help-extended
 
 ---
-AI Distiller (aid) v%s
+AI Distiller (aid) %s
 Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic, www.siteone.io)
 Explore the project on GitHub: %s%s
-`, gray, reset, version.Version, version.WebsiteURL, reset)
+`, gray, reset, getVersionInfo(), version.WebsiteURL, reset)
 }
 
 // showCheatSheet displays a quick reference card
@@ -1049,8 +1049,12 @@ AI ACTIONS:
   --ai-action prompt-for-complex-codebase-analysis  # Architecture overview  
   --ai-action prompt-for-security-analysis          # Security audit
   --ai-action prompt-for-performance-analysis       # Performance optimization
+  --ai-action prompt-for-best-practices-analysis    # Code quality assessment
+  --ai-action prompt-for-bug-hunting               # Systematic bug detection
+  --ai-action prompt-for-single-file-docs          # Single file documentation
+  --ai-action prompt-for-diagrams                  # Generate Mermaid diagrams
   
-  Add --raw for full source code (large context needed - use Gemini 2.5 Pro)
+  Add --raw to process all text files without language parsing (docs, configs, etc.)
 
 ESSENTIAL FILTERING:
   --public=1 --private=1 --protected=1    # Include all visibility levels
@@ -1071,13 +1075,14 @@ QUICK COMBINATIONS:
 
   # Git History with Comprehensive Analysis
   aid .git --git-limit=50 --with-analysis-prompt
-  # Includes: commit quality scores, Gantt charts, bug patterns, complexity analysis
+  # Generates: contributor stats, timeline visualization, quality analysis, insights
 
 OUTPUT FORMATS:
-  --format text        # Compact (default)
-  --format md          # Clean, structured markdown
-  --format jsonl       # One JSON per file
+  --format text             # Ultra-compact for AI (default)
+  --format md               # Clean, structured markdown
+  --format jsonl            # One JSON per file
   --format json-structured  # Rich semantic data
+  --format xml              # Structured XML
 
 SUMMARY FORMATS:
   --summary-type visual-progress-bar   # Visual progress bar: [████████░░] 97.5%% saved! (default)
@@ -1100,10 +1105,10 @@ HELP:
   aid help git         # Git mode help
 
 ---
-AI Distiller (aid) v%s
+AI Distiller (aid) %s
 Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic, www.siteone.io)
 Explore the project on GitHub: %s%s
-`, gray, reset, version.Version, version.WebsiteURL, reset)
+`, gray, reset, getVersionInfo(), version.WebsiteURL, reset)
 }
 
 // getAIActionsList returns a list of available AI actions with descriptions
