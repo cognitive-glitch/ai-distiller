@@ -840,12 +840,18 @@ func createProcessOptionsFromFlags() processor.ProcessOptions {
 		opts = processIncludeList(includeList)
 		opts.Workers = workers
 		opts.RawMode = rawMode
+		opts.Recursive = recursiveStr != "0"
+		opts.IncludePatterns = includeGlob
+		opts.ExcludePatterns = excludeGlob
 		return opts
 	}
 	if excludeList != "" {
 		opts = processExcludeList(excludeList)
 		opts.Workers = workers
 		opts.RawMode = rawMode
+		opts.Recursive = recursiveStr != "0"
+		opts.IncludePatterns = includeGlob
+		opts.ExcludePatterns = excludeGlob
 		return opts
 	}
 	
@@ -909,32 +915,53 @@ func processIncludeList(list string) processor.ProcessOptions {
 		IncludeImports: false,
 		IncludeImplementation: false,
 		IncludePrivate: false,
+		IncludeDocstrings: false,
+		IncludeAnnotations: false,
 	}
+	
+	// Track which visibility levels are included
+	includePublic := false
+	includeProtected := false
+	includeInternal := false
+	includePrivate := false
 	
 	items := strings.Split(list, ",")
 	for _, item := range items {
 		switch strings.TrimSpace(item) {
 		case "public":
-			// This is the default, nothing to change
+			includePublic = true
 		case "protected":
-			opts.IncludePrivate = true
-			opts.RemovePrivateOnly = true
+			includeProtected = true
 		case "internal":
-			opts.IncludePrivate = true
-			opts.RemoveProtectedOnly = true
+			includeInternal = true
 		case "private":
-			opts.IncludePrivate = true
+			includePrivate = true
 		case "comments":
 			opts.IncludeComments = true
 		case "docstrings":
-			// TODO: Implement separate docstring handling
-			opts.IncludeComments = true
+			opts.IncludeDocstrings = true
 		case "implementation":
 			opts.IncludeImplementation = true
 		case "imports":
 			opts.IncludeImports = true
 		case "annotations":
-			// TODO: Implement annotation handling
+			opts.IncludeAnnotations = true
+		}
+	}
+	
+	// Apply visibility logic similar to normal flag processing
+	if includePublic && !includeProtected && !includeInternal && !includePrivate {
+		// Only public members
+		opts.IncludePrivate = false
+	} else if includePublic || includeProtected || includeInternal || includePrivate {
+		// Some non-public visibility included
+		opts.IncludePrivate = true
+		opts.RemovePrivateOnly = !includePrivate
+		opts.RemoveProtectedOnly = !includeProtected
+		opts.RemoveInternalOnly = !includeInternal
+		// If none explicitly included, we still need to show public
+		if !includePublic && !includeProtected && !includeInternal && !includePrivate {
+			opts.IncludePrivate = false
 		}
 	}
 	
