@@ -105,7 +105,7 @@ func (f *MarkdownFormatter) FormatMultiple(w io.Writer, files []*ir.DistilledFil
 		startIdx += processed
 		
 		// Extract the path
-		pathStart := startIdx + 13 // len(`<file path="`)
+		pathStart := startIdx + 12 // len(`<file path="`)
 		pathEnd := strings.Index(text[pathStart:], `">`)
 		if pathEnd == -1 {
 			break

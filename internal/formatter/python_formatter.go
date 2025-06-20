@@ -230,7 +230,7 @@ func (f *PythonFormatter) formatClass(w io.Writer, class *ir.DistilledClass, ind
 		f.inClass = true
 
 		// Group children by type for better formatting
-		var comments, fields, functions []ir.DistilledNode
+		var comments, fields, functions, classes []ir.DistilledNode
 
 		for _, child := range class.Children {
 			switch child.(type) {
@@ -240,6 +240,8 @@ func (f *PythonFormatter) formatClass(w io.Writer, class *ir.DistilledClass, ind
 				fields = append(fields, child)
 			case *ir.DistilledFunction:
 				functions = append(functions, child)
+			case *ir.DistilledClass:
+				classes = append(classes, child)
 			}
 		}
 
@@ -256,6 +258,11 @@ func (f *PythonFormatter) formatClass(w io.Writer, class *ir.DistilledClass, ind
 		// Write functions
 		for _, function := range functions {
 			f.FormatNode(w, function, indent+1)
+		}
+
+		// Write nested classes
+		for _, nestedClass := range classes {
+			f.FormatNode(w, nestedClass, indent+1)
 		}
 
 		f.inClass = wasInClass
