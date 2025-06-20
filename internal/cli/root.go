@@ -2009,7 +2009,7 @@ func executeContentAction(ctx context.Context, action ai.ContentAction, actionCt
 		fmt.Printf("════════════════════════════════════════════════════════════════════════\n")
 		fmt.Printf("✅ AI action '%s' completed successfully! (%.2fs)\n", action.Name(), duration.Seconds())
 		fmt.Printf("📄 AI prompt with distilled code saved to:\n")
-		fmt.Printf("   💾 %s (%.1f kB)\n", outputPath, sizeKB)
+		fmt.Printf("💾 %s (%.1f kB)\n", outputPath, sizeKB)
 		fmt.Printf("\n")
 		fmt.Printf("You can now:\n")
 		fmt.Printf("1. Let your AI agent read and execute this file\n")
