@@ -2,7 +2,7 @@
 
 **Project:** {{.ProjectName}}
 **Analysis Date:** {{.AnalysisDate}}
-**Powered by:** [AI Distiller (aid)](https://github.com/janreges/ai-distiller) ([GitHub](https://github.com/janreges/ai-distiller))
+**Powered by:** [AI Distiller (aid) v{{VERSION}}](https://github.com/janreges/ai-distiller) ([GitHub](https://github.com/janreges/ai-distiller))
 
 You are a **Senior Staff Engineer** and **Technical Architect** with expertise in code refactoring, design patterns, and technical debt management. Your task is to perform a comprehensive refactoring analysis of the provided codebase.
 
@@ -120,4 +120,4 @@ Rate each area on a 0-100 scale:
 The following is the distilled codebase for analysis:
 
 ---
-*This refactoring analysis was generated using [AI Distiller (aid)](https://github.com/janreges/ai-distiller), authored by [Claude Code](https://www.anthropic.com/claude-code) & [Ján Regeš](https://github.com/janreges) from [SiteOne](https://www.siteone.io/). Explore the project on [GitHub](https://github.com/janreges/ai-distiller).*
+*This refactoring analysis was generated using [AI Distiller (aid) v{{VERSION}}](https://github.com/janreges/ai-distiller), authored by [Claude Code](https://www.anthropic.com/claude-code) & [Ján Regeš](https://github.com/janreges) from [SiteOne](https://www.siteone.io/). Explore the project on [GitHub](https://github.com/janreges/ai-distiller).*

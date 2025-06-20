@@ -8,6 +8,8 @@ import (
 	"strings"
 	"text/template"
 	"time"
+	
+	"github.com/janreges/ai-distiller/internal/version"
 )
 
 // TemplateData contains data for template rendering
@@ -42,7 +44,11 @@ func LoadTemplate(templateName string, data TemplateData) (string, error) {
 		return "", fmt.Errorf("failed to execute template: %w", err)
 	}
 
-	return buf.String(), nil
+	// Replace {{VERSION}} placeholder with actual version
+	result := buf.String()
+	result = strings.ReplaceAll(result, "{{VERSION}}", version.Version)
+
+	return result, nil
 }
 
 // findTemplatePath searches for the template file in multiple locations
