@@ -19,7 +19,6 @@ func TestDefaultProcessOptions(t *testing.T) {
 	assert.True(t, opts.IncludeImports)
 	assert.True(t, opts.IncludePrivate)
 	assert.Equal(t, 100, opts.MaxDepth)
-	assert.False(t, opts.Strict)
 	assert.True(t, opts.SymbolResolution)
 	assert.True(t, opts.IncludeLineNumbers)
 }

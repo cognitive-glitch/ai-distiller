@@ -64,9 +64,6 @@ type ProcessOptions struct {
 	// MaxDepth limits the depth of nested structures
 	MaxDepth int
 
-	// Strict enables strict parsing (fail on any error)
-	Strict bool
-
 	// SymbolResolution enables symbol cross-referencing
 	SymbolResolution bool
 
@@ -115,7 +112,6 @@ func DefaultProcessOptions() ProcessOptions {
 		IncludeDocstrings:     true,
 		IncludeAnnotations:    true,
 		MaxDepth:              100,
-		Strict:                false,
 		SymbolResolution:      true,
 		IncludeLineNumbers:    true,
 		Workers:               0, // 0 = auto (80% of CPU cores)

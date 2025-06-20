@@ -177,7 +177,6 @@ func TestCLIFlags(t *testing.T) {
 		excludeGlob = []string{}
 		recursiveStr = "1"
 		filePathType = "relative"
-		strict = false
 		verbosity = 0
 		includePublic = nil
 		includeProtected = nil
@@ -196,7 +195,6 @@ func TestCLIFlags(t *testing.T) {
 		assert.False(t, outputToStdout)
 		assert.Equal(t, "text", outputFormat)
 		assert.Equal(t, "1", recursiveStr)
-		assert.False(t, strict)
 	})
 
 	t.Run("ParseFlags", func(t *testing.T) {

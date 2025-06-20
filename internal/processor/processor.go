@@ -18,29 +18,21 @@ import (
 
 // Processor processes files and directories
 type Processor struct {
-	useTreeSitter bool
-	ctx          context.Context
+	ctx context.Context
 }
 
 // New creates a new processor
 func New() *Processor {
 	return &Processor{
-		useTreeSitter: false,
-		ctx:          context.Background(),
+		ctx: context.Background(),
 	}
 }
 
 // NewWithContext creates a new processor with a context
 func NewWithContext(ctx context.Context) *Processor {
 	return &Processor{
-		useTreeSitter: false,
-		ctx:          ctx,
+		ctx: ctx,
 	}
-}
-
-// EnableTreeSitter enables tree-sitter parsing for supported languages
-func (p *Processor) EnableTreeSitter() {
-	p.useTreeSitter = true
 }
 
 // ProcessPath processes a file or directory
@@ -123,16 +115,6 @@ func (p *Processor) ProcessFile(filename string, opts ProcessOptions) (*ir.Disti
 	}
 	
 	dbg.Logf(debug.LevelDetailed, "Using %s processor for %s", proc.Language(), filename)
-	
-	// Enable tree-sitter if requested and supported
-	if p.useTreeSitter && proc.Language() == "python" {
-		// Use reflection to call EnableTreeSitter if it exists
-		if enabler, ok := proc.(interface{ EnableTreeSitter() }); ok {
-			enableTSFunc := enabler.EnableTreeSitter
-			enableTSFunc()
-			dbg.Logf(debug.LevelDetailed, "Enabled tree-sitter for Python")
-		}
-	}
 
 	// Open file
 	file, err := os.Open(filename)
@@ -209,14 +191,6 @@ func (p *Processor) Process(ctx context.Context, reader io.Reader, filename stri
 		return nil, fmt.Errorf("no processor found for file: %s", filename)
 	}
 	
-	// Enable tree-sitter if requested and supported
-	if p.useTreeSitter && proc.Language() == "python" {
-		// Use reflection to call EnableTreeSitter if it exists
-		if enabler, ok := proc.(interface{ EnableTreeSitter() }); ok {
-			enableTSFunc := enabler.EnableTreeSitter
-			enableTSFunc()
-		}
-	}
 
 	return proc.Process(ctx, reader, filename)
 }

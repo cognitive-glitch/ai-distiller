@@ -9,9 +9,18 @@
   <img src="https://img.shields.io/badge/Tests-988_passed-purple" alt="Tests">
 </p
 
+## **🤔 Why AI Distiller?**
+
+Do you work with large-scale projects that have thousands of files and functions? Do you struggle with AI tools like Claude Code, Gemini, Copilot, or Cursor frequently "hallucinating" and generating code that looks correct at first glance but is actually incompatible with your project?
+
+**The problem is context.** AI models have a limited context window and cannot comprehend your entire codebase. Instead, AI agents search files, "grep" for keywords, look at a few lines before and after the found term, and try (often, but not always) to guess the interface of your classes and functions. The result? Code full of errors that guesses parameters, returns incorrect data types, and ignores the existing architecture. If you are a sophisticated user of AI agents (vibe coder), you know that you can help yourself by instructing the AI ​​agent to consistently write and run tests, using static code analysis, pre-commit hooks, etc. - the AI ​​agent will usually fix the code itself, but in the meantime it will take 20 steps and 5 minutes. On the other hand, it must be admitted that if you pay for each AI request (and large context is an expensive factor) and are not "playing for time", you may not mind this limited context approach.
+
+**AI Distiller (or `aid` for short) helps solve this problem.** Its main function is code "distillation" – a process where it extracts only the most essential information from the entire project (ideally from the main source folder, or a specific module subdirectory for extremely large projects) that the AI needs to write code correctly on the first try. This distillation usually generates a context that is only 5-20% of the original source code volume, allowing AI tools to include it in their context. As a result, the AI uses the existing code exactly as it was designed, not by trial and error.
+
+Very simply, it can be said that `aid`, within the distillation process, will leave only the public parts of the interface, input and output data types, but in the default state it will discard method implementations and non-public structures. But everything is configurable via [CLI Options](#-complete-cli-reference).
+
 ## Table of Contents
 
-- [🤔 Why AI Distiller?](#-why-ai-distiller)
 - [✨ Key Features](#-key-features)
 - [🎯 How It Works](#-how-it-works)
 - [🚀 Quick Start](#-quick-start)
@@ -32,16 +41,6 @@
 - [📄 License](#-license)
 - [🙏 Acknowledgments](#-acknowledgments)
 
-## **🤔 Why AI Distiller?**
-
-Do you work with large-scale projects that have thousands of files and functions? Do you struggle with AI tools like Claude Code, Gemini, Copilot, or Cursor frequently "hallucinating" and generating code that looks correct at first glance but is actually incompatible with your project?
-
-**The problem is context.** AI models have a limited context window and cannot comprehend your entire codebase. Instead, they search files, "grep" for keywords, look at a few lines before and after the found term, and try to guess the interface of your classes and functions. The result? Code full of errors that guesses parameters, returns incorrect data types, and ignores the existing architecture. If you are a sophisticated user of AI agents (vibe coder), you know that you can help yourself by instructing the AI ​​agent to consistently write and run tests, using static code analysis, pre-commit hooks, etc. - the AI ​​agent will usually fix the code itself, but in the meantime it will take 20 steps and 5 minutes.
-
-**AI Distiller (or `aid` for short) helps solve this problem.** Its main function is code "distillation" – a process where it extracts only the most essential information from the entire project (ideally from the main source folder, or a specific module subdirectory for extremely large projects) that the AI needs to write code correctly on the first try. This distillation usually generates a context that is only 5-20% of the original source code volume, allowing AI tools to include it in their context. As a result, the AI uses the existing code exactly as it was designed, not by trial and error.
-
-Very simply, it can be said that `aid`, within the distillation process, will leave only the public parts of the interface, input and output data types, but in the default state it will discard method implementations and non-public structures.
-
 ## **✨ Key Features**
 
 | Feature | Description | 
@@ -49,14 +48,14 @@ Very simply, it can be said that `aid`, within the distillation process, will le
 | 🚀 Extreme Speed | Processes tens of megabytes of code in hundreds of milliseconds. By default, it uses 80% of available CPU cores, but can be configured, e.g., with `--workers=1` to use only a single CPU core. |  
 | 🧠 Intelligent Distillation | Understands 12+ programming languages and extracts only public APIs (methods, properties, types). |  
 | ⚙️ High Configurability | Allows including private, protected, and internal members, implementation, or comments. |  
-| 🤖 AI Prompt Generation | Prepares sophisticated prompts for security and performance audits, refactoring, and more. See the `--ai-action` switch for details. |  
+| 🤖 AI Prompt Generation | Generates ready-to-use prompts with distilled code for AI analysis. The tool creates files with prompts that AI agents can then execute for security audits, refactoring, etc. See `--ai-action` switch. |  
 | 📋 Analysis Automation | Creates a complete checklist and directory structure for AI agents, who can then systematically analyze the entire project. See the flow-for-\* actions for the `--ai-action` switch. |  
 | 📜 Git Analysis | Processes commit history and prepares data for in-depth analysis of development quality and team dynamics. |  
 | 💻 Multi-platform | A single binary file with no dependencies for Windows, Linux, and macOS (x64 & ARM). |  
-| 🔌 Integration via MCP | Can be integrated into tools like VS Code, Cursor, and others thanks to the included MCP server. |
+| 🔌 Integration via MCP | Can be integrated into tools like Claude Code, VS Code, Cursor, Windsurf and others thanks to the included MCP server. |
 
 ### 🎯 Intelligent Filtering
-
+ 
 Control exactly what to include with our new granular flag system:
 
 **Visibility Control**:
@@ -68,24 +67,23 @@ Control exactly what to include with our new granular flag system:
 **Content Control**:
 - `--comments=0` (default) - Exclude comments
 - `--docstrings=1` (default) - Include documentation
-- `--implementation=0` (default) - Exclude function bodies
-- `--imports=1` (default) - Include import statements
+- `--implementation=0` (default) - Exclude function/methods bodies
+- `--imports=1` (default) - Include import/use statements
 
-**Default behavior**: Shows only public API signatures with documentation - perfect for AI understanding while maintaining maximum compression.
+**Default behavior**: Shows only public API signatures with basic documentation - perfect for AI understanding while maintaining maximum compression.
 
-### 🤖 AI-Powered Analysis Workflows
+### 🤖 AI-Powered Analysis Prompt Generation
 
-Generate comprehensive code analysis task lists for AI assistants:
+AI Distiller generates specialized prompts combined with distilled code for AI-driven analysis:
 
-- **`--ai-action flow-for-deep-file-to-file-analysis`** - Create structured workflows for systematic codebase analysis
-- **`--ai-action flow-for-multi-file-docs`** - Generate documentation workflows for multiple files
-- **Multi-pattern filtering** - `--include "*.go,*.py"` or `--include "*.go" --include "*.py"`  
-- **Smart scope control** - Focus on specific directories, file types, or exclude test files
-- **Pre-generated infrastructure** - Ready-to-use directories, task lists, and summary tables
-- **Color-coded results** - Visual HTML formatting for critical issues and excellent scores
-- **4-dimensional scoring** - Security, Performance, Maintainability, Readability (0-100%)
+- **`--ai-action=flow-for-deep-file-to-file-analysis`** - Generates task lists and prompts for systematic file-by-file analysis
+- **`--ai-action=flow-for-multi-file-docs`** - Creates documentation workflow prompts with code structure
+- **Output to files** - Prompts are saved to `.aid/` directory (or use `--stdout` for small codebases)
+- **Ready for AI execution** - Generated files contain both the analysis prompt and distilled code
+- **AI agent instructions** - Output includes guidance for AI agents to read and process the generated files
+- **Gemini advantage** - 1M token context window perfect for larger codebase analysis
 
-Perfect for systematic code reviews, security audits, and onboarding new team members.
+**Note**: AI Distiller doesn't perform the analysis itself - it prepares optimized prompts that AI agents (Claude, Gemini, ChatGPT) then execute. Users often need to explicitly ask their AI agent to process the generated file or copy its contents to web-based AI tools.
 
 ### 📝 Multiple Output Formats
 - **Text** (`--format text`) - Ultra-compact for AI consumption (default)
@@ -106,12 +104,12 @@ After each distillation, AI Distiller displays a summary showing compression eff
 aid ./src --summary-type=stock-ticker
 📊 AID 97.6% ▲ │ SIZE: 10M→256K │ TIME: 231ms │ EST: ~2.4M tokens saved
 
-aid ./src --summary-type=speedometer-dashboard
-╔═══ AI Distiller ═══╗
+aid ./src --summary-type=json
+╔═══ AI Distiller ════════╗
 ║ Speed: ███████░░░ 77% ║ 231ms
 ║ Saved: ██████████ 97.6% ║ 10M→256K
 ║ Tokens saved: ~2.4M     ║
-╚═════════════════════╝
+╚═══════════════════basic══╝
 ```
 
 **Available formats:**
@@ -154,18 +152,24 @@ AID_PROJECT_ROOT=/build/workspace aid src/
 ```
 
 ### 🌍 Language Support
-Currently supports 12+ languages via tree-sitter:
-- **Full Support**: Python, TypeScript, JavaScript, Go, Java, C#, Rust
-- **Beta**: Ruby, Swift, Kotlin, PHP, C++
+Currently supports 12 languages via tree-sitter:
+- **Full Support**: Python, Go, JavaScript, PHP, Ruby
+- **Beta**: TypeScript, Java, C#, Rust, Kotlin, Swift, C++
 - **Coming Soon**: Zig, Scala, Clojure
 
 #### Language-Specific Documentation:
-- [Python](docs/lang/python.md) - Full Python 3.x support with type hints, async/await, decorators
+- [C++](docs/lang/cpp.md) - C++11/14/17/20 support with templates, namespaces, modern features
 - [C#](docs/lang/csharp.md) - Complete C# 12 support with records, nullable reference types, pattern matching
+- [Go](docs/lang/go.md) - Full Go support with interfaces, goroutines, generics (1.18+)
+- [Java](docs/lang/java.md) - Java 8-21 support with records, sealed classes, pattern matching
+- [JavaScript](docs/lang/javascript.md) - ES6+ support with classes, modules, async/await
+- [Kotlin](docs/lang/kotlin.md) - Kotlin 1.x support with coroutines, data classes, sealed classes
 - [PHP](docs/lang/php.md) - PHP 7.4+ with PHP 8.x features (attributes, union types, enums)
-- [Swift](docs/lang/swift.md) - Swift 5.x support with tree-sitter parser (basic features implemented)
-
-See [all language documentation](docs/lang/) for complete details.
+- [Python](docs/lang/python.md) - Full Python 3.x support with type hints, async/await, decorators
+- [Ruby](docs/lang/ruby.md) - Ruby 2.x/3.x support with blocks, modules, metaprogramming
+- [Rust](docs/lang/rust.md) - Rust 2018/2021 editions with traits, lifetimes, async
+- [Swift](docs/lang/swift.md) - Swift 5.x support with protocols, extensions, property wrappers
+- [TypeScript](docs/lang/typescript.md) - TypeScript 4.x/5.x with generics, decorators, type system
 
 ## 🎯 How It Works
 
@@ -190,7 +194,6 @@ All tree-sitter grammars are compiled into the `aid` binary - zero external depe
 <th align="right">Distilled Tokens</th>
 <th align="center">Fits in Context<sup>1</sup></th>
 <th align="center">Speed<sup>2</sup></th>
-<th align="center">Language</th>
 </tr>
 <tr>
 <td>⚛️ <code>react</code></td>
@@ -199,7 +202,6 @@ All tree-sitter grammars are compiled into the `aid` binary - zero external depe
 <td align="right"><strong>250K</strong> (-95%)</td>
 <td align="center">✅ Gemini<sup>3</sup></td>
 <td align="center">2,875 files/s</td>
-<td align="center">📜</td>
 </tr>
 <tr>
 <td>🎨 <code>vscode</code></td>
@@ -208,7 +210,6 @@ All tree-sitter grammars are compiled into the `aid` binary - zero external depe
 <td align="right"><strong>2M</strong> (-91%)</td>
 <td align="center">⚠️ Needs chunking</td>
 <td align="center">5,072 files/s</td>
-<td align="center">📘</td>
 </tr>
 <tr>
 <td>🐍 <code>django</code></td>
@@ -217,7 +218,6 @@ All tree-sitter grammars are compiled into the `aid` binary - zero external depe
 <td align="right"><strong>256K</strong> (-97%)</td>
 <td align="center">✅ Gemini<sup>3</sup></td>
 <td align="center">4,199 files/s</td>
-<td align="center">🐍</td>
 </tr>
 <tr>
 <td>📦 <code>prometheus</code></td>
@@ -226,7 +226,6 @@ All tree-sitter grammars are compiled into the `aid` binary - zero external depe
 <td align="right"><strong>154K</strong> (-98%)</td>
 <td align="center">✅ Claude/Gemini</td>
 <td align="center">3,071 files/s</td>
-<td align="center">🐹</td>
 </tr>
 <tr>
 <td>🦀 <code>rust-analyzer</code></td>
@@ -235,7 +234,6 @@ All tree-sitter grammars are compiled into the `aid` binary - zero external depe
 <td align="right"><strong>172K</strong> (-97%)</td>
 <td align="center">✅ Claude/Gemini</td>
 <td align="center">10,451 files/s</td>
-<td align="center">🦀</td>
 </tr>
 <tr>
 <td>🚀 <code>astro</code></td>
@@ -244,7 +242,6 @@ All tree-sitter grammars are compiled into the `aid` binary - zero external depe
 <td align="right"><strong>149K</strong> (-99%)</td>
 <td align="center">✅ Claude/Gemini</td>
 <td align="center">5,212 files/s</td>
-<td align="center">📘</td>
 </tr>
 <tr>
 <td>💎 <code>rails</code></td>
@@ -253,7 +250,6 @@ All tree-sitter grammars are compiled into the `aid` binary - zero external depe
 <td align="right"><strong>104K</strong> (-90%)</td>
 <td align="center">✅ ChatGPT-4o</td>
 <td align="center">4,864 files/s</td>
-<td align="center">💎</td>
 </tr>
 <tr>
 <td>🐘 <code>laravel</code></td>
@@ -262,7 +258,6 @@ All tree-sitter grammars are compiled into the `aid` binary - zero external depe
 <td align="right"><strong>238K</strong> (-92%)</td>
 <td align="center">✅ Gemini<sup>3</sup></td>
 <td align="center">4,613 files/s</td>
-<td align="center">🐘</td>
 </tr>
 <tr>
 <td>⚡ <code>nestjs</code></td>
@@ -271,7 +266,6 @@ All tree-sitter grammars are compiled into the `aid` binary - zero external depe
 <td align="right"><strong>107K</strong> (-93%)</td>
 <td align="center">✅ ChatGPT-4o</td>
 <td align="center">8,813 files/s</td>
-<td align="center">📘</td>
 </tr>
 <tr>
 <td>👻 <code>ghost</code></td>
@@ -280,11 +274,10 @@ All tree-sitter grammars are compiled into the `aid` binary - zero external depe
 <td align="right"><strong>235K</strong> (-97%)</td>
 <td align="center">✅ Gemini<sup>3</sup></td>
 <td align="center">4,719 files/s</td>
-<td align="center">📜</td>
 </tr>
 </table>
 
-<sub><sup>1</sup> Context windows: ChatGPT-4o (128K), Claude (200K), Gemini (2M). ✅ = fits completely, ⚠️ = needs splitting</sub><br>
+<sub><sup>1</sup> Context windows: ChatGPT-4o (128K), Claude (200K), Gemini (1M). ✅ = fits completely, ⚠️ = needs splitting</sub><br>
 <sub><sup>2</sup> Processing speed with 12 parallel workers on AMD Ryzen 7945HX. Use `-w 1` for serial mode or `-w N` for custom workers.</sub><br>
 <sub><sup>3</sup> These frameworks exceed 200K tokens and work only with Gemini due to its larger 1M token context window.</sub>
 
@@ -324,12 +317,15 @@ Instead of playing "code roulette", AI can now write correct code from the start
 # Process entire codebase (default: public APIs only)
 aid ./my-project
 
-# Process specific directories or modules
-aid ./my-project/src/auth ./my-project/src/api
-aid ./my-project/core/*.py ./my-project/utils/
+# Process specific directory or module
+aid ./my-project/src/auth
+aid ./my-project/src/api
 
-# Process individual files
-aid src/main.py src/config.py src/models/*.py
+# Process a directory
+aid ./my-project/core/
+
+# Process individual file
+aid src/main.py
 
 # Include protected/private for deeper analysis
 aid ./my-project --private=1 --protected=1
@@ -452,12 +448,12 @@ export class UserService {
 
 ## 📖 Guides & Examples
 
-### Deep Code Analysis with AI Agents
+### Deep Code Analysis Prompt Generation
 
-AI Distiller includes powerful workflows for comprehensive codebase analysis using AI assistants. Generate structured task lists and detailed security/performance audits automatically.
+AI Distiller generates sophisticated analysis prompts that AI assistants can execute for comprehensive codebase understanding:
 
 ```bash
-./build/aid internal \
+aid internal \
    --private=1 --protected=1 --implementation=1 \
    --ai-action=flow-for-deep-file-to-file-analysis
 
@@ -471,17 +467,18 @@ AI Distiller includes powerful workflows for comprehensive codebase analysis usi
 💡 If you are an AI agent, please read the Task List above and carefully follow all instructions to systematically analyze each file.
 ```
 
-**What gets generated**:
-- 📋 **Task list** with checkboxes for each file (`.aid/ANALYSIS-TASK-LIST.PROJECT.DATE.md`)
-- 📊 **Summary table** for collecting results (`.aid/ANALYSIS-SUMMARY.PROJECT.DATE.md`)
-- 📁 **Pre-created directories** for individual file reports
-- 🎨 **Color-coded output** with HTML styling for critical issues
+**What AI Distiller generates**:
+- 📋 **Task list prompt** - A structured checklist for AI to follow (`.aid/ANALYSIS-TASK-LIST.PROJECT.DATE.md`)
+- 🎯 **Analysis instructions** - Detailed prompts guiding AI through security, performance, and quality checks
+- 📊 **Code structure** - Distilled code included in the prompt files for AI to analyze
+- 📁 **Directory structure** - Pre-created folders where AI agents can save their analysis results
 
-**Analysis dimensions**:
-- **🛡️ Security**: Vulnerabilities, exposed secrets, dangerous patterns
-- **⚡ Performance**: Efficiency, scalability concerns, resource usage
-- **🔧 Maintainability**: Code complexity, structure, documentation quality
-- **📖 Readability**: Code clarity, naming, organization, comments
+**How to use the generated prompts**:
+1. **For AI agents**: Direct the agent to read the generated task list file and follow instructions
+2. **For web AI tools**: Copy the content of generated files and paste into Gemini (best for large codebases due to 1M context)
+3. **For small codebases**: Use `--stdout` to get prompt directly without saving to file
+
+**Note**: The analysis dimensions (Security, Performance, Maintainability, Readability) are part of the prompts that guide the AI - AI Distiller itself doesn't perform any analysis.
 
 ### 🤖 Use with Claude Desktop (MCP)
 
@@ -507,7 +504,7 @@ See [MCP Integration Guide](docs/mcp-integration.md) for detailed setup instruct
 
 ### Command Synopsis
 ```bash
-aid [OPTIONS] <path>
+aid <path> [OPTIONS]
 ```
 
 ### Core Arguments and Options
@@ -516,13 +513,13 @@ aid [OPTIONS] <path>
 
 | Argument | Type | Default | Description |
 |----------|------|---------|-------------|
-| `<path>` | String | *(required)* | Path to source file or directory to analyze. Use `.git` for git history mode, `-` for stdin input |
+| `<path>` | String | *(required)* | Path to source file or directory to analyze. Use `.git` for git history mode, `-` (or empty) for stdin input |
 
 #### 📁 Output Options
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `-o, --output` | String | `.aid/<dirname>.[options].txt` | Output file path. Auto-generated based on input directory and options if not specified |
+| `-o, --output` | String | `.aid/<dirname>.[options].txt` | Output file path. Auto-generated based on input directory basename and options if not specified |
 | `--stdout` | Flag | `false` | Print output to stdout in addition to file. When used alone, no file is created |
 | `--format` | String | `text` | Output format: `text` (ultra-compact), `md` (clean Markdown), `jsonl` (one JSON per file), `json-structured` (rich semantic data), `xml` (structured XML) |
 
@@ -530,8 +527,8 @@ aid [OPTIONS] <path>
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `--ai-action` | String | *(none)* | Pre-configured AI analysis workflow. See [AI Actions](#ai-actions-detailed) section below |
-| `--ai-output` | String | `./.aid/<action>.<timestamp>.<dirname>.md` | Custom output path for AI action results |
+| `--ai-action` | String | *(none)* | Generate pre-configured prompts with distilled code for AI analysis. See [AI Actions](#ai-actions-detailed) section below |
+| `--ai-output` | String | `./.aid/<action>.<timestamp>.<dirname>.md` | Custom output path for generated AI prompt files |
 
 #### 👁️ Visibility Filtering
 
@@ -573,8 +570,6 @@ aid [OPTIONS] <path>
 |--------|------|---------|-------------|
 | `--raw` | Flag | `false` | Process all text files without language parsing. Overrides all content filters |
 | `--lang` | String | `auto` | Force language detection: `auto`, `python`, `typescript`, `javascript`, `go`, `rust`, `java`, `csharp`, `kotlin`, `cpp`, `php`, `ruby`, `swift` |
-| `--tree-sitter` | Flag | `false` | Use tree-sitter parser (experimental, provides more accurate parsing) |
-| `--strict` | Flag | `false` | Fail on first syntax error instead of continuing |
 
 #### 📍 Path Control
 
@@ -615,20 +610,20 @@ aid [OPTIONS] <path>
 
 ### AI Actions Detailed
 
-AI actions are pre-configured workflows that format the distilled output for specific AI/LLM tasks:
+AI actions generate pre-configured prompts combined with distilled code that AI agents can then execute for specific analysis tasks:
 
-| Action | Description | Best For |
+| Action | Generated Prompt Type | AI Agent Will |
 |--------|-------------|----------|
-| `prompt-for-refactoring-suggestion` | Comprehensive refactoring analysis with context awareness, effort sizing, and risk assessment | Code improvement, technical debt reduction |
-| `prompt-for-complex-codebase-analysis` | Enterprise-grade analysis with architecture diagrams, compliance checks, and findings | System understanding, architectural reviews |
-| `prompt-for-security-analysis` | Security audit with OWASP Top 10 focus, vulnerability detection, and remediation steps | Security assessments, compliance checks |
-| `prompt-for-performance-analysis` | Performance optimization with complexity analysis and scalability considerations | Performance tuning, bottleneck identification |
-| `prompt-for-best-practices-analysis` | Code quality assessment against industry standards and best practices | Code reviews, quality improvements |
-| `prompt-for-bug-hunting` | Systematic bug detection with pattern analysis and quality metrics | Bug prevention, quality assurance |
-| `prompt-for-single-file-docs` | Comprehensive documentation generation for individual files | API documentation, code explanation |
-| `prompt-for-diagrams` | Generate 10+ Mermaid diagrams for architecture and process visualization | Documentation, presentations |
-| `flow-for-deep-file-to-file-analysis` | Structured task list for systematic codebase analysis | Deep dives, thorough understanding |
-| `flow-for-multi-file-docs` | Documentation workflow for multiple related files | Project documentation, onboarding |
+| `prompt-for-refactoring-suggestion` | Refactoring analysis prompt with distilled code | Analyze code for improvements, technical debt, effort sizing |
+| `prompt-for-complex-codebase-analysis` | Enterprise-grade analysis prompt with full codebase | Generate architecture diagrams, compliance checks, findings |
+| `prompt-for-security-analysis` | Security audit prompt with OWASP Top 10 guidelines | Detect vulnerabilities, suggest remediation steps |
+| `prompt-for-performance-analysis` | Performance optimization prompt with complexity focus | Identify bottlenecks, analyze scalability issues |
+| `prompt-for-best-practices-analysis` | Code quality prompt with industry standards | Assess code quality, suggest improvements |
+| `prompt-for-bug-hunting` | Bug detection prompt with pattern analysis | Find bugs, analyze quality metrics |
+| `prompt-for-single-file-docs` | Documentation generation prompt for single file | Create comprehensive API documentation |
+| `prompt-for-diagrams` | Diagram generation prompt with Mermaid syntax | Generate 10+ architecture and process diagrams |
+| `flow-for-deep-file-to-file-analysis` | Systematic analysis task list with directory structure | Perform file-by-file deep analysis |
+| `flow-for-multi-file-docs` | Documentation workflow with file relationships | Create interconnected documentation |
 
 ### Summary Types
 
@@ -659,7 +654,7 @@ aid ./src
 # Include all visibility levels and implementation
 aid ./src --private=1 --protected=1 --internal=1 --implementation=1
 
-# AI-powered security analysis
+# Generate security analysis prompt (AI agent will execute the analysis)
 aid --ai-action prompt-for-security-analysis ./api --private=1
 
 # Process only Python and Go files, exclude tests
@@ -922,14 +917,14 @@ aid .git --git-limit=500
 aid .git --git-limit=1000 --with-analysis-prompt
 ```
 
-The `--with-analysis-prompt` flag adds a sophisticated prompt that guides AI to generate:
+The `--with-analysis-prompt` flag adds a sophisticated prompt combined with git history that AI agents can use to generate:
 - **Contributor statistics** with expertise areas and collaboration patterns
 - **Timeline analysis** with development phases and activity visualization
 - **Functional categorization** of commits (features, fixes, refactoring)
 - **Codebase evolution insights** including technology shifts
 - **Actionable recommendations** based on discovered patterns
 
-Perfect for understanding project history, identifying knowledge silos, or generating impressive development reports.
+The output file contains both the analysis prompt and formatted git history, ready for AI agents to process. Perfect for understanding project history, identifying knowledge silos, or generating impressive development reports.
 
 ## ❓ FAQ
 

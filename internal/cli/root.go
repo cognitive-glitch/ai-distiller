@@ -42,9 +42,7 @@ var (
 	recursiveStr     string
 	filePathType     string
 	relativePathPrefix string
-	strict           bool
 	verbosity        int
-	useTreeSitter    bool
 	langOverride     string
 	
 	// New filtering flags
@@ -281,15 +279,12 @@ func initFlags() {
 	rootCmd.Flags().StringVarP(&recursiveStr, "recursive", "r", "1", "Process directories recursively (0/1, default: 1)")
 	rootCmd.Flags().StringVar(&filePathType, "file-path-type", "relative", "How paths appear in output: relative|absolute (default: relative)")
 	rootCmd.Flags().StringVar(&relativePathPrefix, "relative-path-prefix", "", "Custom prefix for relative paths (e.g., \"src/\")")
-	rootCmd.Flags().BoolVar(&strict, "strict", false, "Fail on first syntax error")
 
 	// General flags
 	rootCmd.Flags().CountVarP(&verbosity, "verbose", "v", "Verbose output (use -vv or -vvv for more detail)")
 	rootCmd.Flags().Bool("version", false, "Show version information")
 	rootCmd.Flags().Bool("help", false, "Show help message")
 	
-	// Experimental flags
-	rootCmd.Flags().BoolVar(&useTreeSitter, "tree-sitter", false, "Use tree-sitter parser (experimental)")
 
 	// Language override flag
 	rootCmd.Flags().StringVar(&langOverride, "lang", "auto", "Override language detection: auto|python|typescript|javascript|go|ruby|swift|rust|java|csharp|kotlin|cpp|php")
@@ -468,11 +463,6 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 	// Create the processor with context
 	proc := processor.NewWithContext(ctx)
 	
-	// Enable tree-sitter if requested
-	if useTreeSitter {
-		proc.EnableTreeSitter()
-		dbg.Logf(debug.LevelBasic, "Using tree-sitter parser (experimental)")
-	}
 
 	// Log workers configuration
 	actualWorkers := workers
