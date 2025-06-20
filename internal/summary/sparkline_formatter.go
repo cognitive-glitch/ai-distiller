@@ -58,9 +58,9 @@ func (f *SparklineFormatter) Format(w io.Writer, stats Stats) error {
 	// Add output path if not stdout on a new line
 	if !stats.IsStdout && stats.OutputPath != "" {
 		if f.NoEmoji {
-			fmt.Fprintf(w, "Output: %s\n", stats.OutputPath)
+			fmt.Fprintf(w, "→ Distilled output saved to: %s\n", stats.OutputPath)
 		} else {
-			fmt.Fprintf(w, "📄 %s\n", stats.OutputPath)
+			fmt.Fprintf(w, "💾 Distilled output saved to: %s\n", stats.OutputPath)
 		}
 	}
 	return nil

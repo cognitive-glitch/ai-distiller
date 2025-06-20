@@ -61,11 +61,11 @@ func (f *DashboardFormatter) Format(w io.Writer, stats Stats) error {
 	
 	// Add output path if not stdout below the box
 	if !stats.IsStdout && stats.OutputPath != "" {
-		fileEmoji := "📄"
+		fileEmoji := "💾"
 		if f.NoEmoji {
-			fileEmoji = ""
+			fileEmoji = "→"
 		}
-		fmt.Fprintf(w, "%s %s\n", fileEmoji, stats.OutputPath)
+		fmt.Fprintf(w, "%s Distilled output saved to: %s\n", fileEmoji, stats.OutputPath)
 	}
 	
 	return nil

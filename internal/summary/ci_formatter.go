@@ -37,7 +37,7 @@ func (f *CIFormatter) Format(w io.Writer, stats Stats) error {
 	
 	// Add output path if not stdout
 	if !stats.IsStdout && stats.OutputPath != "" {
-		fmt.Fprintf(w, " | out: %s", stats.OutputPath)
+		fmt.Fprintf(w, " | saved to: %s", stats.OutputPath)
 	}
 	
 	fmt.Fprintln(w)
