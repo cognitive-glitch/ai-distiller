@@ -351,7 +351,19 @@ func shouldIncludeFile(filePath string, includePatterns, excludePatterns []strin
 		
 		// Check for directory exclusion patterns (e.g., "vendor/**", "*/test/*")
 		if strings.Contains(normalizedPattern, "/") {
-			if matchesPathPattern(normalizedPath, normalizedPattern) {
+			// For relative patterns, check if the path ends with the pattern
+			// This handles cases like "internal/parser/grammars/*" matching
+			// "/home/user/project/internal/parser/grammars/file.go"
+			if !strings.HasPrefix(normalizedPattern, "/") && !strings.HasPrefix(normalizedPattern, "**") {
+				// Check if any suffix of the path matches the pattern
+				pathParts := strings.Split(normalizedPath, "/")
+				for i := 0; i < len(pathParts); i++ {
+					subPath := strings.Join(pathParts[i:], "/")
+					if matchesPathPattern(subPath, normalizedPattern) {
+						return false
+					}
+				}
+			} else if matchesPathPattern(normalizedPath, normalizedPattern) {
 				return false
 			}
 		} else {
@@ -374,7 +386,17 @@ func shouldIncludeFile(filePath string, includePatterns, excludePatterns []strin
 			
 			// Check for path patterns
 			if strings.Contains(normalizedPattern, "/") {
-				if matchesPathPattern(normalizedPath, normalizedPattern) {
+				// For relative patterns, check if the path ends with the pattern
+				if !strings.HasPrefix(normalizedPattern, "/") && !strings.HasPrefix(normalizedPattern, "**") {
+					// Check if any suffix of the path matches the pattern
+					pathParts := strings.Split(normalizedPath, "/")
+					for i := 0; i < len(pathParts); i++ {
+						subPath := strings.Join(pathParts[i:], "/")
+						if matchesPathPattern(subPath, normalizedPattern) {
+							return true
+						}
+					}
+				} else if matchesPathPattern(normalizedPath, normalizedPattern) {
 					return true
 				}
 			} else {
