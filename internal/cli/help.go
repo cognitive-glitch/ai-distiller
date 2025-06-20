@@ -45,21 +45,19 @@ func getHelpTemplate() string {
 	versionInfo := getVersionInfo()
 	
 	// Determine if we should use colors
-	cyan := ""
 	gray := ""
 	reset := ""
 	if shouldUseColor() {
-		cyan = colorCyan
 		gray = colorGray
 		reset = colorReset
 	}
 	
-	return fmt.Sprintf(`%s{{.Short}} (%s)
+	return fmt.Sprintf(`{{.Short}} (%s)
 
 AI Distiller transforms source code into optimized formats for Large Language Models.
 Compress codebases by 60-90%% while preserving all semantic information needed for AI analysis.
 Generate complete AI prompts and workflows - copy the output directly to Gemini 2.5 Pro,
-ChatGPT-o3/4o, or Claude for perfect AI-powered code analysis.%s
+ChatGPT-o3/4o, or Claude for perfect AI-powered code analysis.
 
 USAGE:
   {{.UseLine}}{{if .HasAvailableSubCommands}}
@@ -137,24 +135,20 @@ For complete documentation and examples: aid --help-extended
 
 %s---
 AI Distiller (aid) v%s - %s
-Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic)
+Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic, www.siteone.io)
 Explore the project on GitHub: https://github.com/janreges/ai-distiller%s
-`, versionInfo, cyan, versionInfo, gray, version.WebsiteURL, reset)
+`, versionInfo, gray, version.Version, version.WebsiteURL, reset)
 }
 
 // getExtendedHelpContent returns the extended help content for --help-extended
 func getExtendedHelpContent() string {
 	// Determine if we should use colors
-	cyan := ""
 	gray := ""
 	reset := ""
 	if shouldUseColor() {
-		cyan = colorCyan
 		gray = colorGray
 		reset = colorReset
 	}
-	
-	versionInfo := getVersionInfo()
 	
 	return fmt.Sprintf(`%sAI DISTILLER - COMPLETE REFERENCE%s
 
@@ -346,7 +340,7 @@ SEE ALSO
     aid help git         - Git mode documentation
     aid --cheat          - Quick reference card
 
-    Online documentation: ` + version.WebsiteURL + `
+    Online documentation: %s
 
 AUTHOR
     AI Distiller development team
@@ -356,9 +350,9 @@ COPYRIGHT
 
 %s---
 AI Distiller (aid) v%s - %s
-Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic)
+Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic, www.siteone.io)
 Explore the project on GitHub: https://github.com/janreges/ai-distiller%s
-`, cyan, versionInfo, gray, version.WebsiteURL, reset)
+`, gray, reset, version.WebsiteURL, gray, version.Version, version.WebsiteURL, reset)
 }
 
 // initializeHelpSystem sets up custom help templates and commands
@@ -427,16 +421,12 @@ func runHelpCommand(cmd *cobra.Command, args []string) error {
 // showAIActionsHelp displays detailed AI actions documentation
 func showAIActionsHelp() {
 	// Determine if we should use colors
-	cyan := ""
 	gray := ""
 	reset := ""
 	if shouldUseColor() {
-		cyan = colorCyan
 		gray = colorGray
 		reset = colorReset
 	}
-	
-	versionInfo := getVersionInfo()
 	
 	output := fmt.Sprintf(`%sAI ACTIONS - DETAILED REFERENCE%s
 
@@ -728,25 +718,21 @@ For more examples: aid --help-extended
 
 %s---
 AI Distiller (aid) v%s - %s
-Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic)
+Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic, www.siteone.io)
 Explore the project on GitHub: https://github.com/janreges/ai-distiller%s
-`, cyan, versionInfo, gray, version.WebsiteURL, reset)
+`, gray, version.Version, version.WebsiteURL, reset)
 	fmt.Print(output)
 }
 
 // showFilteringHelp displays complete filtering documentation
 func showFilteringHelp() {
 	// Determine if we should use colors
-	cyan := ""
 	gray := ""
 	reset := ""
 	if shouldUseColor() {
-		cyan = colorCyan
 		gray = colorGray
 		reset = colorReset
 	}
-	
-	versionInfo := getVersionInfo()
 	
 	fmt.Printf(`%sFILTERING - COMPLETE REFERENCE%s
 
@@ -891,24 +877,20 @@ For complete examples: aid --help-extended
 
 %s---
 AI Distiller (aid) v%s - %s
-Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic)
+Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic, www.siteone.io)
 Explore the project on GitHub: https://github.com/janreges/ai-distiller%s
-`, cyan, versionInfo, gray, version.WebsiteURL, reset)
+`, gray, version.Version, version.WebsiteURL, reset)
 }
 
 // showGitHelp displays git mode documentation
 func showGitHelp() {
 	// Determine if we should use colors
-	cyan := ""
 	gray := ""
 	reset := ""
 	if shouldUseColor() {
-		cyan = colorCyan
 		gray = colorGray
 		reset = colorReset
 	}
-	
-	versionInfo := getVersionInfo()
 	
 	fmt.Printf(`%sGIT MODE - COMPLETE REFERENCE%s
 
@@ -1041,24 +1023,20 @@ For complete examples: aid --help-extended
 
 %s---
 AI Distiller (aid) v%s - %s
-Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic)
+Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic, www.siteone.io)
 Explore the project on GitHub: https://github.com/janreges/ai-distiller%s
-`, cyan, versionInfo, gray, version.WebsiteURL, reset)
+`, gray, version.Version, version.WebsiteURL, reset)
 }
 
 // showCheatSheet displays a quick reference card
 func showCheatSheet() {
 	// Determine if we should use colors
-	cyan := ""
 	gray := ""
 	reset := ""
 	if shouldUseColor() {
-		cyan = colorCyan
 		gray = colorGray
 		reset = colorReset
 	}
-	
-	versionInfo := getVersionInfo()
 	
 	fmt.Printf(`%sAI DISTILLER - QUICK REFERENCE%s
 
@@ -1128,9 +1106,9 @@ HELP:
 
 %s---
 AI Distiller (aid) v%s - %s
-Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic)
+Authored by Claude Code & Ján Regeš from SiteOne (Czech Republic, www.siteone.io)
 Explore the project on GitHub: https://github.com/janreges/ai-distiller%s
-`, cyan, versionInfo, gray, version.WebsiteURL, reset)
+`, gray, version.Version, version.WebsiteURL, reset)
 }
 
 // getAIActionsList returns a list of available AI actions with descriptions
