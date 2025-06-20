@@ -17,6 +17,8 @@ build/
 .vscode/
 *.swp
 *.swo
+*.tar.gz
+*.tgz
 *~
 
 # OS files

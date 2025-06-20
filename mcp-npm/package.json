@@ -1,10 +1,11 @@
 {
   "name": "@janreges/ai-distiller-mcp",
   "version": "1.0.0",
-  "description": "MCP server for AI Distiller - Extract essential code structure from large codebases for LLMs",
+  "description": "AI Distiller (aid) - Essential code structure extractor for LLMs. Provides AI with accurate code signatures, data types, and API contracts from your actual codebase, reducing guesswork and trial-error coding. Accelerates analysis workflows including security audits, performance reviews, git history insights, refactoring suggestions, and comprehensive structural analysis.",
   "keywords": [
     "mcp",
     "model-context-protocol",
+    "aid",
     "ai-distiller",
     "code-analysis",
     "claude",
@@ -15,7 +16,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/janreges/ai-distiller.git"
+    "url": "git+https://github.com/janreges/ai-distiller.git"
   },
   "bugs": {
     "url": "https://github.com/janreges/ai-distiller/issues"
@@ -23,15 +24,17 @@
   "homepage": "https://github.com/janreges/ai-distiller#readme",
   "main": "mcp-server.js",
   "bin": {
-    "aid-mcp": "./mcp-server.js"
+    "aid-mcp": "mcp-server.js"
   },
   "scripts": {
     "postinstall": "node scripts/postinstall.js",
     "test": "echo \"No tests yet\""
   },
   "files": [
-    "bin/",
-    "scripts/",
+    "bin/.gitkeep",
+    "scripts/postinstall.js",
+    "scripts/release.js",
+    "scripts/build-all.sh",
     "mcp-server.js",
     "README.md",
     "LICENSE"
@@ -41,5 +44,8 @@
   },
   "publishConfig": {
     "access": "public"
+  },
+  "dependencies": {
+    "tar": "^6.2.0"
   }
 }

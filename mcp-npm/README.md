@@ -1,119 +1,226 @@
-# AI Distiller MCP Server
+# AI Distiller (aid) MCP Server
 
-Advanced MCP (Model Context Protocol) server for [AI Distiller](https://github.com/janreges/ai-distiller) - a high-performance tool that extracts essential code structure from large codebases, making them digestible for LLMs.
+Advanced MCP (Model Context Protocol) server for [AI Distiller](https://github.com/janreges/ai-distiller) - Essential code structure extractor that provides LLMs with accurate code signatures, data types, and API contracts from your actual codebase. Reduces AI guesswork and trial-error coding by delivering precise structural information. Accelerates analysis workflows including security audits, performance reviews, git history insights, refactoring suggestions, and comprehensive structural analysis.
 
-## 🚀 Quick Start with Claude Desktop
+## 🚀 Quick Start with Claude Code
 
+### Option 1: Project-specific installation (Recommended)
 ```bash
-# One-line installation
-claude mcp add ai-distiller -- npx -y @janreges/ai-distiller-mcp
-
-# Or install globally
-npm install -g @janreges/ai-distiller-mcp
+# Install for current project only
+claude mcp add aid -- npx -y @janreges/ai-distiller-mcp
 ```
 
-## ✨ Features
+### Option 2: User-wide installation with manual configuration
+```bash
+# Install globally for all projects
+claude mcp add --scope=user aid -- npx -y @janreges/ai-distiller-mcp
+```
 
-### 🎯 Specialized AI Analysis Tools (New!)
-- **aid_hunt_bugs** - Systematically scan for bugs, logic errors, and quality issues
-- **aid_suggest_refactoring** - Get specific refactoring suggestions with examples
-- **aid_generate_diagram** - Generate 10 architectural Mermaid diagrams
-- **aid_analyze_security** - OWASP-focused security vulnerability analysis
-- **aid_generate_docs** - Create comprehensive documentation workflows
+**⚠️ Important for user-wide installation:**
+You must set `AID_ROOT` environment variable in your Claude Code configuration to point to your current project directory. Without this, the aid tool won't know which directory to analyze.
 
-### Core Analysis Engine
-- **aid_analyze** - Direct access to all AI actions for advanced workflows
-- Supports all 10 AI actions from the CLI tool
-
-### Legacy Tools (Backwards Compatibility)
-- **distill_file** - Extract code structure from a single file
-- **distill_directory** - Extract structure from entire directories
-- **list_files** - List files with language statistics
-- **get_capabilities** - Get server capabilities and supported features
-
-## Configuration
-
-### Environment Variables
-
-- `AID_ROOT` - Root directory for analysis (defaults to current directory)
-- `AID_CACHE_DIR` - Cache directory (defaults to ~/.cache/aid)
-
-### Claude Desktop Configuration
-
-Add to your Claude Desktop config:
-
+Example configuration:
 ```json
 {
   "mcpServers": {
-    "ai-distiller": {
+    "aid": {
       "command": "npx",
       "args": ["-y", "@janreges/ai-distiller-mcp"],
       "env": {
-        "AID_ROOT": "/path/to/your/project"
+        "AID_ROOT": "/absolute/path/to/your/project"
       }
     }
   }
 }
 ```
 
+## ✨ Features
+
+### 🔑 How AI Distiller Works
+
+AI Distiller (aid) **generates AI prompts with distilled code** - it doesn't analyze code directly. Instead:
+1. **aid extracts code structure** (distillation)
+2. **Generates specialized AI prompts** for your analysis goal
+3. **Outputs to `.aid/` directory** or stdout
+4. **AI agents execute the prompts** to perform actual analysis
+
+### 📋 Typical Workflow
+
+1. **User asks**: "Find bugs in my authentication module"
+2. **Claude calls**: `aid_hunt_bugs({ target_path: "src/auth/" })`
+3. **aid generates**: Bug-hunting prompt + distilled code → `.aid/bug-hunting.md`
+4. **Claude reads**: The generated file and executes the analysis
+5. **Result**: Actual bug findings and recommendations
+
+### 💾 Output Formats
+
+- **Small analyses**: Return directly via stdout
+- **Large analyses**: Save to `.aid/` directory as markdown files
+- **File naming**: `.aid/ACTION.TIMESTAMP.FOLDER.md`
+- **Content**: AI prompt + distilled code in one file
+
+### 🎯 Specialized AI Analysis Tools (New!)
+- **aid_hunt_bugs** - Generates bug-hunting prompts with distilled code
+- **aid_suggest_refactoring** - Creates refactoring analysis prompts
+- **aid_generate_diagram** - Produces prompts for architectural diagrams
+- **aid_analyze_security** - Generates security audit prompts
+- **aid_generate_docs** - Creates documentation generation prompts
+
+### Core Analysis Engine
+- **aid_analyze** - Direct access to all AI actions for custom workflows
+- Supports 10 different AI analysis types
+- Outputs to `.aid/` directory for large analyses
+
+### Code Structure Tools
+- **distill_file** - Extract code structure from a single file
+- **distill_directory** - Extract structure from entire directories
+- Control visibility: public, protected, internal, private
+- Control detail: with or without implementation
+
+## Configuration
+
+### Environment Variables
+
+- `AID_ROOT` - **REQUIRED for user-scoped installation**: Root directory for analysis. Without this, the tool cannot determine which project to analyze.
+
+### Working Directory Behavior
+
+⚠️ **Critical Information:**
+- **Project-scoped installation** (without `--scope=user`): Automatically uses the current project directory
+- **User-scoped installation** (with `--scope=user`): MUST set `AID_ROOT` to your project path
+
+### Claude Desktop Configuration
+
+For user-scoped installations, you MUST configure the project path:
+
+```json
+{
+  "mcpServers": {
+    "aid": {
+      "command": "npx",
+      "args": ["-y", "@janreges/ai-distiller-mcp"],
+      "env": {
+        "AID_ROOT": "/absolute/path/to/your/project"  // REQUIRED!
+      }
+    }
+  }
+}
+```
+
+## 🎛️ Controlling Output Size
+
+### Visibility Levels
+Control what code elements are included:
+- `include_public: true/false` - Public members (default: true)
+- `include_protected: true/false` - Protected members (default: false)
+- `include_internal: true/false` - Internal/package-private (default: false)
+- `include_private: true/false` - Private members (default: false)
+
+### Implementation Control
+- `include_implementation: false` - Only signatures (smallest output)
+- `include_implementation: true` - Full method/function bodies (largest output)
+
+### Output Size Examples
+
+| Configuration | Output Size | Use Case |
+|--------------|-------------|----------|
+| Public only, no implementation | Smallest | API documentation |
+| All visibility, no implementation | Medium | Architecture overview |
+| Public + implementation | Large | Detailed API analysis |
+| All visibility + implementation | Largest | Deep code analysis |
+
+### Working with Large Codebases
+
+For large projects, aid's output may exceed AI context limits. Strategies:
+
+1. **Target specific directories**:
+   ```javascript
+   aid_analyze({
+     target_path: "src/auth/",  // Just auth module
+     ai_action: "prompt-for-bug-hunting"
+   })
+   ```
+
+2. **Use file patterns**:
+   ```javascript
+   aid_analyze({
+     target_path: "src/",
+     include_patterns: "*.py",  // Python files only
+     exclude_patterns: "*test*,*mock*"
+   })
+   ```
+
+3. **Progressive analysis**:
+   - Start with structure only (`include_implementation: false`)
+   - Then analyze specific modules with full detail
+
+4. **Output to files**:
+   - Large analyses go to `.aid/` directory
+   - Can be read by AI agents or copied to tools like Gemini (1M context)
+
 ## 📖 Tool Examples
 
 ### 🎯 Specialized Tools (Recommended)
 
-#### Hunt for Bugs
+#### Generate Bug-Hunting Prompt
 ```javascript
 // Claude will call:
 aid_hunt_bugs({
   target_path: "src/",
-  focus_area: "race conditions",
+  focus_area: "memory leaks and race conditions",
   include_private: true,
-  include_patterns: "*.go,*.py"
+  include_implementation: true  // Include code bodies
 })
-// Returns: Detailed bug analysis with risk levels and fixes
+// Returns: AI prompt with distilled code for bug analysis
+// Output: .aid/bug-hunting-2024-06-20.src.md
 ```
 
-#### Get Refactoring Suggestions
+#### Generate Refactoring Prompt
 ```javascript
 // Claude will call:
 aid_suggest_refactoring({
   target_path: "src/auth/",
   refactoring_goal: "improve testability",
-  include_implementation: true
+  include_implementation: false  // Signatures only for overview
 })
-// Returns: Specific refactoring suggestions with before/after examples
+// Returns: AI prompt for refactoring suggestions
+// Claude can then execute this prompt
 ```
 
-#### Generate Architecture Diagrams
+#### Generate Diagram Creation Prompt
 ```javascript
 // Claude will call:
 aid_generate_diagram({
   target_path: "src/",
-  diagram_focus: "authentication flow"
+  diagram_focus: "authentication flow",
+  include_private: true,
+  include_implementation: false  // Structure only
 })
-// Returns: 10 Mermaid diagrams covering different architectural aspects
+// Returns: AI prompt to create 10 architectural diagrams
 ```
 
-#### Security Analysis
+#### Generate Security Analysis Prompt
 ```javascript
 // Claude will call:
 aid_analyze_security({
   target_path: "src/api/",
-  security_focus: "input validation",
+  security_focus: "input validation and SQL injection",
   include_private: true,
-  include_implementation: true
+  include_implementation: true  // Need to see actual code
 })
-// Returns: OWASP-based security findings with remediation steps
+// Returns: AI prompt for security vulnerability analysis
 ```
 
-#### Generate Documentation
+#### Generate Documentation Prompt
 ```javascript
 // Claude will call:
 aid_generate_docs({
   target_path: "src/core/",
   doc_type: "api-reference",
-  audience: "developers"
+  audience: "external developers",
+  include_private: false  // Public API only
 })
-// Returns: Structured documentation workflow or single file docs
+// Returns: AI prompt to generate comprehensive documentation
 ```
 
 ### Core Analysis Engine

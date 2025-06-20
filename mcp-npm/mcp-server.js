@@ -13,7 +13,14 @@ const binaryPath = path.join(__dirname, 'bin', binaryName);
 // Check if binary exists
 if (!fs.existsSync(binaryPath)) {
   console.error(`Error: AI Distiller binary not found at ${binaryPath}`);
-  console.error('Please reinstall the package: npm install -g @janreges/ai-distiller-mcp');
+  console.error('');
+  console.error('To fix this issue, try one of the following:');
+  console.error('1. Reinstall the package: npm install @janreges/ai-distiller-mcp');
+  console.error('2. Run the postinstall script manually:');
+  console.error(`   cd ${__dirname} && npm run postinstall`);
+  console.error('3. Download the binary manually from:');
+  console.error('   https://github.com/janreges/ai-distiller/releases');
+  console.error(`   and place it at: ${binaryPath}`);
   process.exit(1);
 }
 
@@ -21,7 +28,7 @@ if (!fs.existsSync(binaryPath)) {
 class MCPServer {
   constructor() {
     this.capabilities = {
-      name: "AI Distiller MCP",
+      name: "AI Distiller (aid)",
       version: "1.0.0",
       methods: [
         "tools/list",

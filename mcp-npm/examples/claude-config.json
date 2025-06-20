@@ -4,8 +4,7 @@
       "command": "npx",
       "args": ["-y", "@janreges/ai-distiller-mcp"],
       "env": {
-        "AID_ROOT": "/path/to/your/project",
-        "AID_CACHE_DIR": "~/.cache/aid"
+        "AID_ROOT": "/path/to/your/project"
       }
     }
   }
