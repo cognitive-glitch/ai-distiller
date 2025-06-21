@@ -10,7 +10,7 @@
 $ErrorActionPreference = "Stop"
 
 # Configuration
-$Version = if ($env:AID_VERSION) { $env:AID_VERSION } else { "1.3.0" }
+$Version = if ($env:AID_VERSION) { $env:AID_VERSION } else { "1.3.1" }
 $Repo = "janreges/ai-distiller"
 $InstallRoot = if ($env:AID_INSTALL_ROOT) { $env:AID_INSTALL_ROOT } else { "$env:USERPROFILE\.aid" }
 $BinDir = "$InstallRoot\bin"
