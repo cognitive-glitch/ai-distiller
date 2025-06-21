@@ -29,6 +29,18 @@ echo -e "${GREEN}Building AI Distiller v$VERSION (full language support)${NC}"
 echo "This requires proper toolchains for cross-compilation!"
 echo ""
 
+# Auto-detect and add osxcross to PATH if available
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+PROJECT_ROOT="$( cd "$SCRIPT_DIR/.." && pwd )"
+OSXCROSS_PATH="$PROJECT_ROOT/tools/osxcross/target/bin"
+
+if [ -d "$OSXCROSS_PATH" ]; then
+    echo -e "${GREEN}Found osxcross at: $OSXCROSS_PATH${NC}"
+    export PATH="$PATH:$OSXCROSS_PATH"
+    echo -e "${GREEN}Added osxcross to PATH${NC}"
+    echo ""
+fi
+
 # Function to build for a platform
 build_platform() {
     local GOOS=$1
@@ -88,9 +100,12 @@ fi
 # macOS AMD64 (requires osxcross or Darwin host)
 if command -v o64-clang &> /dev/null; then
     build_platform "darwin" "amd64" "" "o64-clang"
-elif command -v x86_64-apple-darwin*-clang &> /dev/null 2>&1; then
+elif command -v x86_64-apple-darwin23-clang &> /dev/null; then
+    # Common osxcross naming
+    build_platform "darwin" "amd64" "" "x86_64-apple-darwin23-clang"
+elif ls $OSXCROSS_PATH/x86_64-apple-darwin*-clang &> /dev/null 2>&1; then
     # Try to find osxcross compiler by pattern
-    CC=$(command -v x86_64-apple-darwin*-clang | head -1)
+    CC=$(ls $OSXCROSS_PATH/x86_64-apple-darwin*-clang | head -1)
     build_platform "darwin" "amd64" "" "$CC"
 elif [[ "$OSTYPE" == "darwin"* ]]; then
     build_platform "darwin" "amd64" "" ""
@@ -102,9 +117,12 @@ fi
 # macOS ARM64 (requires osxcross or Darwin host)
 if command -v oa64-clang &> /dev/null; then
     build_platform "darwin" "arm64" "" "oa64-clang"
-elif command -v aarch64-apple-darwin*-clang &> /dev/null 2>&1; then
+elif command -v aarch64-apple-darwin23-clang &> /dev/null; then
+    # Common osxcross naming
+    build_platform "darwin" "arm64" "" "aarch64-apple-darwin23-clang"
+elif ls $OSXCROSS_PATH/aarch64-apple-darwin*-clang &> /dev/null 2>&1; then
     # Try to find osxcross compiler by pattern
-    CC=$(command -v aarch64-apple-darwin*-clang | head -1)
+    CC=$(ls $OSXCROSS_PATH/aarch64-apple-darwin*-clang | head -1)
     build_platform "darwin" "arm64" "" "$CC"
 elif [[ "$OSTYPE" == "darwin"* ]]; then
     build_platform "darwin" "arm64" "" ""
