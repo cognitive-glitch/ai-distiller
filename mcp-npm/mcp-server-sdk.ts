@@ -117,6 +117,7 @@ class AidDistillerServer {
    */
   private runAidCommand(args: string[]): Promise<string> {
     return new Promise((resolve, reject) => {
+      // Don't add --summary-type=off anymore - we want to capture stderr
       const fullCommand = `${binaryPath} ${args.map(arg => `"${arg}"`).join(' ')}`;
       if (isDebug) {
         console.error(`[AID MCP] Running command: ${fullCommand}`);
@@ -127,7 +128,8 @@ class AidDistillerServer {
       
       const child = spawn(binaryPath, args, {
         cwd: process.env.AID_ROOT || process.cwd(),
-        env: process.env
+        env: process.env,
+        stdio: ['ignore', 'pipe', 'pipe'] // Explicitly set stdio: ignore stdin, pipe stdout/stderr
       });
       
       let stdout = '';
@@ -151,14 +153,23 @@ class AidDistillerServer {
           console.error(`[AID MCP] Total stdout length: ${stdout.length} bytes`);
           console.error(`[AID MCP] Total stderr length: ${stderr.length} bytes`);
         }
-        if (stderr && (code !== 0 || isDebug)) {
-          console.error(`[AID MCP] stderr: ${stderr}`);
-        }
         
         if (code !== 0) {
+          // If command failed, include stderr in error message
           reject(new Error(stderr || `Aid exited with code ${code}`));
         } else {
-          resolve(stdout);
+          // Command succeeded - combine stderr and stdout
+          let result = '';
+          
+          // Put stderr (progress/info) first
+          if (stderr && stderr.trim()) {
+            result = stderr + '\n\n';
+          }
+          
+          // Then append stdout (actual content)
+          result += stdout;
+          
+          resolve(result);
         }
       });
       
