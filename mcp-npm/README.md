@@ -1,6 +1,22 @@
 # AI Distiller (aid) MCP Server
 
-Advanced MCP (Model Context Protocol) server for [AI Distiller](https://github.com/janreges/ai-distiller) - Essential code structure extractor that provides LLMs with accurate code signatures, data types, and API contracts from your actual codebase. Reduces AI guesswork and trial-error coding by delivering precise structural information. Accelerates analysis workflows including security audits, performance reviews, git history insights, refactoring suggestions, and comprehensive structural analysis.
+## 🎯 The AI Coding Challenge: Understanding Existing Code
+
+When coding with AI (vibe coding), the biggest challenge is **understanding existing code**. AI assistants often write broken code on the first attempt and need multiple iterations to fix it. Why? Because they don't know the actual APIs, data types, and contracts in your codebase.
+
+To save context, AI agents prefer **searching/grepping code** and showing only a few lines around matches. This approach is slow, often misses relevant information, and provides incomplete understanding of code structure and relationships.
+
+**AI Distiller solves this** by extracting complete, precise code structure instantly. Simply tell your AI: *"Distill and study using aid the public interfaces from ./src/components because we'll be modifying components"* - and watch your AI write correct code on the first try!
+
+---
+
+Advanced MCP (Model Context Protocol) server for [AI Distiller](https://github.com/janreges/ai-distiller) - Essential code structure extractor that provides LLMs with accurate code signatures, data types, and API contracts from your actual codebase. 
+
+**⚠️ IMPORTANT**: AI Distiller **generates prompts with distilled code** - it does NOT perform the actual analysis! The output is always a specialized prompt + distilled code that AI agents (like Claude Code, Cursor) or users can execute. For large codebases, you can copy the output to tools like Gemini 2.5 with 1M context window.
+
+**💡 NOTE**: AI Distiller tries to instruct the AI agent to execute the prompt and analysis immediately after generation. However, the AI agent may or may not follow this instruction automatically. If the analysis doesn't start automatically, simply ask your AI agent to "execute the generated prompt" or "perform the analysis from the aid output".
+
+> This is the first version of this tool and its possibilities of use are very extensive. Apply it to your use-cases, be playful and inventive, and send any bugs or feature requests to [GitHub issues](https://github.com/janreges/ai-distiller/issues). We'll be implementing more useful features in future versions. One of them is the possibility to define your own API token to Gemini or ChatGPT/Claude and let external LLM perform the analysis itself. MCPs have relatively low limits on I/O size and using external LLMs via API would bring additional benefits.
 
 ## 🚀 Quick Start with Claude Code
 
@@ -38,19 +54,28 @@ Example configuration:
 
 ### 🔑 How AI Distiller Works
 
-AI Distiller (aid) **generates AI prompts with distilled code** - it doesn't analyze code directly. Instead:
+AI Distiller (aid) **DOES NOT perform analysis** - it generates prompts with distilled code for AI agents to use:
 1. **aid extracts code structure** (distillation)
 2. **Generates specialized AI prompts** for your analysis goal
-3. **Outputs to `.aid/` directory** or stdout
-4. **AI agents execute the prompts** to perform actual analysis
+3. **Outputs prompt + distilled code** to `.aid/` directory or stdout
+4. **You or AI agents execute the prompts** to perform actual analysis
+
+**Important**: The output is always a prompt with distilled code - NOT the analysis itself!
 
 ### 📋 Typical Workflow
 
-1. **User asks**: "Find bugs in my authentication module"
+1. **User asks**: "Find bugs in my authentication module with aid"
 2. **Claude calls**: `aid_hunt_bugs({ target_path: "src/auth/" })`
 3. **aid generates**: Bug-hunting prompt + distilled code → `.aid/bug-hunting.md`
-4. **Claude reads**: The generated file and executes the analysis
-5. **Result**: Actual bug findings and recommendations
+4. **Claude reads**: The generated file and follows the prompt instructions
+5. **Result**: Claude performs the actual bug analysis based on the prompt
+
+**Alternative workflow for large codebases**:
+- Generate the prompt with aid
+- Copy the output to tools like Gemini 2.5 (1M context window)
+- Let the external AI perform deep analysis on large codebases
+
+**Note**: AI Distiller only generates prompts - the actual analysis is performed by AI agents!
 
 ### 💾 Output Formats
 
@@ -58,13 +83,14 @@ AI Distiller (aid) **generates AI prompts with distilled code** - it doesn't ana
 - **Large analyses**: Save to `.aid/` directory as markdown files
 - **File naming**: `.aid/ACTION.TIMESTAMP.FOLDER.md`
 - **Content**: AI prompt + distilled code in one file
+- **Tool usage**: AI agents call these tools via 'aid' command
 
 ### 🎯 Specialized AI Analysis Tools (New!)
-- **aid_hunt_bugs** - Generates bug-hunting prompts with distilled code
-- **aid_suggest_refactoring** - Creates refactoring analysis prompts
-- **aid_generate_diagram** - Produces prompts for architectural diagrams
-- **aid_analyze_security** - Generates security audit prompts
-- **aid_generate_docs** - Creates documentation generation prompts
+- **aid_hunt_bugs** - Generates bug-hunting prompt + distilled code (NOT the bugs themselves!)
+- **aid_suggest_refactoring** - Creates refactoring prompt + distilled code (NOT the refactoring!)
+- **aid_generate_diagram** - Produces diagram generation prompt + distilled code (NOT diagrams!)
+- **aid_analyze_security** - Generates security audit prompt + distilled code (NOT the audit!)
+- **aid_generate_docs** - Creates documentation prompt + distilled code (NOT the docs!)
 
 ### Core Analysis Engine
 - **aid_analyze** - Direct access to all AI actions for custom workflows
@@ -164,31 +190,75 @@ For large projects, aid's output may exceed AI context limits. Strategies:
 
 #### Generate Bug-Hunting Prompt
 ```javascript
+// Example prompts:
+// 1. "Use aid to find bugs in my authentication module"
+// 2. "Run aid bug hunter on src/api/ focusing on input validation"
+// 3. "Check src/services/ for memory leaks with aid, include private methods"
+
 // Claude will call:
 aid_hunt_bugs({
-  target_path: "src/",
+  target_path: "src/auth/",
   focus_area: "memory leaks and race conditions",
   include_private: true,
   include_implementation: true  // Include code bodies
 })
-// Returns: AI prompt with distilled code for bug analysis
-// Output: .aid/bug-hunting-2024-06-20.src.md
+// Returns: Bug-hunting PROMPT with distilled code (NOT bug list!)
+// Output: .aid/bug-hunting-2024-06-20.auth.md
+// Next step: AI agent reads this file and performs the actual bug analysis
+
+// More examples:
+aid_hunt_bugs({
+  target_path: "src/api/",
+  focus_area: "input validation",
+  include_private: false  // Public API only
+})
+
+aid_hunt_bugs({
+  target_path: "src/components/",
+  include_patterns: "*.tsx",
+  focus_area: "React hooks usage"
+})
 ```
 
 #### Generate Refactoring Prompt
 ```javascript
+// Example prompts:
+// 1. "Use aid to suggest refactoring for src/utils/ to reduce complexity"
+// 2. "Run aid refactoring analysis on src/services/ for better testability"
+// 3. "Apply aid to modernize legacy code in src/legacy/, show all methods"
+
 // Claude will call:
 aid_suggest_refactoring({
   target_path: "src/auth/",
   refactoring_goal: "improve testability",
   include_implementation: false  // Signatures only for overview
 })
-// Returns: AI prompt for refactoring suggestions
-// Claude can then execute this prompt
+// Returns: Refactoring PROMPT with distilled code (NOT refactoring suggestions!)
+// Next step: Claude reads this prompt and generates actual refactoring suggestions
+
+// More examples:
+aid_suggest_refactoring({
+  target_path: "src/components/",
+  refactoring_goal: "reduce complexity",
+  include_implementation: true,
+  include_private: true  // Include all methods
+})
+
+aid_suggest_refactoring({
+  target_path: "src/database/",
+  refactoring_goal: "modernize code patterns",
+  include_patterns: "*.js",
+  exclude_patterns: "*test*"
+})
 ```
 
 #### Generate Diagram Creation Prompt
 ```javascript
+// Example prompts:
+// 1. "Use aid to generate architecture diagrams for src/"
+// 2. "Create data flow diagrams with aid for src/api/ endpoints"
+// 3. "Run aid diagram generator on src/services/ showing class relationships"
+
 // Claude will call:
 aid_generate_diagram({
   target_path: "src/",
@@ -196,11 +266,31 @@ aid_generate_diagram({
   include_private: true,
   include_implementation: false  // Structure only
 })
-// Returns: AI prompt to create 10 architectural diagrams
+// Returns: Diagram generation PROMPT with distilled code (NOT diagrams!)
+// Next step: AI agent reads this and creates actual Mermaid diagrams
+
+// More examples:
+aid_generate_diagram({
+  target_path: "src/api/",
+  diagram_focus: "API endpoints",
+  include_private: false,  // Public API only
+  include_protected: true
+})
+
+aid_generate_diagram({
+  target_path: "src/components/",
+  diagram_focus: "component hierarchy",
+  include_patterns: "*.tsx,*.jsx"
+})
 ```
 
 #### Generate Security Analysis Prompt
 ```javascript
+// Example prompts:
+// 1. "Use aid security analyzer on src/api/ and save to security-report.md"
+// 2. "Run aid OWASP check on src/auth/ with all visibility levels"
+// 3. "Execute aid security audit on src/database/ and analyze immediately"
+
 // Claude will call:
 aid_analyze_security({
   target_path: "src/api/",
@@ -208,11 +298,34 @@ aid_analyze_security({
   include_private: true,
   include_implementation: true  // Need to see actual code
 })
-// Returns: AI prompt for security vulnerability analysis
+// Returns: Security audit PROMPT with distilled code (NOT vulnerabilities!)
+// Output: .aid/security-analysis-2024-06-20.api.md
+// Next step: AI agent analyzes code following the prompt instructions
+
+// More examples:
+aid_analyze_security({
+  target_path: "src/auth/",
+  security_focus: "authentication bypass",
+  include_private: true,
+  include_protected: true,
+  include_internal: true  // Full visibility
+})
+
+aid_analyze_security({
+  target_path: "src/controllers/",
+  security_focus: "XSS vulnerabilities",
+  include_patterns: "*.php",
+  include_implementation: true
+})
 ```
 
 #### Generate Documentation Prompt
 ```javascript
+// Example prompts:
+// 1. "Use aid to generate API docs for src/core/ public methods only"
+// 2. "Create developer documentation with aid for src/utils/ including examples"
+// 3. "Run aid docs generator on src/lib/ and write to API.md"
+
 // Claude will call:
 aid_generate_docs({
   target_path: "src/core/",
@@ -220,19 +333,58 @@ aid_generate_docs({
   audience: "external developers",
   include_private: false  // Public API only
 })
-// Returns: AI prompt to generate comprehensive documentation
+// Returns: Documentation generation PROMPT with distilled code (NOT docs!)
+// Output: .aid/docs-api-reference-2024-06-20.core.md
+// Next step: AI agent generates actual documentation from the prompt
+
+// More examples:
+aid_generate_docs({
+  target_path: "src/components/",
+  doc_type: "single-file-docs",
+  audience: "internal team",
+  include_private: true,
+  include_protected: true
+})
+
+aid_generate_docs({
+  target_path: "src/services/",
+  doc_type: "multi-file-docs",
+  include_patterns: "*.ts",
+  exclude_patterns: "*.test.ts"
+})
 ```
 
 ### Core Analysis Engine
 
 #### Custom AI Analysis Workflows
 ```javascript
+// Example prompts:
+// 1. "Use aid to analyze src/ with deep file analysis workflow"
+// 2. "Run aid performance analysis on src/services/ and execute immediately"
+// 3. "Apply aid best practices check to src/utils/ with custom output path"
+
 // For advanced users who need specific AI actions:
 aid_analyze({
   ai_action: "flow-for-deep-file-to-file-analysis",
   target_path: "src/",
   user_query: "Focus on authentication and authorization patterns",
   include_patterns: "*.py,*.js"
+})
+// Output: .aid/flow-for-deep-file-to-file-analysis-2024-06-20.src.md
+
+// More examples:
+aid_analyze({
+  ai_action: "prompt-for-performance-analysis",
+  target_path: "src/api/",
+  include_implementation: true,
+  output_format: "md"
+})
+
+aid_analyze({
+  ai_action: "prompt-for-best-practices-analysis",
+  target_path: "src/components/",
+  include_private: true,
+  exclude_patterns: "*test*,*mock*"
 })
 ```
 
@@ -248,38 +400,110 @@ Available AI actions:
 - `prompt-for-single-file-docs` - Single file documentation prompt
 - `prompt-for-diagrams` - Diagram generation prompt
 
+### Code Structure Tools
+
+#### Extract Single File Structure
+```javascript
+// Example prompts:
+// 1. "Use aid to extract structure from src/main.py with all visibility"
+// 2. "Show me the API of src/auth/service.ts using aid, public only"
+// 3. "Get aid distillation of src/utils.js including implementation"
+
+// Claude will call:
+distill_file({
+  file_path: "src/auth/service.ts",
+  include_private: false,      // Public API only
+  include_implementation: false // Signatures only
+})
+// Returns: Distilled code structure directly
+
+// More examples:
+distill_file({
+  file_path: "src/models/user.py",
+  include_private: true,
+  include_protected: true,
+  include_implementation: true,  // Full code
+  output_format: "json"
+})
+
+distill_file({
+  file_path: "src/components/Button.tsx",
+  include_comments: true,
+  output_format: "md"
+})
+```
+
+#### Extract Directory Structure
+```javascript
+// Example prompts:
+// 1. "Use aid to distill entire src/services/ directory"
+// 2. "Extract structure from src/api/ with aid, exclude tests"
+// 3. "Run aid on src/components/ showing protected members"
+
+// Claude will call:
+distill_directory({
+  directory_path: "src/services/",
+  include_private: false,
+  include_implementation: false,
+  recursive: true
+})
+// Returns: Distilled structure for all files
+
+// More examples:
+distill_directory({
+  directory_path: "src/api/",
+  include_patterns: "*.ts,*.js",
+  exclude_patterns: "*test*,*spec*",
+  include_protected: true,
+  include_internal: true
+})
+
+distill_directory({
+  directory_path: "src/components/",
+  include_patterns: "*.tsx",
+  include_private: true,
+  include_implementation: true,
+  output_format: "jsonl"  // One JSON per file
+})
+```
+
 ## 🤖 AI Agent Workflows
 
 ### Quick Bug Hunt
 ```
-User: "Check this codebase for potential bugs"
-1. Claude uses aid_hunt_bugs(target_path="src/", include_private=true)
-2. Analyzes the structured bug report
-3. Provides prioritized fixes
+User: "Use aid to check src/ for potential bugs"
+1. Claude calls aid_hunt_bugs(target_path="src/", include_private=true)
+2. aid generates bug-hunting PROMPT + distilled code → .aid/bug-hunting-*.md
+3. Claude reads the generated prompt file
+4. Claude executes the prompt instructions to find actual bugs
+5. Claude provides bug findings and fixes
 ```
 
 ### Security Audit
 ```
-User: "Perform a security audit on the API endpoints"
+User: "Run aid security audit on src/api/ endpoints and analyze"
 1. Claude uses aid_analyze_security(target_path="src/api/", include_implementation=true)
-2. Reviews OWASP-categorized findings
-3. Suggests security improvements
+2. Reads .aid/security-analysis-*.md file
+3. Reviews OWASP-categorized findings
+4. Suggests security improvements
 ```
 
 ### Architecture Understanding
 ```
-User: "Help me understand this codebase architecture"
+User: "Help me understand src/ architecture using aid diagrams"
 1. Claude uses aid_generate_diagram(target_path="src/")
-2. Presents 10 different architectural views
-3. Explains key components and relationships
+2. Reads .aid/diagrams-*.md file
+3. Presents 10 different architectural views
+4. Explains key components and relationships
 ```
 
 ### Refactoring Session
 ```
-User: "This module is getting complex, suggest improvements"
-1. Claude uses aid_suggest_refactoring(target_path="module/", refactoring_goal="reduce complexity")
-2. Provides specific refactoring suggestions
-3. Shows before/after code examples
+User: "Apply aid refactoring analysis to src/services/ for complexity"
+1. Claude uses aid_suggest_refactoring(target_path="src/services/", refactoring_goal="reduce complexity")
+2. Reads .aid/refactoring-suggestion-*.md file
+3. Provides specific refactoring suggestions
+4. Shows before/after code examples
 ```
 
 ## 🚀 Advanced Features
