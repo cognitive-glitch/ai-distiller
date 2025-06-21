@@ -19,7 +19,7 @@ set -o pipefail # Pipeline fails on first command failure
 
 # --- Parse arguments ---
 USE_SUDO=false
-VERSION="1.0.0"
+VERSION="1.3.0"
 
 for arg in "$@"; do
     case "$arg" in

@@ -2,6 +2,22 @@
 
 This guide documents the complete process for releasing the AI Distiller MCP server to npmjs.org.
 
+## Quick Release Steps
+
+For experienced users, here's the minimal process:
+
+```bash
+cd mcp-npm/
+
+# 1. Update version in package.json (other files now read it automatically)
+# 2. Run the publish script
+./publish.sh
+
+# 3. Tag the release
+git add . && git commit -m "chore: release AI Distiller MCP v$(node -p "require('./package.json').version")"
+git tag mcp-v$(node -p "require('./package.json').version") && git push && git push --tags
+```
+
 ## Prerequisites
 
 1. **NPM Account**: Ensure you're logged in to npm:
@@ -21,21 +37,84 @@ This guide documents the complete process for releasing the AI Distiller MCP ser
 
 ## Release Process
 
-### 1. Update Version Numbers
+There are two ways to release: using the automated `publish.sh` script (recommended) or manually.
 
-Update the version in both places to match the `aid` binary version:
+## Option 1: Automated Release with publish.sh (Recommended)
+
+The `publish.sh` script automates the entire release process and includes safety checks:
+- Verifies npm login status
+- Ensures TypeScript builds successfully
+- Shows package contents preview before publishing
+- Requires explicit confirmation before publishing
+- Handles all build steps automatically
+
+### 1. Update Version Number
+
+The version is now read dynamically from `package.json`. You only need to update it in one place:
 
 ```bash
 cd mcp-npm/
 
-# Edit package.json - update version field
+# Edit package.json and update the "version" field
 vim package.json
-
-# Edit postinstall.js - update VERSION constant
-vim scripts/postinstall.js
 ```
 
-### 2. Test Locally
+### 2. Run the Publish Script
+
+The `publish.sh` script handles the entire build and publish process:
+
+```bash
+./publish.sh
+```
+
+The script will:
+1. Check that you're logged in to npm
+2. Clean previous builds
+3. Install dependencies
+4. Build TypeScript
+5. Show package contents preview
+6. Ask for confirmation before publishing
+7. Publish to npm with public access
+
+### 3. Verify Installation
+
+After successful publish, test the package:
+
+```bash
+# In a new directory
+npx @janreges/ai-distiller-mcp@latest
+
+# Or install globally
+npm install -g @janreges/ai-distiller-mcp@latest
+aid-mcp --version
+```
+
+### 4. Tag and Commit
+
+After successful publish, tag the release in git:
+
+```bash
+git add .
+git commit -m "chore: release AI Distiller MCP v$(node -p "require('./package.json').version")"
+git tag mcp-v$(node -p "require('./package.json').version")
+git push && git push --tags
+```
+
+## Option 2: Manual Release Process
+
+### 1. Update Version Numbers
+
+Same as Option 1 above.
+
+### 2. Build TypeScript
+
+```bash
+cd mcp-npm/
+npm install
+npm run build
+```
+
+### 3. Test Locally
 
 Before publishing, test the package installation locally:
 
@@ -54,10 +133,10 @@ npm install /path/to/mcp-npm/janreges-ai-distiller-mcp-X.Y.Z.tgz
 ls -la node_modules/@janreges/ai-distiller-mcp/bin/
 
 # Test the MCP server
-npx aid-mcp --help
+npx @janreges/ai-distiller-mcp
 ```
 
-### 3. Dry Run
+### 4. Dry Run
 
 Always do a dry run first to see what will be published:
 
@@ -68,13 +147,14 @@ npm publish --dry-run
 
 Review the file list carefully. Should include:
 - `package.json`
-- `mcp-server.js`
+- `dist/` (compiled TypeScript files)
+- `mcp-server-wrapper.js`
 - `scripts/postinstall.js`
 - `bin/` (empty directory, will be populated during install)
 - `README.md`
 - `LICENSE`
 
-### 4. Publish to NPM
+### 5. Publish to NPM
 
 When ready, publish with public access (required for scoped packages):
 
@@ -82,29 +162,7 @@ When ready, publish with public access (required for scoped packages):
 npm publish --access public
 ```
 
-### 5. Verify Installation
-
-Test the published package:
-
-```bash
-# In a new directory
-npx @janreges/ai-distiller-mcp --version
-
-# Or install globally
-npm install -g @janreges/ai-distiller-mcp
-aid-mcp --version
-```
-
-### 6. Tag and Commit
-
-After successful publish, tag the release in git:
-
-```bash
-git add .
-git commit -m "chore: release AI Distiller MCP vX.Y.Z"
-git tag mcp-vX.Y.Z
-git push && git push --tags
-```
+### 6. Follow steps 3-4 from Option 1
 
 ## Version Synchronization
 

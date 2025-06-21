@@ -9,7 +9,7 @@ const zlib = require('zlib');
 const tar = require('tar');
 
 // This should match the AI Distiller release version
-const VERSION = '1.0.0';
+const VERSION = require('../package.json').version;
 
 function getPlatformInfo() {
   const platform = os.platform();
@@ -75,6 +75,8 @@ function downloadFile(url, dest, isStream = false) {
 
 async function extractArchive(archivePath, destDir, platform) {
   console.log('Extracting archive...');
+  console.log(`Archive path: ${archivePath}`);
+  console.log(`Destination: ${destDir}`);
   
   if (!fs.existsSync(destDir)) {
     fs.mkdirSync(destDir, { recursive: true });
@@ -98,15 +100,31 @@ async function extractArchive(archivePath, destDir, platform) {
       }
     }
   } else {
-    // For Unix systems, use tar
-    await tar.x({
-      file: archivePath,
-      cwd: destDir
-    });
+    // For Unix systems, try system tar first (much faster)
+    try {
+      console.log('Using system tar command...');
+      execSync(`tar -xzf "${archivePath}" -C "${destDir}"`, { 
+        stdio: 'inherit' 
+      });
+    } catch (e) {
+      console.log('System tar failed, falling back to node-tar library...');
+      // Fallback to node tar library
+      await tar.x({
+        file: archivePath,
+        cwd: destDir,
+        onentry: (entry) => {
+          // Log progress for debugging
+          if (entry.path.includes('aid')) {
+            console.log(`Extracting: ${entry.path}`);
+          }
+        }
+      });
+    }
   }
 }
 
 async function install() {
+  const startTime = Date.now();
   try {
     const { platform, arch, ext } = getPlatformInfo();
     const archiveName = `aid-${platform}-${arch}-v${VERSION}.${ext}`;
@@ -114,6 +132,7 @@ async function install() {
     
     console.log(`Installing AI Distiller MCP for ${platform}/${arch}...`);
     console.log(`Version: ${VERSION}`);
+    console.log(`Download URL: ${url}`);
     
     const binDir = path.join(__dirname, '..', 'bin');
     const tempFile = path.join(binDir, archiveName);
@@ -129,23 +148,51 @@ async function install() {
     if (fs.existsSync(binaryPath)) {
       try {
         // Try to get version to verify it works
-        execSync(`"${binaryPath}" --version`, { stdio: 'pipe' });
-        console.log('AI Distiller binary already installed and working.');
-        return;
+        const existingVersionOutput = execSync(`"${binaryPath}" --version`, { 
+          stdio: 'pipe',
+          encoding: 'utf8'
+        }).trim();
+        
+        // Extract version number (e.g., "aid version 1.3.0" -> "1.3.0")
+        const versionMatch = existingVersionOutput.match(/(\d+\.\d+\.\d+)/);
+        const existingVersion = versionMatch ? versionMatch[1] : null;
+        
+        console.log(`Found existing AI Distiller binary version: ${existingVersion}`);
+        
+        if (existingVersion === VERSION) {
+          console.log(`Version matches required version (${VERSION}). Skipping download.`);
+          const totalTime = Date.now() - startTime;
+          console.log(`Installation check completed in ${totalTime}ms`);
+          return;
+        } else {
+          console.log(`Version mismatch (found ${existingVersion}, need ${VERSION}). Re-downloading...`);
+          fs.unlinkSync(binaryPath); // Remove old binary
+        }
       } catch (e) {
-        console.log('Existing binary not working, re-downloading...');
-        fs.unlinkSync(binaryPath);
+        console.log('Existing binary not working or version check failed, re-downloading...');
+        // Attempt to remove potentially corrupted binary
+        if (fs.existsSync(binaryPath)) {
+          fs.unlinkSync(binaryPath);
+        }
       }
     }
     
     try {
       // Download archive
+      const downloadStart = Date.now();
       await downloadFile(url, tempFile);
-      console.log('Download complete.');
+      const downloadTime = Date.now() - downloadStart;
+      console.log(`Download complete in ${downloadTime}ms.`);
+      
+      // Check archive size
+      const archiveStats = fs.statSync(tempFile);
+      console.log(`Archive size: ${Math.round(archiveStats.size / 1024 / 1024)} MB`);
       
       // Extract archive
+      const extractStart = Date.now();
       await extractArchive(tempFile, binDir, platform);
-      console.log('Extraction complete.');
+      const extractTime = Date.now() - extractStart;
+      console.log(`Extraction complete in ${extractTime}ms.`);
       
       // Verify binary exists
       if (!fs.existsSync(binaryPath)) {
@@ -164,8 +211,15 @@ async function install() {
           encoding: 'utf8'
         }).trim();
         console.log(`AI Distiller installed successfully: ${version}`);
+        console.log(`Binary location: ${binaryPath}`);
+        
+        // Check file size to ensure it's not corrupted
+        const stats = fs.statSync(binaryPath);
+        console.log(`Binary size: ${Math.round(stats.size / 1024 / 1024)} MB`);
       } catch (e) {
-        console.warn('Warning: Could not verify binary version, but installation completed.');
+        console.error('ERROR: Could not verify binary:', e.message);
+        console.error(`Please check if binary exists at: ${binaryPath}`);
+        throw new Error('Binary verification failed');
       }
       
     } finally {
@@ -176,7 +230,8 @@ async function install() {
     }
     
   } catch (error) {
-    console.error('Installation failed:', error.message);
+    const totalTime = Date.now() - startTime;
+    console.error(`Installation failed after ${totalTime}ms:`, error.message);
     console.error('\nYou can manually download the binary from:');
     console.error(`https://github.com/janreges/ai-distiller/releases/tag/v${VERSION}`);
     console.error('\nAnd place it in:', path.join(__dirname, '..', 'bin'));
@@ -184,6 +239,9 @@ async function install() {
     // Exit with error code to fail npm install
     process.exit(1);
   }
+  
+  const totalTime = Date.now() - startTime;
+  console.log(`Total installation time: ${totalTime}ms`);
 }
 
 // Only run if called directly (not required as module)

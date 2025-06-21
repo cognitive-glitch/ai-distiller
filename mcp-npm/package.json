@@ -1,6 +1,6 @@
 {
   "name": "@janreges/ai-distiller-mcp",
-  "version": "1.0.0",
+  "version": "1.3.0",
   "description": "AI Distiller (aid) - Essential code structure extractor for LLMs. Provides AI with accurate code signatures, data types, and API contracts from your actual codebase, reducing guesswork and trial-error coding. Accelerates analysis workflows including security audits, performance reviews, git history insights, refactoring suggestions, and comprehensive structural analysis.",
   "keywords": [
     "mcp",
@@ -22,28 +22,39 @@
     "url": "https://github.com/janreges/ai-distiller/issues"
   },
   "homepage": "https://github.com/janreges/ai-distiller#readme",
-  "main": "mcp-server.js",
+  "main": "mcp-server-wrapper.js",
+  "types": "dist/mcp-server-sdk.d.ts",
   "bin": {
-    "aid-mcp": "mcp-server.js"
+    "aid-mcp": "mcp-server-wrapper.js"
   },
   "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
     "postinstall": "node scripts/postinstall.js",
+    "prepublishOnly": "npm run build",
     "test": "echo \"No tests yet\""
   },
   "files": [
+    "dist/",
     "bin/.gitkeep",
     "scripts/postinstall.js",
-    "mcp-server.js",
+    "mcp-server-wrapper.js",
     "README.md",
     "LICENSE"
   ],
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=18.0.0"
   },
   "publishConfig": {
     "access": "public"
   },
   "dependencies": {
-    "tar": "^6.2.0"
+    "@modelcontextprotocol/sdk": "^1.13.0",
+    "tar": "^6.2.0",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3"
   }
 }
