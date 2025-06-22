@@ -5,11 +5,16 @@
 🚀 **MCP Server Available**: Install the Model Context Protocol server for AI Distiller from NPM: [`@janreges/ai-distiller-mcp`](https://www.npmjs.com/package/@janreges/ai-distiller-mcp) - seamlessly integrate with Claude, Cursor, and other MCP-compatible AI tools!
 
 <p align="center">
+  <img src="docs/assets/aid-mascot-300.png" alt="AI Distiller (aid) Mascot" width="200">
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/badge/Languages-12+-blue" alt="12+ Languages">
   <img src="https://img.shields.io/badge/Performance-5k+_files/sec-green" alt="Performance">
   <img src="https://img.shields.io/badge/Compression-90%25+-orange" alt="Compression">
   <img src="https://img.shields.io/badge/Tests-988_passed-purple" alt="Tests">
 </p
+
 
 ## **🤔 Why AI Distiller?**
 
