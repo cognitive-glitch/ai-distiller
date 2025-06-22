@@ -8,8 +8,10 @@ const { execSync } = require('child_process');
 const zlib = require('zlib');
 const tar = require('tar');
 
-// This should match the AI Distiller release version
-const VERSION = require('../package.json').version;
+// AI Distiller binary version to download
+// This can be different from the MCP package version
+const AID_VERSION = '1.3.1'; // Update this when new aid releases are available
+const MCP_VERSION = require('../package.json').version;
 
 function getPlatformInfo() {
   const platform = os.platform();
@@ -127,11 +129,12 @@ async function install() {
   const startTime = Date.now();
   try {
     const { platform, arch, ext } = getPlatformInfo();
-    const archiveName = `aid-${platform}-${arch}-v${VERSION}.${ext}`;
-    const url = `https://github.com/janreges/ai-distiller/releases/download/v${VERSION}/${archiveName}`;
+    const archiveName = `aid-${platform}-${arch}-v${AID_VERSION}.${ext}`;
+    const url = `https://github.com/janreges/ai-distiller/releases/download/v${AID_VERSION}/${archiveName}`;
     
     console.log(`Installing AI Distiller MCP for ${platform}/${arch}...`);
-    console.log(`Version: ${VERSION}`);
+    console.log(`MCP Version: ${MCP_VERSION}`);
+    console.log(`AI Distiller Binary Version: ${AID_VERSION}`);
     console.log(`Download URL: ${url}`);
     
     const binDir = path.join(__dirname, '..', 'bin');
@@ -159,13 +162,13 @@ async function install() {
         
         console.log(`Found existing AI Distiller binary version: ${existingVersion}`);
         
-        if (existingVersion === VERSION) {
-          console.log(`Version matches required version (${VERSION}). Skipping download.`);
+        if (existingVersion === AID_VERSION) {
+          console.log(`Version matches required version (${AID_VERSION}). Skipping download.`);
           const totalTime = Date.now() - startTime;
           console.log(`Installation check completed in ${totalTime}ms`);
           return;
         } else {
-          console.log(`Version mismatch (found ${existingVersion}, need ${VERSION}). Re-downloading...`);
+          console.log(`Version mismatch (found ${existingVersion}, need ${AID_VERSION}). Re-downloading...`);
           fs.unlinkSync(binaryPath); // Remove old binary
         }
       } catch (e) {
@@ -233,7 +236,7 @@ async function install() {
     const totalTime = Date.now() - startTime;
     console.error(`Installation failed after ${totalTime}ms:`, error.message);
     console.error('\nYou can manually download the binary from:');
-    console.error(`https://github.com/janreges/ai-distiller/releases/tag/v${VERSION}`);
+    console.error(`https://github.com/janreges/ai-distiller/releases/tag/v${AID_VERSION}`);
     console.error('\nAnd place it in:', path.join(__dirname, '..', 'bin'));
     
     // Exit with error code to fail npm install

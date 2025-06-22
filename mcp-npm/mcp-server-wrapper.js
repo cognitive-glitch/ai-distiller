@@ -27,8 +27,23 @@ const child = spawn(process.execPath, [sdkServerPath], {
   env: process.env
 });
 
-child.on('exit', (code) => {
-  process.exit(code || 0);
+// Forward signals to child process
+process.on('SIGINT', () => {
+  child.kill('SIGINT');
+});
+
+process.on('SIGTERM', () => {
+  child.kill('SIGTERM');
+});
+
+child.on('exit', (code, signal) => {
+  if (signal) {
+    // Killed by signal
+    process.exit(0);
+  } else {
+    // Normal exit
+    process.exit(code || 0);
+  }
 });
 
 child.on('error', (err) => {

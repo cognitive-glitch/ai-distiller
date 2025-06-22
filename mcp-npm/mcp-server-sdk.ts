@@ -951,19 +951,59 @@ class AidDistillerServer {
    * Connect to transport and start server
    */
   async connect(): Promise<void> {
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
-    
-    console.error(`AI Distiller MCP Server started (SDK version)
+    try {
+      const transport = new StdioServerTransport();
+      
+      // Set up error handlers before connecting
+      transport.onclose = () => {
+        if (isDebug) console.error('[AID MCP] Transport closed');
+        process.exit(0);
+      };
+      
+      transport.onerror = (error: Error) => {
+        console.error('[AID MCP] Transport error:', error);
+        process.exit(1);
+      };
+      
+      await this.server.connect(transport);
+      
+      if (isDebug) {
+        console.error(`[AID MCP] Server connected successfully
 Binary: ${binaryPath}
 Working directory: ${process.env.AID_ROOT || process.cwd()}
 Protocol: 2025-03-26`);
+      }
+    } catch (error) {
+      console.error('[AID MCP] Failed to connect transport:', error);
+      process.exit(1);
+    }
   }
 }
+
+// Handle process termination gracefully
+process.on('SIGINT', () => {
+  if (isDebug) console.error('[AID MCP] Received SIGINT, shutting down gracefully');
+  process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+  if (isDebug) console.error('[AID MCP] Received SIGTERM, shutting down gracefully');
+  process.exit(0);
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('[AID MCP] Uncaught exception:', error);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[AID MCP] Unhandled rejection at:', promise, 'reason:', reason);
+  process.exit(1);
+});
 
 // Start the server
 const server = new AidDistillerServer();
 server.connect().catch(error => {
-  console.error('Failed to start server:', error);
+  console.error('[AID MCP] Failed to start server:', error);
   process.exit(1);
 });

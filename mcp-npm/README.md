@@ -6,15 +6,29 @@ When coding with AI (vibe coding), the biggest challenge is **understanding exis
 
 To save context, AI agents prefer **searching/grepping code** and showing only a few lines around matches. This approach is slow, often misses relevant information, and provides incomplete understanding of code structure and relationships.
 
-**AI Distiller solves this** by extracting complete, precise code structure instantly. Simply tell your AI: *"Distill and study using aid the public interfaces from ./src/components because we'll be modifying components"* - and watch your AI write correct code on the first try!
+**AI Distiller solves this** by extracting complete, precise code structure instantly. Simply tell your AI: *"Distill and study the public interfaces from ./src/components"* - and watch your AI write correct code on the first try!
 
 ---
 
-Advanced MCP (Model Context Protocol) server for [AI Distiller](https://github.com/janreges/ai-distiller) - Essential code structure extractor that provides LLMs with accurate code signatures, data types, and API contracts from your actual codebase. 
+AI Distiller MCP server uses [AI Distiller](https://github.com/janreges/ai-distiller) - Essential code structure extractor that provides LLMs with accurate code signatures, data types, and API contracts from your actual codebase.
 
-**⚠️ IMPORTANT**: AI Distiller **generates prompts with distilled code** - it does NOT perform the actual analysis! The output is always a specialized prompt + distilled code that AI agents (like Claude Code, Cursor) or users can execute. For large codebases, you can copy the output to tools like Gemini 2.5 with 1M context window.
+> **Note:** This is the very first version of this tool. We would be very grateful for any feedback in the form of a discussion or by creating an issue on [GitHub](https://github.com/janreges/ai-distiller/issues). Thank you!
 
-**💡 NOTE**: AI Distiller tries to instruct the AI agent to execute the prompt and analysis immediately after generation. However, the AI agent may or may not follow this instruction automatically. If the analysis doesn't start automatically, simply ask your AI agent to "execute the generated prompt" or "perform the analysis from the aid output".
+## 📋 Two Main Ways to Use AI Distiller MCP
+
+### 1. **Code Distillation for Better Context**
+Extract essential code structure from files/directories to provide AI with accurate API signatures, types, and contracts. This dramatically improves AI's understanding of your codebase and leads to more accurate code generation.
+
+**Example**: *"Distill ./src/components to understand the component APIs before we modify them"*
+
+### 2. **AI-Powered Analysis Actions**
+Generate specialized analysis prompts and workflows that guide AI agents through comprehensive code analysis tasks like security audits, refactoring suggestions, or documentation generation.
+
+**Example**: *"Use aid to analyze security vulnerabilities in ./api"* or *"Generate refactoring suggestions for ./legacy"*
+
+**⚠️ IMPORTANT for AI Actions**: AI Distiller **generates analysis prompts with distilled code** - it does NOT perform the actual analysis! The output is a specialized prompt + distilled code that AI agents (like Claude Code, Cursor) or users can execute. For large codebases, you can copy the output to tools like Gemini 2.5 with 1M context window.
+
+**💡 NOTE**: When using AI actions, AI Distiller tries to instruct the AI agent to execute the prompt and analysis immediately after generation. However, the AI agent may or may not follow this instruction automatically. If the analysis doesn't start automatically, simply ask your AI agent to "execute the generated prompt" or "perform the analysis from the aid output".
 
 > This is the first version of this tool and its possibilities of use are very extensive. Apply it to your use-cases, be playful and inventive, and send any bugs or feature requests to [GitHub issues](https://github.com/janreges/ai-distiller/issues). We'll be implementing more useful features in future versions. One of them is the possibility to define your own API token to Gemini or ChatGPT/Claude and let external LLM perform the analysis itself. MCPs have relatively low limits on I/O size and using external LLMs via API would bring additional benefits.
 
