@@ -107,12 +107,22 @@ After each distillation, AI Distiller displays a summary showing compression eff
 aid ./src --summary-type=stock-ticker
 📊 AID 97.6% ▲ │ SIZE: 10M→256K │ TIME: 231ms │ EST: ~2.4M tokens saved
 
+# JSON output
 aid ./src --summary-type=json
-╔═══ AI Distiller ════════╗
-║ Speed: ███████░░░ 77% ║ 231ms
-║ Saved: ██████████ 97.6% ║ 10M→256K
-║ Tokens saved: ~2.4M     ║
-╚═══════════════════basic══╝
+
+{
+  "original_bytes": 70020,
+  "distilled_bytes": 8244,
+  "savings_pct": 88.22622107969151,
+  "duration_ms": 6,
+  "tokens_before": 17505,
+  "tokens_after": 2061,
+  "tokens_saved": 15444,
+  "token_savings_pct": 88.22622107969151,
+  "file_count": 9,
+  "output_path": "/home/user/project/.aid/aid.processor.txt",
+  "tokenizer": "cl100k_base"
+}
 ```
 
 **Available formats:**
@@ -483,9 +493,9 @@ aid internal \
 
 **Note**: The analysis dimensions (Security, Performance, Maintainability, Readability) are part of the prompts that guide the AI - AI Distiller itself doesn't perform any analysis.
 
-### 🤖 Use with Claude Desktop (MCP)
+### 🤖 Use with Claude Code/Desktop (MCP)
 
-AI Distiller now integrates seamlessly with Claude Desktop through the Model Context Protocol (MCP), enabling AI agents to analyze and understand codebases directly within conversations.
+AI Distiller now integrates seamlessly with Claude Code/Desktop through the Model Context Protocol (MCP), enabling AI agents to analyze and understand codebases directly within conversations.
 
 ```bash
 # One-line installation
