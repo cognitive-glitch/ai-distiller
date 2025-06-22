@@ -2,6 +2,8 @@
 
 > **Note:** This is the very first version of this tool. We would be very grateful for any feedback in the form of a discussion or by creating an issue on [GitHub](https://github.com/janreges/ai-distiller/issues). Thank you\!
 
+🚀 **MCP Server Available**: Install the Model Context Protocol server for AI Distiller from NPM: [`@janreges/ai-distiller-mcp`](https://www.npmjs.com/package/@janreges/ai-distiller-mcp) - seamlessly integrate with Claude, Cursor, and other MCP-compatible AI tools!
+
 <p align="center">
   <img src="https://img.shields.io/badge/Languages-12+-blue" alt="12+ Languages">
   <img src="https://img.shields.io/badge/Performance-5k+_files/sec-green" alt="Performance">
@@ -21,20 +23,21 @@ Very simply, it can be said that `aid`, within the distillation process, will le
 
 ## Table of Contents
 
+- [🤔 Why AI Distiller?](#-why-ai-distiller)
 - [✨ Key Features](#-key-features)
 - [🎯 How It Works](#-how-it-works)
 - [🚀 Quick Start](#-quick-start)
-  - [Installation](#installation)
+  - [One-Line Installation](#one-line-installation)
   - [Basic Usage](#basic-usage)
-  - [Example Output](#example-output)
+- [📖 Example Output](#-example-output)
 - [📖 Guides & Examples](#-guides--examples)
-  - [Deep Code Analysis with AI Agents](#deep-code-analysis-with-ai-agents)
+  - [Deep Code Analysis Prompt Generation](#deep-code-analysis-prompt-generation)
   - [🤖 Use with Claude Desktop (MCP)](#-use-with-claude-desktop-mcp)
 - [📖 Complete CLI Reference](#-complete-cli-reference)
-- [🛠️ Advanced Usage](#️-advanced-usage)
+- [🛠️ Advanced Usage](#-advanced-usage)
   - [🚫 Ignoring Files with .aidignore](#-ignoring-files-with-aidignore)
   - [🎯 Git History Analysis Mode](#-git-history-analysis-mode)
-- [⚠️ Limitations](#️-limitations)
+- [⚠️ Limitations](#-limitations)
 - [🔒 Security Considerations](#-security-considerations)
 - [❓ FAQ](#-faq)
 - [🤝 Contributing](#-contributing)
@@ -482,23 +485,41 @@ aid internal \
 
 ### 🤖 Use with Claude Desktop (MCP)
 
-AI Distiller now integrates seamlessly with Claude Code through the Model Context Protocol (MCP), enabling AI agents to analyze and understand codebases directly within conversations.
+AI Distiller now integrates seamlessly with Claude Desktop through the Model Context Protocol (MCP), enabling AI agents to analyze and understand codebases directly within conversations.
 
 ```bash
 # One-line installation
-claude mcp add ai-distiller -- npx -y @janreges/ai-distiller-mcp
+claude mcp add aid -- npx -y @janreges/ai-distiller-mcp
 ```
 
-Available MCP tools for AI agents:
-- `distillDirectory` - Extract structure from entire codebase or specific modules/directories
-- `distillFile` - Get detailed structure info for specific files
-- `search` - Pattern search across entire codebase
-- `listFiles` - Browse directories with file statistics
-- `getFileContent` - Access raw file content when needed
+📦 **NPM Package**: [`@janreges/ai-distiller-mcp`](https://www.npmjs.com/package/@janreges/ai-distiller-mcp) - Full documentation and examples available
+
+#### Available MCP Tools
+
+**🔍 Code Structure Tools:**
+- `distill_file` - Extract structure from a single file
+- `distill_directory` - Extract structure from entire directories
+- `list_files` - Browse directories with file statistics
+- `get_capabilities` - Get info about AI Distiller capabilities
+
+**🎯 Specialized AI Analysis Tools:**
+- `aid_hunt_bugs` - Generate bug-hunting prompts with distilled code
+- `aid_suggest_refactoring` - Create refactoring analysis prompts
+- `aid_generate_diagram` - Produce diagram generation prompts (Mermaid)
+- `aid_analyze_security` - Generate security audit prompts (OWASP Top 10)
+- `aid_generate_docs` - Create documentation generation prompts
+- `aid_deep_file_analysis` - Systematic file-by-file analysis workflow
+- `aid_multi_file_docs` - Multi-file documentation workflow
+- `aid_complex_analysis` - Enterprise-grade analysis prompts
+- `aid_performance_analysis` - Performance optimization prompts
+- `aid_best_practices` - Code quality and best practices prompts
+
+**🔧 Core Analysis Engine:**
+- `aid_analyze` - Direct access to all AI actions for custom workflows
+
+**Important**: AI Distiller **generates analysis prompts** with distilled code - it does NOT perform the actual analysis! The output is a specialized prompt + distilled code that AI agents (like Claude) then execute. For large codebases, you can copy the output to tools like Gemini 2.0 with 1M context window.
 
 **Smart Context Management**: AI agents can analyze your entire project for understanding the big picture, then zoom into specific modules (auth, API, database) for detailed work. No more overwhelming AI with irrelevant code!
-
-See [MCP Integration Guide](docs/mcp-integration.md) for detailed setup instructions and advanced usage.
 
 ## 📖 Complete CLI Reference
 
