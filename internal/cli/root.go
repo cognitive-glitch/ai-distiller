@@ -80,6 +80,9 @@ var (
 	// Summary output flags
 	summaryFormat        string
 	noEmoji              bool
+	
+	// AI agent instructions flag
+	showAiAgentInstructions bool
 )
 
 // rootCmd represents the base command
@@ -327,6 +330,9 @@ func initFlags() {
 	// Summary output flags
 	rootCmd.Flags().StringVar(&summaryFormat, "summary-type", "visual-progress-bar", "Summary output format: visual-progress-bar|stock-ticker|speedometer-dashboard|minimalist-sparkline|ci-friendly|json|off (default: visual-progress-bar)")
 	rootCmd.Flags().BoolVar(&noEmoji, "no-emoji", false, "Disable emojis in summary output")
+	
+	// AI agent instructions flag
+	rootCmd.Flags().BoolVar(&showAiAgentInstructions, "show-ai-agent-instructions", false, "Show AI agent instructions at the beginning of text output")
 
 	// Handle version flag specially
 	rootCmd.PreRun = func(cmd *cobra.Command, args []string) {
@@ -499,7 +505,19 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 	}
 
 	// Create formatter based on format
-	formatterOpts := formatter.Options{}
+	formatterOpts := formatter.Options{
+		ProcessingOptions: formatter.ProcessingInfo{
+			IncludePublic:        procOpts.IncludePublic,
+			IncludeProtected:     procOpts.IncludeProtected,
+			IncludeInternal:      procOpts.IncludeInternal,
+			IncludePrivate:       procOpts.IncludePrivate,
+			IncludeImplementation: procOpts.IncludeImplementation,
+			IncludeComments:      procOpts.IncludeComments,
+			IncludeImports:       procOpts.IncludeImports,
+			IncludeDocstrings:    procOpts.IncludeDocstrings,
+			IncludeAnnotations:   procOpts.IncludeAnnotations,
+		},
+	}
 	outputFormatter, err := formatter.Get(outputFormat, formatterOpts)
 	if err != nil {
 		return fmt.Errorf("failed to get formatter: %w", err)
@@ -551,6 +569,13 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 	// Clean up empty file tags for text format
 	outputStr := output.String()
 	dbg.Logf(debug.LevelDetailed, "Output format: %s", outputFormat)
+	
+	// Add distillation instructions at the beginning of text output if enabled
+	if outputFormat == "text" && fileCount > 0 && showAiAgentInstructions {
+		instructions := generateDistillationInstructions(procOpts)
+		outputStr = instructions + "\n\n" + outputStr
+	}
+	
 	if outputFormat == "text" {
 		// Remove empty file tags with only whitespace between them
 		emptyFilePattern := regexp.MustCompile(`(?s)<file path="[^"]+">\s*</file>\s*`)
@@ -767,7 +792,19 @@ func processStdinWithContext(ctx context.Context) error {
 	}
 	
 	// Create formatter based on format
-	formatterOpts := formatter.Options{}
+	formatterOpts := formatter.Options{
+		ProcessingOptions: formatter.ProcessingInfo{
+			IncludePublic:        procOpts.IncludePublic,
+			IncludeProtected:     procOpts.IncludeProtected,
+			IncludeInternal:      procOpts.IncludeInternal,
+			IncludePrivate:       procOpts.IncludePrivate,
+			IncludeImplementation: procOpts.IncludeImplementation,
+			IncludeComments:      procOpts.IncludeComments,
+			IncludeImports:       procOpts.IncludeImports,
+			IncludeDocstrings:    procOpts.IncludeDocstrings,
+			IncludeAnnotations:   procOpts.IncludeAnnotations,
+		},
+	}
 	outputFormatter, err := formatter.Get(outputFormat, formatterOpts)
 	if err != nil {
 		return fmt.Errorf("failed to get formatter: %w", err)
@@ -857,12 +894,17 @@ func createProcessOptionsFromFlags() processor.ProcessOptions {
 	includeInternalVal := getBoolFlag(includeInternal, false)
 	includePrivateVal := getBoolFlag(includePrivate, false)
 	
+	// Store visibility levels for formatter instructions
+	opts.IncludePublic = includePublicVal
+	opts.IncludeProtected = includeProtectedVal
+	opts.IncludeInternal = includeInternalVal
+	
 	// Convert to stripper options
 	// If only public is included, remove all non-public
 	if includePublicVal && !includeProtectedVal && !includeInternalVal && !includePrivateVal {
 		opts.IncludePrivate = false
 	} else {
-		opts.IncludePrivate = true
+		opts.IncludePrivate = includePrivateVal
 		// Set specific removal flags based on what's NOT included
 		opts.RemovePrivateOnly = !includePrivateVal
 		opts.RemoveProtectedOnly = !includeProtectedVal
@@ -2138,6 +2180,96 @@ func estimateNodeSize(node ir.DistilledNode) int64 {
 	}
 	
 	return size
+}
+
+// generateDistillationInstructions generates dynamic instructions based on processing options
+func generateDistillationInstructions(opts processor.ProcessOptions) string {
+	// Build list of what's included
+	var included []string
+	var excluded []string
+	
+	// Visibility levels - handle case when not all flags are explicitly set
+	visibilityIncluded := []string{}
+	
+	// Default values if not explicitly set (only public is true by default)
+	includePublic := true
+	includeProtected := false
+	includeInternal := false
+	includePrivate := false
+	
+	// Use actual values if they were set
+	if opts.IncludePublic || opts.IncludeProtected || opts.IncludeInternal || opts.IncludePrivate {
+		includePublic = opts.IncludePublic
+		includeProtected = opts.IncludeProtected
+		includeInternal = opts.IncludeInternal
+		includePrivate = opts.IncludePrivate
+	}
+	
+	if includePublic {
+		visibilityIncluded = append(visibilityIncluded, "public")
+	}
+	if includeProtected {
+		visibilityIncluded = append(visibilityIncluded, "protected")
+	}
+	if includeInternal {
+		visibilityIncluded = append(visibilityIncluded, "internal/package-private")
+	}
+	if includePrivate {
+		visibilityIncluded = append(visibilityIncluded, "private")
+	}
+	
+	if len(visibilityIncluded) > 0 {
+		if len(visibilityIncluded) == 4 {
+			included = append(included, "All visibility levels (public, protected, internal, private)")
+		} else {
+			included = append(included, strings.Join(visibilityIncluded, ", ")+" members")
+		}
+	}
+	
+	// Content types
+	if opts.IncludeImports {
+		included = append(included, "import statements")
+	} else {
+		excluded = append(excluded, "import statements")
+	}
+	
+	if opts.IncludeDocstrings {
+		included = append(included, "documentation/docstrings")
+	}
+	
+	if opts.IncludeAnnotations {
+		included = append(included, "decorators/annotations")
+	}
+	
+	if opts.IncludeImplementation {
+		included = append(included, "function/method implementations")
+	} else {
+		excluded = append(excluded, "function/method bodies")
+	}
+	
+	if opts.IncludeComments {
+		included = append(included, "code comments")
+	} else {
+		excluded = append(excluded, "code comments")
+	}
+	
+	// Build the instructions
+	instructions := "⚡ PROJECT ARCHITECTURE OVERVIEW: This distilled code shows "
+	
+	if len(included) > 0 {
+		instructions += strings.Join(included, ", ")
+		instructions += " providing a complete map of available classes, methods, functions, data types, interfaces, and their relationships."
+	} else {
+		instructions += "all public APIs, classes, methods, functions, data types, and interfaces available in this project."
+	}
+	
+	if len(excluded) > 0 {
+		instructions += " (Excludes: " + strings.Join(excluded, ", ") + ")"
+	}
+	
+	instructions += " 📋 USE THIS DISTILLATION TO: 1) Understand the project's architecture and available components, 2) See what classes/methods/types exist and how to use them correctly, 3) Find the right APIs and their exact signatures, 4) Understand relationships between components. ✅ TRUST THIS OVERVIEW: When implementing features or fixing bugs, reference the distilled signatures above to use the correct classes, methods, parameters, and types - no need to read source files for information already captured here."
+	
+	return instructions
 }
 
 // registerAIActions registers all built-in AI actions

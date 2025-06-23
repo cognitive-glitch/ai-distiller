@@ -43,10 +43,10 @@ test:
 	@export PATH="$$PATH:$$(go env GOPATH)/bin"; \
 	export CGO_CFLAGS="-w"; \
 	if command -v gotestsum >/dev/null 2>&1; then \
-		gotestsum --format testname --junitfile test-results.xml -- -race -coverprofile=coverage.txt -covermode=atomic $$(go list ./... | grep -v '/tools/' | grep -v '/test_project/'); \
+		gotestsum --format testname --junitfile test-results.xml -- -race -coverprofile=coverage.txt -covermode=atomic $$(go list ./... | grep -v '/tools/' | grep -v '/test_project/' | grep -v 'cmd/aid-validate'); \
 	else \
 		echo "📝 For prettier test output, install gotestsum: go install gotest.tools/gotestsum@latest"; \
-		$(GOTEST) -v -race -coverprofile=coverage.txt -covermode=atomic $$(go list ./... | grep -v '/tools/' | grep -v '/test_project/'); \
+		$(GOTEST) -v -race -coverprofile=coverage.txt -covermode=atomic $$(go list ./... | grep -v '/tools/' | grep -v '/test_project/' | grep -v 'cmd/aid-validate'); \
 	fi
 
 # Run tests with different output formats

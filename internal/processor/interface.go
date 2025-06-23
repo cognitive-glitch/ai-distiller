@@ -55,6 +55,15 @@ type ProcessOptions struct {
 	// RemoveInternalOnly removes only internal/package-private members
 	RemoveInternalOnly bool
 	
+	// IncludePublic includes public members (for formatter instructions)
+	IncludePublic bool
+	
+	// IncludeProtected includes protected members (for formatter instructions)
+	IncludeProtected bool
+	
+	// IncludeInternal includes internal/package-private members (for formatter instructions)
+	IncludeInternal bool
+	
 	// IncludeDocstrings includes documentation comments (when false, removes them)
 	IncludeDocstrings bool
 	

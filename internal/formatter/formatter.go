@@ -34,6 +34,22 @@ type Options struct {
 
 	// SortNodes sorts nodes by type and name
 	SortNodes bool
+
+	// ProcessingOptions contains information about what was included/excluded during processing
+	ProcessingOptions ProcessingInfo
+}
+
+// ProcessingInfo contains information about what was included/excluded during processing
+type ProcessingInfo struct {
+	IncludePublic        bool
+	IncludeProtected     bool
+	IncludeInternal      bool
+	IncludePrivate       bool
+	IncludeImplementation bool
+	IncludeComments      bool
+	IncludeImports       bool
+	IncludeDocstrings    bool
+	IncludeAnnotations   bool
 }
 
 // BaseFormatter provides common functionality for formatters

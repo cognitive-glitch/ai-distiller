@@ -203,7 +203,7 @@ class AidDistillerServer {
       },
       async (params) => {
         if (isDebug) console.error(`[AID MCP] distill_file called with params: ${JSON.stringify(params)}`);
-        const args = [params.file_path, '--stdout'];
+        const args = [params.file_path, '--stdout', '--show-ai-agent-instructions'];
         
         if (params.output_format) args.push(`--format=${params.output_format}`);
         if (params.include_private) args.push('--private=1');
@@ -251,7 +251,7 @@ class AidDistillerServer {
       },
       async (params) => {
         if (isDebug) console.error(`[AID MCP] distill_directory called with params: ${JSON.stringify(params)}`);
-        const args = [params.directory_path, '--stdout'];
+        const args = [params.directory_path, '--stdout', '--show-ai-agent-instructions'];
         
         if (params.output_format) args.push(`--format=${params.output_format}`);
         if (params.recursive === false) args.push('--recursive=0');

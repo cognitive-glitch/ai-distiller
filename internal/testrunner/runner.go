@@ -266,14 +266,14 @@ func (r *Runner) RunTest(tc TestCase) error {
 		goArgs := []string{"run", filepath.Join(relProjectPath, "cmd/aid")}
 		goArgs = append(goArgs, relSourceFile)
 		goArgs = append(goArgs, tc.Flags...)
-		goArgs = append(goArgs, "--format", "text", "--stdout")
+		goArgs = append(goArgs, "--format", "text", "--stdout", "--summary-type=off")
 		
 		cmd = exec.Command("go", goArgs...)
 		cmd.Dir = r.testDataDir
 	} else {
 		// Use binary mode
 		args := append([]string{relSourceFile}, tc.Flags...)
-		args = append(args, "--format", "text", "--stdout")
+		args = append(args, "--format", "text", "--stdout", "--summary-type=off")
 		
 		cmd = exec.Command(r.aidBinary, args...)
 		cmd.Dir = r.testDataDir
@@ -361,7 +361,7 @@ func (r *Runner) GenerateExpectedFiles(language, scenario string, flagSets [][]s
 		
 		// Run aid with these flags
 		args := append([]string{sourceFile}, flags...)
-		args = append(args, "--format", "text", "--stdout")
+		args = append(args, "--format", "text", "--stdout", "--summary-type=off")
 		
 		cmd := exec.Command(r.aidBinary, args...)
 		output, err := cmd.Output()
