@@ -83,6 +83,9 @@ var (
 	
 	// AI agent instructions flag
 	showAiAgentInstructions bool
+	
+	// Import filtering flag
+	filterImports        *bool
 )
 
 // rootCmd represents the base command
@@ -333,6 +336,11 @@ func initFlags() {
 	
 	// AI agent instructions flag
 	rootCmd.Flags().BoolVar(&showAiAgentInstructions, "show-ai-agent-instructions", false, "Show AI agent instructions at the beginning of text output")
+	
+	// Import filtering flag
+	filterImports = new(bool)
+	*filterImports = true // Default is true for text output
+	rootCmd.Flags().BoolVar(filterImports, "filter-imports", true, "Filter unused imports in text output")
 
 	// Handle version flag specially
 	rootCmd.PreRun = func(cmd *cobra.Command, args []string) {
@@ -516,7 +524,9 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 			IncludeImports:       procOpts.IncludeImports,
 			IncludeDocstrings:    procOpts.IncludeDocstrings,
 			IncludeAnnotations:   procOpts.IncludeAnnotations,
+			FilterImports:        *filterImports && outputFormat == "text",
 		},
+		DebugLevel: verbosity,
 	}
 	outputFormatter, err := formatter.Get(outputFormat, formatterOpts)
 	if err != nil {
@@ -803,7 +813,9 @@ func processStdinWithContext(ctx context.Context) error {
 			IncludeImports:       procOpts.IncludeImports,
 			IncludeDocstrings:    procOpts.IncludeDocstrings,
 			IncludeAnnotations:   procOpts.IncludeAnnotations,
+			FilterImports:        *filterImports && outputFormat == "text",
 		},
+		DebugLevel: verbosity,
 	}
 	outputFormatter, err := formatter.Get(outputFormat, formatterOpts)
 	if err != nil {
@@ -1873,7 +1885,21 @@ func distillForAction(ctx context.Context, projectPath string) (string, error) {
 	}
 	
 	// Always use text format for AI actions
-	formatterOpts := formatter.Options{}
+	formatterOpts := formatter.Options{
+		ProcessingOptions: formatter.ProcessingInfo{
+			IncludePublic:        procOpts.IncludePublic,
+			IncludeProtected:     procOpts.IncludeProtected,
+			IncludeInternal:      procOpts.IncludeInternal,
+			IncludePrivate:       procOpts.IncludePrivate,
+			IncludeImplementation: procOpts.IncludeImplementation,
+			IncludeComments:      procOpts.IncludeComments,
+			IncludeImports:       procOpts.IncludeImports,
+			IncludeDocstrings:    procOpts.IncludeDocstrings,
+			IncludeAnnotations:   procOpts.IncludeAnnotations,
+			FilterImports:        true, // Always filter imports for AI actions
+		},
+		DebugLevel: verbosity,
+	}
 	outputFormatter, err := formatter.Get("text", formatterOpts)
 	if err != nil {
 		return "", fmt.Errorf("failed to get formatter: %w", err)

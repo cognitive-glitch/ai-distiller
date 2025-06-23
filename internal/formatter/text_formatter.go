@@ -1,10 +1,13 @@
 package formatter
 
 import (
+	"bytes"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 
+	"github.com/janreges/ai-distiller/internal/importfilter"
 	"github.com/janreges/ai-distiller/internal/ir"
 )
 
@@ -22,13 +25,23 @@ func NewTextFormatter(options Options) Formatter {
 
 // Format implements formatter.Formatter
 func (f *TextFormatter) Format(w io.Writer, file *ir.DistilledFile) error {
+	// Check if we should apply import filtering
+	if f.options.ProcessingOptions.FilterImports && file.Language != "" {
+		// Use buffered approach for filtering
+		return f.formatWithFiltering(w, file)
+	}
+	
+	// Direct formatting without filtering
+	return f.formatDirect(w, file)
+}
+
+// formatDirect writes directly to the writer without filtering
+func (f *TextFormatter) formatDirect(w io.Writer, file *ir.DistilledFile) error {
 	// Write file header
 	fmt.Fprintf(w, "<file path=\"%s\">\n", file.Path)
 
 	// Write file contents
-	// fmt.Printf("File has %d children\n", len(file.Children))
 	for _, child := range file.Children {
-		// fmt.Printf("  Child %d: type=%T\n", i, child)
 		if err := f.formatNode(w, child, 0); err != nil {
 			return err
 		}
@@ -37,6 +50,36 @@ func (f *TextFormatter) Format(w io.Writer, file *ir.DistilledFile) error {
 	// Write file footer
 	fmt.Fprintln(w, "</file>")
 
+	return nil
+}
+
+// formatWithFiltering buffers output and applies import filtering
+func (f *TextFormatter) formatWithFiltering(w io.Writer, file *ir.DistilledFile) error {
+	var buf bytes.Buffer
+	
+	// Format to buffer
+	if err := f.formatDirect(&buf, file); err != nil {
+		return err
+	}
+	
+	// Apply import filtering
+	content := buf.String()
+	filteredContent, removedImports, err := importfilter.FilterImports(content, file.Language, f.options.DebugLevel)
+	if err != nil {
+		// On error, use original content
+		fmt.Fprint(w, content)
+		return nil
+	}
+	
+	// Log removed imports in debug mode
+	if len(removedImports) > 0 && f.options.DebugLevel >= 3 {
+		for _, imp := range removedImports {
+			fmt.Fprintf(os.Stderr, "[import filter] Removed unused import: %s\n", imp)
+		}
+	}
+	
+	// Write filtered content
+	fmt.Fprint(w, filteredContent)
 	return nil
 }
 
