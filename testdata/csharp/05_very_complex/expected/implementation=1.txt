@@ -1,10 +1,6 @@
 <file path="source.cs">
 #nullable enable
 
-using System;
-using System.Collections.Generic;
-using System.Numerics;
-using Microsoft.Extensions.DependencyInjection;
 namespace Constructs.VeryComplex05;
 public record VectorN(
     T[] Components,

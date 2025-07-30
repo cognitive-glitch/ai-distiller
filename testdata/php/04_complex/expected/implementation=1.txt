@@ -1,14 +1,8 @@
 <file path="source.php">
 namespace App\Complex;
-use Attribute;
 use ReflectionClass;
-use ReflectionMethod;
-use ReflectionProperty;
-use ReflectionAttribute;
 use Generator;
 use Closure;
-use WeakMap;
-use SplObjectStorage;
 #[Attribute(Attribute::TARGET_METHOD)]
 class Route {
     public readonly string $path;

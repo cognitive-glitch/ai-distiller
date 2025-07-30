@@ -1,7 +1,6 @@
 <file path="source.cs">
 #nullable enable
 
-using System;
 namespace Constructs.Simple02;
 public class BankAccount {
     public dynamic BalanceChanged;

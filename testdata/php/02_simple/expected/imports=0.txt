@@ -29,8 +29,6 @@ trait ValidatableTrait {
     public hasValidationErrors(): bool
 }
 class Product extends BaseEntity implements CacheableInterface {
-    use TimestampableTrait;
-    use ValidatableTrait;
     public const CACHE_TTL = 3600;
     public __construct(string $name, float $price, string $description = '')
     public getName(): string

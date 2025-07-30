@@ -1,7 +1,5 @@
 <file path="source.php">
 namespace App\Simple;
-use DateTimeInterface;
-use JsonSerializable;
 /** Interface for entities that can be persisted */
 interface PersistableInterface {
     public getId(): ?int
@@ -40,8 +38,6 @@ trait ValidatableTrait {
     public hasValidationErrors(): bool
 }
 class Product extends BaseEntity implements CacheableInterface {
-    use TimestampableTrait;
-    use ValidatableTrait;
     private string $name;
     private float $price;
     private string $description;

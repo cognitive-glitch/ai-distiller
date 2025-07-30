@@ -1,6 +1,5 @@
 <file path="source.java">
 package com.aidi.test.modern
-import java.util.stream.Stream
 
 sealed interface Shape permits Circle, Rectangle {
     public double area();

@@ -1,6 +1,5 @@
 <file path="source.py">
 """Represents a user account in the system."""
-from datetime import datetime
 
 class User:
     # A simple representation of a user with basic attributes.

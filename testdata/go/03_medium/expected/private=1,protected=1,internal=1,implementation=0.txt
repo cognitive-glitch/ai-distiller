@@ -2,7 +2,6 @@
 package server
 
 import (
-    "fmt"
 )
 
 // Config holds server configuration.

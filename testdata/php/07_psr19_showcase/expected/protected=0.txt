@@ -1,7 +1,5 @@
 <file path="source.php">
 namespace App\PSR19Showcase;
-use InvalidArgumentException;
-use RuntimeException;
 use DateTimeInterface;
 /**
  * User entity with comprehensive PSR-19 annotations

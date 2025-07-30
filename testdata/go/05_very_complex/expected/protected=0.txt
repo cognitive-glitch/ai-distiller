@@ -2,7 +2,6 @@
 package cache
 
 import (
-    "sync"
 )
 
 // Cache is a generic, thread-safe key-value store.

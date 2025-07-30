@@ -1,5 +1,4 @@
 <file path="source.py">
-import asyncio
 from typing import Type, TypeVar, Generic
 T = TypeVar('T')
 

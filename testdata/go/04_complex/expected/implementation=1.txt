@@ -3,9 +3,7 @@ package worker
 
 import (
     "context"
-    "fmt"
     "sync"
-    "time"
 )
 
 type Job struct {

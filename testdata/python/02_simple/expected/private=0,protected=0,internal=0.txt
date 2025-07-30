@@ -1,5 +1,4 @@
 <file path="source.py">
-from datetime import datetime
 
 class User:
     __init__(self, user_id: int, username: str, email: str)

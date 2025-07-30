@@ -1,16 +1,8 @@
 <file path="source.php">
 namespace App\VeryComplex;
-use Attribute;
 use ReflectionClass;
-use ReflectionMethod;
-use ReflectionProperty;
-use ReflectionFunction;
-use ReflectionAttribute;
 use Generator;
 use Closure;
-use WeakMap;
-use WeakReference;
-use SplObjectStorage;
 use Fiber;
 use FiberError;
 #[Attribute(Attribute::TARGET_CLASS)]

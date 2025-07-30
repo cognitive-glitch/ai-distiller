@@ -1,5 +1,4 @@
 <file path="source.py">
-import re
 PUBLIC_MIN_PASSWORD_LENGTH = 8
 def is_valid_email(email: str) -> bool:
     """

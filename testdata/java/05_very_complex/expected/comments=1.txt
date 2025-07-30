@@ -1,6 +1,5 @@
 <file path="source.java">
 package com.aidi.test.modern
-import java.util.stream.Stream
 
 public class ModernJava {
     public static void main(String[] args);

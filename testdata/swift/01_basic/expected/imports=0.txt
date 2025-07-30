@@ -1,2 +1,0 @@
-<file path="source.swift">
-</file>

@@ -1,6 +1,5 @@
 <file path="source.java">
 package com.aidi.test.oop
-import java.util.Objects
 
 public class SimpleOOP {
     public final String id;
