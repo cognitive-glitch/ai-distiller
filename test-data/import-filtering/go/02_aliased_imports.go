@@ -1,3 +1,5 @@
+//go:build ignore
+
 // Test Pattern 2: Aliased Imports
 // Tests imports with explicit aliases and their usage
 

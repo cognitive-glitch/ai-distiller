@@ -1,3 +1,5 @@
+//go:build ignore
+
 // Test Pattern 5: Complex Import Patterns
 // Tests struct tags, CGO, and indirect usage
 

@@ -1,3 +1,5 @@
+//go:build ignore
+
 // Test Pattern 3: Dot Imports and Grouped Imports
 // Tests dot imports that bring package contents into current namespace
 

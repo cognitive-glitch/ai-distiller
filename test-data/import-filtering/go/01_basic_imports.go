@@ -1,3 +1,5 @@
+//go:build ignore
+
 // Test Pattern 1: Basic Imports
 // Tests standard package imports and usage detection
 

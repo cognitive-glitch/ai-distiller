@@ -1,3 +1,5 @@
+//go:build ignore
+
 // Test Pattern 4: Blank Imports and Side Effects
 // Tests blank imports that execute init() functions for side effects
 
