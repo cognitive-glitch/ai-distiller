@@ -12,7 +12,7 @@
   <img src="https://img.shields.io/badge/Languages-12+-blue" alt="12+ Languages">
   <img src="https://img.shields.io/badge/Performance-5k+_files/sec-green" alt="Performance">
   <img src="https://img.shields.io/badge/Compression-90%25+-orange" alt="Compression">
-  <img src="https://img.shields.io/badge/Tests-988_passed-purple" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-1211_passed-purple" alt="Tests">
 </p
 
 
