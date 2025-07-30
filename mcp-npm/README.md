@@ -437,7 +437,7 @@ distill_file({
   include_private: true,
   include_protected: true,
   include_implementation: true,  // Full code
-  output_format: "json"
+  output_format: "json-structured"
 })
 
 distill_file({

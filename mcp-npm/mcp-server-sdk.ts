@@ -198,7 +198,7 @@ class AidDistillerServer {
           include_internal: z.boolean().optional().describe("Include internal/package-private members (default: false)"),
           include_implementation: z.boolean().optional().describe("Include function/method bodies (default: false)"),
           include_comments: z.boolean().optional().describe("Include comments (default: false)"),
-          output_format: z.enum(["text", "md", "json"]).optional().describe("Output format (default: text)")
+          output_format: z.enum(["text", "md", "jsonl", "json-structured", "xml"]).optional().describe("Output format (default: text)")
         }
       },
       async (params) => {
@@ -246,7 +246,7 @@ class AidDistillerServer {
           include_implementation: z.boolean().optional().describe("Include function/method bodies (default: false)"),
           include_patterns: z.string().optional().describe("File patterns to include (comma-separated, e.g., '*.go,*.py')"),
           exclude_patterns: z.string().optional().describe("File patterns to exclude (comma-separated, e.g., '*test*,vendor/**')"),
-          output_format: z.enum(["text", "md", "json", "jsonl", "xml"]).optional().describe("Output format (default: text)")
+          output_format: z.enum(["text", "md", "jsonl", "json-structured", "xml"]).optional().describe("Output format (default: text)")
         }
       },
       async (params) => {
@@ -670,7 +670,7 @@ class AidDistillerServer {
           ]).describe("AI action to perform"),
           target_path: z.string().describe("Path to analyze"),
           user_query: z.string().optional().describe("Additional context or specific query"),
-          output_format: z.enum(["md", "text", "json"]).optional().describe("Output format"),
+          output_format: z.enum(["text", "md", "jsonl", "json-structured", "xml"]).optional().describe("Output format"),
           include_private: z.boolean().optional().describe("Include private members"),
           include_implementation: z.boolean().optional().describe("Include implementation"),
           include_patterns: z.string().optional().describe("File patterns to include"),
@@ -773,7 +773,7 @@ class AidDistillerServer {
             "Python", "TypeScript", "JavaScript", "Go", "Java",
             "C#", "Rust", "Ruby", "Swift", "Kotlin", "PHP", "C++"
           ],
-          supported_formats: ["text", "md", "json", "jsonl", "xml"],
+          supported_formats: ["text", "md", "jsonl", "json-structured", "xml"],
           ai_actions: {
             prompts: [
               "prompt-for-refactoring-suggestion",
