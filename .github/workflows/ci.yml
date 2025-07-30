@@ -263,7 +263,7 @@ jobs:
           # Test all supported formats
           ./aid test-js --format text > output.txt
           ./aid test-js --format md > output.md
-          ./aid test-js --format json > output.json
+          ./aid test-js --format json-structured > output.json
           ./aid test-js --format xml > output.xml
           
           # Verify all outputs exist and are non-empty

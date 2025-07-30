@@ -460,7 +460,7 @@ aid app.js
 aid src/ --private=0 --protected=0 --internal=0,implementation
 
 # Generate JSON output for tooling integration
-aid src/ --format json --output structure.json
+aid src/ --format json-structured --output structure.json
 
 # Focus on TypeScript files only
 aid src/ --include "*.ts" --exclude "*.test.ts"

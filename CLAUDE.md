@@ -24,7 +24,7 @@ aid                                    # Process current directory
 aid src/                              # Process src directory
 aid main.py                           # Process single file
 aid --comments=0,implementation   # Remove comments and implementations
-aid --format json --output api.json   # JSON output to file
+aid --format json-structured --output api.json   # JSON output to file
 aid --private=0 --protected=0 --internal=0 --stdout       # Print only public members to stdout
 
 # Special git mode (activated when path is .git):

@@ -792,7 +792,7 @@ generate-code.sh | aid --lang typescript --format json
 aid ./src --format text --implementation=0 > context.txt
 
 # Generate a codebase summary for RAG systems
-aid . --format json | jq -r '.files[].symbols[].name' > symbols.txt
+aid . --format json-structured | jq -r '.files[].symbols[].name' > symbols.txt
 
 # Extract API surface for documentation
 aid ./api --comments=0 --implementation=0 --format md > api-ref.md

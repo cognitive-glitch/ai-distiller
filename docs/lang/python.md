@@ -564,7 +564,7 @@ distillFile("app.py", strip_implementation=true)
 ```bash
 # Extract public API for docs
 aid ./src --strip "non-public,implementation" \
-    --format json | \
+    --format json-structured | \
     jq '.files[].symbols[] | select(.visibility == "public")'
 ```
 

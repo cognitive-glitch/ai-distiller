@@ -38,7 +38,7 @@ while preserving important semantic information.`,
   ai-distiller example.py
 
   # Distill multiple files to JSON
-  ai-distiller --format json src/*.py
+  ai-distiller --format json-structured src/*.py
 
   # Strip private members and implementations
   ai-distiller --no-private --no-implementation module.py

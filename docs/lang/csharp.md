@@ -685,7 +685,7 @@ listFiles("Services/Payment/", pattern="*.cs")
 
 ```bash
 # Extract metadata for source generators
-aid ./Models --format json --private=0 --protected=0 --internal=0 | \
+aid ./Models --format json-structured --private=0 --protected=0 --internal=0 | \
   jq '.files[].symbols[] | select(.type == "class" and .attributes[] | contains("GenerateDto"))'
 ```
 

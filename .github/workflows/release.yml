@@ -180,7 +180,7 @@ jobs:
           aid                                    # Process current directory
           aid src/                              # Process src directory  
           aid --strip comments,implementation   # Remove comments and implementations
-          aid --format json --output api.json   # JSON output to file
+          aid --format json-structured --output api.json   # JSON output to file
           aid --strip non-public --stdout       # Print only public members
           ```
           
