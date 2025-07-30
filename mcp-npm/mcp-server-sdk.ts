@@ -198,6 +198,8 @@ class AidDistillerServer {
           include_internal: z.boolean().optional().describe("Include internal/package-private members (default: false)"),
           include_implementation: z.boolean().optional().describe("Include function/method bodies (default: false)"),
           include_comments: z.boolean().optional().describe("Include comments (default: false)"),
+          include_fields: z.boolean().optional().describe("Include fields/properties (default: true)"),
+          include_methods: z.boolean().optional().describe("Include methods/functions (default: true)"),
           output_format: z.enum(["text", "md", "jsonl", "json-structured", "xml"]).optional().describe("Output format (default: text)")
         }
       },
@@ -211,6 +213,8 @@ class AidDistillerServer {
         if (params.include_internal) args.push('--internal=1');
         if (params.include_implementation) args.push('--implementation=1');
         if (params.include_comments) args.push('--comments=1');
+        if (params.include_fields === false) args.push('--fields=0');
+        if (params.include_methods === false) args.push('--methods=0');
         
         if (isDebug) console.error(`[AID MCP] distill_file final args: ${JSON.stringify(args)}`);
         const result = await this.executeAidCommand(args);
@@ -244,6 +248,9 @@ class AidDistillerServer {
           include_protected: z.boolean().optional().describe("Include protected members (default: false)"),
           include_internal: z.boolean().optional().describe("Include internal/package-private members (default: false)"),
           include_implementation: z.boolean().optional().describe("Include function/method bodies (default: false)"),
+          include_comments: z.boolean().optional().describe("Include comments (default: false)"),
+          include_fields: z.boolean().optional().describe("Include fields/properties (default: true)"),
+          include_methods: z.boolean().optional().describe("Include methods/functions (default: true)"),
           include_patterns: z.string().optional().describe("File patterns to include (comma-separated, e.g., '*.go,*.py')"),
           exclude_patterns: z.string().optional().describe("File patterns to exclude (comma-separated, e.g., '*test*,vendor/**')"),
           output_format: z.enum(["text", "md", "jsonl", "json-structured", "xml"]).optional().describe("Output format (default: text)")
@@ -259,6 +266,9 @@ class AidDistillerServer {
         if (params.include_protected) args.push('--protected=1');
         if (params.include_internal) args.push('--internal=1');
         if (params.include_implementation) args.push('--implementation=1');
+        if (params.include_comments) args.push('--comments=1');
+        if (params.include_fields === false) args.push('--fields=0');
+        if (params.include_methods === false) args.push('--methods=0');
         if (params.include_patterns) args.push(`--include=${params.include_patterns}`);
         if (params.exclude_patterns) args.push(`--exclude=${params.exclude_patterns}`);
         
@@ -672,7 +682,12 @@ class AidDistillerServer {
           user_query: z.string().optional().describe("Additional context or specific query"),
           output_format: z.enum(["text", "md", "jsonl", "json-structured", "xml"]).optional().describe("Output format"),
           include_private: z.boolean().optional().describe("Include private members"),
+          include_protected: z.boolean().optional().describe("Include protected members"),
+          include_internal: z.boolean().optional().describe("Include internal/package-private members"),
           include_implementation: z.boolean().optional().describe("Include implementation"),
+          include_comments: z.boolean().optional().describe("Include comments"),
+          include_fields: z.boolean().optional().describe("Include fields/properties (default: true)"),
+          include_methods: z.boolean().optional().describe("Include methods/functions (default: true)"),
           include_patterns: z.string().optional().describe("File patterns to include"),
           exclude_patterns: z.string().optional().describe("File patterns to exclude")
         }
@@ -684,8 +699,13 @@ class AidDistillerServer {
         ];
         
         if (params.output_format) args.push(`--format=${params.output_format}`);
-        if (params.include_private) args.push('--private=1', '--protected=1', '--internal=1');
+        if (params.include_private) args.push('--private=1');
+        if (params.include_protected) args.push('--protected=1');
+        if (params.include_internal) args.push('--internal=1');
         if (params.include_implementation) args.push('--implementation=1');
+        if (params.include_comments) args.push('--comments=1');
+        if (params.include_fields === false) args.push('--fields=0');
+        if (params.include_methods === false) args.push('--methods=0');
         if (params.include_patterns) args.push(`--include=${params.include_patterns}`);
         if (params.exclude_patterns) args.push(`--exclude=${params.exclude_patterns}`);
         

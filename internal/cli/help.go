@@ -234,12 +234,15 @@ Content Filtering:
     --implementation 0|1       Include function/method bodies (default: 0)
     --imports 0|1              Include import/require statements (default: 1)
     --annotations 0|1          Include decorators/annotations (default: 1)
+    --fields 0|1               Include fields/properties (default: 1)
+    --methods 0|1              Include methods/functions (default: 1)
 
 Alternative Filtering:
     --include-only CATEGORIES   Include ONLY these categories (comma-separated)
     --exclude-items CATEGORIES  Exclude these categories (comma-separated)
                                Categories: public,protected,internal,private,
-                               comments,docstrings,implementation,imports,annotations
+                               comments,docstrings,implementation,imports,annotations,
+                               fields,methods
 
 File Selection:
     --include PATTERNS         Include file patterns (e.g., "*.py,*.go")
@@ -788,6 +791,16 @@ Controls what parts of the code structure are included:
                           • Python decorators (@property)
                           • Java annotations (@Override)
                           • C# attributes ([Serializable])
+    
+    --fields 0|1           Include fields/properties (default: 1)
+                          • Class fields and properties
+                          • Instance and static variables
+                          • Data members
+    
+    --methods 0|1          Include methods/functions (default: 1)
+                          • Class methods and functions
+                          • Instance and static methods
+                          • Member functions
 
 ALTERNATIVE FILTERING SYNTAX:
 

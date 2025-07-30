@@ -66,6 +66,8 @@ The new flag system provides precise control over what to include:
 - `--implementation=0/1` (default: 0) - Include function/method bodies
 - `--imports=0/1` (default: 1) - Include import statements
 - `--annotations=0/1` (default: 1) - Include decorators/annotations
+- `--fields=0/1` (default: 1) - Include class fields and properties
+- `--methods=0/1` (default: 1) - Include methods and functions
 
 **Group Filtering** (alternative syntax):
 - `--include-only=public,protected,imports` - Include only these categories
@@ -93,6 +95,15 @@ aid src/ --exclude-items=comments
 
 # Only public and protected members with imports
 aid src/ --include-only=public,protected,imports
+
+# Extract only method signatures (no fields/properties) - great for large codebases  
+aid src/ --fields=0 --implementation=0
+
+# Extract only data structures (no method noise)
+aid models/ --methods=0
+
+# Focus on public API methods only
+aid services/ --fields=0 --private=0 --protected=0 --internal=0
 
 # Performance control
 aid large-project/ --workers=1        # Single-threaded for debugging

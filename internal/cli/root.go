@@ -86,6 +86,10 @@ var (
 	
 	// Import filtering flag
 	filterImports        *bool
+	
+	// Fields and methods filtering flags
+	fieldsFlag           string
+	methodsFlag          string
 )
 
 // rootCmd represents the base command
@@ -307,6 +311,8 @@ func initFlags() {
 	rootCmd.Flags().String("implementation", "0", "Include function/method bodies (0/1, default: 0)")
 	rootCmd.Flags().String("imports", "1", "Include import statements (0/1, default: 1)")
 	rootCmd.Flags().String("annotations", "1", "Include decorators/annotations (0/1, default: 1)")
+	rootCmd.Flags().String("fields", "1", "Include fields/properties (0/1, default: 1)")
+	rootCmd.Flags().String("methods", "1", "Include methods/functions (0/1, default: 1)")
 	
 	// Group filtering flags
 	rootCmd.Flags().StringVar(&includeList, "include-only", "", "Include only these categories (comma-separated)")
@@ -366,6 +372,10 @@ func initFlags() {
 		parseBoolFlag(cmd, "implementation", &includeImplementation)
 		parseBoolFlag(cmd, "imports", &includeImports)
 		parseBoolFlag(cmd, "annotations", &includeAnnotations)
+		
+		// Parse fields and methods flags
+		fieldsFlag, _ = cmd.Flags().GetString("fields")
+		methodsFlag, _ = cmd.Flags().GetString("methods")
 		
 		// Validate mutually exclusive flags
 		if includeList != "" && excludeList != "" {
@@ -464,12 +474,14 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 		getBoolFlag(includeProtected, false),
 		getBoolFlag(includeInternal, false),
 		getBoolFlag(includePrivate, false))
-	dbg.Logf(debug.LevelDetailed, "Content: comments=%v, docstrings=%v, implementation=%v, imports=%v, annotations=%v",
+	dbg.Logf(debug.LevelDetailed, "Content: comments=%v, docstrings=%v, implementation=%v, imports=%v, annotations=%v, fields=%v, methods=%v",
 		getBoolFlag(includeComments, false),
 		getBoolFlag(includeDocstrings, true),
 		getBoolFlag(includeImplementation, false),
 		getBoolFlag(includeImports, true),
-		getBoolFlag(includeAnnotations, true))
+		getBoolFlag(includeAnnotations, true),
+		parseBoolStringFlag(fieldsFlag, true),
+		parseBoolStringFlag(methodsFlag, true))
 
 	// Create processor options from flags
 	procOpts := createProcessOptionsFromFlags()
@@ -696,6 +708,12 @@ func generateOutputFilename(path string, stripOptions []string, format string) s
 		if !getBoolFlag(includeAnnotations, true) {
 			abbrev = append(abbrev, "nann")
 		}
+		if !parseBoolStringFlag(fieldsFlag, true) {
+			abbrev = append(abbrev, "nfld")
+		}
+		if !parseBoolStringFlag(methodsFlag, true) {
+			abbrev = append(abbrev, "nmth")
+		}
 	} else {
 		// Legacy --strip system
 		for _, opt := range stripOptions {
@@ -853,6 +871,25 @@ func parseBoolFlag(cmd *cobra.Command, name string, target **bool) {
 	}
 }
 
+// parseBoolStringFlag parses a string flag value to bool with default
+func parseBoolStringFlag(value string, defaultValue bool) bool {
+	if value == "" {
+		return defaultValue
+	}
+	
+	if value == "0" {
+		return false
+	} else if value == "1" {
+		return true
+	}
+	
+	if b, err := strconv.ParseBool(value); err == nil {
+		return b
+	}
+	
+	return defaultValue
+}
+
 // createProcessOptionsFromFlags creates ProcessOptions from the new flag system
 func createProcessOptionsFromFlags() processor.ProcessOptions {
 	opts := processor.ProcessOptions{}
@@ -927,6 +964,10 @@ func createProcessOptionsFromFlags() processor.ProcessOptions {
 	opts.IncludeDocstrings = getBoolFlag(includeDocstrings, true)
 	opts.IncludeAnnotations = getBoolFlag(includeAnnotations, true)
 	
+	// Handle fields and methods flags
+	opts.IncludeFields = parseBoolStringFlag(fieldsFlag, true)
+	opts.IncludeMethods = parseBoolStringFlag(methodsFlag, true)
+	
 	// Set workers value
 	opts.Workers = workers
 	
@@ -961,6 +1002,8 @@ func processIncludeList(list string) processor.ProcessOptions {
 		IncludePrivate: false,
 		IncludeDocstrings: false,
 		IncludeAnnotations: false,
+		IncludeFields: false,
+		IncludeMethods: false,
 	}
 	
 	// Track which visibility levels are included
@@ -990,6 +1033,10 @@ func processIncludeList(list string) processor.ProcessOptions {
 			opts.IncludeImports = true
 		case "annotations":
 			opts.IncludeAnnotations = true
+		case "fields":
+			opts.IncludeFields = true
+		case "methods":
+			opts.IncludeMethods = true
 		}
 	}
 	
@@ -1020,6 +1067,10 @@ func processExcludeList(list string) processor.ProcessOptions {
 		IncludeImports: true,
 		IncludeImplementation: true,
 		IncludePrivate: true,
+		IncludeDocstrings: true,
+		IncludeAnnotations: true,
+		IncludeFields: true,
+		IncludeMethods: true,
 	}
 	
 	items := strings.Split(list, ",")
@@ -1042,7 +1093,11 @@ func processExcludeList(list string) processor.ProcessOptions {
 		case "imports":
 			opts.IncludeImports = false
 		case "annotations":
-			// TODO: Implement annotation handling
+			opts.IncludeAnnotations = false
+		case "fields":
+			opts.IncludeFields = false
+		case "methods":
+			opts.IncludeMethods = false
 		}
 	}
 	

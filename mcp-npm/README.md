@@ -445,6 +445,22 @@ distill_file({
   include_comments: true,
   output_format: "md"
 })
+
+// Extract only methods (no fields/properties) - great for API surface analysis
+distill_file({
+  file_path: "src/services/UserService.java", 
+  include_fields: false,     // Exclude all fields
+  include_methods: true,     // Keep methods (default)
+  output_format: "text"
+})
+
+// Extract only data structure (no method noise)
+distill_file({
+  file_path: "src/models/Config.ts",
+  include_fields: true,      // Keep fields (default)
+  include_methods: false,    // Exclude methods
+  include_implementation: false
+})
 ```
 
 #### Extract Directory Structure

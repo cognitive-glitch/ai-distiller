@@ -17,13 +17,15 @@ type Options struct {
 	RemoveImports         bool
 	RemoveDocstrings      bool  // Remove documentation comments specifically
 	RemoveAnnotations     bool  // Remove decorators/annotations
+	RemoveFields          bool  // Remove class fields/properties
+	RemoveMethods         bool  // Remove methods/functions
 }
 
 // HasAnyOption returns true if any stripping option is enabled
 func (o Options) HasAnyOption() bool {
 	return o.RemovePrivate || o.RemovePrivateOnly || o.RemoveProtectedOnly || o.RemoveInternalOnly ||
 		o.RemoveImplementations || o.RemoveComments || o.RemoveImports || 
-		o.RemoveDocstrings || o.RemoveAnnotations
+		o.RemoveDocstrings || o.RemoveAnnotations || o.RemoveFields || o.RemoveMethods
 }
 
 // Stripper removes specified elements from the IR based on options
@@ -134,6 +136,11 @@ func (s *Stripper) visitFile(n *ir.DistilledFile) *ir.DistilledFile {
 }
 
 func (s *Stripper) visitFunction(n *ir.DistilledFunction) ir.DistilledNode {
+	// Check if methods should be removed entirely
+	if s.options.RemoveMethods {
+		return nil
+	}
+	
 	// Check if should remove by visibility
 	if s.shouldRemoveByVisibility(n.Name, n.Visibility) {
 		return nil
@@ -282,6 +289,11 @@ func (s *Stripper) visitEnum(n *ir.DistilledEnum) ir.DistilledNode {
 }
 
 func (s *Stripper) visitField(n *ir.DistilledField) ir.DistilledNode {
+	// Check if fields should be removed entirely
+	if s.options.RemoveFields {
+		return nil
+	}
+	
 	// Check if should remove by visibility
 	if s.shouldRemoveByVisibility(n.Name, n.Visibility) {
 		return nil

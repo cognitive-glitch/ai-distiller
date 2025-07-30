@@ -584,6 +584,8 @@ aid <path> [OPTIONS]
 | `--implementation` | 0\|1 | `0` | Include function/method bodies (implementation details) |
 | `--imports` | 0\|1 | `1` | Include import/require statements |
 | `--annotations` | 0\|1 | `1` | Include decorators and annotations |
+| `--fields` | 0\|1 | `1` | Include class fields and properties |
+| `--methods` | 0\|1 | `1` | Include methods and functions |
 
 #### 🎛️ Alternative Filtering Syntax
 
@@ -796,6 +798,15 @@ aid . --format json-structured | jq -r '.files[].symbols[].name' > symbols.txt
 
 # Extract API surface for documentation
 aid ./api --comments=0 --implementation=0 --format md > api-ref.md
+
+# Extract only method signatures (no fields/properties) - great for large codebases
+aid ./src --fields=0 --implementation=0 > methods-only.txt
+
+# Extract only data structures (no method noise)  
+aid ./models --methods=0 > data-structures.txt
+
+# Focus on public API methods only
+aid ./services --fields=0 --private=0 --protected=0 --internal=0
 ```
 
 ### 🚫 Ignoring Files with .aidignore

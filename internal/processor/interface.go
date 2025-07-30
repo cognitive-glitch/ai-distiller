@@ -69,6 +69,12 @@ type ProcessOptions struct {
 	
 	// IncludeAnnotations includes decorators/annotations (when false, removes them)
 	IncludeAnnotations bool
+	
+	// IncludeFields includes class fields/properties (when false, removes them)
+	IncludeFields bool
+	
+	// IncludeMethods includes methods/functions (when false, removes them)
+	IncludeMethods bool
 
 	// MaxDepth limits the depth of nested structures
 	MaxDepth int
@@ -120,6 +126,8 @@ func DefaultProcessOptions() ProcessOptions {
 		RemoveInternalOnly:    false,
 		IncludeDocstrings:     true,
 		IncludeAnnotations:    true,
+		IncludeFields:         true,
+		IncludeMethods:        true,
 		MaxDepth:              100,
 		SymbolResolution:      true,
 		IncludeLineNumbers:    true,
@@ -232,5 +240,7 @@ func (opts ProcessOptions) ToStripperOptions() stripper.Options {
 		RemoveImports:         !opts.IncludeImports,
 		RemoveDocstrings:      !opts.IncludeDocstrings,
 		RemoveAnnotations:     !opts.IncludeAnnotations,
+		RemoveFields:          !opts.IncludeFields,
+		RemoveMethods:         !opts.IncludeMethods,
 	}
 }
