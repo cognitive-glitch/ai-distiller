@@ -123,6 +123,8 @@ func resetAllFlags() {
 	includeAnnotations = nil
 	includeList = ""
 	excludeList = ""
+	fieldsFlag = "1"
+	methodsFlag = "1"
 }
 
 func TestContains(t *testing.T) {
@@ -605,4 +607,212 @@ func TestProcessExcludeList(t *testing.T) {
 // Helper function to create bool pointer
 func boolPtr(b bool) *bool {
 	return &b
+}
+
+func TestFieldsAndMethodsFiltering(t *testing.T) {
+	t.Run("DefaultBehavior", func(t *testing.T) {
+		cmd := rootCmd
+		cmd.ResetFlags()
+		initFlags()
+
+		// Test that fields and methods are included by default
+		args := []string{}
+		cmd.ParseFlags(args)
+
+		fields, _ := cmd.Flags().GetString("fields")
+		methods, _ := cmd.Flags().GetString("methods")
+
+		assert.Equal(t, "1", fields, "fields should be included by default")
+		assert.Equal(t, "1", methods, "methods should be included by default")
+	})
+
+	t.Run("ExcludeFields", func(t *testing.T) {
+		cmd := rootCmd
+		cmd.ResetFlags()
+		initFlags()
+
+		// Test --fields=0 (exclude fields)
+		args := []string{"--fields=0"}
+		cmd.ParseFlags(args)
+
+		fields, _ := cmd.Flags().GetString("fields")
+		methods, _ := cmd.Flags().GetString("methods")
+
+		assert.Equal(t, "0", fields, "fields should be excluded")
+		assert.Equal(t, "1", methods, "methods should still be included")
+	})
+
+	t.Run("ExcludeMethods", func(t *testing.T) {
+		cmd := rootCmd
+		cmd.ResetFlags()
+		initFlags()
+
+		// Test --methods=0 (exclude methods)
+		args := []string{"--methods=0"}
+		cmd.ParseFlags(args)
+
+		fields, _ := cmd.Flags().GetString("fields")
+		methods, _ := cmd.Flags().GetString("methods")
+
+		assert.Equal(t, "1", fields, "fields should still be included")
+		assert.Equal(t, "0", methods, "methods should be excluded")
+	})
+
+	t.Run("ExcludeBoth", func(t *testing.T) {
+		cmd := rootCmd
+		cmd.ResetFlags()
+		initFlags()
+
+		// Test --fields=0 --methods=0 (exclude both)
+		args := []string{"--fields=0", "--methods=0"}
+		cmd.ParseFlags(args)
+
+		fields, _ := cmd.Flags().GetString("fields")
+		methods, _ := cmd.Flags().GetString("methods")
+
+		assert.Equal(t, "0", fields, "fields should be excluded")
+		assert.Equal(t, "0", methods, "methods should be excluded")
+	})
+
+	t.Run("IncludeOnlyWithFields", func(t *testing.T) {
+		cmd := rootCmd
+		cmd.ResetFlags()
+		initFlags()
+
+		// Test --include-only with fields
+		args := []string{"--include-only", "fields,imports"}
+		cmd.ParseFlags(args)
+
+		includeOnly, _ := cmd.Flags().GetString("include-only")
+		assert.Equal(t, "fields,imports", includeOnly)
+	})
+
+	t.Run("IncludeOnlyWithMethods", func(t *testing.T) {
+		cmd := rootCmd
+		cmd.ResetFlags()
+		initFlags()
+
+		// Test --include-only with methods
+		args := []string{"--include-only", "methods,public"}
+		cmd.ParseFlags(args)
+
+		includeOnly, _ := cmd.Flags().GetString("include-only")
+		assert.Equal(t, "methods,public", includeOnly)
+	})
+
+	t.Run("ExcludeItemsWithFields", func(t *testing.T) {
+		cmd := rootCmd
+		cmd.ResetFlags()
+		initFlags()
+
+		// Test --exclude-items with fields
+		args := []string{"--exclude-items", "fields,comments"}
+		cmd.ParseFlags(args)
+
+		excludeItems, _ := cmd.Flags().GetString("exclude-items")
+		assert.Equal(t, "fields,comments", excludeItems)
+	})
+
+	t.Run("ExcludeItemsWithMethods", func(t *testing.T) {
+		cmd := rootCmd
+		cmd.ResetFlags()
+		initFlags()
+
+		// Test --exclude-items with methods
+		args := []string{"--exclude-items", "methods,implementation"}
+		cmd.ParseFlags(args)
+
+		excludeItems, _ := cmd.Flags().GetString("exclude-items")
+		assert.Equal(t, "methods,implementation", excludeItems)
+	})
+}
+
+func TestFieldsMethodsProcessorOptionsMapping(t *testing.T) {
+	t.Run("DefaultProcessorOptions", func(t *testing.T) {
+		// Reset all flags
+		resetAllFlags()
+		fieldsFlag = "1"
+		methodsFlag = "1"
+
+		opts := createProcessOptionsFromFlags()
+
+		assert.True(t, opts.IncludeFields, "IncludeFields should be true by default")
+		assert.True(t, opts.IncludeMethods, "IncludeMethods should be true by default")
+	})
+
+	t.Run("FieldsDisabled", func(t *testing.T) {
+		// Reset all flags and set fields=0
+		resetAllFlags()
+		fieldsFlag = "0"
+		methodsFlag = "1"
+
+		opts := createProcessOptionsFromFlags()
+
+		assert.False(t, opts.IncludeFields, "IncludeFields should be false when fields=0")
+		assert.True(t, opts.IncludeMethods, "IncludeMethods should be true")
+	})
+
+	t.Run("MethodsDisabled", func(t *testing.T) {
+		// Reset all flags and set methods=0
+		resetAllFlags()
+		fieldsFlag = "1"
+		methodsFlag = "0"
+
+		opts := createProcessOptionsFromFlags()
+
+		assert.True(t, opts.IncludeFields, "IncludeFields should be true")
+		assert.False(t, opts.IncludeMethods, "IncludeMethods should be false when methods=0")
+	})
+
+	t.Run("BothDisabled", func(t *testing.T) {
+		// Reset all flags and set both to 0
+		resetAllFlags()
+		fieldsFlag = "0"
+		methodsFlag = "0"
+
+		opts := createProcessOptionsFromFlags()
+
+		assert.False(t, opts.IncludeFields, "IncludeFields should be false when fields=0")
+		assert.False(t, opts.IncludeMethods, "IncludeMethods should be false when methods=0")
+	})
+
+	t.Run("IncludeOnlyFields", func(t *testing.T) {
+		resetAllFlags()
+		includeList = "fields"
+
+		opts := processIncludeList(includeList)
+
+		assert.True(t, opts.IncludeFields, "IncludeFields should be true in include-only fields")
+		assert.False(t, opts.IncludeMethods, "IncludeMethods should be false in include-only fields")
+	})
+
+	t.Run("IncludeOnlyMethods", func(t *testing.T) {
+		resetAllFlags()
+		includeList = "methods"
+
+		opts := processIncludeList(includeList)
+
+		assert.False(t, opts.IncludeFields, "IncludeFields should be false in include-only methods")
+		assert.True(t, opts.IncludeMethods, "IncludeMethods should be true in include-only methods")
+	})
+
+	t.Run("ExcludeFields", func(t *testing.T) {
+		resetAllFlags()
+		excludeList = "fields"
+
+		opts := processExcludeList(excludeList)
+
+		assert.False(t, opts.IncludeFields, "IncludeFields should be false when fields excluded")
+		assert.True(t, opts.IncludeMethods, "IncludeMethods should be true when only fields excluded")
+	})
+
+	t.Run("ExcludeMethods", func(t *testing.T) {
+		resetAllFlags()
+		excludeList = "methods"
+
+		opts := processExcludeList(excludeList)
+
+		assert.True(t, opts.IncludeFields, "IncludeFields should be true when only methods excluded")
+		assert.False(t, opts.IncludeMethods, "IncludeMethods should be false when methods excluded")
+	})
 }
