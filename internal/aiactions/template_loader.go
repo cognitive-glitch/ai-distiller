@@ -1,6 +1,7 @@
 package aiactions
 
 import (
+	"embed"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,24 +13,35 @@ import (
 	"github.com/janreges/ai-distiller/internal/version"
 )
 
+//go:embed templates/*.md
+var embeddedTemplates embed.FS
+
 // TemplateData contains data for template rendering
 type TemplateData struct {
 	ProjectName  string
 	AnalysisDate string
 }
 
-// LoadTemplate loads and renders a template from the templates directory
+// LoadTemplate loads and renders a template from embedded files first, then filesystem fallback
 func LoadTemplate(templateName string, data TemplateData) (string, error) {
-	templatePath := findTemplatePath(templateName)
-	if templatePath == "" {
-		cwd, _ := os.Getwd()
-		return "", fmt.Errorf("template file not found: %s (searched from %s)", templateName+".md", cwd)
-	}
+	var content []byte
+	var err error
 	
-	// Load template file
-	content, err := os.ReadFile(templatePath)
+	// Strategy 1: Try embedded templates first
+	embeddedPath := fmt.Sprintf("templates/%s.md", templateName)
+	content, err = embeddedTemplates.ReadFile(embeddedPath)
 	if err != nil {
-		return "", fmt.Errorf("failed to read template file %s: %w", templatePath, err)
+		// Strategy 2: Fall back to filesystem
+		templatePath := findTemplatePath(templateName)
+		if templatePath == "" {
+			cwd, _ := os.Getwd()
+			return "", fmt.Errorf("template file not found: %s (searched embedded and filesystem from %s)", templateName+".md", cwd)
+		}
+		
+		content, err = os.ReadFile(templatePath)
+		if err != nil {
+			return "", fmt.Errorf("failed to read template file %s: %w", templatePath, err)
+		}
 	}
 
 	// Create FuncMap with template functions
