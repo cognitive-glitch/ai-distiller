@@ -31,11 +31,27 @@ PLATFORMS = linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 wind
 
 all: build
 
-# Build for current platform (with CGO - full language support)
+# Build for current platform (with CGO - full language support and embedded templates)
 build: clean
-	@echo "==> Building $(BINARY_NAME) $(VERSION) with full language support"
+	@echo "==> Building $(BINARY_NAME) $(VERSION) with full language support and embedded templates"
 	@mkdir -p $(BUILD_DIR)
-	CGO_ENABLED=1 $(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/aid
+	CGO_ENABLED=1 CGO_CFLAGS="-w" $(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/aid
+	@echo "✅ Successfully built $(BINARY_NAME) at: $(BUILD_DIR)/$(BINARY_NAME) ($$(du -h $(BUILD_DIR)/$(BINARY_NAME) | cut -f1))"
+
+# Build without CGO (embedded templates only, Go language support)
+build-no-cgo: clean
+	@echo "==> Building $(BINARY_NAME) $(VERSION) with embedded templates (CGO disabled)"
+	@mkdir -p $(BUILD_DIR)
+	CGO_ENABLED=0 $(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/aid
+	@echo "✅ Successfully built $(BINARY_NAME) at: $(BUILD_DIR)/$(BINARY_NAME) ($$(du -h $(BUILD_DIR)/$(BINARY_NAME) | cut -f1))"
+
+# Build with verbose output (shows all warnings)
+build-verbose: clean
+	@echo "==> Building $(BINARY_NAME) $(VERSION) with verbose output (shows warnings)"
+	@mkdir -p $(BUILD_DIR)
+	CGO_ENABLED=1 $(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/aid 2>&1
+	@echo ""
+	@echo "✅ Successfully built $(BINARY_NAME) at: $(BUILD_DIR)/$(BINARY_NAME) ($$(du -h $(BUILD_DIR)/$(BINARY_NAME) | cut -f1))"
 
 # Run tests with enhanced output
 test:
@@ -367,7 +383,9 @@ npm-release: npm-prepare npm-build-binaries
 # Show help
 help:
 	@echo "Available targets:"
-	@echo "  build           - Build the application"
+	@echo "  build           - Build the application (CGO enabled, full language support)"
+	@echo "  build-no-cgo   - Build with embedded templates only (CGO disabled)"
+	@echo "  build-verbose   - Build with verbose output (shows CGO warnings)"
 	@echo ""
 	@echo "✨ Test commands (with gotestsum - pretty output):"
 	@echo "  test            - Run tests with enhanced output (default)"
