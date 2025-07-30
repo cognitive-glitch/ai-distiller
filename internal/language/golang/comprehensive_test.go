@@ -58,7 +58,11 @@ func TestGoConstructs(t *testing.T) {
 	}
 
 	p := NewProcessor()
-	textFormatter := formatterPkg.NewLanguageAwareTextFormatter(formatterPkg.Options{})
+	textFormatter := formatterPkg.NewLanguageAwareTextFormatter(formatterPkg.Options{
+		ProcessingOptions: formatterPkg.ProcessingInfo{
+			FilterImports: true, // Enable import filtering like CLI does
+		},
+	})
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
