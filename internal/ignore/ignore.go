@@ -208,10 +208,16 @@ func (m *IgnoreMatcher) matchPattern(relPath string, p pattern, isDir bool) bool
 	
 	// For directory patterns, check if the path is within that directory
 	if p.isDir {
-		if isDir && relPath == pattern {
+		// Handle leading slash in pattern - remove it for comparison with relPath
+		patternToMatch := pattern
+		if strings.HasPrefix(pattern, "/") {
+			patternToMatch = strings.TrimPrefix(pattern, "/")
+		}
+		
+		if isDir && relPath == patternToMatch {
 			// Directory itself matches
 			matched = true
-		} else if strings.HasPrefix(relPath, pattern+"/") {
+		} else if strings.HasPrefix(relPath, patternToMatch+"/") {
 			// Path is inside the directory
 			matched = true
 		}
@@ -234,6 +240,19 @@ func (m *IgnoreMatcher) matchPattern(relPath string, p pattern, isDir bool) bool
 		} else {
 			// Simple name pattern - matches anywhere
 			matched = matchName(relPath, pattern)
+			
+			// Also try to match as directory pattern (without trailing slash)
+			// This handles cases like "bin" matching "bin/file.txt"
+			if !matched {
+				// Check if this could be a directory pattern
+				if relPath == pattern {
+					// Exact directory match
+					matched = true
+				} else if strings.HasPrefix(relPath, pattern+"/") {
+					// Path is inside this directory
+					matched = true
+				}
+			}
 		}
 	}
 
