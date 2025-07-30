@@ -353,6 +353,14 @@ func (p *NativeTreeSitterProcessor) processFunction(node *sitter.Node, file *ir.
 			if int(startByte) < len(p.source) && int(endByte) <= len(p.source) {
 				fn.Implementation = string(p.source[startByte:endByte])
 			}
+			
+			// Also process the contents of the block recursively
+			// This allows us to extract field assignments like self.field = value
+			// We pass a special context that includes both the function and its parent (class)
+			for j := 0; j < int(child.ChildCount()); j++ {
+				blockChild := child.Child(j)
+				p.processNodeWithClassContext(blockChild, file, fn, parent)
+			}
 		}
 	}
 
@@ -546,6 +554,16 @@ func (p *NativeTreeSitterProcessor) processAssignment(node *sitter.Node, file *i
 	if leftNode != nil {
 		if leftNode.Type() == "identifier" {
 			name = p.getNodeText(leftNode)
+		} else if leftNode.Type() == "attribute" {
+			// Handle self.field_name = value assignments
+			// Extract the attribute name (field name) from attribute node
+			for i := 0; i < int(leftNode.ChildCount()); i++ {
+				child := leftNode.Child(i)
+				if child.Type() == "identifier" && i > 0 { // Skip the first identifier (usually "self")
+					name = p.getNodeText(child)
+					break
+				}
+			}
 		} else if leftNode.Type() == "typed_assignment" {
 			// variable: Type = value
 			for i := 0; i < int(leftNode.ChildCount()); i++ {
@@ -581,8 +599,151 @@ func (p *NativeTreeSitterProcessor) processAssignment(node *sitter.Node, file *i
 			field.Visibility = ir.VisibilityPublic
 		}
 
-		p.addNode(file, parent, field)
+		// Special handling for self.field assignments in Python:
+		// If this is an attribute assignment (self.field = value) and we're inside a function
+		// that's inside a class, associate the field with the class instead of the function
+		targetParent := parent
+		if leftNode != nil && leftNode.Type() == "attribute" {
+			// Check if we're in a function that's inside a class
+			if function, ok := parent.(*ir.DistilledFunction); ok {
+				// Look through the file to find which class contains this function
+				if class := p.findClassContainingFunction(file, function); class != nil {
+					targetParent = class
+				}
+			}
+		}
+
+		p.addNode(file, targetParent, field)
 	}
+}
+
+// processNodeWithClassContext processes a node with knowledge of both function and class context
+func (p *NativeTreeSitterProcessor) processNodeWithClassContext(node *sitter.Node, file *ir.DistilledFile, function *ir.DistilledFunction, classParent ir.DistilledNode) {
+	switch node.Type() {
+	case "assignment":
+		p.processAssignmentWithClassContext(node, file, function, classParent)
+	
+	case "expression_statement":
+		// Check for assignments within expression statements
+		if node.ChildCount() > 0 {
+			child := node.Child(0)
+			if child.Type() == "assignment" {
+				p.processAssignmentWithClassContext(child, file, function, classParent)
+			}
+		}
+	
+	default:
+		// For other node types, recurse into children with the same context
+		for i := 0; i < int(node.ChildCount()); i++ {
+			p.processNodeWithClassContext(node.Child(i), file, function, classParent)
+		}
+	}
+}
+
+// processAssignmentWithClassContext processes assignments with class context available
+func (p *NativeTreeSitterProcessor) processAssignmentWithClassContext(node *sitter.Node, file *ir.DistilledFile, function *ir.DistilledFunction, classParent ir.DistilledNode) {
+	var name string
+	var typeRef *ir.TypeRef
+	var value string
+
+	// Find left and right sides
+	var leftNode, rightNode *sitter.Node
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		if child.Type() == "=" {
+			if i > 0 {
+				leftNode = node.Child(i - 1)
+			}
+			if i < int(node.ChildCount())-1 {
+				rightNode = node.Child(i + 1)
+			}
+			break
+		}
+	}
+
+	if leftNode == nil {
+		// Try pattern: first child is left, last is right
+		if node.ChildCount() >= 3 {
+			leftNode = node.Child(0)
+			rightNode = node.Child(int(node.ChildCount()) - 1)
+		}
+	}
+
+	// Extract name from left side
+	if leftNode != nil {
+		if leftNode.Type() == "identifier" {
+			name = p.getNodeText(leftNode)
+		} else if leftNode.Type() == "attribute" {
+			// Handle self.field_name = value assignments
+			// Extract the attribute name (field name) from attribute node
+			for i := 0; i < int(leftNode.ChildCount()); i++ {
+				child := leftNode.Child(i)
+				if child.Type() == "identifier" && i > 0 { // Skip the first identifier (usually "self")
+					name = p.getNodeText(child)
+					break
+				}
+			}
+		} else if leftNode.Type() == "typed_assignment" {
+			// variable: Type = value
+			for i := 0; i < int(leftNode.ChildCount()); i++ {
+				child := leftNode.Child(i)
+				if child.Type() == "identifier" && name == "" {
+					name = p.getNodeText(child)
+				} else if child.Type() == "type" {
+					typeRef = &ir.TypeRef{
+						Name: p.getNodeText(child),
+					}
+				}
+			}
+		}
+	}
+
+	// Extract value from right side
+	if rightNode != nil {
+		value = p.getNodeText(rightNode)
+	}
+
+	if name != "" {
+		field := &ir.DistilledField{
+			BaseNode:     p.nodeLocation(node),
+			Name:         name,
+			Type:         typeRef,
+			DefaultValue: value,
+		}
+
+		// Set visibility
+		if p.isPrivateName(name) {
+			field.Visibility = ir.VisibilityPrivate
+		} else {
+			field.Visibility = ir.VisibilityPublic
+		}
+
+		// Determine target parent: if this is a self.field assignment and we have a class context, use the class
+		var targetParent ir.DistilledNode = function // default to function
+		if leftNode != nil && leftNode.Type() == "attribute" && classParent != nil {
+			if class, ok := classParent.(*ir.DistilledClass); ok {
+				targetParent = class
+			}
+		}
+
+		p.addNode(file, targetParent, field)
+	}
+}
+
+// findClassContainingFunction searches for the class that contains the given function
+func (p *NativeTreeSitterProcessor) findClassContainingFunction(file *ir.DistilledFile, function *ir.DistilledFunction) *ir.DistilledClass {
+	// Search through all children of the file
+	for _, child := range file.Children {
+		if class, ok := child.(*ir.DistilledClass); ok {
+			// Check if this class contains the function
+			for _, classChild := range class.Children {
+				if classChild == function {
+					return class
+				}
+			}
+		}
+	}
+	return nil
 }
 
 // processDocstring processes docstring comments

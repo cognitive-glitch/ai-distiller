@@ -28,6 +28,8 @@ func TestGoConstructs(t *testing.T) {
 				IncludeComments:       false,
 				IncludeDocstrings:     true,  // Fixed: default should include docstrings
 				IncludeImports:        true,
+				IncludeFields:         true,  // Fixed: default should include fields
+				IncludeMethods:        true,  // Fixed: default should include methods
 			},
 			expectedFile: "default.txt",
 		},
@@ -40,6 +42,8 @@ func TestGoConstructs(t *testing.T) {
 				IncludeComments:       false,  // Fixed: implementation=1.txt doesn't include comments
 				IncludeDocstrings:     true,
 				IncludeImports:        true,
+				IncludeFields:         true,  // Fixed: default should include fields
+				IncludeMethods:        true,  // Fixed: default should include methods
 			},
 			expectedFile: "implementation=1.txt",
 		},
@@ -52,6 +56,8 @@ func TestGoConstructs(t *testing.T) {
 				IncludeComments:       false,  // Fixed: private=1,protected=1,internal=1,implementation=0.txt doesn't include comments
 				IncludeDocstrings:     true,
 				IncludeImports:        true,
+				IncludeFields:         true,  // Fixed: default should include fields
+				IncludeMethods:        true,  // Fixed: default should include methods
 			},
 			expectedFile: "private=1,protected=1,internal=1,implementation=0.txt",
 		},
