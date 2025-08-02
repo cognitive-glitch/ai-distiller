@@ -290,6 +290,61 @@ class AidDistillerServer {
         };
       }
     );
+
+    // Dependency-aware distillation
+    this.server.registerTool(
+      "distill_with_dependencies",
+      {
+        title: "Dependency-Aware Code Distillation",
+        description: "Analyzes call dependencies and returns distilled code of only relevant methods/classes up to specified depth. This advanced feature traces function/method calls across files and includes only the code that is actually called from the target file, creating focused distillations for deep code analysis.\n\nUSAGE: Perfect for understanding code execution flows, impact analysis, and creating focused context for AI assistants. Particularly useful for large codebases where you need to understand how specific functionality works across multiple files.",
+        inputSchema: {
+          file_path: z.string().describe("Target file to analyze"),
+          max_depth: z.number().default(2).describe("Maximum depth to follow dependencies (default: 2)"),
+          include_private: z.boolean().optional().describe("Include private members (default: false)"),
+          include_protected: z.boolean().optional().describe("Include protected members (default: false)"),
+          include_internal: z.boolean().optional().describe("Include internal/package-private members (default: false)"),
+          include_implementation: z.boolean().optional().describe("Include function/method bodies (default: false)"),
+          include_comments: z.boolean().optional().describe("Include comments (default: false)"),
+          include_fields: z.boolean().optional().describe("Include fields/properties (default: true)"),
+          include_methods: z.boolean().optional().describe("Include methods/functions (default: true)"),
+          output_format: z.enum(["text", "md", "jsonl", "json-structured", "xml"]).optional().describe("Output format (default: text)")
+        }
+      },
+      async (params) => {
+        if (isDebug) console.error(`[AID MCP] distill_with_dependencies called with params: ${JSON.stringify(params)}`);
+        const args = [params.file_path, '--dependency-aware', '--stdout', '--show-ai-agent-instructions'];
+        
+        // Add max-depth parameter
+        args.push(`--max-depth=${params.max_depth || 2}`);
+        
+        // Add standard distillation options
+        if (params.output_format) args.push(`--format=${params.output_format}`);
+        if (params.include_private) args.push('--private=1');
+        if (params.include_protected) args.push('--protected=1');
+        if (params.include_internal) args.push('--internal=1');
+        if (params.include_implementation) args.push('--implementation=1');
+        if (params.include_comments) args.push('--comments=1');
+        if (params.include_fields === false) args.push('--fields=0');
+        if (params.include_methods === false) args.push('--methods=0');
+        
+        if (isDebug) console.error(`[AID MCP] distill_with_dependencies final args: ${JSON.stringify(args)}`);
+        const result = await this.executeAidCommand(args);
+        
+        // Check if result is empty
+        if (!result || result.trim().length === 0) {
+          if (isDebug) console.error(`[AID MCP] Warning: Empty result for dependency analysis of ${params.file_path}`);
+          throw new Error(`No output received from dependency-aware distillation. File may not exist, may not be supported, or aid binary may have issues.`);
+        }
+        
+        if (isDebug) console.error(`[AID MCP] distill_with_dependencies result length: ${result.length} bytes`);
+        return {
+          content: [{
+            type: "text",
+            text: result
+          }]
+        };
+      }
+    );
   }
 
   /**
@@ -765,7 +820,8 @@ class AidDistillerServer {
           tools: {
             core: [
               "distill_file - Extract structure from single files",
-              "distill_directory - Extract structure from directories"
+              "distill_directory - Extract structure from directories",
+              "distill_with_dependencies - Dependency-aware distillation with call graph analysis"
             ],
             specialized: [
               "aid_hunt_bugs - Systematic bug detection",
