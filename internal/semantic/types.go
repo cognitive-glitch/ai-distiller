@@ -75,15 +75,22 @@ type ParameterInfo struct {
 	IsVariadic   bool   `json:"is_variadic"` // *args, **kwargs, ...rest
 }
 
+// TypeTracker tracks variable types and object instantiations
+type TypeTracker struct {
+	Variables map[string]string `json:"variables"` // variable name -> type name
+	Types     map[string]string `json:"types"`     // type name -> scope/module
+}
+
 // SymbolTable contains symbols declared within a specific scope (e.g., a file)
 type SymbolTable struct {
 	FilePath     string             `json:"file_path"`
 	Language     string             `json:"language"`
-	Symbols      map[string]*Symbol `json:"symbols"`      // Maps symbol name to definition
+	Symbols      map[string]*Symbol `json:"symbols"`       // Maps symbol name to definition
 	NestedScopes map[string]*Symbol `json:"nested_scopes"` // Maps scope name to its symbol
-	Dependencies []string           `json:"dependencies"` // List of imported file paths
-	Exports      []string           `json:"exports"`      // List of exported symbol names
-	Timestamp    time.Time          `json:"timestamp"`    // When this table was created
+	Dependencies []string           `json:"dependencies"`  // List of imported file paths
+	Exports      []string           `json:"exports"`       // List of exported symbol names
+	TypeTracker  *TypeTracker       `json:"type_tracker"`  // NEW: Track variable types
+	Timestamp    time.Time          `json:"timestamp"`     // When this table was created
 }
 
 // NewSymbolTable creates a new symbol table for a file
@@ -95,7 +102,11 @@ func NewSymbolTable(filePath, language string) *SymbolTable {
 		NestedScopes: make(map[string]*Symbol),
 		Dependencies: make([]string, 0),
 		Exports:      make([]string, 0),
-		Timestamp:    time.Now(),
+		TypeTracker: &TypeTracker{
+			Variables: make(map[string]string),
+			Types:     make(map[string]string),
+		},
+		Timestamp: time.Now(),
 	}
 }
 

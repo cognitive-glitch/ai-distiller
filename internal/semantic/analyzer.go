@@ -153,10 +153,14 @@ func (a *Analyzer) processDeclarationCapture(captureName string, node *sitter.No
 		return a.processClassDeclaration(captureName, node, content, analysis)
 	case strings.HasPrefix(captureName, "method."):
 		return a.processMethodDeclaration(captureName, node, content, analysis)
+	case strings.HasPrefix(captureName, "decorated_method."):
+		return a.processMethodDeclaration(captureName, node, content, analysis)
 	case strings.HasPrefix(captureName, "variable."):
 		return a.processVariableDeclaration(captureName, node, content, analysis)
 	case strings.HasPrefix(captureName, "constant."):
 		return a.processConstantDeclaration(captureName, node, content, analysis)
+	case strings.HasPrefix(captureName, "instantiation."):
+		return a.processInstantiationDeclaration(captureName, node, content, analysis)
 	case strings.HasPrefix(captureName, "property."):
 		return a.processPropertyDeclaration(captureName, node, content, analysis)
 	}
@@ -281,7 +285,7 @@ func (a *Analyzer) processClassDeclaration(captureName string, node *sitter.Node
 
 // processMethodDeclaration processes method declarations (functions inside classes)
 func (a *Analyzer) processMethodDeclaration(captureName string, node *sitter.Node, content []byte, analysis *FileAnalysis) error {
-	if captureName != "method.definition" {
+	if captureName != "method.definition" && captureName != "decorated_method.definition" {
 		return nil
 	}
 
@@ -483,6 +487,41 @@ func (a *Analyzer) processPropertyDeclaration(captureName string, node *sitter.N
 	}
 
 	analysis.SymbolTable.AddSymbol(symbol)
+	return nil
+}
+
+// processInstantiationDeclaration processes object instantiation assignments
+func (a *Analyzer) processInstantiationDeclaration(captureName string, node *sitter.Node, content []byte, analysis *FileAnalysis) error {
+	if captureName != "instantiation.assignment" {
+		return nil
+	}
+
+	// Extract variable name (left side of assignment)
+	leftNode := node.ChildByFieldName("left")
+	if leftNode == nil {
+		return nil
+	}
+	varName := nodeText(leftNode, content)
+
+	// Extract call expression (right side of assignment)
+	rightNode := node.ChildByFieldName("right")
+	if rightNode == nil {
+		return nil
+	}
+
+	// Extract the function being called (should be class constructor)
+	funcNode := rightNode.ChildByFieldName("function")
+	if funcNode == nil {
+		return nil
+	}
+	className := nodeText(funcNode, content)
+
+	// Track this variable -> type mapping
+	if analysis.SymbolTable.TypeTracker != nil {
+		analysis.SymbolTable.TypeTracker.Variables[varName] = className
+		analysis.SymbolTable.TypeTracker.Types[className] = analysis.FilePath
+	}
+
 	return nil
 }
 
