@@ -9,6 +9,8 @@ tmp/
 .*.aid.txt
 *.tmp
 *.log
+aid.*.txt
+.claude/
 
 # Binary files
 aid
