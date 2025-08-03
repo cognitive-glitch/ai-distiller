@@ -90,6 +90,10 @@ var (
 	// Fields and methods filtering flags
 	fieldsFlag           string
 	methodsFlag          string
+	
+	// Dependency-aware distillation flags
+	dependencyAware      bool
+	maxDepth            int
 )
 
 // rootCmd represents the base command
@@ -347,6 +351,10 @@ func initFlags() {
 	filterImports = new(bool)
 	*filterImports = true // Default is true for text output
 	rootCmd.Flags().BoolVar(filterImports, "filter-imports", true, "Filter unused imports in text output")
+	
+	// Dependency-aware distillation flags
+	rootCmd.Flags().BoolVar(&dependencyAware, "dependency-aware", false, "Enable cross-file dependency analysis and call graph traversal")
+	rootCmd.Flags().IntVar(&maxDepth, "max-depth", 2, "Maximum depth for dependency traversal (default: 2)")
 
 	// Handle version flag specially
 	rootCmd.PreRun = func(cmd *cobra.Command, args []string) {
@@ -908,6 +916,8 @@ func createProcessOptionsFromFlags() processor.ProcessOptions {
 		opts.RemoveProtectedOnly = contains(stripOptions, "protected")
 		opts.Workers = workers
 		opts.RawMode = rawMode
+		opts.MaxDepth = maxDepth
+		opts.SymbolResolution = dependencyAware
 		return opts
 	}
 	
@@ -919,6 +929,8 @@ func createProcessOptionsFromFlags() processor.ProcessOptions {
 		opts.Recursive = recursiveStr != "0"
 		opts.IncludePatterns = includeGlob
 		opts.ExcludePatterns = excludeGlob
+		opts.MaxDepth = maxDepth
+		opts.SymbolResolution = dependencyAware
 		return opts
 	}
 	if excludeList != "" {
@@ -928,6 +940,8 @@ func createProcessOptionsFromFlags() processor.ProcessOptions {
 		opts.Recursive = recursiveStr != "0"
 		opts.IncludePatterns = includeGlob
 		opts.ExcludePatterns = excludeGlob
+		opts.MaxDepth = maxDepth
+		opts.SymbolResolution = dependencyAware
 		return opts
 	}
 	
@@ -980,6 +994,10 @@ func createProcessOptionsFromFlags() processor.ProcessOptions {
 	// Set include/exclude patterns
 	opts.IncludePatterns = includeGlob
 	opts.ExcludePatterns = excludeGlob
+	
+	// Dependency-aware distillation options
+	opts.MaxDepth = maxDepth
+	opts.SymbolResolution = dependencyAware
 	
 	return opts
 }

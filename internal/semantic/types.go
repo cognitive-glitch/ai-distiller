@@ -53,6 +53,12 @@ type Symbol struct {
 	Metadata    SymbolMeta   `json:"metadata"`     // Additional language-specific data
 }
 
+// CallInfo represents one direct call the symbol performs
+type CallInfo struct {
+	FunctionName string `json:"function_name"`
+	// In future: FilePath, ReceiverType, etc.
+}
+
 // SymbolMeta contains additional metadata for symbols
 type SymbolMeta struct {
 	ReturnType   string            `json:"return_type,omitempty"`
@@ -64,6 +70,7 @@ type SymbolMeta struct {
 	LineCount    int               `json:"line_count,omitempty"`   // Size metric
 	Complexity   int               `json:"complexity,omitempty"`   // Cyclomatic complexity
 	CustomFields map[string]string `json:"custom_fields,omitempty"` // Language-specific fields
+	Calls        []CallInfo        `json:"calls,omitempty"`        // Functions/methods called by this symbol
 }
 
 // ParameterInfo represents function/method parameter information

@@ -371,6 +371,13 @@ func (f *TextFormatter) formatField(w io.Writer, field *ir.DistilledField, inden
 }
 
 func (f *TextFormatter) formatComment(w io.Writer, comment *ir.DistilledComment, indent string) error {
+	// Special handling for implementation format (from dependency analysis)
+	if comment.Format == "implementation" {
+		// Output raw implementation content without comment formatting
+		fmt.Fprint(w, comment.Text)
+		return nil
+	}
+	
 	// Just output the comment text as-is for language-agnostic output
 	fmt.Fprintf(w, "%s%s\n", indent, comment.Text)
 	return nil

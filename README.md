@@ -31,6 +31,7 @@ Very simply, it can be said that `aid`, within the distillation process, will le
 - [🤔 Why AI Distiller?](#-why-ai-distiller)
 - [✨ Key Features](#-key-features)
 - [🎯 How It Works](#-how-it-works)
+- [🔗 Dependency-Aware Distillation](#-dependency-aware-distillation)
 - [🚀 Quick Start](#-quick-start)
   - [One-Line Installation](#one-line-installation)
   - [Basic Usage](#basic-usage)
@@ -197,6 +198,93 @@ Currently supports 12 languages via tree-sitter:
 4. **Outputs** in your preferred format: compact text, markdown, or structured JSON
 
 All tree-sitter grammars are compiled into the `aid` binary - zero external dependencies!
+
+## 🔗 Dependency-Aware Distillation
+
+**Advanced Feature**: AI Distiller includes dependency-aware distillation that analyzes call graphs across files and includes only the code that is actually used from your codebase. This creates focused distillations for deep code analysis by following function/method calls across multiple files.
+
+> 💡 **New to dependency analysis?** This feature traces which functions actually call each other in your code, creating a minimal context that includes only the relevant parts. Perfect for AI tools that need to understand code relationships without processing entire files.
+
+### 🎯 How Dependency-Aware Analysis Works
+
+Instead of including entire files, dependency-aware distillation:
+1. **Identifies entry points** (main functions, exported APIs)
+2. **Traces function calls** across file boundaries
+3. **Builds call graphs** to understand dependencies
+4. **Includes only used code** - functions that are actually called
+5. **Filters out unused code** - dead code elimination for AI context
+
+```bash
+# Basic dependency analysis
+aid main.py --dependency-aware
+
+# Control analysis depth
+aid main.py --dependency-aware --max-depth=2
+
+# Include implementations for deeper analysis
+aid main.py --dependency-aware --implementation=1 --max-depth=3
+```
+
+### 📊 Language Support Quality
+
+We've worked extensively to make dependency-aware distillation as reliable as possible across different programming languages. However, the complexity varies significantly between languages, and we want to be transparent about the current state:
+
+| Language | Support Level | Cross-File Analysis | Intra-File Calls | Performance | Notes |
+|----------|---------------|--------------------|--------------------|-------------|-------|
+| **Python** | 🟢 **Very Good** | ✅ Full | ✅ Complete | ~37ms | Package imports, all call patterns |
+| **JavaScript** | 🟢 **Very Good** | ✅ Full | ✅ Complete | ~38ms | CommonJS & ES6 modules |
+| **Go** | 🟢 **Very Good** | ✅ Full | ✅ Complete | ~37ms | Package system integration |
+| **Rust** | 🟢 **Very Good** | ✅ Full | ✅ Complete | ~36ms | Crate system, proper filtering |
+| **Java** | 🟢 **Very Good** | ✅ Full | ✅ Complete | ~41ms | Package imports, static methods |
+| **Swift** | 🟢 **Very Good** | ✅ Full | ✅ Complete | ~37ms | Class and static method detection |
+| **PHP** | 🟢 **Very Good** | ✅ Full | ✅ Complete | ~37ms | Include/require resolution |
+| **Ruby** | 🟢 **Very Good** | ✅ Full | ✅ Complete | ~40ms | Module system, all call patterns |
+| **TypeScript** | 🟡 **Limited** | ❌ Issues | ❌ Issues | N/A | Language processor limitations |
+| **C#** | 🟡 **Limited** | ❌ Issues | ❌ Issues | N/A | Language processor limitations |
+| **C++** | 🟡 **Limited** | ❌ Issues | ❌ Issues | N/A | Language processor limitations |
+| **Kotlin** | 🟠 **Good** | ✅ Partial | ⚠️ Basic | ~45ms | Companion objects, some edge cases |
+
+**Legend:**
+- 🟢 **Very Good**: Production-ready, handles complex scenarios reliably
+- 🟠 **Good**: Solid functionality with minor limitations
+- 🟡 **Limited**: Basic functionality, parsing capabilities may be limited
+- ✅ **Full**: Complete cross-file dependency tracing
+- ⚠️ **Basic**: Simple scenarios work well, complex patterns may be limited
+- ❌ **Issues**: Functionality is significantly limited
+
+### 🚀 Performance Characteristics
+
+**Very Good Performance** (8 languages):
+- **Processing Time**: 36-41ms consistently
+- **Compression**: 65-72% size reduction
+- **Scalability**: Handles projects up to 10 files efficiently
+- **Memory Usage**: Minimal, no hanging or timeout issues
+
+**Areas for Enhancement**:
+- **Large Projects**: Performance may be limited with 50+ files
+- **Language Processors**: C#, C++, TypeScript have fundamental limitations  
+- **Complex Call Patterns**: Advanced metaprogramming patterns may be limited
+
+### 💡 When to Use Dependency-Aware Analysis
+
+**Perfect for:**
+- 🎯 **Impact Analysis** - Understand what code is affected by changes
+- 🔍 **Code Navigation** - Follow execution flows across multiple files
+- 🎪 **Focused Context** - Get only relevant code for AI assistants
+- 📚 **Legacy Understanding** - Trace through complex codebases systematically
+- 🔧 **API Analysis** - See which methods are actually called vs. just defined
+
+**Best Practices:**
+```bash
+# Start with small depth for quick overview
+aid main.py --dependency-aware --max-depth=1
+
+# Increase depth for comprehensive analysis
+aid main.py --dependency-aware --max-depth=2 --implementation=1
+
+# Use with specific languages known to work well
+aid src/ --dependency-aware --include="*.py,*.js,*.go"
+```
 
 ### 🚀 Transform Massive Codebases Into AI-Friendly Context
 

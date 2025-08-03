@@ -138,6 +138,16 @@ func (p *Processor) ProcessFile(filename string, opts ProcessOptions) (*ir.Disti
 			d.Dump(debug.LevelTrace, fmt.Sprintf("IR for %s", filepath.Base(filename)), result)
 		})
 		
+		// Apply dependency-aware analysis if enabled
+		if opts.SymbolResolution && opts.MaxDepth >= 0 {
+			dependencyResult, err := ProcessWithDependencyAnalysis(p.ctx, p, filename, opts)
+			if err != nil {
+				dbg.Logf(debug.LevelBasic, "Dependency analysis failed, using normal result: %v", err)
+				return result, nil
+			}
+			return dependencyResult, nil
+		}
+		
 		return result, nil
 	}
 	
@@ -174,10 +184,31 @@ func (p *Processor) ProcessFile(filename string, opts ProcessOptions) (*ir.Disti
 				debug.Lazy(p.ctx, debug.LevelTrace, func(d debug.Debugger) {
 					d.Dump(debug.LevelTrace, fmt.Sprintf("Stripped IR for %s", filepath.Base(filename)), file)
 				})
+				
+				// Apply dependency-aware analysis if enabled
+				if opts.SymbolResolution && opts.MaxDepth >= 0 {
+					dependencyResult, err := ProcessWithDependencyAnalysis(p.ctx, p, filename, opts)
+					if err != nil {
+						dbg.Logf(debug.LevelBasic, "Dependency analysis failed, using normal result: %v", err)
+						return file, nil
+					}
+					return dependencyResult, nil
+				}
+				
 				return file, nil
 			}
 			return nil, fmt.Errorf("unexpected node type after stripping")
 		}
+	}
+
+	// Apply dependency-aware analysis if enabled
+	if opts.SymbolResolution && opts.MaxDepth >= 0 {
+		dependencyResult, err := ProcessWithDependencyAnalysis(p.ctx, p, filename, opts)
+		if err != nil {
+			dbg.Logf(debug.LevelBasic, "Dependency analysis failed, using normal result: %v", err)
+			return result, nil
+		}
+		return dependencyResult, nil
 	}
 
 	return result, nil

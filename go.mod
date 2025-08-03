@@ -17,7 +17,6 @@ require (
 	github.com/tree-sitter/tree-sitter-java v0.23.5
 	github.com/tree-sitter/tree-sitter-javascript v0.23.1
 	github.com/tree-sitter/tree-sitter-php v0.23.12
-	github.com/tree-sitter/tree-sitter-python v0.23.2
 	github.com/tree-sitter/tree-sitter-ruby v0.23.1
 	golang.org/x/term v0.32.0
 	tree-sitter-swift v0.0.0
