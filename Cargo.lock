@@ -499,6 +499,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "lang-swift"
+version = "0.1.0"
+dependencies = [
+ "distiller-core",
+ "insta",
+ "parking_lot",
+ "tree-sitter",
+ "tree-sitter-swift",
+]
+
+[[package]]
 name = "lang-typescript"
 version = "2.0.0"
 dependencies = [
@@ -1043,6 +1054,16 @@ name = "tree-sitter-rust"
 version = "0.23.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ca8ccb3e3a3495c8a943f6c3fd24c3804c471fd7f4f16087623c7fa4c0068e8a"
+dependencies = [
+ "cc",
+ "tree-sitter-language",
+]
+
+[[package]]
+name = "tree-sitter-swift"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d65aeb41726119416567d0333ec17580ac4abfb96db1f67c4bd638c65f9992fe"
 dependencies = [
  "cc",
  "tree-sitter-language",
