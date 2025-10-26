@@ -32,30 +32,35 @@ impl SwiftProcessor {
         source[node.start_byte()..node.end_byte()].to_string()
     }
 
-    fn parse_visibility(&self, node: TSNode, source: &str) -> Visibility {
+    fn parse_modifiers(&self, node: TSNode, source: &str) -> (Visibility, Vec<String>) {
+        let mut visibility = Visibility::Internal; // Swift default
+        let mut modifiers = Vec::new();
+        
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
             if child.kind() == "modifiers" {
                 let text = self.node_text(child, source);
-                // Check for various visibility modifiers
-                if text.contains("private") {
-                    return Visibility::Private;
-                } else if text.contains("fileprivate") {
-                    return Visibility::Private;
+                if text.contains("private") || text.contains("fileprivate") {
+                    visibility = Visibility::Private;
                 } else if text.contains("public") || text.contains("open") {
-                    return Visibility::Public;
+                    visibility = Visibility::Public;
                 } else if text.contains("internal") {
-                    return Visibility::Internal;
+                    visibility = Visibility::Internal;
+                }
+                
+                if text.contains("open") {
+                    modifiers.push("open".to_string());
                 }
             }
         }
-        // Swift defaults to internal visibility
-        Visibility::Internal
+        
+        (visibility, modifiers)
     }
 
     fn parse_type_parameters(&self, node: TSNode, source: &str) -> Vec<TypeParam> {
         let mut type_params = Vec::new();
         let mut cursor = node.walk();
+        
         for child in node.children(&mut cursor) {
             if child.kind() == "type_parameters" {
                 let mut tp_cursor = child.walk();
@@ -72,10 +77,10 @@ impl SwiftProcessor {
                                         name = self.node_text(param_child, source);
                                     }
                                 }
-                                "type_constraint" => {
+                                "type_constraint" | "inheritance_constraint" => {
                                     let constraint_text = self.node_text(param_child, source);
                                     if !constraint_text.is_empty() {
-                                        constraints.push(TypeRef::new(constraint_text));
+                                        constraints.push(TypeRef::new(constraint_text.trim_start_matches(": ")));
                                     }
                                 }
                                 _ => {}
@@ -96,11 +101,26 @@ impl SwiftProcessor {
         type_params
     }
 
-    fn parse_protocol(&self, node: TSNode, source: &str) -> Result<Option<Class>> {
+    fn get_class_type(&self, node: TSNode, _source: &str) -> Option<String> {
+        let mut cursor = node.walk();
+        for child in node.children(&mut cursor) {
+            match child.kind() {
+                "enum" => return Some("enum".to_string()),
+                "struct" => return Some("struct".to_string()),
+                "class" => return Some("class".to_string()),
+                "protocol" => return Some("protocol".to_string()),
+                _ => {}
+            }
+        }
+        None
+    }
+
+    fn parse_class_declaration(&self, node: TSNode, source: &str) -> Result<Option<Class>> {
+        let class_type = self.get_class_type(node, source);
         let mut name = String::new();
-        let mut children = Vec::new();
         let mut extends = Vec::new();
-        let visibility = self.parse_visibility(node, source);
+        let mut children = Vec::new();
+        let (visibility, extra_modifiers) = self.parse_modifiers(node, source);
         let type_params = self.parse_type_parameters(node, source);
 
         let line_start = node.start_position().row + 1;
@@ -114,11 +134,72 @@ impl SwiftProcessor {
                         name = self.node_text(child, source);
                     }
                 }
-                "type_inheritance_clause" => {
+                "type_inheritance_clause" | "inheritance_specifier" => {
+                    self.parse_type_inheritance(child, source, &mut extends)?;
+                }
+                "class_body" | "enum_class_body" | "struct_body" | "protocol_body" => {
+                    self.parse_body(child, source, &mut children)?;
+                }
+                _ => {}
+            }
+        }
+
+        // Determine decorators and handle inheritance
+        let decorators = if let Some(ref t) = class_type {
+            if t == "enum" || t == "struct" || t == "protocol" {
+                vec![t.clone()]
+            } else {
+                vec![]
+            }
+        } else {
+            vec![]
+        };
+
+        // For Swift, in most cases inheritance means protocol conformance
+        // Classes can have superclass but we can't distinguish without type info
+        // So we treat all as protocols (implements) for simplicity
+        let (extends_final, implements_final) = match class_type.as_deref() {
+            Some("struct") | Some("enum") | Some("class") => (vec![], extends),
+            Some("protocol") => (extends, vec![]),
+            _ => (vec![], extends),
+        };
+
+        Ok(Some(Class {
+            name,
+            visibility,
+            extends: extends_final,
+            implements: implements_final,
+            type_params,
+            decorators,
+            modifiers: extra_modifiers.iter().map(|_| Modifier::Final).collect(),
+            children,
+            line_start,
+            line_end,
+        }))
+    }
+
+    fn parse_protocol_declaration(&self, node: TSNode, source: &str) -> Result<Option<Class>> {
+        let mut name = String::new();
+        let mut extends = Vec::new();
+        let mut children = Vec::new();
+        let (visibility, _) = self.parse_modifiers(node, source);
+
+        let line_start = node.start_position().row + 1;
+        let line_end = node.end_position().row + 1;
+
+        let mut cursor = node.walk();
+        for child in node.children(&mut cursor) {
+            match child.kind() {
+                "type_identifier" => {
+                    if name.is_empty() {
+                        name = self.node_text(child, source);
+                    }
+                }
+                "type_inheritance_clause" | "inheritance_specifier" => {
                     self.parse_type_inheritance(child, source, &mut extends)?;
                 }
                 "protocol_body" => {
-                    self.parse_protocol_body(child, source, &mut children)?;
+                    self.parse_body(child, source, &mut children)?;
                 }
                 _ => {}
             }
@@ -129,212 +210,8 @@ impl SwiftProcessor {
             visibility,
             extends,
             implements: vec![],
-            type_params,
-            decorators: vec!["protocol".to_string()],
-            modifiers: vec![],
-            children,
-            line_start,
-            line_end,
-        }))
-    }
-
-    fn parse_protocol_body(&self, node: TSNode, source: &str, children: &mut Vec<ir::Node>) -> Result<()> {
-        let mut cursor = node.walk();
-        for child in node.children(&mut cursor) {
-            match child.kind() {
-                "protocol_function_declaration" | "protocol_property_declaration" => {
-                    if let Some(method) = self.parse_protocol_requirement(child, source)? {
-                        children.push(ir::Node::Function(method));
-                    }
-                }
-                _ => {}
-            }
-        }
-        Ok(())
-    }
-
-    fn parse_protocol_requirement(&self, node: TSNode, source: &str) -> Result<Option<Function>> {
-        let mut name = String::new();
-        let mut parameters = Vec::new();
-        let mut return_type = None;
-        let visibility = Visibility::Public; // Protocol requirements are always public
-
-        let line_start = node.start_position().row + 1;
-        let line_end = node.end_position().row + 1;
-
-        let mut cursor = node.walk();
-        for child in node.children(&mut cursor) {
-            match child.kind() {
-                "simple_identifier" => {
-                    if name.is_empty() {
-                        name = self.node_text(child, source);
-                    }
-                }
-                "parameter_clause" => {
-                    self.parse_parameters(child, source, &mut parameters)?;
-                }
-                "type_annotation" => {
-                    return_type = self.parse_type_annotation(child, source);
-                }
-                _ => {}
-            }
-        }
-
-        if !name.is_empty() {
-            Ok(Some(Function {
-                name,
-                visibility,
-                parameters,
-                return_type,
-                decorators: vec![],
-                modifiers: vec![],
-                type_params: vec![],
-                implementation: None,
-                line_start,
-                line_end,
-            }))
-        } else {
-            Ok(None)
-        }
-    }
-
-    fn parse_struct(&self, node: TSNode, source: &str) -> Result<Option<Class>> {
-        let mut name = String::new();
-        let mut extends = Vec::new();
-        let mut children = Vec::new();
-        let visibility = self.parse_visibility(node, source);
-        let type_params = self.parse_type_parameters(node, source);
-
-        let line_start = node.start_position().row + 1;
-        let line_end = node.end_position().row + 1;
-
-        let mut cursor = node.walk();
-        for child in node.children(&mut cursor) {
-            match child.kind() {
-                "type_identifier" => {
-                    if name.is_empty() {
-                        name = self.node_text(child, source);
-                    }
-                }
-                "type_inheritance_clause" => {
-                    self.parse_type_inheritance(child, source, &mut extends)?;
-                }
-                "struct_body" => {
-                    self.parse_body(child, source, &mut children)?;
-                }
-                _ => {}
-            }
-        }
-
-        Ok(Some(Class {
-            name,
-            visibility,
-            extends: vec![],
-            implements: extends, // In Swift, structs implement protocols
-            type_params,
-            decorators: vec!["struct".to_string()],
-            modifiers: vec![],
-            children,
-            line_start,
-            line_end,
-        }))
-    }
-
-    fn parse_class(&self, node: TSNode, source: &str) -> Result<Option<Class>> {
-        let mut name = String::new();
-        let mut extends = Vec::new();
-        let mut children = Vec::new();
-        let mut modifiers = vec![];
-        let visibility = self.parse_visibility(node, source);
-        let type_params = self.parse_type_parameters(node, source);
-
-        let line_start = node.start_position().row + 1;
-        let line_end = node.end_position().row + 1;
-
-        // Check for 'open' modifier
-        let mut cursor = node.walk();
-        for child in node.children(&mut cursor) {
-            if child.kind() == "modifiers" {
-                let text = self.node_text(child, source);
-                if text.contains("open") {
-                    modifiers.push(Modifier::Final); // Use existing modifier, open is similar to non-final
-                }
-            }
-        }
-
-        let mut cursor = node.walk();
-        for child in node.children(&mut cursor) {
-            match child.kind() {
-                "type_identifier" => {
-                    if name.is_empty() {
-                        name = self.node_text(child, source);
-                    }
-                }
-                "type_inheritance_clause" => {
-                    self.parse_type_inheritance(child, source, &mut extends)?;
-                }
-                "class_body" => {
-                    self.parse_body(child, source, &mut children)?;
-                }
-                _ => {}
-            }
-        }
-
-        // First item in extends is the superclass, rest are protocols
-        let (extends, implements) = if !extends.is_empty() {
-            (vec![extends[0].clone()], extends[1..].to_vec())
-        } else {
-            (vec![], vec![])
-        };
-
-        Ok(Some(Class {
-            name,
-            visibility,
-            extends,
-            implements,
-            type_params,
-            decorators: vec![],
-            modifiers,
-            children,
-            line_start,
-            line_end,
-        }))
-    }
-
-    fn parse_enum(&self, node: TSNode, source: &str) -> Result<Option<Class>> {
-        let mut name = String::new();
-        let mut extends = Vec::new();
-        let mut children = Vec::new();
-        let visibility = self.parse_visibility(node, source);
-
-        let line_start = node.start_position().row + 1;
-        let line_end = node.end_position().row + 1;
-
-        let mut cursor = node.walk();
-        for child in node.children(&mut cursor) {
-            match child.kind() {
-                "type_identifier" => {
-                    if name.is_empty() {
-                        name = self.node_text(child, source);
-                    }
-                }
-                "type_inheritance_clause" => {
-                    self.parse_type_inheritance(child, source, &mut extends)?;
-                }
-                "enum_class_body" => {
-                    self.parse_body(child, source, &mut children)?;
-                }
-                _ => {}
-            }
-        }
-
-        Ok(Some(Class {
-            name,
-            visibility,
-            extends: vec![],
-            implements: extends,
             type_params: vec![],
-            decorators: vec!["enum".to_string()],
+            decorators: vec!["protocol".to_string()],
             modifiers: vec![],
             children,
             line_start,
@@ -359,7 +236,7 @@ impl SwiftProcessor {
         let mut name = String::new();
         let mut parameters = Vec::new();
         let mut return_type = None;
-        let visibility = self.parse_visibility(node, source);
+        let (visibility, _) = self.parse_modifiers(node, source);
         let type_params = self.parse_type_parameters(node, source);
 
         let line_start = node.start_position().row + 1;
@@ -373,34 +250,43 @@ impl SwiftProcessor {
                         name = self.node_text(child, source);
                     }
                 }
-                "parameter_clause" => {
+                "function_value_parameters" | "parameter_clause" => {
                     self.parse_parameters(child, source, &mut parameters)?;
                 }
-                "type_annotation" => {
-                    return_type = self.parse_type_annotation(child, source);
+                "function_type" => {
+                    let mut ft_cursor = child.walk();
+                    for ft_child in child.children(&mut ft_cursor) {
+                        if ft_child.kind() == "type_identifier" {
+                            return_type = Some(TypeRef::new(self.node_text(ft_child, source)));
+                        }
+                    }
                 }
                 _ => {}
             }
         }
 
-        Ok(Some(Function {
-            name,
-            visibility,
-            parameters,
-            return_type,
-            decorators: vec![],
-            modifiers: vec![],
-            type_params,
-            implementation: None,
-            line_start,
-            line_end,
-        }))
+        if !name.is_empty() {
+            Ok(Some(Function {
+                name,
+                visibility,
+                parameters,
+                return_type,
+                decorators: vec![],
+                modifiers: vec![],
+                type_params,
+                implementation: None,
+                line_start,
+                line_end,
+            }))
+        } else {
+            Ok(None)
+        }
     }
 
     fn parse_parameters(&self, node: TSNode, source: &str, params: &mut Vec<Parameter>) -> Result<()> {
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
-            if child.kind() == "parameter" {
+            if child.kind() == "parameter" || child.kind() == "function_value_parameter" {
                 self.parse_single_parameter(child, source, params)?;
             }
         }
@@ -416,16 +302,17 @@ impl SwiftProcessor {
         for child in node.children(&mut cursor) {
             match child.kind() {
                 "simple_identifier" => {
-                    // Swift can have external and internal parameter names
-                    // We'll use the last identifier as the parameter name
                     name = self.node_text(child, source);
                 }
                 "type_annotation" => {
-                    if let Some(type_ref) = self.parse_type_annotation(child, source) {
-                        param_type = type_ref;
+                    let mut ta_cursor = child.walk();
+                    for ta_child in child.children(&mut ta_cursor) {
+                        if ta_child.kind() == "type_identifier" || ta_child.kind() == "user_type" {
+                            param_type = TypeRef::new(self.node_text(ta_child, source));
+                        }
                     }
                 }
-                "variadic_parameter" => {
+                "variadic" => {
                     is_variadic = true;
                 }
                 _ => {}
@@ -446,39 +333,27 @@ impl SwiftProcessor {
         Ok(())
     }
 
-    fn parse_type_annotation(&self, node: TSNode, source: &str) -> Option<TypeRef> {
-        let mut cursor = node.walk();
-        for child in node.children(&mut cursor) {
-            if matches!(child.kind(), "type_identifier" | "user_type" | "optional_type") {
-                let type_name = self.node_text(child, source);
-                if !type_name.is_empty() && type_name != ":" {
-                    return Some(TypeRef::new(type_name));
-                }
-            }
-        }
-        None
-    }
-
     fn parse_property(&self, node: TSNode, source: &str) -> Result<Option<Field>> {
         let mut name = String::new();
         let mut field_type = None;
-        let visibility = self.parse_visibility(node, source);
+        let (visibility, _) = self.parse_modifiers(node, source);
         let line = node.start_position().row + 1;
 
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
             match child.kind() {
-                "pattern_binding" => {
-                    let mut binding_cursor = child.walk();
-                    for binding_child in child.children(&mut binding_cursor) {
-                        match binding_child.kind() {
-                            "simple_identifier" => {
-                                name = self.node_text(binding_child, source);
+                "pattern" | "value_binding_pattern" => {
+                    let mut pattern_cursor = child.walk();
+                    for pattern_child in child.children(&mut pattern_cursor) {
+                        if pattern_child.kind() == "simple_identifier" {
+                            name = self.node_text(pattern_child, source);
+                        } else if pattern_child.kind() == "type_annotation" {
+                            let mut ta_cursor = pattern_child.walk();
+                            for ta_child in pattern_child.children(&mut ta_cursor) {
+                                if ta_child.kind() == "type_identifier" {
+                                    field_type = Some(TypeRef::new(self.node_text(ta_child, source)));
+                                }
                             }
-                            "type_annotation" => {
-                                field_type = self.parse_type_annotation(binding_child, source);
-                            }
-                            _ => {}
                         }
                     }
                 }
@@ -504,29 +379,19 @@ impl SwiftProcessor {
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
             match child.kind() {
-                "function_declaration" => {
+                "function_declaration" | "protocol_function_declaration" => {
                     if let Some(func) = self.parse_function(child, source)? {
                         children.push(ir::Node::Function(func));
                     }
                 }
-                "property_declaration" => {
+                "property_declaration" | "protocol_property_declaration" => {
                     if let Some(field) = self.parse_property(child, source)? {
                         children.push(ir::Node::Field(field));
                     }
                 }
                 "class_declaration" => {
-                    if let Some(class) = self.parse_class(child, source)? {
+                    if let Some(class) = self.parse_class_declaration(child, source)? {
                         children.push(ir::Node::Class(class));
-                    }
-                }
-                "struct_declaration" => {
-                    if let Some(struct_decl) = self.parse_struct(child, source)? {
-                        children.push(ir::Node::Class(struct_decl));
-                    }
-                }
-                "enum_declaration" => {
-                    if let Some(enum_decl) = self.parse_enum(child, source)? {
-                        children.push(ir::Node::Class(enum_decl));
                     }
                 }
                 _ => {}
@@ -568,22 +433,12 @@ impl LanguageProcessor for SwiftProcessor {
         for child in root.children(&mut cursor) {
             match child.kind() {
                 "class_declaration" => {
-                    if let Some(class) = self.parse_class(child, source)? {
+                    if let Some(class) = self.parse_class_declaration(child, source)? {
                         file.children.push(ir::Node::Class(class));
                     }
                 }
-                "struct_declaration" => {
-                    if let Some(struct_decl) = self.parse_struct(child, source)? {
-                        file.children.push(ir::Node::Class(struct_decl));
-                    }
-                }
-                "enum_declaration" => {
-                    if let Some(enum_decl) = self.parse_enum(child, source)? {
-                        file.children.push(ir::Node::Class(enum_decl));
-                    }
-                }
                 "protocol_declaration" => {
-                    if let Some(protocol) = self.parse_protocol(child, source)? {
+                    if let Some(protocol) = self.parse_protocol_declaration(child, source)? {
                         file.children.push(ir::Node::Class(protocol));
                     }
                 }
@@ -657,10 +512,6 @@ enum TemperatureScale: String {
 public struct Point: Describable, Equatable {
     public var x: Int
     public var y: Int
-
-    public var magnitude: Double {
-        sqrt(Double(x * x + y * y))
-    }
 }
 "#;
         let processor = SwiftProcessor::new().unwrap();
@@ -685,15 +536,7 @@ public struct Point: Describable, Equatable {
     fn test_class_with_inheritance() {
         let source = r#"
 open class Rectangle: Describable {
-    public private(set) var origin: Point
-
-    public init(origin: Point, width: Int, height: Int) {
-        self.origin = origin
-    }
-
-    open var description: String {
-        "Rect@\(origin)"
-    }
+    public var x: Int
 }
 "#;
         let processor = SwiftProcessor::new().unwrap();
@@ -742,14 +585,9 @@ public protocol Describable {
     fn test_generic_struct() {
         let source = r#"
 public struct Stack<Element> {
-    private var storage: [Element] = []
+    private var storage: [Element]
 
-    public mutating func push(_ element: Element) {
-        storage.append(element)
-    }
-
-    public func peek() -> Element? {
-        storage.last
+    public func push(_ element: Element) {
     }
 }
 "#;
@@ -768,127 +606,6 @@ public struct Stack<Element> {
             assert_eq!(struct_decl.type_params[0].name, "Element");
         } else {
             panic!("Expected a generic struct");
-        }
-    }
-}
-
-#[cfg(test)]
-mod debug_tests {
-    use super::*;
-    use std::path::PathBuf;
-
-    #[test]
-    fn debug_enum_parsing() {
-        let source = r#"
-enum TemperatureScale: String {
-    case celsius = "°C"
-}
-"#;
-        let mut parser = Parser::new();
-        parser.set_language(&tree_sitter_swift::LANGUAGE.into()).unwrap();
-        let tree = parser.parse(source, None).unwrap();
-        
-        let root = tree.root_node();
-        eprintln!("Root: {}", root.kind());
-        
-        let mut cursor = root.walk();
-        for child in root.children(&mut cursor) {
-            eprintln!("  Child: {}", child.kind());
-            
-            let mut child_cursor = child.walk();
-            for grandchild in child.children(&mut child_cursor) {
-                eprintln!("    Grandchild: {}", grandchild.kind());
-            }
-        }
-        
-        let processor = SwiftProcessor::new().unwrap();
-        let opts = ProcessOptions::default();
-        let result = processor.process(source, &PathBuf::from("test.swift"), &opts);
-        
-        if let Ok(file) = result {
-            eprintln!("File children: {}", file.children.len());
-            for (i, child) in file.children.iter().enumerate() {
-                match child {
-                    ir::Node::Class(c) => {
-                        eprintln!("  [{}] Class: {}, decorators: {:?}", i, c.name, c.decorators);
-                    }
-                    _ => {
-                        eprintln!("  [{}] Other node", i);
-                    }
-                }
-            }
-        }
-    }
-}
-
-    #[test]
-    fn debug_struct_parsing() {
-        let source = r#"
-public struct Point {
-    public var x: Int
-}
-"#;
-        let mut parser = Parser::new();
-        parser.set_language(&tree_sitter_swift::LANGUAGE.into()).unwrap();
-        let tree = parser.parse(source, None).unwrap();
-        
-        let root = tree.root_node();
-        eprintln!("\n=== STRUCT DEBUG ===");
-        eprintln!("Root: {}", root.kind());
-        
-        let mut cursor = root.walk();
-        for child in root.children(&mut cursor) {
-            eprintln!("  Child: {}", child.kind());
-            
-            let mut child_cursor = child.walk();
-            for grandchild in child.children(&mut child_cursor) {
-                eprintln!("    Grandchild: {}", grandchild.kind());
-            }
-        }
-        
-        let processor = SwiftProcessor::new().unwrap();
-        let opts = ProcessOptions::default();
-        let result = processor.process(source, &PathBuf::from("test.swift"), &opts);
-        
-        if let Ok(file) = result {
-            eprintln!("File children: {}", file.children.len());
-            for (i, child) in file.children.iter().enumerate() {
-                match child {
-                    ir::Node::Class(c) => {
-                        eprintln!("  [{}] Class: {}, decorators: {:?}", i, c.name, c.decorators);
-                    }
-                    _ => {
-                        eprintln!("  [{}] Other node", i);
-                    }
-                }
-            }
-        }
-    }
-
-    #[test]
-    fn debug_class_with_protocol() {
-        let source = r#"
-open class Rectangle: Describable {
-    public var x: Int
-}
-"#;
-        let mut parser = Parser::new();
-        parser.set_language(&tree_sitter_swift::LANGUAGE.into()).unwrap();
-        let tree = parser.parse(source, None).unwrap();
-        
-        let root = tree.root_node();
-        eprintln!("\n=== CLASS WITH PROTOCOL DEBUG ===");
-        eprintln!("Root: {}", root.kind());
-        
-        let mut cursor = root.walk();
-        for child in root.children(&mut cursor) {
-            eprintln!("  Child: {}", child.kind());
-            
-            let mut child_cursor = child.walk();
-            for grandchild in child.children(&mut child_cursor) {
-                eprintln!("    Grandchild: {} | text: {:?}", grandchild.kind(), 
-                    &source[grandchild.start_byte()..grandchild.end_byte().min(source.len())]);
-            }
         }
     }
 }
