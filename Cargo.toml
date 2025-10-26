@@ -7,6 +7,7 @@ members = [
     "crates/lang-typescript",
     "crates/lang-go",
     "crates/lang-javascript",
+    "crates/lang-rust",
     # Language processors will be added here as they're created
     # Formatters will be added here as they're created
 ]
