@@ -172,21 +172,34 @@ impl DirectoryProcessor {
 
 /// Registry of language processors
 ///
-/// This is a placeholder - will be implemented properly when we add
-/// language-specific processors.
+/// Stores language processors and finds the appropriate one for a given file.
 pub struct LanguageRegistry {
-    // TODO: Add processors when language crates are created
+    processors: Vec<Box<dyn super::language::LanguageProcessor>>,
 }
 
 impl LanguageRegistry {
     /// Create an empty registry
     pub fn new() -> Self {
-        Self {}
+        Self {
+            processors: Vec::new(),
+        }
+    }
+
+    /// Register a language processor
+    pub fn register(&mut self, processor: Box<dyn super::language::LanguageProcessor>) {
+        self.processors.push(processor);
     }
 
     /// Find a processor that can handle this file
-    fn find_processor(&self, _path: &Path) -> Option<&dyn super::language::LanguageProcessor> {
-        // TODO: Implement when we have actual processors
+    pub(crate) fn find_processor(
+        &self,
+        path: &Path,
+    ) -> Option<&dyn super::language::LanguageProcessor> {
+        for processor in &self.processors {
+            if processor.can_process(path) {
+                return Some(processor.as_ref());
+            }
+        }
         None
     }
 }

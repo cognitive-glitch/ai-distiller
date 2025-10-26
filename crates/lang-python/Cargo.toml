@@ -1,0 +1,15 @@
+[package]
+name = "lang-python"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+distiller-core = { path = "../distiller-core" }
+tree-sitter = { workspace = true }
+tree-sitter-python = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+parking_lot = { workspace = true }
+
+[dev-dependencies]
+insta = { workspace = true }

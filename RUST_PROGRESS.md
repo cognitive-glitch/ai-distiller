@@ -70,18 +70,6 @@ test result: ok. 6 passed; 0 failed
 
 ---
 
-## Phase 2: Core IR & Parser Infrastructure (IN PROGRESS)
-
-**Target Duration**: 2 weeks
-**Status**: Not started
-
-### Planned Tasks
-- [ ] 2.1 Parser pool with tree-sitter
-- [ ] 2.2 Directory processor with rayon
-- [ ] 2.3 Stripper visitor implementation
-- [ ] 2.4 Language processor registry
-
----
 
 ## Key Architecture Decisions
 
@@ -189,3 +177,50 @@ None currently. Phase 1 completed successfully.
 ---
 
 Last updated: 2025-10-27 02:56 UTC
+## Phase 2: Core IR & Parser Infrastructure (COMPLETED ✅)
+
+**Target Duration**: 2 weeks  
+**Actual Duration**: 1 session  
+**Status**: ✅ Complete
+
+### Completed Tasks
+- [x] 2.1 Parser pool with tree-sitter - Thread-safe pooling with RAII guards
+- [x] 2.2 Directory processor with rayon - Parallel processing with order preservation
+- [x] 2.3 Stripper visitor implementation - Minimal visitor pattern framework
+- [x] 2.4 Language processor registry - Placeholder for language-specific processors
+
+### Implementation Details
+
+**Parser Pool** (crates/distiller-core/src/parser/pool.rs - 219 LOC):
+- Thread-safe parser pooling per language (max 32 parsers/language)
+- RAII guards via `ParserGuard` struct with automatic return
+- Efficient locking with `parking_lot::Mutex`
+- Statistics tracking (`PoolStats`) for monitoring
+- Tests: 3 unit tests passing
+
+**Directory Processor** (crates/distiller-core/src/processor/directory.rs - 235 LOC):
+- Rayon-based parallel file processing
+- Respects `.gitignore` patterns via `ignore` crate
+- Maintains file discovery order despite parallel execution
+- `LanguageRegistry` placeholder for Phase 3
+- Tests: 3 unit tests passing
+
+**Stripper Visitor** (crates/distiller-core/src/stripper.rs - 105 LOC):
+- Implements Visitor pattern from IR
+- Minimal placeholder for full filtering logic
+- Will be enhanced when language processors are added
+- Tests: 2 unit tests passing
+
+### Metrics
+- **LOC Added**: ~560 Rust LOC (+ 1153 Cargo.lock dependencies)
+- **Tests**: 17 passing (9 from Phase 1 + 8 new)
+- **Binary Size**: 2.2MB release build
+- **Build Time**: ~2.6s for release
+- **Lint Status**: Clean (clippy strict warnings, cargo fmt)
+
+### Commit
+```
+e6556a8 feat(rust): Phase 2 - Parser pool, directory processor, stripper visitor
+```
+
+---
