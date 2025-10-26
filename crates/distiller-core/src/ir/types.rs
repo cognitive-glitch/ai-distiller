@@ -35,6 +35,7 @@ pub enum Modifier {
     Const,
     Readonly,
     Mutable,
+    Event,
 }
 
 /// Type reference

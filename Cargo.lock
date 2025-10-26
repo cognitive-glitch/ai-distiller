@@ -438,6 +438,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "lang-csharp"
+version = "0.1.0"
+dependencies = [
+ "distiller-core",
+ "insta",
+ "parking_lot",
+ "tree-sitter",
+ "tree-sitter-c-sharp",
+]
+
+[[package]]
 name = "lang-go"
 version = "2.0.0"
 dependencies = [
@@ -1011,6 +1022,16 @@ dependencies = [
  "regex",
  "regex-syntax",
  "streaming-iterator",
+ "tree-sitter-language",
+]
+
+[[package]]
+name = "tree-sitter-c-sharp"
+version = "0.23.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "67f06accca7b45351758663b8215089e643d53bd9a660ce0349314263737fcb0"
+dependencies = [
+ "cc",
  "tree-sitter-language",
 ]
 
