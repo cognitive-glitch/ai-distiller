@@ -36,6 +36,9 @@ pub enum Modifier {
     Readonly,
     Mutable,
     Event,
+    Data,
+    Sealed,
+    Inline,
 }
 
 /// Type reference
