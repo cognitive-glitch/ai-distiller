@@ -1,8 +1,8 @@
 use distiller_core::{
     error::{DistilError, Result},
     ir::{
-        Class, Field, File, Function, Import, Interface, Modifier, Node, Parameter,
-        TypeRef, Visibility,
+        Class, Field, File, Function, Import, Interface, Modifier, Node, Parameter, TypeRef,
+        Visibility,
     },
     options::ProcessOptions,
     processor::language::LanguageProcessor,

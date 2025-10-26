@@ -22,3 +22,8 @@ build/
 # Tools (osxcross is large)
 tools/osxcross/
 test-results.xml
+
+# Rust
+target/
+**/*.rs.bk
+*.pdb
