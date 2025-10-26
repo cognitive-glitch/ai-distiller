@@ -400,7 +400,6 @@ e6556a8 feat(rust): Phase 2 - Parser pool, directory processor, stripper visitor
 | Java | ✅ Complete | 8/8 | 768 | `b41e9df` | Generics, annotations, inheritance |
 | C# | ✅ Complete | 9/9 | 687 | `0da6b90` | Records, properties, events, operators |
 | Kotlin | ⏸️ Planned | - | - | - | Phase 3.10 |
-| Kotlin | ⏸️ Planned | - | - | - | Phase 3.10 |
 | C++ | ⏸️ Planned | - | - | - | Phase 3.11 |
 | PHP | ⏸️ Planned | - | - | - | Phase 3.12 |
 
