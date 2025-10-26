@@ -68,18 +68,12 @@ mod tests {
     #[test]
     fn test_error_display() {
         let err = DistilError::parse_error("test.py", "Invalid syntax");
-        assert_eq!(
-            err.to_string(),
-            "Parse error in test.py: Invalid syntax"
-        );
+        assert_eq!(err.to_string(), "Parse error in test.py: Invalid syntax");
     }
 
     #[test]
     fn test_unsupported_language() {
         let err = DistilError::unsupported_language("test.xyz", "xyz");
-        assert_eq!(
-            err.to_string(),
-            "Unsupported language for test.xyz: xyz"
-        );
+        assert_eq!(err.to_string(), "Unsupported language for test.xyz: xyz");
     }
 }

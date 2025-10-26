@@ -1,0 +1,14 @@
+/home/alpha/Documents/GitHub/ai-distiller/.dev/worktree/clever-river/target/release/deps/serde-6c31ebacd827645b.d: /home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /home/alpha/Documents/GitHub/ai-distiller/.dev/worktree/clever-river/target/release/build/serde-6c46120237399bde/out/private.rs
+
+/home/alpha/Documents/GitHub/ai-distiller/.dev/worktree/clever-river/target/release/deps/libserde-6c31ebacd827645b.rlib: /home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /home/alpha/Documents/GitHub/ai-distiller/.dev/worktree/clever-river/target/release/build/serde-6c46120237399bde/out/private.rs
+
+/home/alpha/Documents/GitHub/ai-distiller/.dev/worktree/clever-river/target/release/deps/libserde-6c31ebacd827645b.rmeta: /home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /home/alpha/Documents/GitHub/ai-distiller/.dev/worktree/clever-river/target/release/build/serde-6c46120237399bde/out/private.rs
+
+/home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs:
+/home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs:
+/home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs:
+/home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs:
+/home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs:
+/home/alpha/Documents/GitHub/ai-distiller/.dev/worktree/clever-river/target/release/build/serde-6c46120237399bde/out/private.rs:
+
+# env-dep:OUT_DIR=/home/alpha/Documents/GitHub/ai-distiller/.dev/worktree/clever-river/target/release/build/serde-6c46120237399bde/out

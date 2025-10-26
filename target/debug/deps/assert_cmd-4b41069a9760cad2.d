@@ -1,0 +1,15 @@
+/home/alpha/Documents/GitHub/ai-distiller/.dev/worktree/clever-river/target/debug/deps/assert_cmd-4b41069a9760cad2.d: /home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/assert_cmd-2.0.17/src/lib.rs /home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/assert_cmd-2.0.17/src/macros.rs /home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/assert_cmd-2.0.17/src/assert.rs /home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/assert_cmd-2.0.17/src/cargo.rs /home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/assert_cmd-2.0.17/src/cmd.rs /home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/assert_cmd-2.0.17/src/output.rs /home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/assert_cmd-2.0.17/src/color.rs /home/alpha/Documents/GitHub/ai-distiller/.dev/worktree/clever-river/target/debug/build/assert_cmd-73525e9479647240/out/current_target.txt /home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/assert_cmd-2.0.17/src/../README.md
+
+/home/alpha/Documents/GitHub/ai-distiller/.dev/worktree/clever-river/target/debug/deps/libassert_cmd-4b41069a9760cad2.rmeta: /home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/assert_cmd-2.0.17/src/lib.rs /home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/assert_cmd-2.0.17/src/macros.rs /home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/assert_cmd-2.0.17/src/assert.rs /home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/assert_cmd-2.0.17/src/cargo.rs /home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/assert_cmd-2.0.17/src/cmd.rs /home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/assert_cmd-2.0.17/src/output.rs /home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/assert_cmd-2.0.17/src/color.rs /home/alpha/Documents/GitHub/ai-distiller/.dev/worktree/clever-river/target/debug/build/assert_cmd-73525e9479647240/out/current_target.txt /home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/assert_cmd-2.0.17/src/../README.md
+
+/home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/assert_cmd-2.0.17/src/lib.rs:
+/home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/assert_cmd-2.0.17/src/macros.rs:
+/home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/assert_cmd-2.0.17/src/assert.rs:
+/home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/assert_cmd-2.0.17/src/cargo.rs:
+/home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/assert_cmd-2.0.17/src/cmd.rs:
+/home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/assert_cmd-2.0.17/src/output.rs:
+/home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/assert_cmd-2.0.17/src/color.rs:
+/home/alpha/Documents/GitHub/ai-distiller/.dev/worktree/clever-river/target/debug/build/assert_cmd-73525e9479647240/out/current_target.txt:
+/home/alpha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/assert_cmd-2.0.17/src/../README.md:
+
+# env-dep:OUT_DIR=/home/alpha/Documents/GitHub/ai-distiller/.dev/worktree/clever-river/target/debug/build/assert_cmd-73525e9479647240/out
