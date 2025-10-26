@@ -1,6 +1,9 @@
 use distiller_core::{
     error::{DistilError, Result},
-    ir::{Class, File, Function, Import, ImportedSymbol, Modifier, Node, Parameter, TypeRef, Visibility},
+    ir::{
+        Class, File, Function, Import, ImportedSymbol, Modifier, Node, Parameter, TypeRef,
+        Visibility,
+    },
     options::ProcessOptions,
     processor::language::LanguageProcessor,
 };
@@ -16,7 +19,9 @@ impl JavaScriptProcessor {
         let mut parser = tree_sitter::Parser::new();
         parser
             .set_language(&tree_sitter_javascript::LANGUAGE.into())
-            .map_err(|e| DistilError::TreeSitter(format!("Failed to set JavaScript language: {}", e)))?;
+            .map_err(|e| {
+                DistilError::TreeSitter(format!("Failed to set JavaScript language: {}", e))
+            })?;
         Ok(Self {
             parser: Arc::new(Mutex::new(parser)),
         })
@@ -43,9 +48,9 @@ impl JavaScriptProcessor {
                     for clause_child in child.children(&mut clause_cursor) {
                         match clause_child.kind() {
                             "identifier" => {
-                                symbols.push(ImportedSymbol { 
-                                    name: self.node_text(clause_child, source), 
-                                    alias: None 
+                                symbols.push(ImportedSymbol {
+                                    name: self.node_text(clause_child, source),
+                                    alias: None,
                                 });
                             }
                             "named_imports" => {
@@ -55,9 +60,9 @@ impl JavaScriptProcessor {
                                         let mut spec_cursor = import_child.walk();
                                         for spec_child in import_child.children(&mut spec_cursor) {
                                             if spec_child.kind() == "identifier" {
-                                                symbols.push(ImportedSymbol { 
-                                                    name: self.node_text(spec_child, source), 
-                                                    alias: None 
+                                                symbols.push(ImportedSymbol {
+                                                    name: self.node_text(spec_child, source),
+                                                    alias: None,
                                                 });
                                             }
                                         }
@@ -70,7 +75,9 @@ impl JavaScriptProcessor {
                 }
                 "string" => {
                     let text = self.node_text(child, source);
-                    module = text.trim_matches(|c| c == '"' || c == '\'' || c == '`').to_string();
+                    module = text
+                        .trim_matches(|c| c == '"' || c == '\'' || c == '`')
+                        .to_string();
                 }
                 _ => {}
             }
@@ -112,10 +119,13 @@ impl JavaScriptProcessor {
                 "class_body" => {
                     let mut body_cursor = child.walk();
                     for body_child in child.children(&mut body_cursor) {
-                        if body_child.kind() == "method_definition" {
-                            if let Some(method) = self.parse_method(body_child, source)? {
-                                methods.push(method);
+                        match body_child.kind() {
+                            "method_definition" | "field_definition" => {
+                                if let Some(method) = self.parse_method(body_child, source)? {
+                                    methods.push(method);
+                                }
                             }
+                            _ => {}
                         }
                     }
                 }
@@ -158,7 +168,7 @@ impl JavaScriptProcessor {
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
             match child.kind() {
-                "property_identifier" | "identifier" => {
+                "property_identifier" | "identifier" | "private_property_identifier" => {
                     if name.is_empty() {
                         let text = self.node_text(child, source);
                         // Check for private field syntax
@@ -270,11 +280,7 @@ impl JavaScriptProcessor {
         }))
     }
 
-    fn parse_parameters(
-        &self,
-        node: tree_sitter::Node,
-        source: &str,
-    ) -> Result<Vec<Parameter>> {
+    fn parse_parameters(&self, node: tree_sitter::Node, source: &str) -> Result<Vec<Parameter>> {
         let mut parameters = Vec::new();
 
         let mut cursor = node.walk();
@@ -291,7 +297,7 @@ impl JavaScriptProcessor {
                         default_value: None,
                     });
                 }
-                "rest_parameter" => {
+                "rest_pattern" => {
                     let mut rest_cursor = child.walk();
                     for rest_child in child.children(&mut rest_cursor) {
                         if rest_child.kind() == "identifier" {
@@ -301,8 +307,8 @@ impl JavaScriptProcessor {
                                 param_type: TypeRef::new("any[]".to_string()),
                                 is_variadic: true,
                                 is_optional: false,
-                        decorators: vec![],
-                        default_value: None,
+                                decorators: vec![],
+                                default_value: None,
                             });
                         }
                     }
@@ -364,9 +370,12 @@ impl LanguageProcessor for JavaScriptProcessor {
 
     fn process(&self, source: &str, path: &Path, _opts: &ProcessOptions) -> Result<File> {
         let mut parser = self.parser.lock();
-        let tree = parser
-            .parse(source, None)
-            .ok_or_else(|| DistilError::parse_error(path.to_string_lossy().as_ref(), "Failed to parse JavaScript source"))?;
+        let tree = parser.parse(source, None).ok_or_else(|| {
+            DistilError::parse_error(
+                path.to_string_lossy().as_ref(),
+                "Failed to parse JavaScript source",
+            )
+        })?;
 
         let mut file = File {
             path: path.to_string_lossy().to_string(),
@@ -425,7 +434,9 @@ import './styles.css';
 "#;
 
         let opts = ProcessOptions::default();
-        let file = processor.process(source, Path::new("test.js"), &opts).unwrap();
+        let file = processor
+            .process(source, Path::new("test.js"), &opts)
+            .unwrap();
 
         let imports: Vec<_> = file
             .children
@@ -480,7 +491,9 @@ class UserService {
 "#;
 
         let opts = ProcessOptions::default();
-        let file = processor.process(source, Path::new("test.js"), &opts).unwrap();
+        let file = processor
+            .process(source, Path::new("test.js"), &opts)
+            .unwrap();
 
         let classes: Vec<_> = file
             .children
@@ -553,7 +566,9 @@ function _privateHelper(...args) {
 "#;
 
         let opts = ProcessOptions::default();
-        let file = processor.process(source, Path::new("test.js"), &opts).unwrap();
+        let file = processor
+            .process(source, Path::new("test.js"), &opts)
+            .unwrap();
 
         let functions: Vec<_> = file
             .children

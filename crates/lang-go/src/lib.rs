@@ -2,8 +2,8 @@ use distiller_core::error::Result;
 use distiller_core::{
     error::DistilError,
     ir::{
-        Class, Field, File, Function, Import, Interface, Modifier, Node,
-        Parameter, TypeParam, TypeRef, Visibility,
+        Class, Field, File, Function, Import, Interface, Modifier, Node, Parameter, TypeParam,
+        TypeRef, Visibility,
     },
     options::ProcessOptions,
     processor::language::LanguageProcessor,
@@ -20,9 +20,9 @@ impl GoProcessor {
     pub fn new() -> Result<Self> {
         let mut parser = Parser::new();
         let language = tree_sitter_go::LANGUAGE;
-        parser
-            .set_language(&language.into())
-            .map_err(|e| DistilError::parse_error("", format!("Failed to set Go language: {}", e)))?;
+        parser.set_language(&language.into()).map_err(|e| {
+            DistilError::parse_error("", format!("Failed to set Go language: {}", e))
+        })?;
 
         Ok(Self {
             parser: Mutex::new(parser),
@@ -171,11 +171,7 @@ impl GoProcessor {
         }))
     }
 
-    fn parse_struct_fields(
-        &self,
-        node: tree_sitter::Node,
-        source: &str,
-    ) -> Result<Vec<Field>> {
+    fn parse_struct_fields(&self, node: tree_sitter::Node, source: &str) -> Result<Vec<Field>> {
         let mut fields = Vec::new();
 
         let mut cursor = node.walk();
@@ -291,7 +287,6 @@ impl GoProcessor {
             line_end,
         }))
     }
-
 
     fn parse_method_spec(&self, node: tree_sitter::Node, source: &str) -> Result<Option<Function>> {
         let mut name = String::new();
@@ -467,7 +462,9 @@ impl GoProcessor {
             .into_iter()
             .map(|name| Parameter {
                 name,
-                param_type: param_type.clone().unwrap_or_else(|| TypeRef::new("".to_string())),
+                param_type: param_type
+                    .clone()
+                    .unwrap_or_else(|| TypeRef::new("".to_string())),
                 default_value: None,
                 is_variadic: false,
                 is_optional: false,
@@ -493,8 +490,9 @@ impl GoProcessor {
     fn try_extract_type(&self, node: tree_sitter::Node, source: &str) -> Option<TypeRef> {
         match node.kind() {
             "type_identifier" | "qualified_type" | "pointer_type" | "array_type" | "slice_type"
-            | "map_type" | "channel_type" | "function_type" | "interface_type"
-            | "struct_type" => Some(TypeRef::new(self.node_text(node, source))),
+            | "map_type" | "channel_type" | "function_type" | "interface_type" | "struct_type" => {
+                Some(TypeRef::new(self.node_text(node, source)))
+            }
             _ => None,
         }
     }
@@ -547,7 +545,11 @@ impl GoProcessor {
             return Ok(None);
         }
 
-        Ok(Some(TypeParam { name, constraints: constraint.map(|c| vec![c]).unwrap_or_default(), default: None }))
+        Ok(Some(TypeParam {
+            name,
+            constraints: constraint.map(|c| vec![c]).unwrap_or_default(),
+            default: None,
+        }))
     }
 
     fn process_node(&self, node: tree_sitter::Node, source: &str, file: &mut File) -> Result<()> {
@@ -576,7 +578,12 @@ impl GoProcessor {
         Ok(())
     }
 
-    fn process_type_spec(&self, node: tree_sitter::Node, source: &str, file: &mut File) -> Result<()> {
+    fn process_type_spec(
+        &self,
+        node: tree_sitter::Node,
+        source: &str,
+        file: &mut File,
+    ) -> Result<()> {
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
             match child.kind() {
@@ -617,9 +624,9 @@ impl LanguageProcessor for GoProcessor {
 
     fn process(&self, source: &str, path: &Path, _opts: &ProcessOptions) -> Result<File> {
         let mut parser = self.parser.lock();
-        let tree = parser
-            .parse(source, None)
-            .ok_or_else(|| DistilError::parse_error(path.display().to_string(), "Failed to parse Go source"))?;
+        let tree = parser.parse(source, None).ok_or_else(|| {
+            DistilError::parse_error(path.display().to_string(), "Failed to parse Go source")
+        })?;
 
         let root_node = tree.root_node();
 
@@ -734,7 +741,6 @@ func (u *User) setEmail(email string) {
         assert!(result.is_ok());
 
         let file = result.unwrap();
-
 
         let structs: Vec<_> = file
             .children
