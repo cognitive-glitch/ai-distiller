@@ -288,8 +288,8 @@ e6556a8 feat(rust): Phase 2 - Parser pool, directory processor, stripper visitor
 | TypeScript | ✅ Complete | 6/6 | ~650 | `[hash]` | Generics, TSX support |
 | Go | ✅ Complete | 6/6 | 811 | `2d20e10` | Generics, receiver methods |
 | JavaScript | ✅ Complete | 6/6 | 587 | `fa03884` | All ES6+ features working |
-| Rust | ⏸️ Planned | - | - | - | Phase 3.5+ |
-| Ruby | ⏸️ Planned | - | - | - | Phase 3.6+ |
+| Rust | ✅ Complete | 6/6 | 428 | `ec5180d` | Traits, impl blocks, async |
+| Ruby | ✅ Complete | 6/6 | 459 | `8224025` | Singleton methods, modules |
 | Swift | ⏸️ Planned | - | - | - | Phase 3.7+ |
 | Java | ⏸️ Planned | - | - | - | Phase 3.8+ |
 | C# | ⏸️ Planned | - | - | - | Phase 3.9+ |
@@ -347,6 +347,26 @@ Last updated: 2025-10-27 (Session 2)
   - Two-pass processing: collect structs/traits → associate impl blocks
   - Visibility mapping: pub → Public, pub(crate) → Internal, pub(super) → Protected
   - Fixed async detection (function_modifiers node)
+  - Zero clippy warnings
+  - Proper error handling with DistilError
+
+#### ✅ Phase 3.6: Ruby Language Processor (COMPLETE)
+- **Status**: 6/6 tests passing ✓
+- **Commit**: `8224025` - Ruby processor complete
+- **LOC**: 459 lines
+- **Features**:
+  - Class parsing with inheritance (extends)
+  - Module parsing (treated as class with "module" decorator)
+  - Method parsing (regular and singleton methods like def self.method_name)
+  - Parameter parsing (required, optional, splat, hash_splat, block, keyword)
+  - Visibility detection (public, private, protected, @private RDoc)
+  - Special file support (.rb, .rake, .gemspec, Rakefile, Gemfile)
+- **Implementation Details**:
+  - Uses tree-sitter-ruby v0.23 native Rust bindings
+  - Supports both "method" and "singleton_method" node kinds
+  - Singleton method name extraction (helper not self.helper)
+  - Visibility parsing with keywords and RDoc comments
+  - RAII parser management with parking_lot::Mutex
   - Zero clippy warnings
   - Proper error handling with DistilError
 
