@@ -477,6 +477,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "lang-ruby"
+version = "0.1.0"
+dependencies = [
+ "distiller-core",
+ "insta",
+ "parking_lot",
+ "tree-sitter",
+ "tree-sitter-ruby",
+]
+
+[[package]]
 name = "lang-rust"
 version = "0.1.0"
 dependencies = [
@@ -1012,6 +1023,16 @@ name = "tree-sitter-python"
 version = "0.23.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3d065aaa27f3aaceaf60c1f0e0ac09e1cb9eb8ed28e7bcdaa52129cffc7f4b04"
+dependencies = [
+ "cc",
+ "tree-sitter-language",
+]
+
+[[package]]
+name = "tree-sitter-ruby"
+version = "0.23.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "be0484ea4ef6bb9c575b4fdabde7e31340a8d2dbc7d52b321ac83da703249f95"
 dependencies = [
  "cc",
  "tree-sitter-language",
