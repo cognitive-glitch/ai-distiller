@@ -8,9 +8,81 @@ AI Distiller (`aid`) is a high-performance CLI tool that extracts essential code
 
 **Core Purpose**: Enable AI assistants to understand entire codebases by fitting them into context windows, eliminating hallucinations caused by partial code visibility.
 
-## Essential Development Commands
+---
 
-### Building
+## 🦀 Rust Refactoring (Target Architecture)
+
+### Strategic Goals
+
+AI Distiller is being rewritten in Rust to achieve:
+
+1. **Performance**: 2-3x faster processing (no CGO overhead)
+2. **Safety**: Memory safety and fearless concurrency
+3. **Simplicity**: Smaller binaries, cleaner architecture
+4. **MCP Simplification**: Reduce from 10+ functions to 4 core operations
+
+### Target Architecture
+
+**Cargo Workspace Monorepo**:
+```
+crates/
+├── aid-cli/            # Binary CLI entry point
+├── distiller-core/     # Core library (IR, processor, error)
+├── lang-python/        # Python language processor
+├── lang-typescript/    # TypeScript processor
+├── lang-*/             # Other language processors (12+ total)
+├── formatter-text/     # Text output formatter
+├── formatter-*/        # Other formatters (markdown, JSON, XML)
+└── mcp-server/         # Simplified MCP server (4 functions)
+```
+
+### Key Design Decisions
+
+#### 1. NO tokio in Core (CRITICAL)
+- **Use rayon** for CPU parallelism (NOT tokio/async)
+- **Rationale**: AI Distiller has zero network I/O; local filesystem is OS-buffered
+- **Benefits**: Simpler code, smaller binaries, cleaner stack traces
+- **Exception**: MCP server MAY use minimal tokio for JSON-RPC only
+
+#### 2. Simplified MCP Interface
+Reduce from 10+ functions to **4 core operations**:
+1. `distil_directory(path, options)` - Process directory
+2. `distil_file(path, options)` - Process single file
+3. `list_dir(path, filters)` - List directory with metadata
+4. `get_capa()` - Get server capabilities
+
+#### 3. Feature-Gated Languages
+- Each language is optional cargo crate
+- Modular compilation for smaller binaries
+- Example: `cargo build --features lang-python,lang-typescript`
+
+#### 4. IR Design
+- Enum-based nodes for zero-cost dispatch
+- Visitor pattern for extensible operations
+- Synchronous trait interfaces (no async)
+
+### Target Performance
+
+| Metric | Go Baseline | Rust Target |
+|--------|-------------|-------------|
+| Django (970 files) | 231ms | < 150ms |
+| Binary size | 38MB | < 25MB |
+| Memory (10k files) | ~800MB | < 500MB |
+| Startup time | ~80ms | < 50ms |
+
+### Development Status
+
+**See `RUST_PROGRESS.md` for implementation progress.**
+
+**Current Branch**: `clever-river` (Rust rewrite in progress)
+
+---
+
+## Go Implementation (Current)
+
+### Essential Development Commands
+
+#### Building
 
 ```bash
 # Standard build (CGO required for full language support)
@@ -19,7 +91,7 @@ make build-verbose         # Shows CGO warnings during build
 make aid ARGS="test.py"    # Quick build + run (development)
 ```
 
-### Testing
+#### Testing
 
 ```bash
 # Primary test commands
@@ -38,7 +110,7 @@ make generate-expected-testdata  # Build aid + regenerate all
 make test-basic           # Standard Go test output (no gotestsum)
 ```
 
-### Development Utilities
+#### Development Utilities
 
 ```bash
 make dev-init             # Initialize dev environment (install tools)
@@ -47,7 +119,9 @@ make lint                 # Run golangci-lint
 make fmt                  # Format code with gofmt
 ```
 
-## Architecture
+---
+
+## Architecture (Go)
 
 ### Core Data Flow
 
@@ -107,7 +181,9 @@ type LanguageProcessor interface {
 **Visitor Pattern** (`internal/stripper/`):
 Standardized filtering via `stripper.New()` - NEVER implement custom filtering.
 
-## Language Parser Development
+---
+
+## Language Parser Development (Go)
 
 ### Architecture Pattern (CRITICAL)
 
@@ -176,7 +252,9 @@ func (p *Parser) nodeText(node *sitter.Node) string {
 ❌ **NEVER**: Skip boundary checks on node text extraction
 ✅ **ALWAYS**: Validate start/end byte positions
 
-## Testing Strategy
+---
+
+## Testing Strategy (Go)
 
 ### Test File Organization
 
@@ -220,7 +298,9 @@ make test-update
 ./build/aid testdata/python/01_basic/source.py --stdout > testdata/python/01_basic/default.txt
 ```
 
-## Debugging
+---
+
+## Debugging (Go)
 
 ### Debug Levels
 
@@ -235,6 +315,8 @@ aid src/ -vvv      # Level 3: Full trace (IR dumps, raw structures)
 - Subsystem scoping: `dbg.WithSubsystem("parser")`
 - Performance guards: `if dbg.IsEnabledFor(debug.LevelDetailed)`
 - Output: stderr with format `[HH:MM:SS.mmm] [subsystem] LEVEL: message`
+
+---
 
 ## Critical Development Principles
 
@@ -279,6 +361,8 @@ for _, node := range file.Children {
 - **Memory**: Stream processing, bounded channels
 - **One-pass**: No multiple IR traversals
 
+---
+
 ## Git Commit Protocol
 
 **Pre-commit Checklist**:
@@ -286,26 +370,34 @@ for _, node := range file.Children {
 2. Check for temporary files: `*.tmp`, `*.log`, `.aid.*.txt` in root
 3. Review with `git diff --cached`
 4. Ensure `.gitignore` is properly configured
-5. Run `make test` - all tests must pass
+5. Run `make test` (Go) or `cargo test` (Rust) - all tests must pass
 
 **Commit Style**:
 ```
 feat(parser): add support for async/await in TypeScript
 fix(go): resolve method association for embedded structs
 chore: update expected test files for Python parser
+feat(rust): Phase 1 Foundation - Cargo workspace, IR, error system
 ```
+
+---
 
 ## Important Files & Documentation
 
-- `BUILD.md` - Cross-compilation setup and build requirements
-- `docs/TESTING.md` - Comprehensive testing guide with gotestsum formats
-- `docs/CROSS_COMPILATION.md` - Detailed cross-compilation instructions
-- `docs/lang/*.md` - Language-specific parser documentation
+- `BUILD.md` - Cross-compilation setup and build requirements (Go)
+- `RUST_PROGRESS.md` - Rust refactoring implementation progress
+- `README.rust.md` - Rust implementation quick start
+- `docs/TESTING.md` - Comprehensive testing guide with gotestsum formats (Go)
+- `docs/CROSS_COMPILATION.md` - Detailed cross-compilation instructions (Go)
+- `docs/lang/*.md` - Language-specific parser documentation (Go)
 - `.aidignore` - File exclusion patterns (gitignore syntax)
+
+---
 
 ## Quick Reference
 
-**Common Tasks**:
+### Common Tasks (Go)
+
 ```bash
 # Add new language parser
 1. Create internal/language/<lang>/processor.go
@@ -329,7 +421,27 @@ chore: update expected test files for Python parser
 4. Test with --format <format>
 ```
 
-**Performance Debugging**:
+### Common Tasks (Rust)
+
+```bash
+# Build and test
+cargo build --release -p aid-cli
+cargo test --all-features
+cargo clippy --all-features -- -D warnings
+
+# Run
+cargo run -p aid-cli -- --help
+cargo run -p aid-cli -- testdata/python/01_basic/source.py -vvv
+
+# Add language processor
+1. Create crates/lang-<lang>/
+2. Implement LanguageProcessor trait
+3. Add to workspace members in Cargo.toml
+4. Write tests with insta snapshots
+```
+
+### Performance Debugging (Go)
+
 ```bash
 # Profile memory usage
 go test -memprofile=mem.prof -run=TestProcessor
@@ -343,10 +455,13 @@ go tool pprof cpu.prof
 make bench
 ```
 
+---
+
 ## Notes for AI Assistants
 
 - **Language**: Use English for all communication, code, and documentation
 - **CLI Examples**: Already comprehensive in README.md - don't duplicate
 - **Focus**: Architecture understanding and development workflow
 - **Testing**: Always run tests after changes; update expected files if parser behavior changes
-- **Parallelism**: Use `make aid` for rapid iteration during development
+- **Parallelism**: Use `make aid` (Go) or `cargo run -p aid-cli` (Rust) for rapid iteration
+- **Progress**: See `RUST_PROGRESS.md` for Rust implementation status
