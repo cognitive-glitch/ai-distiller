@@ -14,16 +14,12 @@ fn create_full_registry() -> LanguageRegistry {
     let mut registry = LanguageRegistry::new();
 
     // Register all available language processors
-    #[cfg(feature = "lang-python")]
     registry.register(Box::new(lang_python::PythonProcessor::new().unwrap()));
-
-    #[cfg(feature = "lang-typescript")]
     registry.register(Box::new(
         lang_typescript::TypeScriptProcessor::new().unwrap(),
     ));
-
-    #[cfg(feature = "lang-go")]
     registry.register(Box::new(lang_go::GoProcessor::new().unwrap()));
+    registry.register(Box::new(lang_c::CProcessor::new().unwrap()));
 
     registry
 }
@@ -271,5 +267,66 @@ fn test_recursive_vs_non_recursive() {
             dir_recursive.children.len(),
             dir_non_recursive.children.len()
         );
+    }
+}
+
+#[test]
+fn test_c_language_processing() {
+    let registry = create_full_registry();
+    let opts = ProcessOptions::default();
+    let processor = DirectoryProcessor::new(opts);
+
+    let test_dir = Path::new("../../../testdata/c");
+
+    if !test_dir.exists() {
+        eprintln!("Skipping test: C testdata directory not found");
+        return;
+    }
+
+    let result = processor.process(test_dir, &registry);
+
+    match result {
+        Ok(directory) => {
+            let file_count = directory.children.len();
+            assert!(
+                file_count >= 5,
+                "Expected at least 5 C test files, got {}",
+                file_count
+            );
+
+            // Verify C files were processed
+            let c_files: Vec<_> = directory
+                .children
+                .iter()
+                .filter_map(|node| {
+                    if let Node::File(f) = node {
+                        if f.path.ends_with(".c") {
+                            Some(f)
+                        } else {
+                            None
+                        }
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+
+            assert!(!c_files.is_empty(), "Should process at least one C file");
+
+            // Verify C files contain expected structures
+            for file in c_files {
+                let has_content = !file.children.is_empty();
+                assert!(
+                    has_content,
+                    "C file {} should have parsed content",
+                    file.path
+                );
+            }
+
+            println!("✅ C language processing: {} files processed", file_count);
+        }
+        Err(e) => {
+            panic!("Failed to process C directory: {}", e);
+        }
     }
 }

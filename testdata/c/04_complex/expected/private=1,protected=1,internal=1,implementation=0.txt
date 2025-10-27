@@ -1,0 +1,52 @@
+<file path="testdata/c/04_complex//source.c">
+import stdio.h
+import stdlib.h
+import string.h
+import stdint.h
+import stdbool.h
+import pthread.h
+class MemoryPool:
+    memory: void
+    block_size: size_t
+    num_blocks: size_t
+    free_blocks: size_t
+    free_list: uint8_t
+    lock: pthread_mutex_t
+class HashEntry:
+    key: char
+    value: void
+    next
+class HashTable:
+    capacity: size_t
+    size: size_t
+    lock: pthread_rwlock_t
+class Task:
+    argument: void
+    next
+class ThreadPool:
+    threads: pthread_t
+    thread_count: size_t
+    task_queue
+    queue_lock: pthread_mutex_t
+    queue_cond: pthread_cond_t
+    shutdown: bool
+def mempool_create(block_size: size_t, num_blocks: size_t)
+def mempool_alloc(pool: unknown) -> void
+def mempool_free(pool: unknown, ptr: void) -> void
+def mempool_destroy(pool: unknown) -> void
+~static def default_hash(key: char) -> uint32_t
+def hashtable_create(capacity: size_t)
+def hashtable_insert(table: unknown, key: char, value: void) -> bool
+def hashtable_get(table: unknown, key: char) -> void
+def hashtable_remove(table: unknown, key: char) -> bool
+def hashtable_destroy(table: unknown) -> void
+~static def worker_thread(arg: void) -> void
+def threadpool_create(thread_count: size_t)
+def threadpool_submit(pool: unknown, param_1: void, arg: void) -> bool
+def threadpool_destroy(pool: unknown) -> void
+~static def next_power_of_two(n: uint32_t) -> uint32_t
+~static def compare_int(a: void, b: void) -> int
+~static def swap(a: void, b: void, size: size_t) -> void
+</file>
+
+

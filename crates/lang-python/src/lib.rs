@@ -1063,8 +1063,12 @@ fn test_private_class() {
 
 #[test]
 fn test_django_style_models() {
-    let source = std::fs::read_to_string("../../testdata/real-world/django-app/models.py")
-        .expect("Failed to read Django models file");
+    let manifest_dir = env!("CARGO_MANIFEST_DIR");
+    let path = format!(
+        "{}/../../testdata/real-world/django-app/models.py",
+        manifest_dir
+    );
+    let source = std::fs::read_to_string(&path).expect("Failed to read Django models file");
 
     let processor = PythonProcessor::new().unwrap();
     let opts = ProcessOptions::default();
@@ -1102,8 +1106,12 @@ fn test_django_style_models() {
 
 #[test]
 fn test_django_style_views() {
-    let source = std::fs::read_to_string("../../testdata/real-world/django-app/views.py")
-        .expect("Failed to read Django views file");
+    let manifest_dir = env!("CARGO_MANIFEST_DIR");
+    let path = format!(
+        "{}/../../testdata/real-world/django-app/views.py",
+        manifest_dir
+    );
+    let source = std::fs::read_to_string(&path).expect("Failed to read Django views file");
 
     let processor = PythonProcessor::new().unwrap();
     let opts = ProcessOptions::default();
@@ -1148,9 +1156,12 @@ fn test_django_style_views() {
 
 #[test]
 fn test_malformed_python() {
-    let source =
-        std::fs::read_to_string("../../testdata/edge-cases/malformed/python_syntax_error.py")
-            .expect("Failed to read malformed Python file");
+    let manifest_dir = env!("CARGO_MANIFEST_DIR");
+    let path = format!(
+        "{}/../../testdata/edge-cases/malformed/python_syntax_error.py",
+        manifest_dir
+    );
+    let source = std::fs::read_to_string(&path).expect("Failed to read malformed Python file");
 
     let processor = PythonProcessor::new().unwrap();
     let opts = ProcessOptions::default();
@@ -1177,8 +1188,12 @@ fn test_malformed_python() {
 
 #[test]
 fn test_unicode_python() {
-    let source = std::fs::read_to_string("../../testdata/edge-cases/unicode/python_unicode.py")
-        .expect("Failed to read Unicode Python file");
+    let manifest_dir = env!("CARGO_MANIFEST_DIR");
+    let path = format!(
+        "{}/../../testdata/edge-cases/unicode/python_unicode.py",
+        manifest_dir
+    );
+    let source = std::fs::read_to_string(&path).expect("Failed to read Unicode Python file");
 
     let processor = PythonProcessor::new().unwrap();
     let opts = ProcessOptions::default();
@@ -1211,8 +1226,12 @@ fn test_unicode_python() {
 
 #[test]
 fn test_large_python_file() {
-    let source = std::fs::read_to_string("../../testdata/edge-cases/large-files/large_python.py")
-        .expect("Failed to read large Python file");
+    let manifest_dir = env!("CARGO_MANIFEST_DIR");
+    let path = format!(
+        "{}/../../testdata/edge-cases/large-files/large_python.py",
+        manifest_dir
+    );
+    let source = std::fs::read_to_string(&path).expect("Failed to read large Python file");
 
     let processor = PythonProcessor::new().unwrap();
     let opts = ProcessOptions::default();
@@ -1257,8 +1276,12 @@ fn test_large_python_file() {
 
 #[test]
 fn test_empty_python_file_edge() {
-    let source = std::fs::read_to_string("../../testdata/edge-cases/syntax-edge/empty.py")
-        .expect("Failed to read empty Python file");
+    let manifest_dir = env!("CARGO_MANIFEST_DIR");
+    let path = format!(
+        "{}/../../testdata/edge-cases/syntax-edge/empty.py",
+        manifest_dir
+    );
+    let source = std::fs::read_to_string(&path).expect("Failed to read empty Python file");
 
     let processor = PythonProcessor::new().unwrap();
     let opts = ProcessOptions::default();
@@ -1283,8 +1306,12 @@ fn test_empty_python_file_edge() {
 
 #[test]
 fn test_deeply_nested_python() {
-    let source = std::fs::read_to_string("../../testdata/edge-cases/syntax-edge/deeply_nested.py")
-        .expect("Failed to read deeply nested Python file");
+    let manifest_dir = env!("CARGO_MANIFEST_DIR");
+    let path = format!(
+        "{}/../../testdata/edge-cases/syntax-edge/deeply_nested.py",
+        manifest_dir
+    );
+    let source = std::fs::read_to_string(&path).expect("Failed to read deeply nested Python file");
 
     let processor = PythonProcessor::new().unwrap();
     let opts = ProcessOptions::default();

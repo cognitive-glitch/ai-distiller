@@ -1,0 +1,70 @@
+<file path="testdata/c/05_very_complex//source.c">
+import stdio.h
+import stdlib.h
+import string.h
+import stdint.h
+import stdbool.h
+import stdatomic.h
+import pthread.h
+import sys/mman.h
+import unistd.h
+class LFQueueNode:
+    data: void
+    next
+class LFQueue:
+    head
+    tail
+    size: size_t
+class Arena:
+    buffer: uint8_t
+    capacity: size_t
+    offset: size_t
+    next
+class ArenaAllocator:
+    current
+    arena_size: size_t
+    lock: pthread_mutex_t
+class RefCounted:
+    data: void
+    ref_count: int
+class RingBuffer:
+    buffer: uint8_t
+    capacity: size_t
+    read_pos: size_t
+    write_pos: size_t
+    shared_memory: bool
+def lfqueue_create(param_0: void)
+def lfqueue_enqueue(queue: unknown, data: void) -> bool
+def lfqueue_dequeue(queue: unknown) -> void
+def lfqueue_size(queue: unknown) -> size_t
+def lfqueue_destroy(queue: unknown) -> void
+def arena_create(arena_size: size_t)
+def arena_alloc(allocator: unknown, size: size_t) -> void
+def arena_reset(allocator: unknown) -> void
+def arena_destroy(allocator: unknown) -> void
+def refcount_create(data: void, param_1: void)
+def refcount_retain(rc: unknown) -> void
+def refcount_release(rc: unknown) -> void
+def refcount_get(rc: unknown) -> int
+def ringbuffer_create(capacity: size_t, use_shared_memory: bool)
+def ringbuffer_write(rb: unknown, data: void, size: size_t) -> size_t
+def ringbuffer_read(rb: unknown, data: void, size: size_t) -> size_t
+def ringbuffer_available(rb: unknown) -> size_t
+def ringbuffer_destroy(rb: unknown) -> void
+~static def is_power_of_two(n: size_t) -> bool
+~static def align_up(n: size_t, alignment: size_t) -> size_t
+~static def align_down(n: size_t, alignment: size_t) -> size_t
+~static def hash_fnv1a(data: void, len: size_t) -> uint64_t
+~static def memory_barrier(param_0: void) -> void
+~static def atomic_cas_ptr(param_0: void, expected: void, desired: void) -> bool
+class PerfCounter:
+    count: uint64_t
+    total_time: uint64_t
+    min_time: uint64_t
+    max_time: uint64_t
+def perf_counter_init(counter: unknown) -> void
+def perf_counter_record(counter: unknown, time: uint64_t) -> void
+def perf_counter_avg(counter: unknown) -> uint64_t
+</file>
+
+

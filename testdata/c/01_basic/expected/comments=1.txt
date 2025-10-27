@@ -1,0 +1,16 @@
+<file path="testdata/c/01_basic//source.c">
+import stdio.h
+import stdlib.h
+import myheader.h
+class Point:
+    x: int
+    y: int
+def add(a: int, b: int) -> int
+def multiply(x: int, y: int) -> int
+~static def helper(param_0: void) -> int
+def process(data: int, buffer: char) -> void
+def init_point(p: unknown, x: int, y: int) -> void
+def get_distance(p1: unknown, p2: unknown) -> double
+</file>
+
+
