@@ -3,8 +3,8 @@
 //! Minimal implementation for Phase 2 - will be enhanced when language processors are added.
 
 use crate::{
-    ir::{Class, Enum, File, Function, Interface, Node, Package, Struct, Visitor},
     ProcessOptions,
+    ir::{Class, Enum, File, Function, Interface, Node, Package, Struct, Visitor},
 };
 
 /// Stripper visitor (placeholder for Phase 2)

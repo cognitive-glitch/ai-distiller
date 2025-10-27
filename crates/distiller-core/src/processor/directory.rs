@@ -4,9 +4,9 @@
 //! Respects .gitignore patterns and provides progress tracking.
 
 use crate::{
+    ProcessOptions,
     error::{DistilError, Result},
     ir::{Directory, File, Node},
-    ProcessOptions,
 };
 use ignore::WalkBuilder;
 use rayon::prelude::*;

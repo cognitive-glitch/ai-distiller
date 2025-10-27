@@ -1,8 +1,8 @@
 use distiller_core::{
+    ProcessOptions,
     error::{DistilError, Result},
     ir::*,
     processor::LanguageProcessor,
-    ProcessOptions,
 };
 use parking_lot::Mutex;
 use std::path::Path;

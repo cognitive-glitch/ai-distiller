@@ -1,8 +1,8 @@
 use distiller_core::{
+    ProcessOptions,
     error::{DistilError, Result},
     ir::*,
     processor::LanguageProcessor,
-    ProcessOptions,
 };
 use parking_lot::Mutex;
 use std::path::Path;
@@ -600,7 +600,7 @@ fun greet(name: String, age: Int) {
         if let Node::Function(func) = &file.children[0] {
             assert_eq!(func.name, "greet");
             assert_eq!(func.parameters.len(), 2);
-            
+
             // Validate typed parameters
             assert_eq!(func.parameters[0].name, "name");
             assert_eq!(func.parameters[0].param_type.name, "String");
@@ -638,12 +638,20 @@ class Calculator {
         if let Node::Class(class) = &file.children[0] {
             assert_eq!(class.name, "Calculator");
             assert_eq!(class.children.len(), 3);
-            
+
             // Count functions
-            let funcs: Vec<_> = class.children.iter()
-                .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+            let funcs: Vec<_> = class
+                .children
+                .iter()
+                .filter_map(|n| {
+                    if let Node::Function(f) = n {
+                        Some(f)
+                    } else {
+                        None
+                    }
+                })
                 .collect();
-            
+
             assert_eq!(funcs.len(), 3);
             assert_eq!(funcs[0].name, "add");
             assert_eq!(funcs[1].name, "multiply");
@@ -674,15 +682,25 @@ abstract class Shape {
         assert!(!file.children.is_empty());
         if let Node::Class(class) = &file.children[0] {
             assert_eq!(class.name, "Shape");
-            assert!(class.modifiers.contains(&Modifier::Abstract), 
-                   "Expected abstract modifier on class");
-            
+            assert!(
+                class.modifiers.contains(&Modifier::Abstract),
+                "Expected abstract modifier on class"
+            );
+
             // Find abstract method
-            let abstract_methods: Vec<_> = class.children.iter()
-                .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+            let abstract_methods: Vec<_> = class
+                .children
+                .iter()
+                .filter_map(|n| {
+                    if let Node::Function(f) = n {
+                        Some(f)
+                    } else {
+                        None
+                    }
+                })
                 .filter(|f| f.modifiers.contains(&Modifier::Abstract))
                 .collect();
-            
+
             assert!(!abstract_methods.is_empty(), "Expected abstract method");
             assert_eq!(abstract_methods[0].name, "area");
         } else {
@@ -726,12 +744,20 @@ class Outer {
         assert_eq!(file.children.len(), 1);
         if let Node::Class(outer) = &file.children[0] {
             assert_eq!(outer.name, "Outer");
-            
+
             // Find nested class
-            let nested_classes: Vec<_> = outer.children.iter()
-                .filter_map(|n| if let Node::Class(c) = n { Some(c) } else { None })
+            let nested_classes: Vec<_> = outer
+                .children
+                .iter()
+                .filter_map(|n| {
+                    if let Node::Class(c) = n {
+                        Some(c)
+                    } else {
+                        None
+                    }
+                })
                 .collect();
-            
+
             assert!(!nested_classes.is_empty(), "Expected nested class");
             assert_eq!(nested_classes[0].name, "Inner");
         } else {
@@ -757,8 +783,10 @@ object Singleton {
         assert!(!file.children.is_empty());
         if let Node::Class(obj) = &file.children[0] {
             assert_eq!(obj.name, "Singleton");
-            assert!(obj.decorators.contains(&"object".to_string()), 
-                   "Expected 'object' decorator");
+            assert!(
+                obj.decorators.contains(&"object".to_string()),
+                "Expected 'object' decorator"
+            );
         } else {
             panic!("Expected class node for object");
         }
@@ -782,11 +810,19 @@ class User {
         assert!(!file.children.is_empty());
         if let Node::Class(class) = &file.children[0] {
             assert_eq!(class.name, "User");
-            
-            let fields: Vec<_> = class.children.iter()
-                .filter_map(|n| if let Node::Field(f) = n { Some(f) } else { None })
+
+            let fields: Vec<_> = class
+                .children
+                .iter()
+                .filter_map(|n| {
+                    if let Node::Field(f) = n {
+                        Some(f)
+                    } else {
+                        None
+                    }
+                })
                 .collect();
-            
+
             assert_eq!(fields.len(), 3);
             assert_eq!(fields[0].name, "id");
             assert_eq!(fields[1].name, "name");
@@ -813,8 +849,10 @@ inline fun <reified T> isInstance(value: Any): Boolean {
         assert!(!file.children.is_empty());
         if let Node::Function(func) = &file.children[0] {
             assert_eq!(func.name, "isInstance");
-            assert!(func.modifiers.contains(&Modifier::Inline), 
-                   "Expected inline modifier");
+            assert!(
+                func.modifiers.contains(&Modifier::Inline),
+                "Expected inline modifier"
+            );
         } else {
             panic!("Expected function node");
         }
@@ -849,9 +887,11 @@ object MySingleton {}
             .process(source, &PathBuf::from("Multiple.kt"), &opts)
             .unwrap();
 
-        assert!(file.children.len() >= 3, 
-               "Expected at least 3 top-level declarations, got {}", 
-               file.children.len());
+        assert!(
+            file.children.len() >= 3,
+            "Expected at least 3 top-level declarations, got {}",
+            file.children.len()
+        );
     }
 
     #[test]
@@ -872,27 +912,39 @@ class Derived : Base() {
             .unwrap();
 
         assert_eq!(file.children.len(), 2);
-        
+
         // Check Base class
         if let Node::Class(base) = &file.children[0] {
             assert_eq!(base.name, "Base");
-            assert!(base.modifiers.contains(&Modifier::Virtual), 
-                   "Expected open (virtual) modifier on base class");
+            assert!(
+                base.modifiers.contains(&Modifier::Virtual),
+                "Expected open (virtual) modifier on base class"
+            );
         }
-        
+
         // Check Derived class
         if let Node::Class(derived) = &file.children[1] {
             assert_eq!(derived.name, "Derived");
-            
+
             // Find override method
-            let override_methods: Vec<_> = derived.children.iter()
-                .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+            let override_methods: Vec<_> = derived
+                .children
+                .iter()
+                .filter_map(|n| {
+                    if let Node::Function(f) = n {
+                        Some(f)
+                    } else {
+                        None
+                    }
+                })
                 .filter(|f| f.modifiers.contains(&Modifier::Override))
                 .collect();
-            
+
             assert!(!override_methods.is_empty(), "Expected override method");
-            assert!(override_methods[0].modifiers.contains(&Modifier::Final), 
-                   "Expected final modifier on override method");
+            assert!(
+                override_methods[0].modifiers.contains(&Modifier::Final),
+                "Expected final modifier on override method"
+            );
         }
     }
 
@@ -912,8 +964,11 @@ internal class InternalClass {
         assert!(!file.children.is_empty());
         if let Node::Class(class) = &file.children[0] {
             assert_eq!(class.name, "InternalClass");
-            assert_eq!(class.visibility, Visibility::Internal, 
-                      "Expected internal visibility");
+            assert_eq!(
+                class.visibility,
+                Visibility::Internal,
+                "Expected internal visibility"
+            );
         } else {
             panic!("Expected class node");
         }

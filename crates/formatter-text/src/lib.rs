@@ -8,18 +8,10 @@ use distiller_core::ir::*;
 use std::fmt::Write as FmtWrite;
 
 /// Text formatter options
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct TextFormatterOptions {
     /// Include implementation bodies
     pub include_implementation: bool,
-}
-
-impl Default for TextFormatterOptions {
-    fn default() -> Self {
-        Self {
-            include_implementation: false,
-        }
-    }
 }
 
 /// Text formatter
@@ -66,7 +58,12 @@ impl TextFormatter {
     }
 
     /// Format a node with indentation
-    fn format_node(&self, output: &mut String, node: &Node, indent: usize) -> Result<(), std::fmt::Error> {
+    fn format_node(
+        &self,
+        output: &mut String,
+        node: &Node,
+        indent: usize,
+    ) -> Result<(), std::fmt::Error> {
         match node {
             Node::Import(import) => self.format_import(output, import, indent)?,
             Node::Class(class) => self.format_class(output, class, indent)?,
@@ -87,16 +84,25 @@ impl TextFormatter {
     }
 
     /// Format an import statement
-    fn format_import(&self, output: &mut String, import: &Import, indent: usize) -> Result<(), std::fmt::Error> {
+    fn format_import(
+        &self,
+        output: &mut String,
+        import: &Import,
+        indent: usize,
+    ) -> Result<(), std::fmt::Error> {
         let ind = self.indent(indent);
 
         if import.import_type == "from" {
             // Python-style: from module import symbol1, symbol2
-            let symbols = import.symbols.iter()
-                .map(|s| if let Some(ref alias) = s.alias {
-                    format!("{} as {}", s.name, alias)
-                } else {
-                    s.name.clone()
+            let symbols = import
+                .symbols
+                .iter()
+                .map(|s| {
+                    if let Some(ref alias) = s.alias {
+                        format!("{} as {}", s.name, alias)
+                    } else {
+                        s.name.clone()
+                    }
                 })
                 .collect::<Vec<_>>()
                 .join(", ");
@@ -106,11 +112,15 @@ impl TextFormatter {
             if import.symbols.is_empty() {
                 writeln!(output, "{}import {}", ind, import.module)?;
             } else {
-                let symbols = import.symbols.iter()
-                    .map(|s| if let Some(ref alias) = s.alias {
-                        format!("{} as {}", s.name, alias)
-                    } else {
-                        s.name.clone()
+                let symbols = import
+                    .symbols
+                    .iter()
+                    .map(|s| {
+                        if let Some(ref alias) = s.alias {
+                            format!("{} as {}", s.name, alias)
+                        } else {
+                            s.name.clone()
+                        }
                     })
                     .collect::<Vec<_>>()
                     .join(", ");
@@ -122,7 +132,12 @@ impl TextFormatter {
     }
 
     /// Format a class
-    fn format_class(&self, output: &mut String, class: &Class, indent: usize) -> Result<(), std::fmt::Error> {
+    fn format_class(
+        &self,
+        output: &mut String,
+        class: &Class,
+        indent: usize,
+    ) -> Result<(), std::fmt::Error> {
         let ind = self.indent(indent);
         let vis_symbol = self.visibility_symbol(class.visibility);
 
@@ -162,18 +177,29 @@ impl TextFormatter {
     }
 
     /// Format an interface
-    fn format_interface(&self, output: &mut String, interface: &Interface, indent: usize) -> Result<(), std::fmt::Error> {
+    fn format_interface(
+        &self,
+        output: &mut String,
+        interface: &Interface,
+        indent: usize,
+    ) -> Result<(), std::fmt::Error> {
         let ind = self.indent(indent);
         let vis_symbol = self.visibility_symbol(interface.visibility);
 
         write!(output, "{}{}interface {}", ind, vis_symbol, interface.name)?;
 
         if !interface.type_params.is_empty() {
-            write!(output, "<{}>", self.format_type_params(&interface.type_params))?;
+            write!(
+                output,
+                "<{}>",
+                self.format_type_params(&interface.type_params)
+            )?;
         }
 
         if !interface.extends.is_empty() {
-            let extends = interface.extends.iter()
+            let extends = interface
+                .extends
+                .iter()
                 .map(|t| self.format_type_ref(t))
                 .collect::<Vec<_>>()
                 .join(", ");
@@ -190,14 +216,23 @@ impl TextFormatter {
     }
 
     /// Format a struct
-    fn format_struct(&self, output: &mut String, struct_node: &Struct, indent: usize) -> Result<(), std::fmt::Error> {
+    fn format_struct(
+        &self,
+        output: &mut String,
+        struct_node: &Struct,
+        indent: usize,
+    ) -> Result<(), std::fmt::Error> {
         let ind = self.indent(indent);
         let vis_symbol = self.visibility_symbol(struct_node.visibility);
 
         write!(output, "{}{}struct {}", ind, vis_symbol, struct_node.name)?;
 
         if !struct_node.type_params.is_empty() {
-            write!(output, "<{}>", self.format_type_params(&struct_node.type_params))?;
+            write!(
+                output,
+                "<{}>",
+                self.format_type_params(&struct_node.type_params)
+            )?;
         }
 
         writeln!(output, ":")?;
@@ -210,7 +245,12 @@ impl TextFormatter {
     }
 
     /// Format an enum
-    fn format_enum(&self, output: &mut String, enum_node: &Enum, indent: usize) -> Result<(), std::fmt::Error> {
+    fn format_enum(
+        &self,
+        output: &mut String,
+        enum_node: &Enum,
+        indent: usize,
+    ) -> Result<(), std::fmt::Error> {
         let ind = self.indent(indent);
         let vis_symbol = self.visibility_symbol(enum_node.visibility);
 
@@ -230,7 +270,12 @@ impl TextFormatter {
     }
 
     /// Format a type alias
-    fn format_type_alias(&self, output: &mut String, alias: &TypeAlias, indent: usize) -> Result<(), std::fmt::Error> {
+    fn format_type_alias(
+        &self,
+        output: &mut String,
+        alias: &TypeAlias,
+        indent: usize,
+    ) -> Result<(), std::fmt::Error> {
         let ind = self.indent(indent);
         let vis_symbol = self.visibility_symbol(alias.visibility);
 
@@ -246,7 +291,12 @@ impl TextFormatter {
     }
 
     /// Format a function
-    fn format_function(&self, output: &mut String, func: &Function, indent: usize) -> Result<(), std::fmt::Error> {
+    fn format_function(
+        &self,
+        output: &mut String,
+        func: &Function,
+        indent: usize,
+    ) -> Result<(), std::fmt::Error> {
         let ind = self.indent(indent);
         let vis_symbol = self.visibility_symbol(func.visibility);
 
@@ -256,7 +306,9 @@ impl TextFormatter {
         }
 
         // Modifiers
-        let mut modifiers = func.modifiers.iter()
+        let mut modifiers = func
+            .modifiers
+            .iter()
             .map(|m| format!("{:?}", m).to_lowercase())
             .collect::<Vec<_>>();
         let modifiers_str = if !modifiers.is_empty() {
@@ -266,7 +318,11 @@ impl TextFormatter {
             String::new()
         };
 
-        write!(output, "{}{}{}def {}", ind, vis_symbol, modifiers_str, func.name)?;
+        write!(
+            output,
+            "{}{}{}def {}",
+            ind, vis_symbol, modifiers_str, func.name
+        )?;
 
         // Type parameters
         if !func.type_params.is_empty() {
@@ -275,7 +331,9 @@ impl TextFormatter {
 
         // Parameters
         write!(output, "(")?;
-        let params = func.parameters.iter()
+        let params = func
+            .parameters
+            .iter()
             .map(|p| self.format_parameter(p))
             .collect::<Vec<_>>()
             .join(", ");
@@ -305,12 +363,19 @@ impl TextFormatter {
     }
 
     /// Format a field
-    fn format_field(&self, output: &mut String, field: &Field, indent: usize) -> Result<(), std::fmt::Error> {
+    fn format_field(
+        &self,
+        output: &mut String,
+        field: &Field,
+        indent: usize,
+    ) -> Result<(), std::fmt::Error> {
         let ind = self.indent(indent);
         let vis_symbol = self.visibility_symbol(field.visibility);
 
         // Modifiers
-        let mut modifiers = field.modifiers.iter()
+        let mut modifiers = field
+            .modifiers
+            .iter()
             .map(|m| format!("{:?}", m).to_lowercase())
             .collect::<Vec<_>>();
         let modifiers_str = if !modifiers.is_empty() {
@@ -320,7 +385,11 @@ impl TextFormatter {
             String::new()
         };
 
-        write!(output, "{}{}{}{}", ind, vis_symbol, modifiers_str, field.name)?;
+        write!(
+            output,
+            "{}{}{}{}",
+            ind, vis_symbol, modifiers_str, field.name
+        )?;
 
         if let Some(ref field_type) = field.field_type {
             write!(output, ": {}", self.format_type_ref(field_type))?;
@@ -336,7 +405,12 @@ impl TextFormatter {
     }
 
     /// Format a comment
-    fn format_comment(&self, output: &mut String, comment: &Comment, indent: usize) -> Result<(), std::fmt::Error> {
+    fn format_comment(
+        &self,
+        output: &mut String,
+        comment: &Comment,
+        indent: usize,
+    ) -> Result<(), std::fmt::Error> {
         let ind = self.indent(indent);
 
         for line in comment.text.lines() {
@@ -347,7 +421,12 @@ impl TextFormatter {
     }
 
     /// Format a package
-    fn format_package(&self, output: &mut String, package: &Package, indent: usize) -> Result<(), std::fmt::Error> {
+    fn format_package(
+        &self,
+        output: &mut String,
+        package: &Package,
+        indent: usize,
+    ) -> Result<(), std::fmt::Error> {
         let ind = self.indent(indent);
         writeln!(output, "{}package {}", ind, package.name)?;
 
@@ -359,7 +438,12 @@ impl TextFormatter {
     }
 
     /// Format raw content
-    fn format_raw(&self, output: &mut String, raw: &RawContent, _indent: usize) -> Result<(), std::fmt::Error> {
+    fn format_raw(
+        &self,
+        output: &mut String,
+        raw: &RawContent,
+        _indent: usize,
+    ) -> Result<(), std::fmt::Error> {
         writeln!(output, "{}", raw.content)?;
         Ok(())
     }
@@ -369,7 +453,9 @@ impl TextFormatter {
         let mut result = type_ref.name.clone();
 
         if !type_ref.type_args.is_empty() {
-            let args = type_ref.type_args.iter()
+            let args = type_ref
+                .type_args
+                .iter()
                 .map(|t| self.format_type_ref(t))
                 .collect::<Vec<_>>()
                 .join(", ");
@@ -389,11 +475,14 @@ impl TextFormatter {
 
     /// Format type parameters
     fn format_type_params(&self, type_params: &[TypeParam]) -> String {
-        type_params.iter()
+        type_params
+            .iter()
             .map(|tp| {
                 let mut result = tp.name.clone();
                 if !tp.constraints.is_empty() {
-                    let constraints = tp.constraints.iter()
+                    let constraints = tp
+                        .constraints
+                        .iter()
                         .map(|t| self.format_type_ref(t))
                         .collect::<Vec<_>>()
                         .join(" + ");
@@ -455,42 +544,36 @@ mod tests {
     fn test_simple_class() {
         let file = File {
             path: "test.py".to_string(),
-            children: vec![
-                Node::Class(Class {
-                    name: "Example".to_string(),
+            children: vec![Node::Class(Class {
+                name: "Example".to_string(),
+                visibility: Visibility::Public,
+                modifiers: Vec::new(),
+                decorators: Vec::new(),
+                type_params: Vec::new(),
+                extends: Vec::new(),
+                implements: Vec::new(),
+                children: vec![Node::Function(Function {
+                    name: "__init__".to_string(),
                     visibility: Visibility::Public,
                     modifiers: Vec::new(),
                     decorators: Vec::new(),
                     type_params: Vec::new(),
-                    extends: Vec::new(),
-                    implements: Vec::new(),
-                    children: vec![
-                        Node::Function(Function {
-                            name: "__init__".to_string(),
-                            visibility: Visibility::Public,
-                            modifiers: Vec::new(),
-                            decorators: Vec::new(),
-                            type_params: Vec::new(),
-                            parameters: vec![
-                                Parameter {
-                                    name: "self".to_string(),
-                                    param_type: TypeRef::new("Self"),
-                                    default_value: None,
-                                    is_variadic: false,
-                                    is_optional: false,
-                                    decorators: Vec::new(),
-                                },
-                            ],
-                            return_type: None,
-                            implementation: None,
-                            line_start: 2,
-                            line_end: 3,
-                        }),
-                    ],
-                    line_start: 1,
+                    parameters: vec![Parameter {
+                        name: "self".to_string(),
+                        param_type: TypeRef::new("Self"),
+                        default_value: None,
+                        is_variadic: false,
+                        is_optional: false,
+                        decorators: Vec::new(),
+                    }],
+                    return_type: None,
+                    implementation: None,
+                    line_start: 2,
                     line_end: 3,
-                }),
-            ],
+                })],
+                line_start: 1,
+                line_end: 3,
+            })],
         };
 
         let formatter = TextFormatter::new();
@@ -515,24 +598,22 @@ mod tests {
     fn test_import() {
         let file = File {
             path: "test.py".to_string(),
-            children: vec![
-                Node::Import(Import {
-                    import_type: "from".to_string(),
-                    module: "typing".to_string(),
-                    symbols: vec![
-                        ImportedSymbol {
-                            name: "List".to_string(),
-                            alias: None,
-                        },
-                        ImportedSymbol {
-                            name: "Optional".to_string(),
-                            alias: None,
-                        },
-                    ],
-                    is_type: true,
-                    line: Some(1),
-                }),
-            ],
+            children: vec![Node::Import(Import {
+                import_type: "from".to_string(),
+                module: "typing".to_string(),
+                symbols: vec![
+                    ImportedSymbol {
+                        name: "List".to_string(),
+                        alias: None,
+                    },
+                    ImportedSymbol {
+                        name: "Optional".to_string(),
+                        alias: None,
+                    },
+                ],
+                is_type: true,
+                line: Some(1),
+            })],
         };
 
         let formatter = TextFormatter::new();
@@ -545,29 +626,25 @@ mod tests {
     fn test_private_field() {
         let file = File {
             path: "test.py".to_string(),
-            children: vec![
-                Node::Class(Class {
-                    name: "Example".to_string(),
-                    visibility: Visibility::Public,
+            children: vec![Node::Class(Class {
+                name: "Example".to_string(),
+                visibility: Visibility::Public,
+                modifiers: Vec::new(),
+                decorators: Vec::new(),
+                type_params: Vec::new(),
+                extends: Vec::new(),
+                implements: Vec::new(),
+                children: vec![Node::Field(Field {
+                    name: "_private_field".to_string(),
+                    visibility: Visibility::Private,
                     modifiers: Vec::new(),
-                    decorators: Vec::new(),
-                    type_params: Vec::new(),
-                    extends: Vec::new(),
-                    implements: Vec::new(),
-                    children: vec![
-                        Node::Field(Field {
-                            name: "_private_field".to_string(),
-                            visibility: Visibility::Private,
-                            modifiers: Vec::new(),
-                            field_type: Some(TypeRef::new("str")),
-                            default_value: None,
-                            line: 2,
-                        }),
-                    ],
-                    line_start: 1,
-                    line_end: 3,
-                }),
-            ],
+                    field_type: Some(TypeRef::new("str")),
+                    default_value: None,
+                    line: 2,
+                })],
+                line_start: 1,
+                line_end: 3,
+            })],
         };
 
         let formatter = TextFormatter::new();

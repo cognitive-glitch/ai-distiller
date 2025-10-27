@@ -1,8 +1,8 @@
 use distiller_core::{
+    ProcessOptions,
     error::{DistilError, Result},
     ir::{self, *},
     processor::LanguageProcessor,
-    ProcessOptions,
 };
 use parking_lot::Mutex;
 use std::path::Path;
@@ -270,7 +270,7 @@ impl SwiftProcessor {
                 "->" => {
                     saw_arrow = true;
                 }
-                // Return type handling (appears after ->) 
+                // Return type handling (appears after ->)
                 "user_type" | "optional_type" | "type_identifier" => {
                     if saw_arrow && return_type.is_none() {
                         // Extract full type text including optional marker
@@ -283,7 +283,9 @@ impl SwiftProcessor {
                     if return_type.is_none() {
                         let mut ft_cursor = child.walk();
                         for ft_child in child.children(&mut ft_cursor) {
-                            if ft_child.kind() == "type_identifier" || ft_child.kind() == "user_type" {
+                            if ft_child.kind() == "type_identifier"
+                                || ft_child.kind() == "user_type"
+                            {
                                 return_type = Some(TypeRef::new(self.node_text(ft_child, source)));
                             }
                         }
@@ -352,9 +354,10 @@ impl SwiftProcessor {
                 "type_annotation" => {
                     let mut ta_cursor = child.walk();
                     for ta_child in child.children(&mut ta_cursor) {
-                        if ta_child.kind() == "type_identifier" 
-                            || ta_child.kind() == "user_type" 
-                            || ta_child.kind() == "optional_type" {
+                        if ta_child.kind() == "type_identifier"
+                            || ta_child.kind() == "user_type"
+                            || ta_child.kind() == "optional_type"
+                        {
                             param_type = TypeRef::new(self.node_text(ta_child, source));
                         }
                     }
@@ -748,12 +751,28 @@ struct Calculator {
             assert!(struct_decl.decorators.contains(&"struct".to_string()));
 
             // Count functions and fields
-            let funcs: Vec<_> = struct_decl.children.iter()
-                .filter_map(|n| if let ir::Node::Function(f) = n { Some(f) } else { None })
+            let funcs: Vec<_> = struct_decl
+                .children
+                .iter()
+                .filter_map(|n| {
+                    if let ir::Node::Function(f) = n {
+                        Some(f)
+                    } else {
+                        None
+                    }
+                })
                 .collect();
 
-            let fields: Vec<_> = struct_decl.children.iter()
-                .filter_map(|n| if let ir::Node::Field(f) = n { Some(f) } else { None })
+            let fields: Vec<_> = struct_decl
+                .children
+                .iter()
+                .filter_map(|n| {
+                    if let ir::Node::Field(f) = n {
+                        Some(f)
+                    } else {
+                        None
+                    }
+                })
                 .collect();
 
             assert_eq!(funcs.len(), 3, "Expected 3 methods");
@@ -763,7 +782,11 @@ struct Calculator {
             assert_eq!(funcs[0].name, "add");
             assert_eq!(funcs[1].name, "multiply");
             assert_eq!(funcs[2].name, "helper");
-            assert_eq!(funcs[2].visibility, Visibility::Private, "helper should be private");
+            assert_eq!(
+                funcs[2].visibility,
+                Visibility::Private,
+                "helper should be private"
+            );
         } else {
             panic!("Expected a struct");
         }
@@ -891,8 +914,16 @@ class UserService {
         if let ir::Node::Class(class) = &file.children[0] {
             assert_eq!(class.name, "UserService");
 
-            let funcs: Vec<_> = class.children.iter()
-                .filter_map(|n| if let ir::Node::Function(f) = n { Some(f) } else { None })
+            let funcs: Vec<_> = class
+                .children
+                .iter()
+                .filter_map(|n| {
+                    if let ir::Node::Function(f) = n {
+                        Some(f)
+                    } else {
+                        None
+                    }
+                })
                 .collect();
 
             assert!(!funcs.is_empty(), "Expected at least one method");
@@ -934,8 +965,16 @@ struct Rectangle {
         if let ir::Node::Class(struct_decl) = &file.children[0] {
             assert_eq!(struct_decl.name, "Rectangle");
 
-            let fields: Vec<_> = struct_decl.children.iter()
-                .filter_map(|n| if let ir::Node::Field(f) = n { Some(f) } else { None })
+            let fields: Vec<_> = struct_decl
+                .children
+                .iter()
+                .filter_map(|n| {
+                    if let ir::Node::Field(f) = n {
+                        Some(f)
+                    } else {
+                        None
+                    }
+                })
                 .collect();
 
             assert!(fields.len() >= 2, "Expected at least 2 properties");
@@ -971,12 +1010,15 @@ class DataManager: Codable, Equatable, Hashable {
 
         if let ir::Node::Class(class) = &file.children[0] {
             assert_eq!(class.name, "DataManager");
-            assert_eq!(class.implements.len(), 3, "Expected 3 protocol conformances");
+            assert_eq!(
+                class.implements.len(),
+                3,
+                "Expected 3 protocol conformances"
+            );
 
             // Validate protocol names
-            let protocol_names: Vec<String> = class.implements.iter()
-                .map(|p| p.name.clone())
-                .collect();
+            let protocol_names: Vec<String> =
+                class.implements.iter().map(|p| p.name.clone()).collect();
             assert!(protocol_names.contains(&"Codable".to_string()));
             assert!(protocol_names.contains(&"Equatable".to_string()));
             assert!(protocol_names.contains(&"Hashable".to_string()));
@@ -1009,8 +1051,16 @@ class Service {
         if let ir::Node::Class(class) = &file.children[0] {
             assert_eq!(class.name, "Service");
 
-            let funcs: Vec<_> = class.children.iter()
-                .filter_map(|n| if let ir::Node::Function(f) = n { Some(f) } else { None })
+            let funcs: Vec<_> = class
+                .children
+                .iter()
+                .filter_map(|n| {
+                    if let ir::Node::Function(f) = n {
+                        Some(f)
+                    } else {
+                        None
+                    }
+                })
                 .collect();
 
             assert_eq!(funcs.len(), 4, "Expected 4 methods");
@@ -1060,12 +1110,28 @@ class User {
         if let ir::Node::Class(class) = &file.children[0] {
             assert_eq!(class.name, "User");
 
-            let fields: Vec<_> = class.children.iter()
-                .filter_map(|n| if let ir::Node::Field(f) = n { Some(f) } else { None })
+            let fields: Vec<_> = class
+                .children
+                .iter()
+                .filter_map(|n| {
+                    if let ir::Node::Field(f) = n {
+                        Some(f)
+                    } else {
+                        None
+                    }
+                })
                 .collect();
 
-            let funcs: Vec<_> = class.children.iter()
-                .filter_map(|n| if let ir::Node::Function(f) = n { Some(f) } else { None })
+            let funcs: Vec<_> = class
+                .children
+                .iter()
+                .filter_map(|n| {
+                    if let ir::Node::Function(f) = n {
+                        Some(f)
+                    } else {
+                        None
+                    }
+                })
                 .collect();
 
             assert_eq!(fields.len(), 2, "Expected 2 fields");
@@ -1085,11 +1151,11 @@ class User {
 #[cfg(test)]
 mod debug_tests {
     use super::*;
-    
+
     fn print_tree(node: TSNode, source: &str, depth: usize) {
         let indent = "  ".repeat(depth);
         let kind = node.kind();
-        
+
         let start = node.start_byte();
         let end = node.end_byte();
         let text = if end > start && end <= source.len() {
@@ -1097,21 +1163,21 @@ mod debug_tests {
         } else {
             ""
         };
-        
+
         let text_preview = if text.len() > 60 {
             format!("{}...", &text[..60].replace('\n', "\\n"))
         } else {
             text.replace('\n', "\\n")
         };
-        
+
         eprintln!("{}[{}] \"{}\"", indent, kind, text_preview);
-        
+
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
             print_tree(child, source, depth + 1);
         }
     }
-    
+
     #[test]
     #[ignore]
     fn debug_function_parameters_ast() {
@@ -1126,15 +1192,15 @@ func calculate(x: Int, y: Int) -> Int {
 func findUser(id: Int?) -> String? {
     return "User"
 }"#;
-        
+
         let processor = SwiftProcessor::new().unwrap();
         let mut parser = processor.parser.lock();
         let tree = parser.parse(source, None).unwrap();
         let root = tree.root_node();
-        
+
         eprintln!("\n=== Swift AST Structure ===\n");
         print_tree(root, source, 0);
-        
+
         panic!("Debug output - check stderr");
     }
 }

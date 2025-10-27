@@ -1,8 +1,8 @@
 use distiller_core::{
+    ProcessOptions,
     error::{DistilError, Result},
     ir::*,
     processor::LanguageProcessor,
-    ProcessOptions,
 };
 use parking_lot::Mutex;
 use std::path::Path;
@@ -48,10 +48,10 @@ impl CppProcessor {
 
         // Check if this is a template
         let parent = node.parent();
-        if let Some(p) = parent {
-            if p.kind() == "template_declaration" {
-                type_params = self.parse_template_parameters(p, source);
-            }
+        if let Some(p) = parent
+            && p.kind() == "template_declaration"
+        {
+            type_params = self.parse_template_parameters(p, source);
         }
 
         let mut cursor = node.walk();
@@ -382,10 +382,10 @@ impl CppProcessor {
                         if let Some(class) = self.parse_class(child, source)? {
                             file.children.push(Node::Class(class));
                         }
-                    } else if child.kind() == "function_definition" {
-                        if let Some(func) = self.parse_function(child, source)? {
-                            file.children.push(Node::Function(func));
-                        }
+                    } else if child.kind() == "function_definition"
+                        && let Some(func) = self.parse_function(child, source)?
+                    {
+                        file.children.push(Node::Function(func));
                     }
                 }
             }
@@ -797,8 +797,16 @@ public:
         if let Node::Class(class) = &file.children[0] {
             assert_eq!(class.name, "Complex");
 
-            let operators: Vec<_> = class.children.iter()
-                .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+            let operators: Vec<_> = class
+                .children
+                .iter()
+                .filter_map(|n| {
+                    if let Node::Function(f) = n {
+                        Some(f)
+                    } else {
+                        None
+                    }
+                })
                 .filter(|f| f.name.starts_with("operator"))
                 .collect();
 
@@ -904,12 +912,23 @@ private:
             assert_eq!(class.name, "Resource");
 
             // Check for constructor and destructor
-            let constructors: Vec<_> = class.children.iter()
-                .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+            let constructors: Vec<_> = class
+                .children
+                .iter()
+                .filter_map(|n| {
+                    if let Node::Function(f) = n {
+                        Some(f)
+                    } else {
+                        None
+                    }
+                })
                 .filter(|f| f.name == "Resource" || f.name.starts_with('~'))
                 .collect();
 
-            assert!(!constructors.is_empty(), "Expected constructor and/or destructor");
+            assert!(
+                !constructors.is_empty(),
+                "Expected constructor and/or destructor"
+            );
         } else {
             panic!("Expected Resource class");
         }
@@ -953,8 +972,11 @@ public:
 
         assert!(colored_shape.is_some(), "Expected ColoredShape class");
         if let Some(Node::Class(class)) = colored_shape {
-            assert_eq!(class.extends.len(), 2,
-                      "Expected multiple inheritance with 2 base classes");
+            assert_eq!(
+                class.extends.len(),
+                2,
+                "Expected multiple inheritance with 2 base classes"
+            );
             assert_eq!(class.extends[0].name, "Shape");
             assert_eq!(class.extends[1].name, "Colored");
         }
@@ -984,8 +1006,16 @@ public:
             assert_eq!(outer.name, "Outer");
 
             // Find nested class
-            let nested_classes: Vec<_> = outer.children.iter()
-                .filter_map(|n| if let Node::Class(c) = n { Some(c) } else { None })
+            let nested_classes: Vec<_> = outer
+                .children
+                .iter()
+                .filter_map(|n| {
+                    if let Node::Class(c) = n {
+                        Some(c)
+                    } else {
+                        None
+                    }
+                })
                 .collect();
 
             // Parser limitation: nested classes not detected
@@ -1103,13 +1133,24 @@ private:
             assert_eq!(class.name, "String");
 
             // Count constructors
-            let constructors: Vec<_> = class.children.iter()
-                .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+            let constructors: Vec<_> = class
+                .children
+                .iter()
+                .filter_map(|n| {
+                    if let Node::Function(f) = n {
+                        Some(f)
+                    } else {
+                        None
+                    }
+                })
                 .filter(|f| f.name == "String")
                 .collect();
 
-            assert!(!constructors.is_empty(),
-                   "Expected multiple constructors, found {}", constructors.len());
+            assert!(
+                !constructors.is_empty(),
+                "Expected multiple constructors, found {}",
+                constructors.len()
+            );
         } else {
             panic!("Expected String class");
         }

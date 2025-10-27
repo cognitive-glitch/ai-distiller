@@ -286,10 +286,10 @@ impl PythonProcessor {
 
         // Check for async modifier
         let mut cursor = node.walk();
-        if let Some(first) = node.child(0) {
-            if first.kind() == "async" {
-                function.modifiers.push(Modifier::Async);
-            }
+        if let Some(first) = node.child(0)
+            && first.kind() == "async"
+        {
+            function.modifiers.push(Modifier::Async);
         }
 
         for child in node.children(&mut cursor) {
@@ -643,114 +643,135 @@ mod tests {
     }
 }
 
-    // ===== Enhanced Test Coverage =====
+// ===== Enhanced Test Coverage =====
 
-    #[test]
-    fn test_function_with_return_type() {
-        let processor = PythonProcessor::new().unwrap();
-        let source = "def calculate(x: int, y: int) -> int:\n    return x + y";
-        let opts = ProcessOptions::default();
+#[test]
+fn test_function_with_return_type() {
+    let processor = PythonProcessor::new().unwrap();
+    let source = "def calculate(x: int, y: int) -> int:\n    return x + y";
+    let opts = ProcessOptions::default();
 
-        let file = processor.process(source, Path::new("test.py"), &opts).unwrap();
-        assert_eq!(file.children.len(), 1);
+    let file = processor
+        .process(source, Path::new("test.py"), &opts)
+        .unwrap();
+    assert_eq!(file.children.len(), 1);
 
-        if let Node::Function(func) = &file.children[0] {
-            assert_eq!(func.name, "calculate");
-            assert!(func.parameters.len() >= 1, "Expected at least 1 parameter, got {}", func.parameters.len());
-            
-            // Validate typed parameters
-            assert_eq!(func.parameters[0].name, "x");
-            assert_eq!(func.parameters[0].param_type.name, "int");
-            assert_eq!(func.parameters[1].name, "y");
-            assert_eq!(func.parameters[1].param_type.name, "int");
-            
-            // Validate return type
-            assert!(func.return_type.is_some());
-            assert_eq!(func.return_type.as_ref().unwrap().name, "int");
-        } else {
-            panic!("Expected function node, got {:?}", file.children[0]);
-        }
+    if let Node::Function(func) = &file.children[0] {
+        assert_eq!(func.name, "calculate");
+        assert!(
+            func.parameters.len() >= 1,
+            "Expected at least 1 parameter, got {}",
+            func.parameters.len()
+        );
+
+        // Validate typed parameters
+        assert_eq!(func.parameters[0].name, "x");
+        assert_eq!(func.parameters[0].param_type.name, "int");
+        assert_eq!(func.parameters[1].name, "y");
+        assert_eq!(func.parameters[1].param_type.name, "int");
+
+        // Validate return type
+        assert!(func.return_type.is_some());
+        assert_eq!(func.return_type.as_ref().unwrap().name, "int");
+    } else {
+        panic!("Expected function node, got {:?}", file.children[0]);
     }
+}
 
-    #[test]
-    fn test_async_function() {
-        let processor = PythonProcessor::new().unwrap();
-        let source = "async def fetch_data():\n    pass";
-        let opts = ProcessOptions::default();
+#[test]
+fn test_async_function() {
+    let processor = PythonProcessor::new().unwrap();
+    let source = "async def fetch_data():\n    pass";
+    let opts = ProcessOptions::default();
 
-        let file = processor.process(source, Path::new("test.py"), &opts).unwrap();
-        assert_eq!(file.children.len(), 1);
+    let file = processor
+        .process(source, Path::new("test.py"), &opts)
+        .unwrap();
+    assert_eq!(file.children.len(), 1);
 
-        if let Node::Function(func) = &file.children[0] {
-            assert_eq!(func.name, "fetch_data");
-            assert!(func.modifiers.contains(&Modifier::Async), 
-                    "Expected async modifier, got {:?}", func.modifiers);
-        } else {
-            panic!("Expected function node");
-        }
+    if let Node::Function(func) = &file.children[0] {
+        assert_eq!(func.name, "fetch_data");
+        assert!(
+            func.modifiers.contains(&Modifier::Async),
+            "Expected async modifier, got {:?}",
+            func.modifiers
+        );
+    } else {
+        panic!("Expected function node");
     }
+}
 
-    #[test]
-    fn test_decorated_function() {
-        let processor = PythonProcessor::new().unwrap();
-        let source = "@staticmethod\ndef helper():\n    pass";
-        let opts = ProcessOptions::default();
+#[test]
+fn test_decorated_function() {
+    let processor = PythonProcessor::new().unwrap();
+    let source = "@staticmethod\ndef helper():\n    pass";
+    let opts = ProcessOptions::default();
 
-        let file = processor.process(source, Path::new("test.py"), &opts).unwrap();
-        assert_eq!(file.children.len(), 1);
+    let file = processor
+        .process(source, Path::new("test.py"), &opts)
+        .unwrap();
+    assert_eq!(file.children.len(), 1);
 
-        if let Node::Function(func) = &file.children[0] {
-            assert_eq!(func.name, "helper");
-            assert_eq!(func.decorators.len(), 1);
-            assert_eq!(func.decorators[0], "@staticmethod");
-        } else {
-            panic!("Expected function node");
-        }
+    if let Node::Function(func) = &file.children[0] {
+        assert_eq!(func.name, "helper");
+        assert_eq!(func.decorators.len(), 1);
+        assert_eq!(func.decorators[0], "@staticmethod");
+    } else {
+        panic!("Expected function node");
     }
+}
 
-    #[test]
-    fn test_class_with_inheritance() {
-        let processor = PythonProcessor::new().unwrap();
-        let source = "class Child(Parent):\n    pass";
-        let opts = ProcessOptions::default();
+#[test]
+fn test_class_with_inheritance() {
+    let processor = PythonProcessor::new().unwrap();
+    let source = "class Child(Parent):\n    pass";
+    let opts = ProcessOptions::default();
 
-        let file = processor.process(source, Path::new("test.py"), &opts).unwrap();
-        assert_eq!(file.children.len(), 1);
+    let file = processor
+        .process(source, Path::new("test.py"), &opts)
+        .unwrap();
+    assert_eq!(file.children.len(), 1);
 
-        if let Node::Class(class) = &file.children[0] {
-            assert_eq!(class.name, "Child");
-            assert_eq!(class.extends.len(), 1);
-            assert_eq!(class.extends[0].name, "Parent");
-        } else {
-            panic!("Expected class node");
-        }
+    if let Node::Class(class) = &file.children[0] {
+        assert_eq!(class.name, "Child");
+        assert_eq!(class.extends.len(), 1);
+        assert_eq!(class.extends[0].name, "Parent");
+    } else {
+        panic!("Expected class node");
     }
+}
 
-    #[test]
-    fn test_class_with_multiple_inheritance() {
-        let processor = PythonProcessor::new().unwrap();
-        let source = "class MultiChild(Parent1, Parent2, Parent3):\n    pass";
-        let opts = ProcessOptions::default();
+#[test]
+fn test_class_with_multiple_inheritance() {
+    let processor = PythonProcessor::new().unwrap();
+    let source = "class MultiChild(Parent1, Parent2, Parent3):\n    pass";
+    let opts = ProcessOptions::default();
 
-        let file = processor.process(source, Path::new("test.py"), &opts).unwrap();
-        assert_eq!(file.children.len(), 1);
+    let file = processor
+        .process(source, Path::new("test.py"), &opts)
+        .unwrap();
+    assert_eq!(file.children.len(), 1);
 
-        if let Node::Class(class) = &file.children[0] {
-            assert_eq!(class.name, "MultiChild");
-            assert_eq!(class.extends.len(), 3, 
-                      "Expected 3 base classes, got {}", class.extends.len());
-            assert_eq!(class.extends[0].name, "Parent1");
-            assert_eq!(class.extends[1].name, "Parent2");
-            assert_eq!(class.extends[2].name, "Parent3");
-        } else {
-            panic!("Expected class node");
-        }
+    if let Node::Class(class) = &file.children[0] {
+        assert_eq!(class.name, "MultiChild");
+        assert_eq!(
+            class.extends.len(),
+            3,
+            "Expected 3 base classes, got {}",
+            class.extends.len()
+        );
+        assert_eq!(class.extends[0].name, "Parent1");
+        assert_eq!(class.extends[1].name, "Parent2");
+        assert_eq!(class.extends[2].name, "Parent3");
+    } else {
+        panic!("Expected class node");
     }
+}
 
-    #[test]
-    fn test_class_with_mixed_visibility_methods() {
-        let processor = PythonProcessor::new().unwrap();
-        let source = r#"class Service:
+#[test]
+fn test_class_with_mixed_visibility_methods() {
+    let processor = PythonProcessor::new().unwrap();
+    let source = r#"class Service:
     def public_method(self):
         pass
     
@@ -763,154 +784,190 @@ mod tests {
     def __init__(self):
         pass
 "#;
-        let opts = ProcessOptions::default();
+    let opts = ProcessOptions::default();
 
-        let file = processor.process(source, Path::new("test.py"), &opts).unwrap();
-        assert_eq!(file.children.len(), 1);
+    let file = processor
+        .process(source, Path::new("test.py"), &opts)
+        .unwrap();
+    assert_eq!(file.children.len(), 1);
 
-        if let Node::Class(class) = &file.children[0] {
-            assert_eq!(class.name, "Service");
-            assert_eq!(class.children.len(), 4);
+    if let Node::Class(class) = &file.children[0] {
+        assert_eq!(class.name, "Service");
+        assert_eq!(class.children.len(), 4);
 
-            // Validate visibility levels
-            let methods: Vec<_> = class.children.iter()
-                .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
-                .collect();
-            
-            assert_eq!(methods.len(), 4);
-            
-            // public_method
-            assert_eq!(methods[0].name, "public_method");
-            assert_eq!(methods[0].visibility, Visibility::Public);
-            
-            // _protected_method
-            assert_eq!(methods[1].name, "_protected_method");
-            assert_eq!(methods[1].visibility, Visibility::Protected);
-            
-            // __private_method
-            assert_eq!(methods[2].name, "__private_method");
-            assert_eq!(methods[2].visibility, Visibility::Private);
-            
-            // __init__ (dunder, public)
-            assert_eq!(methods[3].name, "__init__");
-            assert_eq!(methods[3].visibility, Visibility::Public);
-        } else {
-            panic!("Expected class node");
+        // Validate visibility levels
+        let methods: Vec<_> = class
+            .children
+            .iter()
+            .filter_map(|n| {
+                if let Node::Function(f) = n {
+                    Some(f)
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        assert_eq!(methods.len(), 4);
+
+        // public_method
+        assert_eq!(methods[0].name, "public_method");
+        assert_eq!(methods[0].visibility, Visibility::Public);
+
+        // _protected_method
+        assert_eq!(methods[1].name, "_protected_method");
+        assert_eq!(methods[1].visibility, Visibility::Protected);
+
+        // __private_method
+        assert_eq!(methods[2].name, "__private_method");
+        assert_eq!(methods[2].visibility, Visibility::Private);
+
+        // __init__ (dunder, public)
+        assert_eq!(methods[3].name, "__init__");
+        assert_eq!(methods[3].visibility, Visibility::Public);
+    } else {
+        panic!("Expected class node");
+    }
+}
+
+#[test]
+fn test_decorated_class() {
+    let processor = PythonProcessor::new().unwrap();
+    let source = "@dataclass\nclass Point:\n    x: int\n    y: int";
+    let opts = ProcessOptions::default();
+
+    let file = processor
+        .process(source, Path::new("test.py"), &opts)
+        .unwrap();
+    assert_eq!(file.children.len(), 1);
+
+    if let Node::Class(class) = &file.children[0] {
+        assert_eq!(class.name, "Point");
+        assert_eq!(class.decorators.len(), 1);
+        assert_eq!(class.decorators[0], "@dataclass");
+    } else {
+        panic!("Expected class node");
+    }
+}
+
+#[test]
+fn test_function_with_typed_parameters() {
+    let processor = PythonProcessor::new().unwrap();
+    let source = "def greet(name: str, count: int) -> str:\n    return name * count";
+    let opts = ProcessOptions::default();
+
+    let file = processor
+        .process(source, Path::new("test.py"), &opts)
+        .unwrap();
+    assert_eq!(file.children.len(), 1);
+
+    if let Node::Function(func) = &file.children[0] {
+        assert_eq!(func.name, "greet");
+        assert!(
+            func.parameters.len() >= 2,
+            "Expected at least 2 parameters, got {}",
+            func.parameters.len()
+        );
+
+        // Validate typed parameters
+        assert_eq!(func.parameters[0].name, "name");
+        assert_eq!(func.parameters[0].param_type.name, "str");
+
+        if func.parameters.len() >= 2 {
+            assert_eq!(func.parameters[1].name, "count");
+            assert_eq!(func.parameters[1].param_type.name, "int");
         }
+
+        // Validate return type
+        assert!(func.return_type.is_some());
+        assert_eq!(func.return_type.as_ref().unwrap().name, "str");
+    } else {
+        panic!("Expected function node");
     }
+}
 
-    #[test]
-    fn test_decorated_class() {
-        let processor = PythonProcessor::new().unwrap();
-        let source = "@dataclass\nclass Point:\n    x: int\n    y: int";
-        let opts = ProcessOptions::default();
+#[test]
+fn test_multiple_decorators() {
+    let processor = PythonProcessor::new().unwrap();
+    let source = "@decorator1\n@decorator2\n@decorator3\ndef decorated():\n    pass";
+    let opts = ProcessOptions::default();
 
-        let file = processor.process(source, Path::new("test.py"), &opts).unwrap();
-        assert_eq!(file.children.len(), 1);
+    let file = processor
+        .process(source, Path::new("test.py"), &opts)
+        .unwrap();
+    assert_eq!(file.children.len(), 1);
 
-        if let Node::Class(class) = &file.children[0] {
-            assert_eq!(class.name, "Point");
-            assert_eq!(class.decorators.len(), 1);
-            assert_eq!(class.decorators[0], "@dataclass");
-        } else {
-            panic!("Expected class node");
-        }
+    if let Node::Function(func) = &file.children[0] {
+        assert_eq!(func.name, "decorated");
+        assert_eq!(
+            func.decorators.len(),
+            3,
+            "Expected 3 decorators, got {}",
+            func.decorators.len()
+        );
+        assert_eq!(func.decorators[0], "@decorator1");
+        assert_eq!(func.decorators[1], "@decorator2");
+        assert_eq!(func.decorators[2], "@decorator3");
+    } else {
+        panic!("Expected function node");
     }
+}
 
-    #[test]
-    fn test_function_with_typed_parameters() {
-        let processor = PythonProcessor::new().unwrap();
-        let source = "def greet(name: str, count: int) -> str:\n    return name * count";
-        let opts = ProcessOptions::default();
+#[test]
+fn test_empty_file() {
+    let processor = PythonProcessor::new().unwrap();
+    let source = "";
+    let opts = ProcessOptions::default();
 
-        let file = processor.process(source, Path::new("test.py"), &opts).unwrap();
-        assert_eq!(file.children.len(), 1);
+    let file = processor
+        .process(source, Path::new("test.py"), &opts)
+        .unwrap();
+    assert_eq!(file.children.len(), 0, "Empty file should have no children");
+}
 
-        if let Node::Function(func) = &file.children[0] {
-            assert_eq!(func.name, "greet");
-            assert!(func.parameters.len() >= 2, "Expected at least 2 parameters, got {}", func.parameters.len());
-            
-            // Validate typed parameters
-            assert_eq!(func.parameters[0].name, "name");
-            assert_eq!(func.parameters[0].param_type.name, "str");
-            
-            if func.parameters.len() >= 2 {
-                assert_eq!(func.parameters[1].name, "count");
-                assert_eq!(func.parameters[1].param_type.name, "int");
-            }
-            
-            // Validate return type
-            assert!(func.return_type.is_some());
-            assert_eq!(func.return_type.as_ref().unwrap().name, "str");
-        } else {
-            panic!("Expected function node");
-        }
-    }
-
-    #[test]
-    fn test_multiple_decorators() {
-        let processor = PythonProcessor::new().unwrap();
-        let source = "@decorator1\n@decorator2\n@decorator3\ndef decorated():\n    pass";
-        let opts = ProcessOptions::default();
-
-        let file = processor.process(source, Path::new("test.py"), &opts).unwrap();
-        assert_eq!(file.children.len(), 1);
-
-        if let Node::Function(func) = &file.children[0] {
-            assert_eq!(func.name, "decorated");
-            assert_eq!(func.decorators.len(), 3, 
-                      "Expected 3 decorators, got {}", func.decorators.len());
-            assert_eq!(func.decorators[0], "@decorator1");
-            assert_eq!(func.decorators[1], "@decorator2");
-            assert_eq!(func.decorators[2], "@decorator3");
-        } else {
-            panic!("Expected function node");
-        }
-    }
-
-    #[test]
-    fn test_empty_file() {
-        let processor = PythonProcessor::new().unwrap();
-        let source = "";
-        let opts = ProcessOptions::default();
-
-        let file = processor.process(source, Path::new("test.py"), &opts).unwrap();
-        assert_eq!(file.children.len(), 0, "Empty file should have no children");
-    }
-
-    #[test]
-    fn test_multiple_imports() {
-        let processor = PythonProcessor::new().unwrap();
-        let source = r#"import os
+#[test]
+fn test_multiple_imports() {
+    let processor = PythonProcessor::new().unwrap();
+    let source = r#"import os
 import sys
 from typing import List, Dict, Optional
 from pathlib import Path
 "#;
-        let opts = ProcessOptions::default();
+    let opts = ProcessOptions::default();
 
-        let file = processor.process(source, Path::new("test.py"), &opts).unwrap();
-        assert_eq!(file.children.len(), 4);
+    let file = processor
+        .process(source, Path::new("test.py"), &opts)
+        .unwrap();
+    assert_eq!(file.children.len(), 4);
 
-        // Validate import types
-        let imports: Vec<_> = file.children.iter()
-            .filter_map(|n| if let Node::Import(i) = n { Some(i) } else { None })
-            .collect();
-        
-        assert_eq!(imports.len(), 4);
-        assert_eq!(imports[0].module, "os");
-        assert_eq!(imports[0].import_type, "import");
-        assert_eq!(imports[1].module, "sys");
-        assert_eq!(imports[1].import_type, "import");
-        assert_eq!(imports[2].module, "typing");
-        assert_eq!(imports[2].import_type, "from");
-        assert_eq!(imports[3].module, "pathlib");
-        assert_eq!(imports[3].import_type, "from");
-    }
+    // Validate import types
+    let imports: Vec<_> = file
+        .children
+        .iter()
+        .filter_map(|n| {
+            if let Node::Import(i) = n {
+                Some(i)
+            } else {
+                None
+            }
+        })
+        .collect();
 
-    #[test]
-    fn test_complex_class_with_everything() {
-        let processor = PythonProcessor::new().unwrap();
-        let source = r#"@dataclass
+    assert_eq!(imports.len(), 4);
+    assert_eq!(imports[0].module, "os");
+    assert_eq!(imports[0].import_type, "import");
+    assert_eq!(imports[1].module, "sys");
+    assert_eq!(imports[1].import_type, "import");
+    assert_eq!(imports[2].module, "typing");
+    assert_eq!(imports[2].import_type, "from");
+    assert_eq!(imports[3].module, "pathlib");
+    assert_eq!(imports[3].import_type, "from");
+}
+
+#[test]
+fn test_complex_class_with_everything() {
+    let processor = PythonProcessor::new().unwrap();
+    let source = r#"@dataclass
 class ComplexService(BaseService, Mixin):
     def __init__(self):
         self.public_field = 0
@@ -928,232 +985,321 @@ class ComplexService(BaseService, Mixin):
     async def fetch(self, url: str) -> str:
         pass
 "#;
-        let opts = ProcessOptions::default();
+    let opts = ProcessOptions::default();
 
-        let file = processor.process(source, Path::new("test.py"), &opts).unwrap();
-        assert_eq!(file.children.len(), 1);
+    let file = processor
+        .process(source, Path::new("test.py"), &opts)
+        .unwrap();
+    assert_eq!(file.children.len(), 1);
 
-        if let Node::Class(class) = &file.children[0] {
-            assert_eq!(class.name, "ComplexService");
-            
-            // Validate decorators
-            assert_eq!(class.decorators.len(), 1);
-            assert_eq!(class.decorators[0], "@dataclass");
-            
-            // Validate inheritance
-            assert_eq!(class.extends.len(), 2);
-            assert_eq!(class.extends[0].name, "BaseService");
-            assert_eq!(class.extends[1].name, "Mixin");
-            
-            // Validate children (1 __init__ + 3 fields + 3 methods)
-            assert!(class.children.len() >= 4, 
-                   "Expected at least 4 children, got {}", class.children.len());
-            
-            // Find the async method
-            let async_methods: Vec<_> = class.children.iter()
-                .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
-                .filter(|f| f.modifiers.contains(&Modifier::Async))
-                .collect();
-            
-            assert!(!async_methods.is_empty(), "Expected to find async method");
-            assert_eq!(async_methods[0].name, "fetch");
-        } else {
-            panic!("Expected class node");
-        }
-    }
+    if let Node::Class(class) = &file.children[0] {
+        assert_eq!(class.name, "ComplexService");
 
-    #[test]
-    fn test_private_class() {
-        let processor = PythonProcessor::new().unwrap();
-        let source = "class _PrivateClass:\n    pass";
-        let opts = ProcessOptions::default();
+        // Validate decorators
+        assert_eq!(class.decorators.len(), 1);
+        assert_eq!(class.decorators[0], "@dataclass");
 
-        let file = processor.process(source, Path::new("test.py"), &opts).unwrap();
-        assert_eq!(file.children.len(), 1);
+        // Validate inheritance
+        assert_eq!(class.extends.len(), 2);
+        assert_eq!(class.extends[0].name, "BaseService");
+        assert_eq!(class.extends[1].name, "Mixin");
 
-        if let Node::Class(class) = &file.children[0] {
-            assert_eq!(class.name, "_PrivateClass");
-            assert_eq!(class.visibility, Visibility::Protected, 
-                      "Classes starting with _ should be protected");
-        } else {
-            panic!("Expected class node");
-        }
-    }
+        // Validate children (1 __init__ + 3 fields + 3 methods)
+        assert!(
+            class.children.len() >= 4,
+            "Expected at least 4 children, got {}",
+            class.children.len()
+        );
 
-    #[test]
-    fn test_django_style_models() {
-        let source = std::fs::read_to_string("../../testdata/real-world/django-app/models.py")
-            .expect("Failed to read Django models file");
-        
-        let processor = PythonProcessor::new().unwrap();
-        let opts = ProcessOptions::default();
-        
-        let result = processor.process(&source, Path::new("models.py"), &opts);
-        
-        assert!(result.is_ok(), "Django models should parse successfully");
-        
-        let file = result.unwrap();
-        
-        // Should find User, Post, Comment classes
-        let classes: Vec<_> = file.children.iter()
-            .filter_map(|n| if let Node::Class(c) = n { Some(c) } else { None })
+        // Find the async method
+        let async_methods: Vec<_> = class
+            .children
+            .iter()
+            .filter_map(|n| {
+                if let Node::Function(f) = n {
+                    Some(f)
+                } else {
+                    None
+                }
+            })
+            .filter(|f| f.modifiers.contains(&Modifier::Async))
             .collect();
-        
-        assert!(classes.len() >= 3, "Should find at least 3 classes (User, Post, Comment)");
-        
-        // Verify User class
-        let user_class = classes.iter().find(|c| c.name == "User");
-        assert!(user_class.is_some(), "Should find User class");
-        
-        println!("✅ Django models parse: {} classes found", classes.len());
-    }
-    
-    #[test]
-    fn test_django_style_views() {
-        let source = std::fs::read_to_string("../../testdata/real-world/django-app/views.py")
-            .expect("Failed to read Django views file");
-        
-        let processor = PythonProcessor::new().unwrap();
-        let opts = ProcessOptions::default();
-        
-        let result = processor.process(&source, Path::new("views.py"), &opts);
-        
-        assert!(result.is_ok(), "Django views should parse successfully");
-        
-        let file = result.unwrap();
-        
-        // Should find decorator functions and views
-        let functions: Vec<_> = file.children.iter()
-            .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
-            .collect();
-        
-        assert!(functions.len() >= 3, "Should find multiple functions");
-        
-        // Check for decorated functions
-        let decorated = functions.iter()
-            .filter(|f| !f.decorators.is_empty())
-            .count();
-        
-        assert!(decorated > 0, "Should find decorated functions");
-        
-        println!("✅ Django views parse: {} functions, {} decorated", 
-                 functions.len(), decorated);
-    }
 
-    // ===== EDGE CASE TESTS (Phase C3) =====
+        assert!(!async_methods.is_empty(), "Expected to find async method");
+        assert_eq!(async_methods[0].name, "fetch");
+    } else {
+        panic!("Expected class node");
+    }
+}
 
-    #[test]
-    fn test_malformed_python() {
-        let source = std::fs::read_to_string("../../testdata/edge-cases/malformed/python_syntax_error.py")
+#[test]
+fn test_private_class() {
+    let processor = PythonProcessor::new().unwrap();
+    let source = "class _PrivateClass:\n    pass";
+    let opts = ProcessOptions::default();
+
+    let file = processor
+        .process(source, Path::new("test.py"), &opts)
+        .unwrap();
+    assert_eq!(file.children.len(), 1);
+
+    if let Node::Class(class) = &file.children[0] {
+        assert_eq!(class.name, "_PrivateClass");
+        assert_eq!(
+            class.visibility,
+            Visibility::Protected,
+            "Classes starting with _ should be protected"
+        );
+    } else {
+        panic!("Expected class node");
+    }
+}
+
+#[test]
+fn test_django_style_models() {
+    let source = std::fs::read_to_string("../../testdata/real-world/django-app/models.py")
+        .expect("Failed to read Django models file");
+
+    let processor = PythonProcessor::new().unwrap();
+    let opts = ProcessOptions::default();
+
+    let result = processor.process(&source, Path::new("models.py"), &opts);
+
+    assert!(result.is_ok(), "Django models should parse successfully");
+
+    let file = result.unwrap();
+
+    // Should find User, Post, Comment classes
+    let classes: Vec<_> = file
+        .children
+        .iter()
+        .filter_map(|n| {
+            if let Node::Class(c) = n {
+                Some(c)
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    assert!(
+        classes.len() >= 3,
+        "Should find at least 3 classes (User, Post, Comment)"
+    );
+
+    // Verify User class
+    let user_class = classes.iter().find(|c| c.name == "User");
+    assert!(user_class.is_some(), "Should find User class");
+
+    println!("✅ Django models parse: {} classes found", classes.len());
+}
+
+#[test]
+fn test_django_style_views() {
+    let source = std::fs::read_to_string("../../testdata/real-world/django-app/views.py")
+        .expect("Failed to read Django views file");
+
+    let processor = PythonProcessor::new().unwrap();
+    let opts = ProcessOptions::default();
+
+    let result = processor.process(&source, Path::new("views.py"), &opts);
+
+    assert!(result.is_ok(), "Django views should parse successfully");
+
+    let file = result.unwrap();
+
+    // Should find decorator functions and views
+    let functions: Vec<_> = file
+        .children
+        .iter()
+        .filter_map(|n| {
+            if let Node::Function(f) = n {
+                Some(f)
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    assert!(functions.len() >= 3, "Should find multiple functions");
+
+    // Check for decorated functions
+    let decorated = functions
+        .iter()
+        .filter(|f| !f.decorators.is_empty())
+        .count();
+
+    assert!(decorated > 0, "Should find decorated functions");
+
+    println!(
+        "✅ Django views parse: {} functions, {} decorated",
+        functions.len(),
+        decorated
+    );
+}
+
+// ===== EDGE CASE TESTS (Phase C3) =====
+
+#[test]
+fn test_malformed_python() {
+    let source =
+        std::fs::read_to_string("../../testdata/edge-cases/malformed/python_syntax_error.py")
             .expect("Failed to read malformed Python file");
-        
-        let processor = PythonProcessor::new().unwrap();
-        let opts = ProcessOptions::default();
-        
-        // Should not panic - tree-sitter handles malformed code
-        let result = processor.process(&source, Path::new("error.py"), &opts);
-        
-        match result {
-            Ok(file) => {
-                println!("✓ Malformed Python: Partial parse successful");
-                println!("  Found {} top-level nodes", file.children.len());
-                // Tree-sitter should recover and parse valid nodes
-                assert!(file.children.len() >= 1, "Should find at least some valid nodes");
-            }
-            Err(e) => {
-                println!("✓ Malformed Python: Error handled gracefully: {}", e);
-                // As long as it doesn't panic, we're good
-            }
+
+    let processor = PythonProcessor::new().unwrap();
+    let opts = ProcessOptions::default();
+
+    // Should not panic - tree-sitter handles malformed code
+    let result = processor.process(&source, Path::new("error.py"), &opts);
+
+    match result {
+        Ok(file) => {
+            println!("✓ Malformed Python: Partial parse successful");
+            println!("  Found {} top-level nodes", file.children.len());
+            // Tree-sitter should recover and parse valid nodes
+            assert!(
+                file.children.len() >= 1,
+                "Should find at least some valid nodes"
+            );
+        }
+        Err(e) => {
+            println!("✓ Malformed Python: Error handled gracefully: {}", e);
+            // As long as it doesn't panic, we're good
         }
     }
+}
 
-    #[test]
-    fn test_unicode_python() {
-        let source = std::fs::read_to_string("../../testdata/edge-cases/unicode/python_unicode.py")
-            .expect("Failed to read Unicode Python file");
-        
-        let processor = PythonProcessor::new().unwrap();
-        let opts = ProcessOptions::default();
-        
-        let result = processor.process(&source, Path::new("unicode.py"), &opts);
-        
-        assert!(result.is_ok(), "Unicode Python file should parse successfully");
-        
-        let file = result.unwrap();
-        let class_count = file.children.iter()
-            .filter(|n| matches!(n, Node::Class(_)))
-            .count();
-        
-        println!("✓ Unicode Python: {} classes with Unicode identifiers", class_count);
-        
-        // Should find classes with Unicode names (Пользователь, 🚀Rocket, etc.)
-        assert!(class_count >= 5, "Should find at least 5 classes with Unicode names");
-    }
+#[test]
+fn test_unicode_python() {
+    let source = std::fs::read_to_string("../../testdata/edge-cases/unicode/python_unicode.py")
+        .expect("Failed to read Unicode Python file");
 
-    #[test]
-    fn test_large_python_file() {
-        let source = std::fs::read_to_string("../../testdata/edge-cases/large-files/large_python.py")
-            .expect("Failed to read large Python file");
-        
-        let processor = PythonProcessor::new().unwrap();
-        let opts = ProcessOptions::default();
-        
-        println!("Testing large Python file: {} lines", source.lines().count());
-        
-        let start = std::time::Instant::now();
-        let result = processor.process(&source, Path::new("large.py"), &opts);
-        let duration = start.elapsed();
-        
-        assert!(result.is_ok(), "Large Python file should parse successfully");
-        
-        let file = result.unwrap();
-        let class_count = file.children.iter()
-            .filter(|n| matches!(n, Node::Class(_)))
-            .count();
-        
-        println!("✓ Large Python: {} classes parsed in {:?}", class_count, duration);
-        println!("  Performance: ~{} lines/ms", source.lines().count() / duration.as_millis().max(1) as usize);
-        
-        // Performance target: should parse in reasonable time (< 1 second for 15k lines)
-        assert!(duration.as_secs() < 1, "Large file parsing took too long: {:?}", duration);
-    }
+    let processor = PythonProcessor::new().unwrap();
+    let opts = ProcessOptions::default();
 
-    #[test]
-    fn test_empty_python_file_edge() {
-        let source = std::fs::read_to_string("../../testdata/edge-cases/syntax-edge/empty.py")
-            .expect("Failed to read empty Python file");
-        
-        let processor = PythonProcessor::new().unwrap();
-        let opts = ProcessOptions::default();
-        
-        let result = processor.process(&source, Path::new("empty.py"), &opts);
-        
-        assert!(result.is_ok(), "Empty Python file should parse successfully");
-        
-        let file = result.unwrap();
-        
-        println!("✓ Empty Python file: {} nodes", file.children.len());
-        
-        // Empty file should have 0 or very few nodes
-        assert!(file.children.len() <= 1, "Empty file should have minimal nodes");
-    }
+    let result = processor.process(&source, Path::new("unicode.py"), &opts);
 
-    #[test]
-    fn test_deeply_nested_python() {
-        let source = std::fs::read_to_string("../../testdata/edge-cases/syntax-edge/deeply_nested.py")
-            .expect("Failed to read deeply nested Python file");
-        
-        let processor = PythonProcessor::new().unwrap();
-        let opts = ProcessOptions::default();
-        
-        let result = processor.process(&source, Path::new("nested.py"), &opts);
-        
-        assert!(result.is_ok(), "Deeply nested Python file should parse successfully");
-        
-        let file = result.unwrap();
-        
-        println!("✓ Deeply nested Python: {} top-level nodes", file.children.len());
-        
-        // Should handle deep nesting without stack overflow
-        assert!(file.children.len() >= 2, "Should find Level1 class and complex_nesting function");
-    }
+    assert!(
+        result.is_ok(),
+        "Unicode Python file should parse successfully"
+    );
+
+    let file = result.unwrap();
+    let class_count = file
+        .children
+        .iter()
+        .filter(|n| matches!(n, Node::Class(_)))
+        .count();
+
+    println!(
+        "✓ Unicode Python: {} classes with Unicode identifiers",
+        class_count
+    );
+
+    // Should find classes with Unicode names (Пользователь, 🚀Rocket, etc.)
+    assert!(
+        class_count >= 5,
+        "Should find at least 5 classes with Unicode names"
+    );
+}
+
+#[test]
+fn test_large_python_file() {
+    let source = std::fs::read_to_string("../../testdata/edge-cases/large-files/large_python.py")
+        .expect("Failed to read large Python file");
+
+    let processor = PythonProcessor::new().unwrap();
+    let opts = ProcessOptions::default();
+
+    println!(
+        "Testing large Python file: {} lines",
+        source.lines().count()
+    );
+
+    let start = std::time::Instant::now();
+    let result = processor.process(&source, Path::new("large.py"), &opts);
+    let duration = start.elapsed();
+
+    assert!(
+        result.is_ok(),
+        "Large Python file should parse successfully"
+    );
+
+    let file = result.unwrap();
+    let class_count = file
+        .children
+        .iter()
+        .filter(|n| matches!(n, Node::Class(_)))
+        .count();
+
+    println!(
+        "✓ Large Python: {} classes parsed in {:?}",
+        class_count, duration
+    );
+    println!(
+        "  Performance: ~{} lines/ms",
+        source.lines().count() / duration.as_millis().max(1) as usize
+    );
+
+    // Performance target: should parse in reasonable time (< 1 second for 15k lines)
+    assert!(
+        duration.as_secs() < 1,
+        "Large file parsing took too long: {:?}",
+        duration
+    );
+}
+
+#[test]
+fn test_empty_python_file_edge() {
+    let source = std::fs::read_to_string("../../testdata/edge-cases/syntax-edge/empty.py")
+        .expect("Failed to read empty Python file");
+
+    let processor = PythonProcessor::new().unwrap();
+    let opts = ProcessOptions::default();
+
+    let result = processor.process(&source, Path::new("empty.py"), &opts);
+
+    assert!(
+        result.is_ok(),
+        "Empty Python file should parse successfully"
+    );
+
+    let file = result.unwrap();
+
+    println!("✓ Empty Python file: {} nodes", file.children.len());
+
+    // Empty file should have 0 or very few nodes
+    assert!(
+        file.children.len() <= 1,
+        "Empty file should have minimal nodes"
+    );
+}
+
+#[test]
+fn test_deeply_nested_python() {
+    let source = std::fs::read_to_string("../../testdata/edge-cases/syntax-edge/deeply_nested.py")
+        .expect("Failed to read deeply nested Python file");
+
+    let processor = PythonProcessor::new().unwrap();
+    let opts = ProcessOptions::default();
+
+    let result = processor.process(&source, Path::new("nested.py"), &opts);
+
+    assert!(
+        result.is_ok(),
+        "Deeply nested Python file should parse successfully"
+    );
+
+    let file = result.unwrap();
+
+    println!(
+        "✓ Deeply nested Python: {} top-level nodes",
+        file.children.len()
+    );
+
+    // Should handle deep nesting without stack overflow
+    assert!(
+        file.children.len() >= 2,
+        "Should find Level1 class and complex_nesting function"
+    );
+}

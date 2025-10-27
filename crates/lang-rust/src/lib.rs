@@ -89,10 +89,10 @@ impl RustProcessor {
 
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
-            if child.kind() == "parameter" || child.kind() == "self_parameter" {
-                if let Some(param) = self.parse_parameter(child, source)? {
-                    parameters.push(param);
-                }
+            if (child.kind() == "parameter" || child.kind() == "self_parameter")
+                && let Some(param) = self.parse_parameter(child, source)?
+            {
+                parameters.push(param);
             }
         }
 
@@ -154,10 +154,10 @@ impl RustProcessor {
                 "declaration_list" => {
                     let mut decl_cursor = child.walk();
                     for decl_child in child.children(&mut decl_cursor) {
-                        if decl_child.kind() == "function_item" {
-                            if let Some(method) = self.parse_function(decl_child, source)? {
-                                methods.push(method);
-                            }
+                        if decl_child.kind() == "function_item"
+                            && let Some(method) = self.parse_function(decl_child, source)?
+                        {
+                            methods.push(method);
                         }
                     }
                 }
@@ -210,10 +210,10 @@ impl RustProcessor {
                 "field_declaration_list" => {
                     let mut field_cursor = child.walk();
                     for field_child in child.children(&mut field_cursor) {
-                        if field_child.kind() == "field_declaration" {
-                            if let Some(field) = self.parse_field(field_child, source)? {
-                                fields.push(field);
-                            }
+                        if field_child.kind() == "field_declaration"
+                            && let Some(field) = self.parse_field(field_child, source)?
+                        {
+                            fields.push(field);
                         }
                     }
                 }
@@ -374,14 +374,14 @@ impl RustProcessor {
                 if !type_name.is_empty() {
                     // Find the struct and add methods
                     for child in &mut file.children {
-                        if let Node::Class(class) = child {
-                            if class.name == type_name {
-                                // Add methods to the struct
-                                for method in methods {
-                                    class.children.push(Node::Function(method));
-                                }
-                                break;
+                        if let Node::Class(class) = child
+                            && class.name == type_name
+                        {
+                            // Add methods to the struct
+                            for method in methods {
+                                class.children.push(Node::Function(method));
                             }
+                            break;
                         }
                     }
                 }
@@ -407,10 +407,10 @@ impl LanguageProcessor for RustProcessor {
     }
 
     fn can_process(&self, path: &Path) -> bool {
-        if let Some(ext) = path.extension() {
-            if let Some(ext_str) = ext.to_str() {
-                return self.supported_extensions().contains(&ext_str);
-            }
+        if let Some(ext) = path.extension()
+            && let Some(ext_str) = ext.to_str()
+        {
+            return self.supported_extensions().contains(&ext_str);
         }
         false
     }

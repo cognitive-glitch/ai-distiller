@@ -12,7 +12,7 @@ pub mod language;
 pub use directory::{DirectoryProcessor, LanguageRegistry};
 pub use language::LanguageProcessor;
 
-use crate::{ir::Node, ProcessOptions, Result};
+use crate::{ProcessOptions, Result, ir::Node};
 use std::path::Path;
 
 /// Main processor for files and directories

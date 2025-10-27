@@ -7,7 +7,6 @@
  * 3. Unicode characters
  * 4. Syntax edge cases (empty, deeply nested, complex)
  */
-
 use distiller_core::language::LanguageRegistry;
 use distiller_core::processor::{DirectoryProcessor, ProcessOptions};
 use std::fs;
@@ -21,7 +20,9 @@ fn create_full_registry() -> LanguageRegistry {
     registry.register(Box::new(lang_python::PythonProcessor::new().unwrap()));
 
     #[cfg(feature = "lang-typescript")]
-    registry.register(Box::new(lang_typescript::TypeScriptProcessor::new().unwrap()));
+    registry.register(Box::new(
+        lang_typescript::TypeScriptProcessor::new().unwrap(),
+    ));
 
     #[cfg(feature = "lang-go")]
     registry.register(Box::new(lang_go::GoProcessor::new().unwrap()));
@@ -112,13 +113,19 @@ fn test_large_python_file() {
     let processor = lang_python::PythonProcessor::new().unwrap();
     let opts = ProcessOptions::default();
 
-    println!("Testing large Python file: {} lines", source.lines().count());
+    println!(
+        "Testing large Python file: {} lines",
+        source.lines().count()
+    );
 
     let start = Instant::now();
     let result = processor.process(&source, Path::new("large.py"), &opts);
     let duration = start.elapsed();
 
-    assert!(result.is_ok(), "Large Python file should parse successfully");
+    assert!(
+        result.is_ok(),
+        "Large Python file should parse successfully"
+    );
 
     let file = result.unwrap();
     let class_count = file
@@ -127,8 +134,14 @@ fn test_large_python_file() {
         .filter(|n| matches!(n, distiller_core::ir::Node::Class(_)))
         .count();
 
-    println!("✓ Large Python: {} classes parsed in {:?}", class_count, duration);
-    println!("  Performance: ~{} lines/ms", source.lines().count() / duration.as_millis().max(1) as usize);
+    println!(
+        "✓ Large Python: {} classes parsed in {:?}",
+        class_count, duration
+    );
+    println!(
+        "  Performance: ~{} lines/ms",
+        source.lines().count() / duration.as_millis().max(1) as usize
+    );
 
     // Performance target: should parse in reasonable time (< 1 second for 15k lines)
     assert!(
@@ -147,7 +160,10 @@ fn test_large_typescript_file() {
     let processor = lang_typescript::TypeScriptProcessor::new().unwrap();
     let opts = ProcessOptions::default();
 
-    println!("Testing large TypeScript file: {} lines", source.lines().count());
+    println!(
+        "Testing large TypeScript file: {} lines",
+        source.lines().count()
+    );
 
     let start = Instant::now();
     let result = processor.process(&source, Path::new("large.ts"), &opts);
@@ -165,8 +181,14 @@ fn test_large_typescript_file() {
         .filter(|n| matches!(n, distiller_core::ir::Node::Class(_)))
         .count();
 
-    println!("✓ Large TypeScript: {} classes parsed in {:?}", class_count, duration);
-    println!("  Performance: ~{} lines/ms", source.lines().count() / duration.as_millis().max(1) as usize);
+    println!(
+        "✓ Large TypeScript: {} classes parsed in {:?}",
+        class_count, duration
+    );
+    println!(
+        "  Performance: ~{} lines/ms",
+        source.lines().count() / duration.as_millis().max(1) as usize
+    );
 
     assert!(
         duration.as_secs() < 1,
@@ -199,8 +221,14 @@ fn test_large_go_file() {
         .filter(|n| matches!(n, distiller_core::ir::Node::Class(_)))
         .count();
 
-    println!("✓ Large Go: {} structs parsed in {:?}", struct_count, duration);
-    println!("  Performance: ~{} lines/ms", source.lines().count() / duration.as_millis().max(1) as usize);
+    println!(
+        "✓ Large Go: {} structs parsed in {:?}",
+        struct_count, duration
+    );
+    println!(
+        "  Performance: ~{} lines/ms",
+        source.lines().count() / duration.as_millis().max(1) as usize
+    );
 
     assert!(
         duration.as_secs() < 1,
@@ -221,7 +249,10 @@ fn test_unicode_python() {
 
     let result = processor.process(&source, Path::new("unicode.py"), &opts);
 
-    assert!(result.is_ok(), "Unicode Python file should parse successfully");
+    assert!(
+        result.is_ok(),
+        "Unicode Python file should parse successfully"
+    );
 
     let file = result.unwrap();
     let class_count = file
@@ -230,10 +261,16 @@ fn test_unicode_python() {
         .filter(|n| matches!(n, distiller_core::ir::Node::Class(_)))
         .count();
 
-    println!("✓ Unicode Python: {} classes with Unicode identifiers", class_count);
+    println!(
+        "✓ Unicode Python: {} classes with Unicode identifiers",
+        class_count
+    );
 
     // Should find classes with Unicode names (Пользователь, 🚀Rocket, etc.)
-    assert!(class_count >= 5, "Should find at least 5 classes with Unicode names");
+    assert!(
+        class_count >= 5,
+        "Should find at least 5 classes with Unicode names"
+    );
 }
 
 #[test]
@@ -259,9 +296,15 @@ fn test_unicode_typescript() {
         .filter(|n| matches!(n, distiller_core::ir::Node::Class(_)))
         .count();
 
-    println!("✓ Unicode TypeScript: {} classes with Unicode identifiers", class_count);
+    println!(
+        "✓ Unicode TypeScript: {} classes with Unicode identifiers",
+        class_count
+    );
 
-    assert!(class_count >= 5, "Should find at least 5 classes with Unicode names");
+    assert!(
+        class_count >= 5,
+        "Should find at least 5 classes with Unicode names"
+    );
 }
 
 #[test]
@@ -284,9 +327,15 @@ fn test_unicode_go() {
         .filter(|n| matches!(n, distiller_core::ir::Node::Class(_)))
         .count();
 
-    println!("✓ Unicode Go: {} structs with Unicode identifiers", struct_count);
+    println!(
+        "✓ Unicode Go: {} structs with Unicode identifiers",
+        struct_count
+    );
 
-    assert!(struct_count >= 5, "Should find at least 5 structs with Unicode names");
+    assert!(
+        struct_count >= 5,
+        "Should find at least 5 structs with Unicode names"
+    );
 }
 
 /// Test 4: Syntax Edge Cases
@@ -301,7 +350,10 @@ fn test_empty_python_file() {
 
     let result = processor.process(&source, Path::new("empty.py"), &opts);
 
-    assert!(result.is_ok(), "Empty Python file should parse successfully");
+    assert!(
+        result.is_ok(),
+        "Empty Python file should parse successfully"
+    );
 
     let file = result.unwrap();
 
@@ -365,10 +417,16 @@ fn test_deeply_nested_python() {
 
     let file = result.unwrap();
 
-    println!("✓ Deeply nested Python: {} top-level nodes", file.children.len());
+    println!(
+        "✓ Deeply nested Python: {} top-level nodes",
+        file.children.len()
+    );
 
     // Should handle deep nesting without stack overflow
-    assert!(file.children.len() >= 2, "Should find Level1 class and complex_nesting function");
+    assert!(
+        file.children.len() >= 2,
+        "Should find Level1 class and complex_nesting function"
+    );
 }
 
 #[test]
@@ -389,7 +447,10 @@ fn test_complex_generics_typescript() {
 
     let file = result.unwrap();
 
-    println!("✓ Complex generics TypeScript: {} top-level nodes", file.children.len());
+    println!(
+        "✓ Complex generics TypeScript: {} top-level nodes",
+        file.children.len()
+    );
 
     // Should handle complex generic constraints
     let classes = file
@@ -398,7 +459,10 @@ fn test_complex_generics_typescript() {
         .filter(|n| matches!(n, distiller_core::ir::Node::Class(_)))
         .count();
 
-    assert!(classes >= 2, "Should find GenericManager and GenericStatic classes");
+    assert!(
+        classes >= 2,
+        "Should find GenericManager and GenericStatic classes"
+    );
 }
 
 /// Test 5: Directory-level Edge Cases
@@ -418,7 +482,10 @@ fn test_mixed_edge_cases_directory() {
 
     let file = result.unwrap();
 
-    println!("✓ Edge cases directory: {} files processed", file.children.len());
+    println!(
+        "✓ Edge cases directory: {} files processed",
+        file.children.len()
+    );
 
     // Should process multiple edge case files
     assert!(

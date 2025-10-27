@@ -96,10 +96,10 @@ impl TypeScriptProcessor {
                 // Handle const/let/var declarations that might be functions
                 let mut child_cursor = node.walk();
                 for child in node.children(&mut child_cursor) {
-                    if child.kind() == "variable_declarator" {
-                        if let Some(func) = self.parse_variable_function(child, source)? {
-                            file.children.push(Node::Function(func));
-                        }
+                    if child.kind() == "variable_declarator"
+                        && let Some(func) = self.parse_variable_function(child, source)?
+                    {
+                        file.children.push(Node::Function(func));
                     }
                 }
             }
@@ -213,10 +213,10 @@ impl TypeScriptProcessor {
         let mut decorators = Vec::new();
 
         // Check for decorators before class
-        if let Some(parent) = node.parent() {
-            if parent.kind() == "decorator" {
-                decorators.push(self.node_text(parent, source));
-            }
+        if let Some(parent) = node.parent()
+            && parent.kind() == "decorator"
+        {
+            decorators.push(self.node_text(parent, source));
         }
 
         let line_start = node.start_position().row + 1;
@@ -1079,7 +1079,13 @@ interface User {
             let fields: Vec<_> = interface
                 .children
                 .iter()
-                .filter_map(|n| if let Node::Field(f) = n { Some(f) } else { None })
+                .filter_map(|n| {
+                    if let Node::Field(f) = n {
+                        Some(f)
+                    } else {
+                        None
+                    }
+                })
                 .collect();
 
             let methods: Vec<_> = interface
@@ -1141,10 +1147,7 @@ enum Status {
 
         // Enums might not be fully captured in current implementation
         // This test verifies no errors occur during parsing
-        assert!(
-            file.children.len() >= 0,
-            "Enum parsing should not error"
-        );
+        assert!(file.children.len() >= 0, "Enum parsing should not error");
     }
 
     #[test]
@@ -1235,12 +1238,21 @@ const multiply = (x: number, y: number) => x * y;
         let file = processor
             .process(source, &PathBuf::from("test.ts"), &opts)
             .unwrap();
-        assert!(file.children.len() >= 2, "Expected at least 2 arrow functions");
+        assert!(
+            file.children.len() >= 2,
+            "Expected at least 2 arrow functions"
+        );
 
         let funcs: Vec<_> = file
             .children
             .iter()
-            .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+            .filter_map(|n| {
+                if let Node::Function(f) = n {
+                    Some(f)
+                } else {
+                    None
+                }
+            })
             .collect();
 
         assert!(funcs.len() >= 2);
@@ -1335,7 +1347,13 @@ function merge(obj: Named & Timestamped): void {
         let funcs: Vec<_> = file
             .children
             .iter()
-            .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+            .filter_map(|n| {
+                if let Node::Function(f) = n {
+                    Some(f)
+                } else {
+                    None
+                }
+            })
             .collect();
 
         assert!(!funcs.is_empty(), "Expected at least one function");
@@ -1371,7 +1389,13 @@ type Result = Success | Error;
         let funcs: Vec<_> = file
             .children
             .iter()
-            .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+            .filter_map(|n| {
+                if let Node::Function(f) = n {
+                    Some(f)
+                } else {
+                    None
+                }
+            })
             .collect();
 
         assert!(!funcs.is_empty(), "Expected at least one function");
@@ -1383,191 +1407,284 @@ type Result = Success | Error;
     }
 }
 
-    #[test]
-    fn test_react_user_profile() {
-        let source = std::fs::read_to_string("../../testdata/real-world/react-app/components/UserProfile.tsx")
+#[test]
+fn test_react_user_profile() {
+    let source =
+        std::fs::read_to_string("../../testdata/real-world/react-app/components/UserProfile.tsx")
             .expect("Failed to read UserProfile file");
-        
-        let processor = TypeScriptProcessor::new().unwrap();
-        let opts = ProcessOptions::default();
-        
-        let result = processor.process(&source, Path::new("UserProfile.tsx"), &opts);
-        
-        assert!(result.is_ok(), "React component should parse successfully");
-        
-        let file = result.unwrap();
-        
-        // Should find interfaces and component
-        let interfaces: Vec<_> = file.children.iter()
-            .filter_map(|n| if let Node::Interface(i) = n { Some(i) } else { None })
-            .collect();
-        
-        let functions: Vec<_> = file.children.iter()
-            .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
-            .collect();
-        
-        assert!(interfaces.len() >= 2, "Should find at least 2 interfaces (User, UserProfileProps)");
-        assert!(functions.len() >= 1, "Should find UserProfile component");
-        
-        println!("✅ React component parse: {} interfaces, {} functions", 
-                 interfaces.len(), functions.len());
-    }
-    
-    #[test]
-    fn test_react_custom_hook() {
-        let source = std::fs::read_to_string("../../testdata/real-world/react-app/hooks/useAuth.ts")
-            .expect("Failed to read useAuth file");
-        
-        let processor = TypeScriptProcessor::new().unwrap();
-        let opts = ProcessOptions::default();
-        
-        let result = processor.process(&source, Path::new("useAuth.ts"), &opts);
-        
-        assert!(result.is_ok(), "Custom hook should parse successfully");
-        
-        let file = result.unwrap();
-        
-        let functions: Vec<_> = file.children.iter()
-            .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
-            .collect();
-        
-        assert!(functions.len() >= 1, "Should find useAuth function");
-        
-        // Verify useAuth function found
-        let use_auth = functions.iter().find(|f| f.name == "useAuth");
-        assert!(use_auth.is_some(), "Should find useAuth function");
-        
-        println!("✅ Custom hook parse: {} functions", functions.len());
-    }
-    
-    #[test]
-    fn test_react_generic_component() {
-        let source = std::fs::read_to_string("../../testdata/real-world/react-app/components/DataTable.tsx")
+
+    let processor = TypeScriptProcessor::new().unwrap();
+    let opts = ProcessOptions::default();
+
+    let result = processor.process(&source, Path::new("UserProfile.tsx"), &opts);
+
+    assert!(result.is_ok(), "React component should parse successfully");
+
+    let file = result.unwrap();
+
+    // Should find interfaces and component
+    let interfaces: Vec<_> = file
+        .children
+        .iter()
+        .filter_map(|n| {
+            if let Node::Interface(i) = n {
+                Some(i)
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    let functions: Vec<_> = file
+        .children
+        .iter()
+        .filter_map(|n| {
+            if let Node::Function(f) = n {
+                Some(f)
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    assert!(
+        interfaces.len() >= 2,
+        "Should find at least 2 interfaces (User, UserProfileProps)"
+    );
+    assert!(functions.len() >= 1, "Should find UserProfile component");
+
+    println!(
+        "✅ React component parse: {} interfaces, {} functions",
+        interfaces.len(),
+        functions.len()
+    );
+}
+
+#[test]
+fn test_react_custom_hook() {
+    let source = std::fs::read_to_string("../../testdata/real-world/react-app/hooks/useAuth.ts")
+        .expect("Failed to read useAuth file");
+
+    let processor = TypeScriptProcessor::new().unwrap();
+    let opts = ProcessOptions::default();
+
+    let result = processor.process(&source, Path::new("useAuth.ts"), &opts);
+
+    assert!(result.is_ok(), "Custom hook should parse successfully");
+
+    let file = result.unwrap();
+
+    let functions: Vec<_> = file
+        .children
+        .iter()
+        .filter_map(|n| {
+            if let Node::Function(f) = n {
+                Some(f)
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    assert!(functions.len() >= 1, "Should find useAuth function");
+
+    // Verify useAuth function found
+    let use_auth = functions.iter().find(|f| f.name == "useAuth");
+    assert!(use_auth.is_some(), "Should find useAuth function");
+
+    println!("✅ Custom hook parse: {} functions", functions.len());
+}
+
+#[test]
+fn test_react_generic_component() {
+    let source =
+        std::fs::read_to_string("../../testdata/real-world/react-app/components/DataTable.tsx")
             .expect("Failed to read DataTable file");
-        
-        let processor = TypeScriptProcessor::new().unwrap();
-        let opts = ProcessOptions::default();
-        
-        let result = processor.process(&source, Path::new("DataTable.tsx"), &opts);
-        
-        assert!(result.is_ok(), "Generic component should parse successfully");
-        
-        let file = result.unwrap();
-        
-        // Should find generic function
-        let functions: Vec<_> = file.children.iter()
-            .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
-            .collect();
-        
-        let generic_functions: Vec<_> = functions.iter()
-            .filter(|f| !f.type_params.is_empty())
-            .collect();
-        
-        // Note: Type params not captured yet - C2 finding
-        assert!(functions.len() >= 1, "Should find DataTable function");
-        
-        println!("✅ Generic component parse: {} functions, {} generic", 
-                 functions.len(), generic_functions.len());
-    }
 
-    // ===== EDGE CASE TESTS (Phase C3) =====
+    let processor = TypeScriptProcessor::new().unwrap();
+    let opts = ProcessOptions::default();
 
-    #[test]
-    fn test_malformed_typescript() {
-        let source = std::fs::read_to_string("../../testdata/edge-cases/malformed/typescript_syntax_error.ts")
+    let result = processor.process(&source, Path::new("DataTable.tsx"), &opts);
+
+    assert!(
+        result.is_ok(),
+        "Generic component should parse successfully"
+    );
+
+    let file = result.unwrap();
+
+    // Should find generic function
+    let functions: Vec<_> = file
+        .children
+        .iter()
+        .filter_map(|n| {
+            if let Node::Function(f) = n {
+                Some(f)
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    let generic_functions: Vec<_> = functions
+        .iter()
+        .filter(|f| !f.type_params.is_empty())
+        .collect();
+
+    // Note: Type params not captured yet - C2 finding
+    assert!(functions.len() >= 1, "Should find DataTable function");
+
+    println!(
+        "✅ Generic component parse: {} functions, {} generic",
+        functions.len(),
+        generic_functions.len()
+    );
+}
+
+// ===== EDGE CASE TESTS (Phase C3) =====
+
+#[test]
+fn test_malformed_typescript() {
+    let source =
+        std::fs::read_to_string("../../testdata/edge-cases/malformed/typescript_syntax_error.ts")
             .expect("Failed to read malformed TypeScript file");
-        
-        let processor = TypeScriptProcessor::new().unwrap();
-        let opts = ProcessOptions::default();
-        
-        // Should not panic - tree-sitter handles malformed code
-        let result = processor.process(&source, Path::new("error.ts"), &opts);
-        
-        match result {
-            Ok(file) => {
-                println!("✓ Malformed TypeScript: Partial parse successful");
-                println!("  Found {} top-level nodes", file.children.len());
-                // Tree-sitter should recover and parse valid nodes
-                assert!(file.children.len() >= 1, "Should find at least some valid nodes");
-            }
-            Err(e) => {
-                println!("✓ Malformed TypeScript: Error handled gracefully: {}", e);
-                // As long as it doesn't panic, we're good
-            }
+
+    let processor = TypeScriptProcessor::new().unwrap();
+    let opts = ProcessOptions::default();
+
+    // Should not panic - tree-sitter handles malformed code
+    let result = processor.process(&source, Path::new("error.ts"), &opts);
+
+    match result {
+        Ok(file) => {
+            println!("✓ Malformed TypeScript: Partial parse successful");
+            println!("  Found {} top-level nodes", file.children.len());
+            // Tree-sitter should recover and parse valid nodes
+            assert!(
+                file.children.len() >= 1,
+                "Should find at least some valid nodes"
+            );
+        }
+        Err(e) => {
+            println!("✓ Malformed TypeScript: Error handled gracefully: {}", e);
+            // As long as it doesn't panic, we're good
         }
     }
+}
 
-    #[test]
-    fn test_unicode_typescript() {
-        let source = std::fs::read_to_string("../../testdata/edge-cases/unicode/typescript_unicode.ts")
-            .expect("Failed to read Unicode TypeScript file");
-        
-        let processor = TypeScriptProcessor::new().unwrap();
-        let opts = ProcessOptions::default();
-        
-        let result = processor.process(&source, Path::new("unicode.ts"), &opts);
-        
-        assert!(result.is_ok(), "Unicode TypeScript file should parse successfully");
-        
-        let file = result.unwrap();
-        let class_count = file.children.iter()
-            .filter(|n| matches!(n, Node::Class(_)))
-            .count();
-        
-        println!("✓ Unicode TypeScript: {} classes with Unicode identifiers", class_count);
-        
-        // Should find classes with Unicode names
-        assert!(class_count >= 5, "Should find at least 5 classes with Unicode names");
-    }
+#[test]
+fn test_unicode_typescript() {
+    let source = std::fs::read_to_string("../../testdata/edge-cases/unicode/typescript_unicode.ts")
+        .expect("Failed to read Unicode TypeScript file");
 
-    #[test]
-    fn test_large_typescript_file() {
-        let source = std::fs::read_to_string("../../testdata/edge-cases/large-files/large_typescript.ts")
+    let processor = TypeScriptProcessor::new().unwrap();
+    let opts = ProcessOptions::default();
+
+    let result = processor.process(&source, Path::new("unicode.ts"), &opts);
+
+    assert!(
+        result.is_ok(),
+        "Unicode TypeScript file should parse successfully"
+    );
+
+    let file = result.unwrap();
+    let class_count = file
+        .children
+        .iter()
+        .filter(|n| matches!(n, Node::Class(_)))
+        .count();
+
+    println!(
+        "✓ Unicode TypeScript: {} classes with Unicode identifiers",
+        class_count
+    );
+
+    // Should find classes with Unicode names
+    assert!(
+        class_count >= 5,
+        "Should find at least 5 classes with Unicode names"
+    );
+}
+
+#[test]
+fn test_large_typescript_file() {
+    let source =
+        std::fs::read_to_string("../../testdata/edge-cases/large-files/large_typescript.ts")
             .expect("Failed to read large TypeScript file");
-        
-        let processor = TypeScriptProcessor::new().unwrap();
-        let opts = ProcessOptions::default();
-        
-        println!("Testing large TypeScript file: {} lines", source.lines().count());
-        
-        let start = std::time::Instant::now();
-        let result = processor.process(&source, Path::new("large.ts"), &opts);
-        let duration = start.elapsed();
-        
-        assert!(result.is_ok(), "Large TypeScript file should parse successfully");
-        
-        let file = result.unwrap();
-        let class_count = file.children.iter()
-            .filter(|n| matches!(n, Node::Class(_)))
-            .count();
-        
-        println!("✓ Large TypeScript: {} classes parsed in {:?}", class_count, duration);
-        println!("  Performance: ~{} lines/ms", source.lines().count() / duration.as_millis().max(1) as usize);
-        
-        // Performance target: should parse in reasonable time (< 1 second for 17k lines)
-        assert!(duration.as_secs() < 1, "Large file parsing took too long: {:?}", duration);
-    }
 
-    #[test]
-    fn test_complex_generics_typescript() {
-        let source = std::fs::read_to_string("../../testdata/edge-cases/syntax-edge/complex_generics.ts")
+    let processor = TypeScriptProcessor::new().unwrap();
+    let opts = ProcessOptions::default();
+
+    println!(
+        "Testing large TypeScript file: {} lines",
+        source.lines().count()
+    );
+
+    let start = std::time::Instant::now();
+    let result = processor.process(&source, Path::new("large.ts"), &opts);
+    let duration = start.elapsed();
+
+    assert!(
+        result.is_ok(),
+        "Large TypeScript file should parse successfully"
+    );
+
+    let file = result.unwrap();
+    let class_count = file
+        .children
+        .iter()
+        .filter(|n| matches!(n, Node::Class(_)))
+        .count();
+
+    println!(
+        "✓ Large TypeScript: {} classes parsed in {:?}",
+        class_count, duration
+    );
+    println!(
+        "  Performance: ~{} lines/ms",
+        source.lines().count() / duration.as_millis().max(1) as usize
+    );
+
+    // Performance target: should parse in reasonable time (< 1 second for 17k lines)
+    assert!(
+        duration.as_secs() < 1,
+        "Large file parsing took too long: {:?}",
+        duration
+    );
+}
+
+#[test]
+fn test_complex_generics_typescript() {
+    let source =
+        std::fs::read_to_string("../../testdata/edge-cases/syntax-edge/complex_generics.ts")
             .expect("Failed to read complex generics TypeScript file");
-        
-        let processor = TypeScriptProcessor::new().unwrap();
-        let opts = ProcessOptions::default();
-        
-        let result = processor.process(&source, Path::new("generics.ts"), &opts);
-        
-        assert!(result.is_ok(), "Complex generics TypeScript file should parse successfully");
-        
-        let file = result.unwrap();
-        
-        println!("✓ Complex generics TypeScript: {} top-level nodes", file.children.len());
-        
-        // Should handle complex generic constraints
-        let classes = file.children.iter()
-            .filter(|n| matches!(n, Node::Class(_)))
-            .count();
-        
-        assert!(classes >= 2, "Should find GenericManager and GenericStatic classes");
-    }
+
+    let processor = TypeScriptProcessor::new().unwrap();
+    let opts = ProcessOptions::default();
+
+    let result = processor.process(&source, Path::new("generics.ts"), &opts);
+
+    assert!(
+        result.is_ok(),
+        "Complex generics TypeScript file should parse successfully"
+    );
+
+    let file = result.unwrap();
+
+    println!(
+        "✓ Complex generics TypeScript: {} top-level nodes",
+        file.children.len()
+    );
+
+    // Should handle complex generic constraints
+    let classes = file
+        .children
+        .iter()
+        .filter(|n| matches!(n, Node::Class(_)))
+        .count();
+
+    assert!(
+        classes >= 2,
+        "Should find GenericManager and GenericStatic classes"
+    );
+}

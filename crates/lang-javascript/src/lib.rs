@@ -360,10 +360,10 @@ impl LanguageProcessor for JavaScriptProcessor {
     }
 
     fn can_process(&self, path: &Path) -> bool {
-        if let Some(ext) = path.extension() {
-            if let Some(ext_str) = ext.to_str() {
-                return self.supported_extensions().contains(&ext_str);
-            }
+        if let Some(ext) = path.extension()
+            && let Some(ext_str) = ext.to_str()
+        {
+            return self.supported_extensions().contains(&ext_str);
         }
         false
     }
@@ -608,7 +608,9 @@ function _privateHelper(...args) {
         let source = "";
         let opts = ProcessOptions::default();
 
-        let file = processor.process(source, Path::new("test.js"), &opts).unwrap();
+        let file = processor
+            .process(source, Path::new("test.js"), &opts)
+            .unwrap();
         assert_eq!(file.children.len(), 0, "Empty file should have no children");
     }
 
@@ -633,7 +635,9 @@ class Person {
 "#;
 
         let opts = ProcessOptions::default();
-        let file = processor.process(source, Path::new("test.js"), &opts).unwrap();
+        let file = processor
+            .process(source, Path::new("test.js"), &opts)
+            .unwrap();
 
         assert_eq!(file.children.len(), 1);
         if let Node::Class(class) = &file.children[0] {
@@ -641,8 +645,16 @@ class Person {
             assert_eq!(class.visibility, Visibility::Public);
             assert_eq!(class.children.len(), 3);
 
-            let methods: Vec<_> = class.children.iter()
-                .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+            let methods: Vec<_> = class
+                .children
+                .iter()
+                .filter_map(|n| {
+                    if let Node::Function(f) = n {
+                        Some(f)
+                    } else {
+                        None
+                    }
+                })
                 .collect();
 
             assert_eq!(methods.len(), 3);
@@ -678,7 +690,9 @@ class Dog extends Animal {
 "#;
 
         let opts = ProcessOptions::default();
-        let file = processor.process(source, Path::new("test.js"), &opts).unwrap();
+        let file = processor
+            .process(source, Path::new("test.js"), &opts)
+            .unwrap();
 
         assert_eq!(file.children.len(), 2);
 
@@ -718,23 +732,37 @@ async function processData(items) {
 "#;
 
         let opts = ProcessOptions::default();
-        let file = processor.process(source, Path::new("test.js"), &opts).unwrap();
+        let file = processor
+            .process(source, Path::new("test.js"), &opts)
+            .unwrap();
 
-        let functions: Vec<_> = file.children.iter()
-            .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+        let functions: Vec<_> = file
+            .children
+            .iter()
+            .filter_map(|n| {
+                if let Node::Function(f) = n {
+                    Some(f)
+                } else {
+                    None
+                }
+            })
             .collect();
 
         assert_eq!(functions.len(), 2);
 
         assert_eq!(functions[0].name, "fetchUserData");
-        assert!(functions[0].modifiers.contains(&Modifier::Async),
-                "fetchUserData should be async");
+        assert!(
+            functions[0].modifiers.contains(&Modifier::Async),
+            "fetchUserData should be async"
+        );
         assert_eq!(functions[0].parameters.len(), 1);
         assert_eq!(functions[0].parameters[0].name, "userId");
 
         assert_eq!(functions[1].name, "processData");
-        assert!(functions[1].modifiers.contains(&Modifier::Async),
-                "processData should be async");
+        assert!(
+            functions[1].modifiers.contains(&Modifier::Async),
+            "processData should be async"
+        );
     }
 
     #[test]
@@ -749,7 +777,9 @@ const greet = name => `Hello ${name}`;
 "#;
 
         let opts = ProcessOptions::default();
-        let file = processor.process(source, Path::new("test.js"), &opts).unwrap();
+        let file = processor
+            .process(source, Path::new("test.js"), &opts)
+            .unwrap();
 
         // Arrow functions are typically not parsed as function declarations
         // They are variable declarations with arrow function expressions
@@ -776,10 +806,20 @@ function handleArray([first, second, ...rest]) {
 "#;
 
         let opts = ProcessOptions::default();
-        let file = processor.process(source, Path::new("test.js"), &opts).unwrap();
+        let file = processor
+            .process(source, Path::new("test.js"), &opts)
+            .unwrap();
 
-        let functions: Vec<_> = file.children.iter()
-            .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+        let functions: Vec<_> = file
+            .children
+            .iter()
+            .filter_map(|n| {
+                if let Node::Function(f) = n {
+                    Some(f)
+                } else {
+                    None
+                }
+            })
             .collect();
 
         assert_eq!(functions.len(), 3);
@@ -802,10 +842,20 @@ function merge(obj1, obj2, ...rest) {
 "#;
 
         let opts = ProcessOptions::default();
-        let file = processor.process(source, Path::new("test.js"), &opts).unwrap();
+        let file = processor
+            .process(source, Path::new("test.js"), &opts)
+            .unwrap();
 
-        let functions: Vec<_> = file.children.iter()
-            .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+        let functions: Vec<_> = file
+            .children
+            .iter()
+            .filter_map(|n| {
+                if let Node::Function(f) = n {
+                    Some(f)
+                } else {
+                    None
+                }
+            })
             .collect();
 
         assert_eq!(functions.len(), 2);
@@ -813,8 +863,10 @@ function merge(obj1, obj2, ...rest) {
         assert_eq!(functions[0].name, "sum");
         assert_eq!(functions[0].parameters.len(), 1);
         assert_eq!(functions[0].parameters[0].name, "numbers");
-        assert!(functions[0].parameters[0].is_variadic,
-                "Rest parameter should be marked as variadic");
+        assert!(
+            functions[0].parameters[0].is_variadic,
+            "Rest parameter should be marked as variadic"
+        );
 
         assert_eq!(functions[1].name, "merge");
         assert_eq!(functions[1].parameters.len(), 3);
@@ -852,27 +904,40 @@ class BankAccount {
 "#;
 
         let opts = ProcessOptions::default();
-        let file = processor.process(source, Path::new("test.js"), &opts).unwrap();
+        let file = processor
+            .process(source, Path::new("test.js"), &opts)
+            .unwrap();
 
         assert_eq!(file.children.len(), 1);
         if let Node::Class(class) = &file.children[0] {
             assert_eq!(class.name, "BankAccount");
 
-            let methods: Vec<_> = class.children.iter()
-                .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+            let methods: Vec<_> = class
+                .children
+                .iter()
+                .filter_map(|n| {
+                    if let Node::Function(f) = n {
+                        Some(f)
+                    } else {
+                        None
+                    }
+                })
                 .collect();
 
             // Find private methods
-            let private_methods: Vec<_> = methods.iter()
+            let private_methods: Vec<_> = methods
+                .iter()
                 .filter(|m| m.visibility == Visibility::Private)
                 .collect();
 
             assert!(!private_methods.is_empty(), "Should have private methods");
 
             // Check #validateAmount is private
-            let validate_method = methods.iter()
-                .find(|m| m.name == "#validateAmount");
-            assert!(validate_method.is_some(), "Should find #validateAmount method");
+            let validate_method = methods.iter().find(|m| m.name == "#validateAmount");
+            assert!(
+                validate_method.is_some(),
+                "Should find #validateAmount method"
+            );
             assert_eq!(validate_method.unwrap().visibility, Visibility::Private);
         } else {
             panic!("Expected class node");
@@ -901,32 +966,57 @@ class MathUtils {
 "#;
 
         let opts = ProcessOptions::default();
-        let file = processor.process(source, Path::new("test.js"), &opts).unwrap();
+        let file = processor
+            .process(source, Path::new("test.js"), &opts)
+            .unwrap();
 
         assert_eq!(file.children.len(), 1);
         if let Node::Class(class) = &file.children[0] {
             assert_eq!(class.name, "MathUtils");
 
-            let methods: Vec<_> = class.children.iter()
-                .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+            let methods: Vec<_> = class
+                .children
+                .iter()
+                .filter_map(|n| {
+                    if let Node::Function(f) = n {
+                        Some(f)
+                    } else {
+                        None
+                    }
+                })
                 .collect();
 
             // Find static methods
-            let static_methods: Vec<_> = methods.iter()
+            let static_methods: Vec<_> = methods
+                .iter()
                 .filter(|m| m.modifiers.contains(&Modifier::Static))
                 .collect();
 
-            assert!(static_methods.len() >= 2,
-                   "Should have at least 2 static methods, got {}", static_methods.len());
+            assert!(
+                static_methods.len() >= 2,
+                "Should have at least 2 static methods, got {}",
+                static_methods.len()
+            );
 
             // Verify specific static methods
-            assert!(methods.iter().any(|m| m.name == "add" && m.modifiers.contains(&Modifier::Static)));
-            assert!(methods.iter().any(|m| m.name == "multiply" && m.modifiers.contains(&Modifier::Static)));
+            assert!(
+                methods
+                    .iter()
+                    .any(|m| m.name == "add" && m.modifiers.contains(&Modifier::Static))
+            );
+            assert!(
+                methods
+                    .iter()
+                    .any(|m| m.name == "multiply" && m.modifiers.contains(&Modifier::Static))
+            );
 
             // Check for async + static combination
-            let async_static: Vec<_> = methods.iter()
-                .filter(|m| m.modifiers.contains(&Modifier::Static) &&
-                           m.modifiers.contains(&Modifier::Async))
+            let async_static: Vec<_> = methods
+                .iter()
+                .filter(|m| {
+                    m.modifiers.contains(&Modifier::Static)
+                        && m.modifiers.contains(&Modifier::Async)
+                })
                 .collect();
             assert!(!async_static.is_empty(), "Should have async static method");
         } else {
@@ -962,14 +1052,27 @@ class Range {
 "#;
 
         let opts = ProcessOptions::default();
-        let file = processor.process(source, Path::new("test.js"), &opts).unwrap();
+        let file = processor
+            .process(source, Path::new("test.js"), &opts)
+            .unwrap();
 
-        let functions: Vec<_> = file.children.iter()
-            .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+        let functions: Vec<_> = file
+            .children
+            .iter()
+            .filter_map(|n| {
+                if let Node::Function(f) = n {
+                    Some(f)
+                } else {
+                    None
+                }
+            })
             .collect();
 
-        assert!(functions.len() >= 2,
-               "Should have at least 2 generator functions, got {}", functions.len());
+        assert!(
+            functions.len() >= 2,
+            "Should have at least 2 generator functions, got {}",
+            functions.len()
+        );
 
         assert!(functions.iter().any(|f| f.name == "numberGenerator"));
         assert!(functions.iter().any(|f| f.name == "fibonacciGenerator"));
@@ -997,25 +1100,51 @@ export { namedFunction as renamedFunction };
 "#;
 
         let opts = ProcessOptions::default();
-        let file = processor.process(source, Path::new("test.js"), &opts).unwrap();
+        let file = processor
+            .process(source, Path::new("test.js"), &opts)
+            .unwrap();
 
         // Verify exports don't cause parsing errors
-        assert!(file.children.len() >= 2,
-               "Should have parsed classes and functions, got {} children",
-               file.children.len());
+        assert!(
+            file.children.len() >= 2,
+            "Should have parsed classes and functions, got {} children",
+            file.children.len()
+        );
 
         // Check for specific exports
-        let classes: Vec<_> = file.children.iter()
-            .filter_map(|n| if let Node::Class(c) = n { Some(c) } else { None })
+        let classes: Vec<_> = file
+            .children
+            .iter()
+            .filter_map(|n| {
+                if let Node::Class(c) = n {
+                    Some(c)
+                } else {
+                    None
+                }
+            })
             .collect();
 
-        let functions: Vec<_> = file.children.iter()
-            .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+        let functions: Vec<_> = file
+            .children
+            .iter()
+            .filter_map(|n| {
+                if let Node::Function(f) = n {
+                    Some(f)
+                } else {
+                    None
+                }
+            })
             .collect();
 
-        assert!(classes.iter().any(|c| c.name == "DefaultClass" || c.name == "NamedClass"),
-               "Should have exported classes");
-        assert!(functions.iter().any(|f| f.name == "namedFunction"),
-               "Should have exported function");
+        assert!(
+            classes
+                .iter()
+                .any(|c| c.name == "DefaultClass" || c.name == "NamedClass"),
+            "Should have exported classes"
+        );
+        assert!(
+            functions.iter().any(|f| f.name == "namedFunction"),
+            "Should have exported function"
+        );
     }
 }

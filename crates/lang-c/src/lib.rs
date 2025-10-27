@@ -1,8 +1,8 @@
 use distiller_core::{
+    ProcessOptions,
     error::{DistilError, Result},
     ir::*,
     processor::LanguageProcessor,
-    ProcessOptions,
 };
 use parking_lot::Mutex;
 use std::path::Path;
@@ -84,10 +84,10 @@ impl CProcessor {
         let mut cursor = node.walk();
 
         for child in node.children(&mut cursor) {
-            if child.kind() == "field_declaration" {
-                if let Some(field) = self.parse_field(child, source)? {
-                    children.push(Node::Field(field));
-                }
+            if child.kind() == "field_declaration"
+                && let Some(field) = self.parse_field(child, source)?
+            {
+                children.push(Node::Field(field));
             }
         }
 
@@ -418,7 +418,8 @@ impl CProcessor {
                 // Function declarations (prototypes)
                 let mut cursor = node.walk();
                 for child in node.children(&mut cursor) {
-                    if child.kind() == "function_declarator" || child.kind() == "pointer_declarator" {
+                    if child.kind() == "function_declarator" || child.kind() == "pointer_declarator"
+                    {
                         if let Some(func) = self.parse_function(node, source)? {
                             file.children.push(Node::Function(func));
                         }
@@ -618,7 +619,13 @@ struct Point {
             let fields: Vec<_> = struct_node
                 .children
                 .iter()
-                .filter_map(|n| if let Node::Field(f) = n { Some(f) } else { None })
+                .filter_map(|n| {
+                    if let Node::Field(f) = n {
+                        Some(f)
+                    } else {
+                        None
+                    }
+                })
                 .collect();
 
             assert_eq!(fields.len(), 2);
@@ -672,7 +679,11 @@ void process(int *data, char *buffer) {
             .filter(|child| matches!(child, Node::Import(_)))
             .count();
 
-        assert!(import_count >= 2, "Expected at least 2 includes, got {}", import_count);
+        assert!(
+            import_count >= 2,
+            "Expected at least 2 includes, got {}",
+            import_count
+        );
     }
 
     #[test]
@@ -738,7 +749,13 @@ static int helper(void) {
         let funcs: Vec<_> = file
             .children
             .iter()
-            .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+            .filter_map(|n| {
+                if let Node::Function(f) = n {
+                    Some(f)
+                } else {
+                    None
+                }
+            })
             .collect();
 
         assert_eq!(funcs.len(), 3);
@@ -781,8 +798,10 @@ typedef struct Point Point;
             .unwrap();
 
         // Typedef might be parsed
-        assert!(!file.children.is_empty() || file.children.is_empty(),
-               "Typedef parsing is optional");
+        assert!(
+            !file.children.is_empty() || file.children.is_empty(),
+            "Typedef parsing is optional"
+        );
     }
 
     #[test]
@@ -918,7 +937,9 @@ void init_array(int arr[], size_t size) {
             assert_eq!(func.name, "init_array");
             assert_eq!(func.parameters.len(), 2);
             // Parser limitation: array parameter names may not be detected
-            assert!(func.parameters[0].name == "arr" || func.parameters[0].name.starts_with("param_"));
+            assert!(
+                func.parameters[0].name == "arr" || func.parameters[0].name.starts_with("param_")
+            );
             assert_eq!(func.parameters[1].name, "size");
         } else {
             panic!("Expected function node");
@@ -947,7 +968,13 @@ struct Rectangle {
         let structs: Vec<_> = file
             .children
             .iter()
-            .filter_map(|n| if let Node::Class(c) = n { Some(c) } else { None })
+            .filter_map(|n| {
+                if let Node::Class(c) = n {
+                    Some(c)
+                } else {
+                    None
+                }
+            })
             .collect();
 
         assert!(structs.len() >= 2, "Expected at least 2 structs");
@@ -968,8 +995,10 @@ typedef int (*callback_fn)(void *data);
 
         // Function pointer typedefs may or may not be parsed
         // Parser limitation: complex typedef patterns
-        assert!(file.children.is_empty() || !file.children.is_empty(),
-               "Function pointer typedef parsing is optional");
+        assert!(
+            file.children.is_empty() || !file.children.is_empty(),
+            "Function pointer typedef parsing is optional"
+        );
     }
 
     #[test]
@@ -1016,7 +1045,13 @@ int get_status(void);
         let funcs: Vec<_> = file
             .children
             .iter()
-            .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+            .filter_map(|n| {
+                if let Node::Function(f) = n {
+                    Some(f)
+                } else {
+                    None
+                }
+            })
             .collect();
 
         assert_eq!(funcs.len(), 2);
@@ -1043,7 +1078,13 @@ void process(void);
         let imports: Vec<_> = file
             .children
             .iter()
-            .filter_map(|n| if let Node::Import(i) = n { Some(i) } else { None })
+            .filter_map(|n| {
+                if let Node::Import(i) = n {
+                    Some(i)
+                } else {
+                    None
+                }
+            })
             .collect();
 
         assert!(imports.len() >= 2, "Expected at least 2 include statements");
@@ -1065,7 +1106,10 @@ void allocate_matrix(int **matrix, int rows, int cols);
             assert_eq!(func.name, "allocate_matrix");
             assert_eq!(func.parameters.len(), 3);
             // Parser limitation: double-pointer parameter names may not be detected
-            assert!(func.parameters[0].name == "matrix" || func.parameters[0].name.starts_with("param_"));
+            assert!(
+                func.parameters[0].name == "matrix"
+                    || func.parameters[0].name.starts_with("param_")
+            );
         } else {
             panic!("Expected function node");
         }
@@ -1088,7 +1132,13 @@ unsigned long get_timestamp(void);
         let funcs: Vec<_> = file
             .children
             .iter()
-            .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+            .filter_map(|n| {
+                if let Node::Function(f) = n {
+                    Some(f)
+                } else {
+                    None
+                }
+            })
             .collect();
 
         assert_eq!(funcs.len(), 2);

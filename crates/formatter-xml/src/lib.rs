@@ -65,7 +65,12 @@ impl XmlFormatter {
     }
 
     /// Format a file element
-    fn format_file_element(&self, output: &mut String, file: &File, indent: usize) -> Result<(), std::fmt::Error> {
+    fn format_file_element(
+        &self,
+        output: &mut String,
+        file: &File,
+        indent: usize,
+    ) -> Result<(), std::fmt::Error> {
         let ind = self.indent(indent);
         writeln!(output, "{}<file path=\"{}\">", ind, escape_xml(&file.path))?;
 
@@ -78,7 +83,12 @@ impl XmlFormatter {
     }
 
     /// Format a node
-    fn format_node(&self, output: &mut String, node: &Node, indent: usize) -> Result<(), std::fmt::Error> {
+    fn format_node(
+        &self,
+        output: &mut String,
+        node: &Node,
+        indent: usize,
+    ) -> Result<(), std::fmt::Error> {
         match node {
             Node::File(file) => self.format_file_element(output, file, indent),
             Node::Directory(dir) => self.format_directory(output, dir, indent),
@@ -97,9 +107,19 @@ impl XmlFormatter {
     }
 
     /// Format a directory
-    fn format_directory(&self, output: &mut String, dir: &Directory, indent: usize) -> Result<(), std::fmt::Error> {
+    fn format_directory(
+        &self,
+        output: &mut String,
+        dir: &Directory,
+        indent: usize,
+    ) -> Result<(), std::fmt::Error> {
         let ind = self.indent(indent);
-        writeln!(output, "{}<directory path=\"{}\">", ind, escape_xml(&dir.path))?;
+        writeln!(
+            output,
+            "{}<directory path=\"{}\">",
+            ind,
+            escape_xml(&dir.path)
+        )?;
         for child in &dir.children {
             self.format_node(output, child, indent + 1)?;
         }
@@ -108,9 +128,19 @@ impl XmlFormatter {
     }
 
     /// Format a package
-    fn format_package(&self, output: &mut String, pkg: &Package, indent: usize) -> Result<(), std::fmt::Error> {
+    fn format_package(
+        &self,
+        output: &mut String,
+        pkg: &Package,
+        indent: usize,
+    ) -> Result<(), std::fmt::Error> {
         let ind = self.indent(indent);
-        writeln!(output, "{}<package name=\"{}\">", ind, escape_xml(&pkg.name))?;
+        writeln!(
+            output,
+            "{}<package name=\"{}\">",
+            ind,
+            escape_xml(&pkg.name)
+        )?;
         for child in &pkg.children {
             self.format_node(output, child, indent + 1)?;
         }
@@ -119,7 +149,12 @@ impl XmlFormatter {
     }
 
     /// Format an import
-    fn format_import(&self, output: &mut String, import: &Import, indent: usize) -> Result<(), std::fmt::Error> {
+    fn format_import(
+        &self,
+        output: &mut String,
+        import: &Import,
+        indent: usize,
+    ) -> Result<(), std::fmt::Error> {
         let ind = self.indent(indent);
         write!(output, "{}<import", ind)?;
         write!(output, " type=\"{}\"", import.import_type)?;
@@ -134,7 +169,12 @@ impl XmlFormatter {
             writeln!(output, ">")?;
             for symbol in &import.symbols {
                 let symbol_ind = self.indent(indent + 1);
-                write!(output, "{}<symbol name=\"{}\"", symbol_ind, escape_xml(&symbol.name))?;
+                write!(
+                    output,
+                    "{}<symbol name=\"{}\"",
+                    symbol_ind,
+                    escape_xml(&symbol.name)
+                )?;
                 if let Some(ref alias) = symbol.alias {
                     write!(output, " alias=\"{}\"", escape_xml(alias))?;
                 }
@@ -146,19 +186,37 @@ impl XmlFormatter {
     }
 
     /// Format a class
-    fn format_class(&self, output: &mut String, class: &Class, indent: usize) -> Result<(), std::fmt::Error> {
+    fn format_class(
+        &self,
+        output: &mut String,
+        class: &Class,
+        indent: usize,
+    ) -> Result<(), std::fmt::Error> {
         let ind = self.indent(indent);
         for decorator in &class.decorators {
-            writeln!(output, "{}<decorator value=\"{}\" />", ind, escape_xml(decorator))?;
+            writeln!(
+                output,
+                "{}<decorator value=\"{}\" />",
+                ind,
+                escape_xml(decorator)
+            )?;
         }
 
         write!(output, "{}<class", ind)?;
         write!(output, " name=\"{}\"", escape_xml(&class.name))?;
-        write!(output, " visibility=\"{}\"", visibility_str(class.visibility))?;
+        write!(
+            output,
+            " visibility=\"{}\"",
+            visibility_str(class.visibility)
+        )?;
         write!(output, " line-start=\"{}\"", class.line_start)?;
         write!(output, " line-end=\"{}\"", class.line_end)?;
         if !class.modifiers.is_empty() {
-            write!(output, " modifiers=\"{}\"", escape_xml(&modifiers_to_string(&class.modifiers)))?;
+            write!(
+                output,
+                " modifiers=\"{}\"",
+                escape_xml(&modifiers_to_string(&class.modifiers))
+            )?;
         }
         writeln!(output, ">")?;
 
@@ -198,11 +256,20 @@ impl XmlFormatter {
     }
 
     /// Format an interface
-    fn format_interface(&self, output: &mut String, interface: &Interface, indent: usize) -> Result<(), std::fmt::Error> {
+    fn format_interface(
+        &self,
+        output: &mut String,
+        interface: &Interface,
+        indent: usize,
+    ) -> Result<(), std::fmt::Error> {
         let ind = self.indent(indent);
         write!(output, "{}<interface", ind)?;
         write!(output, " name=\"{}\"", escape_xml(&interface.name))?;
-        write!(output, " visibility=\"{}\"", visibility_str(interface.visibility))?;
+        write!(
+            output,
+            " visibility=\"{}\"",
+            visibility_str(interface.visibility)
+        )?;
         write!(output, " line-start=\"{}\"", interface.line_start)?;
         write!(output, " line-end=\"{}\"", interface.line_end)?;
         writeln!(output, ">")?;
@@ -234,11 +301,20 @@ impl XmlFormatter {
     }
 
     /// Format a struct
-    fn format_struct(&self, output: &mut String, struct_node: &Struct, indent: usize) -> Result<(), std::fmt::Error> {
+    fn format_struct(
+        &self,
+        output: &mut String,
+        struct_node: &Struct,
+        indent: usize,
+    ) -> Result<(), std::fmt::Error> {
         let ind = self.indent(indent);
         write!(output, "{}<struct", ind)?;
         write!(output, " name=\"{}\"", escape_xml(&struct_node.name))?;
-        write!(output, " visibility=\"{}\"", visibility_str(struct_node.visibility))?;
+        write!(
+            output,
+            " visibility=\"{}\"",
+            visibility_str(struct_node.visibility)
+        )?;
         write!(output, " line-start=\"{}\"", struct_node.line_start)?;
         write!(output, " line-end=\"{}\"", struct_node.line_end)?;
         writeln!(output, ">")?;
@@ -261,11 +337,20 @@ impl XmlFormatter {
     }
 
     /// Format an enum
-    fn format_enum(&self, output: &mut String, enum_node: &Enum, indent: usize) -> Result<(), std::fmt::Error> {
+    fn format_enum(
+        &self,
+        output: &mut String,
+        enum_node: &Enum,
+        indent: usize,
+    ) -> Result<(), std::fmt::Error> {
         let ind = self.indent(indent);
         write!(output, "{}<enum", ind)?;
         write!(output, " name=\"{}\"", escape_xml(&enum_node.name))?;
-        write!(output, " visibility=\"{}\"", visibility_str(enum_node.visibility))?;
+        write!(
+            output,
+            " visibility=\"{}\"",
+            visibility_str(enum_node.visibility)
+        )?;
         write!(output, " line-start=\"{}\"", enum_node.line_start)?;
         write!(output, " line-end=\"{}\"", enum_node.line_end)?;
 
@@ -279,26 +364,33 @@ impl XmlFormatter {
                 self.format_node(output, child, indent + 1)?;
             }
             writeln!(output, "{}</enum>", ind)?;
+        } else if enum_node.children.is_empty() {
+            writeln!(output, " />")?;
         } else {
-            if enum_node.children.is_empty() {
-                writeln!(output, " />")?;
-            } else {
-                writeln!(output, ">")?;
-                for child in &enum_node.children {
-                    self.format_node(output, child, indent + 1)?;
-                }
-                writeln!(output, "{}</enum>", ind)?;
+            writeln!(output, ">")?;
+            for child in &enum_node.children {
+                self.format_node(output, child, indent + 1)?;
             }
+            writeln!(output, "{}</enum>", ind)?;
         }
         Ok(())
     }
 
     /// Format a type alias
-    fn format_type_alias(&self, output: &mut String, type_alias: &TypeAlias, indent: usize) -> Result<(), std::fmt::Error> {
+    fn format_type_alias(
+        &self,
+        output: &mut String,
+        type_alias: &TypeAlias,
+        indent: usize,
+    ) -> Result<(), std::fmt::Error> {
         let ind = self.indent(indent);
         write!(output, "{}<type-alias", ind)?;
         write!(output, " name=\"{}\"", escape_xml(&type_alias.name))?;
-        write!(output, " visibility=\"{}\"", visibility_str(type_alias.visibility))?;
+        write!(
+            output,
+            " visibility=\"{}\"",
+            visibility_str(type_alias.visibility)
+        )?;
         write!(output, " line=\"{}\"", type_alias.line)?;
         writeln!(output, ">")?;
 
@@ -321,19 +413,37 @@ impl XmlFormatter {
     }
 
     /// Format a function
-    fn format_function(&self, output: &mut String, function: &Function, indent: usize) -> Result<(), std::fmt::Error> {
+    fn format_function(
+        &self,
+        output: &mut String,
+        function: &Function,
+        indent: usize,
+    ) -> Result<(), std::fmt::Error> {
         let ind = self.indent(indent);
         for decorator in &function.decorators {
-            writeln!(output, "{}<decorator value=\"{}\" />", ind, escape_xml(decorator))?;
+            writeln!(
+                output,
+                "{}<decorator value=\"{}\" />",
+                ind,
+                escape_xml(decorator)
+            )?;
         }
 
         write!(output, "{}<function", ind)?;
         write!(output, " name=\"{}\"", escape_xml(&function.name))?;
-        write!(output, " visibility=\"{}\"", visibility_str(function.visibility))?;
+        write!(
+            output,
+            " visibility=\"{}\"",
+            visibility_str(function.visibility)
+        )?;
         write!(output, " line-start=\"{}\"", function.line_start)?;
         write!(output, " line-end=\"{}\"", function.line_end)?;
         if !function.modifiers.is_empty() {
-            write!(output, " modifiers=\"{}\"", escape_xml(&modifiers_to_string(&function.modifiers)))?;
+            write!(
+                output,
+                " modifiers=\"{}\"",
+                escape_xml(&modifiers_to_string(&function.modifiers))
+            )?;
         }
         writeln!(output, ">")?;
 
@@ -374,14 +484,27 @@ impl XmlFormatter {
     }
 
     /// Format a field
-    fn format_field(&self, output: &mut String, field: &Field, indent: usize) -> Result<(), std::fmt::Error> {
+    fn format_field(
+        &self,
+        output: &mut String,
+        field: &Field,
+        indent: usize,
+    ) -> Result<(), std::fmt::Error> {
         let ind = self.indent(indent);
         write!(output, "{}<field", ind)?;
         write!(output, " name=\"{}\"", escape_xml(&field.name))?;
-        write!(output, " visibility=\"{}\"", visibility_str(field.visibility))?;
+        write!(
+            output,
+            " visibility=\"{}\"",
+            visibility_str(field.visibility)
+        )?;
         write!(output, " line=\"{}\"", field.line)?;
         if !field.modifiers.is_empty() {
-            write!(output, " modifiers=\"{}\"", escape_xml(&modifiers_to_string(&field.modifiers)))?;
+            write!(
+                output,
+                " modifiers=\"{}\"",
+                escape_xml(&modifiers_to_string(&field.modifiers))
+            )?;
         }
 
         if let Some(ref field_type) = field.field_type {
@@ -391,7 +514,12 @@ impl XmlFormatter {
             self.format_type_ref(output, field_type, indent + 2)?;
             writeln!(output, "{}</type>", type_ind)?;
             if let Some(ref default_value) = field.default_value {
-                writeln!(output, "{}<default-value>{}</default-value>", type_ind, escape_xml(default_value))?;
+                writeln!(
+                    output,
+                    "{}<default-value>{}</default-value>",
+                    type_ind,
+                    escape_xml(default_value)
+                )?;
             }
             writeln!(output, "{}</field>", ind)?;
         } else {
@@ -404,7 +532,12 @@ impl XmlFormatter {
     }
 
     /// Format a comment
-    fn format_comment(&self, output: &mut String, comment: &Comment, indent: usize) -> Result<(), std::fmt::Error> {
+    fn format_comment(
+        &self,
+        output: &mut String,
+        comment: &Comment,
+        indent: usize,
+    ) -> Result<(), std::fmt::Error> {
         let ind = self.indent(indent);
         write!(output, "{}<comment", ind)?;
         write!(output, " format=\"{}\"", comment.format)?;
@@ -416,7 +549,12 @@ impl XmlFormatter {
     }
 
     /// Format raw content
-    fn format_raw_content(&self, output: &mut String, raw: &RawContent, indent: usize) -> Result<(), std::fmt::Error> {
+    fn format_raw_content(
+        &self,
+        output: &mut String,
+        raw: &RawContent,
+        indent: usize,
+    ) -> Result<(), std::fmt::Error> {
         let ind = self.indent(indent);
         writeln!(output, "{}<raw-content>", ind)?;
         writeln!(output, "{}", escape_xml(&raw.content))?;
@@ -425,9 +563,19 @@ impl XmlFormatter {
     }
 
     /// Format a type parameter
-    fn format_type_param(&self, output: &mut String, param: &TypeParam, indent: usize) -> Result<(), std::fmt::Error> {
+    fn format_type_param(
+        &self,
+        output: &mut String,
+        param: &TypeParam,
+        indent: usize,
+    ) -> Result<(), std::fmt::Error> {
         let ind = self.indent(indent);
-        write!(output, "{}<type-param name=\"{}\"", ind, escape_xml(&param.name))?;
+        write!(
+            output,
+            "{}<type-param name=\"{}\"",
+            ind,
+            escape_xml(&param.name)
+        )?;
 
         if param.constraints.is_empty() && param.default.is_none() {
             writeln!(output, " />")?;
@@ -453,9 +601,19 @@ impl XmlFormatter {
     }
 
     /// Format a type reference
-    fn format_type_ref(&self, output: &mut String, type_ref: &TypeRef, indent: usize) -> Result<(), std::fmt::Error> {
+    fn format_type_ref(
+        &self,
+        output: &mut String,
+        type_ref: &TypeRef,
+        indent: usize,
+    ) -> Result<(), std::fmt::Error> {
         let ind = self.indent(indent);
-        write!(output, "{}<type name=\"{}\"", ind, escape_xml(&type_ref.name))?;
+        write!(
+            output,
+            "{}<type name=\"{}\"",
+            ind,
+            escape_xml(&type_ref.name)
+        )?;
 
         if type_ref.type_args.is_empty() {
             writeln!(output, " />")?;
@@ -473,9 +631,19 @@ impl XmlFormatter {
     }
 
     /// Format a parameter
-    fn format_parameter(&self, output: &mut String, param: &Parameter, indent: usize) -> Result<(), std::fmt::Error> {
+    fn format_parameter(
+        &self,
+        output: &mut String,
+        param: &Parameter,
+        indent: usize,
+    ) -> Result<(), std::fmt::Error> {
         let ind = self.indent(indent);
-        write!(output, "{}<parameter name=\"{}\"", ind, escape_xml(&param.name))?;
+        write!(
+            output,
+            "{}<parameter name=\"{}\"",
+            ind,
+            escape_xml(&param.name)
+        )?;
         if param.is_variadic {
             write!(output, " variadic=\"true\"")?;
         }
@@ -490,7 +658,12 @@ impl XmlFormatter {
         writeln!(output, "{}</type>", type_ind)?;
 
         if let Some(ref default_value) = param.default_value {
-            writeln!(output, "{}<default-value>{}</default-value>", type_ind, escape_xml(default_value))?;
+            writeln!(
+                output,
+                "{}<default-value>{}</default-value>",
+                type_ind,
+                escape_xml(default_value)
+            )?;
         }
 
         writeln!(output, "{}</parameter>", ind)?;
@@ -534,7 +707,8 @@ fn visibility_str(vis: Visibility) -> &'static str {
 
 /// Convert modifiers to comma-separated string
 fn modifiers_to_string(modifiers: &[Modifier]) -> String {
-    modifiers.iter()
+    modifiers
+        .iter()
         .map(|m| match m {
             Modifier::Static => "static",
             Modifier::Abstract => "abstract",
@@ -562,42 +736,36 @@ mod tests {
     fn test_xml_format_simple() {
         let file = File {
             path: "test.py".to_string(),
-            children: vec![
-                Node::Class(Class {
-                    name: "Example".to_string(),
+            children: vec![Node::Class(Class {
+                name: "Example".to_string(),
+                visibility: Visibility::Public,
+                modifiers: Vec::new(),
+                decorators: Vec::new(),
+                type_params: Vec::new(),
+                extends: Vec::new(),
+                implements: Vec::new(),
+                children: vec![Node::Function(Function {
+                    name: "__init__".to_string(),
                     visibility: Visibility::Public,
                     modifiers: Vec::new(),
                     decorators: Vec::new(),
                     type_params: Vec::new(),
-                    extends: Vec::new(),
-                    implements: Vec::new(),
-                    children: vec![
-                        Node::Function(Function {
-                            name: "__init__".to_string(),
-                            visibility: Visibility::Public,
-                            modifiers: Vec::new(),
-                            decorators: Vec::new(),
-                            type_params: Vec::new(),
-                            parameters: vec![
-                                Parameter {
-                                    name: "self".to_string(),
-                                    param_type: TypeRef::new("Self"),
-                                    default_value: None,
-                                    is_variadic: false,
-                                    is_optional: false,
-                                    decorators: Vec::new(),
-                                },
-                            ],
-                            return_type: None,
-                            implementation: None,
-                            line_start: 2,
-                            line_end: 3,
-                        }),
-                    ],
-                    line_start: 1,
+                    parameters: vec![Parameter {
+                        name: "self".to_string(),
+                        param_type: TypeRef::new("Self"),
+                        default_value: None,
+                        is_variadic: false,
+                        is_optional: false,
+                        decorators: Vec::new(),
+                    }],
+                    return_type: None,
+                    implementation: None,
+                    line_start: 2,
                     line_end: 3,
-                }),
-            ],
+                })],
+                line_start: 1,
+                line_end: 3,
+            })],
         };
 
         let formatter = XmlFormatter::new();
@@ -616,20 +784,18 @@ mod tests {
     fn test_xml_escaping() {
         let file = File {
             path: "file<>&\".py".to_string(),
-            children: vec![
-                Node::Function(Function {
-                    name: "func<>&\"".to_string(),
-                    visibility: Visibility::Public,
-                    modifiers: Vec::new(),
-                    decorators: Vec::new(),
-                    type_params: Vec::new(),
-                    parameters: Vec::new(),
-                    return_type: None,
-                    implementation: None,
-                    line_start: 1,
-                    line_end: 2,
-                }),
-            ],
+            children: vec![Node::Function(Function {
+                name: "func<>&\"".to_string(),
+                visibility: Visibility::Public,
+                modifiers: Vec::new(),
+                decorators: Vec::new(),
+                type_params: Vec::new(),
+                parameters: Vec::new(),
+                return_type: None,
+                implementation: None,
+                line_start: 1,
+                line_end: 2,
+            })],
         };
 
         let formatter = XmlFormatter::new();
@@ -679,37 +845,33 @@ mod tests {
         let files = vec![
             File {
                 path: "file1.py".to_string(),
-                children: vec![
-                    Node::Function(Function {
-                        name: "func1".to_string(),
-                        visibility: Visibility::Public,
-                        modifiers: Vec::new(),
-                        decorators: Vec::new(),
-                        type_params: Vec::new(),
-                        parameters: Vec::new(),
-                        return_type: None,
-                        implementation: None,
-                        line_start: 1,
-                        line_end: 2,
-                    }),
-                ],
+                children: vec![Node::Function(Function {
+                    name: "func1".to_string(),
+                    visibility: Visibility::Public,
+                    modifiers: Vec::new(),
+                    decorators: Vec::new(),
+                    type_params: Vec::new(),
+                    parameters: Vec::new(),
+                    return_type: None,
+                    implementation: None,
+                    line_start: 1,
+                    line_end: 2,
+                })],
             },
             File {
                 path: "file2.py".to_string(),
-                children: vec![
-                    Node::Function(Function {
-                        name: "func2".to_string(),
-                        visibility: Visibility::Public,
-                        modifiers: Vec::new(),
-                        decorators: Vec::new(),
-                        type_params: Vec::new(),
-                        parameters: Vec::new(),
-                        return_type: None,
-                        implementation: None,
-                        line_start: 1,
-                        line_end: 2,
-                    }),
-                ],
+                children: vec![Node::Function(Function {
+                    name: "func2".to_string(),
+                    visibility: Visibility::Public,
+                    modifiers: Vec::new(),
+                    decorators: Vec::new(),
+                    type_params: Vec::new(),
+                    parameters: Vec::new(),
+                    return_type: None,
+                    implementation: None,
+                    line_start: 1,
+                    line_end: 2,
+                })],
             },
         ];
 
@@ -728,20 +890,18 @@ mod tests {
     fn test_xml_compact() {
         let file = File {
             path: "test.py".to_string(),
-            children: vec![
-                Node::Function(Function {
-                    name: "hello".to_string(),
-                    visibility: Visibility::Public,
-                    modifiers: Vec::new(),
-                    decorators: Vec::new(),
-                    type_params: Vec::new(),
-                    parameters: Vec::new(),
-                    return_type: None,
-                    implementation: None,
-                    line_start: 1,
-                    line_end: 2,
-                }),
-            ],
+            children: vec![Node::Function(Function {
+                name: "hello".to_string(),
+                visibility: Visibility::Public,
+                modifiers: Vec::new(),
+                decorators: Vec::new(),
+                type_params: Vec::new(),
+                parameters: Vec::new(),
+                return_type: None,
+                implementation: None,
+                line_start: 1,
+                line_end: 2,
+            })],
         };
 
         let options = XmlFormatterOptions {
@@ -758,26 +918,22 @@ mod tests {
     fn test_xml_type_params() {
         let file = File {
             path: "test.ts".to_string(),
-            children: vec![
-                Node::Class(Class {
-                    name: "Container".to_string(),
-                    visibility: Visibility::Public,
-                    modifiers: Vec::new(),
-                    decorators: Vec::new(),
-                    type_params: vec![
-                        TypeParam {
-                            name: "T".to_string(),
-                            constraints: Vec::new(),
-                            default: None,
-                        },
-                    ],
-                    extends: Vec::new(),
-                    implements: Vec::new(),
-                    children: Vec::new(),
-                    line_start: 1,
-                    line_end: 3,
-                }),
-            ],
+            children: vec![Node::Class(Class {
+                name: "Container".to_string(),
+                visibility: Visibility::Public,
+                modifiers: Vec::new(),
+                decorators: Vec::new(),
+                type_params: vec![TypeParam {
+                    name: "T".to_string(),
+                    constraints: Vec::new(),
+                    default: None,
+                }],
+                extends: Vec::new(),
+                implements: Vec::new(),
+                children: Vec::new(),
+                line_start: 1,
+                line_end: 3,
+            })],
         };
 
         let formatter = XmlFormatter::new();

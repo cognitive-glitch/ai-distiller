@@ -129,42 +129,36 @@ mod tests {
     fn test_markdown_format_simple() {
         let file = File {
             path: "test.py".to_string(),
-            children: vec![
-                Node::Class(Class {
-                    name: "Example".to_string(),
+            children: vec![Node::Class(Class {
+                name: "Example".to_string(),
+                visibility: Visibility::Public,
+                modifiers: Vec::new(),
+                decorators: Vec::new(),
+                type_params: Vec::new(),
+                extends: Vec::new(),
+                implements: Vec::new(),
+                children: vec![Node::Function(Function {
+                    name: "__init__".to_string(),
                     visibility: Visibility::Public,
                     modifiers: Vec::new(),
                     decorators: Vec::new(),
                     type_params: Vec::new(),
-                    extends: Vec::new(),
-                    implements: Vec::new(),
-                    children: vec![
-                        Node::Function(Function {
-                            name: "__init__".to_string(),
-                            visibility: Visibility::Public,
-                            modifiers: Vec::new(),
-                            decorators: Vec::new(),
-                            type_params: Vec::new(),
-                            parameters: vec![
-                                Parameter {
-                                    name: "self".to_string(),
-                                    param_type: TypeRef::new("Self"),
-                                    default_value: None,
-                                    is_variadic: false,
-                                    is_optional: false,
-                                    decorators: Vec::new(),
-                                },
-                            ],
-                            return_type: None,
-                            implementation: None,
-                            line_start: 2,
-                            line_end: 3,
-                        }),
-                    ],
-                    line_start: 1,
+                    parameters: vec![Parameter {
+                        name: "self".to_string(),
+                        param_type: TypeRef::new("Self"),
+                        default_value: None,
+                        is_variadic: false,
+                        is_optional: false,
+                        decorators: Vec::new(),
+                    }],
+                    return_type: None,
+                    implementation: None,
+                    line_start: 2,
                     line_end: 3,
-                }),
-            ],
+                })],
+                line_start: 1,
+                line_end: 3,
+            })],
         };
 
         let formatter = MarkdownFormatter::new();
@@ -196,37 +190,33 @@ mod tests {
         let files = vec![
             File {
                 path: "file1.py".to_string(),
-                children: vec![
-                    Node::Function(Function {
-                        name: "hello".to_string(),
-                        visibility: Visibility::Public,
-                        modifiers: Vec::new(),
-                        decorators: Vec::new(),
-                        type_params: Vec::new(),
-                        parameters: Vec::new(),
-                        return_type: None,
-                        implementation: None,
-                        line_start: 1,
-                        line_end: 2,
-                    }),
-                ],
+                children: vec![Node::Function(Function {
+                    name: "hello".to_string(),
+                    visibility: Visibility::Public,
+                    modifiers: Vec::new(),
+                    decorators: Vec::new(),
+                    type_params: Vec::new(),
+                    parameters: Vec::new(),
+                    return_type: None,
+                    implementation: None,
+                    line_start: 1,
+                    line_end: 2,
+                })],
             },
             File {
                 path: "file2.py".to_string(),
-                children: vec![
-                    Node::Function(Function {
-                        name: "world".to_string(),
-                        visibility: Visibility::Public,
-                        modifiers: Vec::new(),
-                        decorators: Vec::new(),
-                        type_params: Vec::new(),
-                        parameters: Vec::new(),
-                        return_type: None,
-                        implementation: None,
-                        line_start: 1,
-                        line_end: 2,
-                    }),
-                ],
+                children: vec![Node::Function(Function {
+                    name: "world".to_string(),
+                    visibility: Visibility::Public,
+                    modifiers: Vec::new(),
+                    decorators: Vec::new(),
+                    type_params: Vec::new(),
+                    parameters: Vec::new(),
+                    return_type: None,
+                    implementation: None,
+                    line_start: 1,
+                    line_end: 2,
+                })],
             },
         ];
 
@@ -243,29 +233,25 @@ mod tests {
     fn test_private_field_in_markdown() {
         let file = File {
             path: "test.py".to_string(),
-            children: vec![
-                Node::Class(Class {
-                    name: "Example".to_string(),
-                    visibility: Visibility::Public,
+            children: vec![Node::Class(Class {
+                name: "Example".to_string(),
+                visibility: Visibility::Public,
+                modifiers: Vec::new(),
+                decorators: Vec::new(),
+                type_params: Vec::new(),
+                extends: Vec::new(),
+                implements: Vec::new(),
+                children: vec![Node::Field(Field {
+                    name: "_private".to_string(),
+                    visibility: Visibility::Private,
                     modifiers: Vec::new(),
-                    decorators: Vec::new(),
-                    type_params: Vec::new(),
-                    extends: Vec::new(),
-                    implements: Vec::new(),
-                    children: vec![
-                        Node::Field(Field {
-                            name: "_private".to_string(),
-                            visibility: Visibility::Private,
-                            modifiers: Vec::new(),
-                            field_type: Some(TypeRef::new("str")),
-                            default_value: None,
-                            line: 2,
-                        }),
-                    ],
-                    line_start: 1,
-                    line_end: 3,
-                }),
-            ],
+                    field_type: Some(TypeRef::new("str")),
+                    default_value: None,
+                    line: 2,
+                })],
+                line_start: 1,
+                line_end: 3,
+            })],
         };
 
         let formatter = MarkdownFormatter::new();

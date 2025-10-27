@@ -5,7 +5,6 @@
 //! Always uses compact format (no pretty-printing).
 
 use distiller_core::ir::*;
-use serde_json;
 
 /// JSONL formatter (always compact, one JSON per line)
 pub struct JsonlFormatter;
@@ -58,42 +57,36 @@ mod tests {
     fn test_jsonl_format_simple() {
         let file = File {
             path: "test.py".to_string(),
-            children: vec![
-                Node::Class(Class {
-                    name: "Example".to_string(),
+            children: vec![Node::Class(Class {
+                name: "Example".to_string(),
+                visibility: Visibility::Public,
+                modifiers: Vec::new(),
+                decorators: Vec::new(),
+                type_params: Vec::new(),
+                extends: Vec::new(),
+                implements: Vec::new(),
+                children: vec![Node::Function(Function {
+                    name: "__init__".to_string(),
                     visibility: Visibility::Public,
                     modifiers: Vec::new(),
                     decorators: Vec::new(),
                     type_params: Vec::new(),
-                    extends: Vec::new(),
-                    implements: Vec::new(),
-                    children: vec![
-                        Node::Function(Function {
-                            name: "__init__".to_string(),
-                            visibility: Visibility::Public,
-                            modifiers: Vec::new(),
-                            decorators: Vec::new(),
-                            type_params: Vec::new(),
-                            parameters: vec![
-                                Parameter {
-                                    name: "self".to_string(),
-                                    param_type: TypeRef::new("Self"),
-                                    default_value: None,
-                                    is_variadic: false,
-                                    is_optional: false,
-                                    decorators: Vec::new(),
-                                },
-                            ],
-                            return_type: None,
-                            implementation: None,
-                            line_start: 2,
-                            line_end: 3,
-                        }),
-                    ],
-                    line_start: 1,
+                    parameters: vec![Parameter {
+                        name: "self".to_string(),
+                        param_type: TypeRef::new("Self"),
+                        default_value: None,
+                        is_variadic: false,
+                        is_optional: false,
+                        decorators: Vec::new(),
+                    }],
+                    return_type: None,
+                    implementation: None,
+                    line_start: 2,
                     line_end: 3,
-                }),
-            ],
+                })],
+                line_start: 1,
+                line_end: 3,
+            })],
         };
 
         let formatter = JsonlFormatter::new();
@@ -115,37 +108,33 @@ mod tests {
         let files = vec![
             File {
                 path: "file1.py".to_string(),
-                children: vec![
-                    Node::Function(Function {
-                        name: "func1".to_string(),
-                        visibility: Visibility::Public,
-                        modifiers: Vec::new(),
-                        decorators: Vec::new(),
-                        type_params: Vec::new(),
-                        parameters: Vec::new(),
-                        return_type: None,
-                        implementation: None,
-                        line_start: 1,
-                        line_end: 2,
-                    }),
-                ],
+                children: vec![Node::Function(Function {
+                    name: "func1".to_string(),
+                    visibility: Visibility::Public,
+                    modifiers: Vec::new(),
+                    decorators: Vec::new(),
+                    type_params: Vec::new(),
+                    parameters: Vec::new(),
+                    return_type: None,
+                    implementation: None,
+                    line_start: 1,
+                    line_end: 2,
+                })],
             },
             File {
                 path: "file2.py".to_string(),
-                children: vec![
-                    Node::Function(Function {
-                        name: "func2".to_string(),
-                        visibility: Visibility::Public,
-                        modifiers: Vec::new(),
-                        decorators: Vec::new(),
-                        type_params: Vec::new(),
-                        parameters: Vec::new(),
-                        return_type: None,
-                        implementation: None,
-                        line_start: 1,
-                        line_end: 2,
-                    }),
-                ],
+                children: vec![Node::Function(Function {
+                    name: "func2".to_string(),
+                    visibility: Visibility::Public,
+                    modifiers: Vec::new(),
+                    decorators: Vec::new(),
+                    type_params: Vec::new(),
+                    parameters: Vec::new(),
+                    return_type: None,
+                    implementation: None,
+                    line_start: 1,
+                    line_end: 2,
+                })],
             },
         ];
 
@@ -241,26 +230,22 @@ mod tests {
     fn test_jsonl_type_params() {
         let file = File {
             path: "test.ts".to_string(),
-            children: vec![
-                Node::Class(Class {
-                    name: "Container".to_string(),
-                    visibility: Visibility::Public,
-                    modifiers: Vec::new(),
-                    decorators: Vec::new(),
-                    type_params: vec![
-                        TypeParam {
-                            name: "T".to_string(),
-                            constraints: Vec::new(),
-                            default: None,
-                        },
-                    ],
-                    extends: Vec::new(),
-                    implements: Vec::new(),
-                    children: Vec::new(),
-                    line_start: 1,
-                    line_end: 3,
-                }),
-            ],
+            children: vec![Node::Class(Class {
+                name: "Container".to_string(),
+                visibility: Visibility::Public,
+                modifiers: Vec::new(),
+                decorators: Vec::new(),
+                type_params: vec![TypeParam {
+                    name: "T".to_string(),
+                    constraints: Vec::new(),
+                    default: None,
+                }],
+                extends: Vec::new(),
+                implements: Vec::new(),
+                children: Vec::new(),
+                line_start: 1,
+                line_end: 3,
+            })],
         };
 
         let formatter = JsonlFormatter::new();
@@ -277,37 +262,33 @@ mod tests {
         let files = vec![
             File {
                 path: "file1.py".to_string(),
-                children: vec![
-                    Node::Function(Function {
-                        name: "hello".to_string(),
-                        visibility: Visibility::Public,
-                        modifiers: Vec::new(),
-                        decorators: Vec::new(),
-                        type_params: Vec::new(),
-                        parameters: Vec::new(),
-                        return_type: None,
-                        implementation: None,
-                        line_start: 1,
-                        line_end: 2,
-                    }),
-                ],
+                children: vec![Node::Function(Function {
+                    name: "hello".to_string(),
+                    visibility: Visibility::Public,
+                    modifiers: Vec::new(),
+                    decorators: Vec::new(),
+                    type_params: Vec::new(),
+                    parameters: Vec::new(),
+                    return_type: None,
+                    implementation: None,
+                    line_start: 1,
+                    line_end: 2,
+                })],
             },
             File {
                 path: "file2.py".to_string(),
-                children: vec![
-                    Node::Function(Function {
-                        name: "world".to_string(),
-                        visibility: Visibility::Public,
-                        modifiers: Vec::new(),
-                        decorators: Vec::new(),
-                        type_params: Vec::new(),
-                        parameters: Vec::new(),
-                        return_type: None,
-                        implementation: None,
-                        line_start: 1,
-                        line_end: 2,
-                    }),
-                ],
+                children: vec![Node::Function(Function {
+                    name: "world".to_string(),
+                    visibility: Visibility::Public,
+                    modifiers: Vec::new(),
+                    decorators: Vec::new(),
+                    type_params: Vec::new(),
+                    parameters: Vec::new(),
+                    return_type: None,
+                    implementation: None,
+                    line_start: 1,
+                    line_end: 2,
+                })],
             },
         ];
 
@@ -317,8 +298,8 @@ mod tests {
         // Parse each line independently (simulating streaming)
         let mut parsed_count = 0;
         for line in result.lines() {
-            let file: File = serde_json::from_str(line)
-                .expect("Each line should be independently parseable");
+            let file: File =
+                serde_json::from_str(line).expect("Each line should be independently parseable");
 
             // Verify structure
             assert!(!file.path.is_empty());

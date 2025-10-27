@@ -1,8 +1,8 @@
 use distiller_core::{
+    ProcessOptions,
     error::{DistilError, Result},
     ir::{self, *},
     processor::LanguageProcessor,
-    ProcessOptions,
 };
 use parking_lot::Mutex;
 use std::path::Path;
@@ -32,7 +32,11 @@ impl JavaProcessor {
         source[node.start_byte()..node.end_byte()].to_string()
     }
 
-            fn parse_modifiers(&self, node: TSNode, source: &str) -> (Visibility, Vec<Modifier>, Vec<String>) {
+    fn parse_modifiers(
+        &self,
+        node: TSNode,
+        source: &str,
+    ) -> (Visibility, Vec<Modifier>, Vec<String>) {
         let mut visibility = Visibility::Internal; // Java default is package-private
         let mut modifiers = Vec::new();
         let mut decorators = Vec::new();
@@ -78,8 +82,6 @@ impl JavaProcessor {
 
         (visibility, modifiers, decorators)
     }
-
-
 
     fn parse_type_parameters(&self, node: TSNode, source: &str) -> Vec<TypeParam> {
         let mut params = Vec::new();
@@ -271,7 +273,6 @@ impl JavaProcessor {
         }))
     }
 
-
     fn parse_enum(&self, node: TSNode, source: &str) -> Result<Option<Class>> {
         let mut name = String::new();
         let (visibility, modifiers, _) = self.parse_modifiers(node, source);
@@ -312,12 +313,16 @@ impl JavaProcessor {
                                             }
                                         }
                                         "constructor_declaration" => {
-                                            if let Some(constructor) = self.parse_constructor(decl_child, source)? {
+                                            if let Some(constructor) =
+                                                self.parse_constructor(decl_child, source)?
+                                            {
                                                 children.push(ir::Node::Function(constructor));
                                             }
                                         }
                                         "method_declaration" => {
-                                            if let Some(method) = self.parse_method(decl_child, source)? {
+                                            if let Some(method) =
+                                                self.parse_method(decl_child, source)?
+                                            {
                                                 children.push(ir::Node::Function(method));
                                             }
                                         }
@@ -334,14 +339,17 @@ impl JavaProcessor {
         }
 
         for const_name in enum_constants {
-            children.insert(0, ir::Node::Field(Field {
-                name: const_name,
-                visibility: Visibility::Public,
-                field_type: Some(TypeRef::new(name.clone())),
-                default_value: None,
-                modifiers: vec![Modifier::Static, Modifier::Final],
-                line: line_start,
-            }));
+            children.insert(
+                0,
+                ir::Node::Field(Field {
+                    name: const_name,
+                    visibility: Visibility::Public,
+                    field_type: Some(TypeRef::new(name.clone())),
+                    default_value: None,
+                    modifiers: vec![Modifier::Static, Modifier::Final],
+                    line: line_start,
+                }),
+            );
         }
 
         Ok(Some(Class {
@@ -419,10 +427,10 @@ impl JavaProcessor {
         let mut cursor = node.walk();
 
         for child in node.children(&mut cursor) {
-            if child.kind() == "annotation_type_element_declaration" {
-                if let Some(method) = self.parse_annotation_element(child, source)? {
-                    children.push(ir::Node::Function(method));
-                }
+            if child.kind() == "annotation_type_element_declaration"
+                && let Some(method) = self.parse_annotation_element(child, source)?
+            {
+                children.push(ir::Node::Function(method));
             }
         }
 
@@ -508,13 +516,13 @@ impl JavaProcessor {
         Ok(fields)
     }
 
-        fn parse_method(&self, node: TSNode, source: &str) -> Result<Option<Function>> {
+    fn parse_method(&self, node: TSNode, source: &str) -> Result<Option<Function>> {
         let mut name = String::new();
         let (visibility, modifiers, method_decorators) = self.parse_modifiers(node, source);
         let mut type_params = Vec::new();
         let mut return_type = None;
         let mut parameters = Vec::new();
-        let mut decorators = method_decorators;  // Start with annotations from modifiers
+        let mut decorators = method_decorators; // Start with annotations from modifiers
         let line_start = node.start_position().row + 1;
         let line_end = node.end_position().row + 1;
 
@@ -569,7 +577,6 @@ impl JavaProcessor {
         }
     }
 
-
     fn parse_constructor(&self, node: TSNode, source: &str) -> Result<Option<Function>> {
         let mut name = String::new();
         let (visibility, modifiers, _) = self.parse_modifiers(node, source);
@@ -611,7 +618,7 @@ impl JavaProcessor {
         }
     }
 
-        fn parse_parameters(&self, node: TSNode, source: &str) -> Result<Vec<Parameter>> {
+    fn parse_parameters(&self, node: TSNode, source: &str) -> Result<Vec<Parameter>> {
         let mut parameters = Vec::new();
         let mut cursor = node.walk();
 
@@ -673,7 +680,6 @@ impl JavaProcessor {
 
         Ok(parameters)
     }
-
 }
 
 impl LanguageProcessor for JavaProcessor {
@@ -1024,10 +1030,20 @@ interface Logger {
             let methods: Vec<_> = interface
                 .children
                 .iter()
-                .filter_map(|n| if let ir::Node::Function(f) = n { Some(f) } else { None })
+                .filter_map(|n| {
+                    if let ir::Node::Function(f) = n {
+                        Some(f)
+                    } else {
+                        None
+                    }
+                })
                 .collect();
 
-            assert_eq!(methods.len(), 3, "Expected 3 methods (1 abstract + 2 default)");
+            assert_eq!(
+                methods.len(),
+                3,
+                "Expected 3 methods (1 abstract + 2 default)"
+            );
             assert_eq!(methods[0].name, "log");
             assert_eq!(methods[1].name, "debug");
             assert_eq!(methods[2].name, "error");
@@ -1059,13 +1075,21 @@ abstract class Shape {
         assert_eq!(file.children.len(), 1);
         if let ir::Node::Class(class) = &file.children[0] {
             assert_eq!(class.name, "Shape");
-            assert!(class.modifiers.contains(&Modifier::Abstract),
-                   "Expected abstract modifier on class");
+            assert!(
+                class.modifiers.contains(&Modifier::Abstract),
+                "Expected abstract modifier on class"
+            );
 
             let abstract_methods: Vec<_> = class
                 .children
                 .iter()
-                .filter_map(|n| if let ir::Node::Function(f) = n { Some(f) } else { None })
+                .filter_map(|n| {
+                    if let ir::Node::Function(f) = n {
+                        Some(f)
+                    } else {
+                        None
+                    }
+                })
                 .filter(|f| f.modifiers.contains(&Modifier::Abstract))
                 .collect();
 
@@ -1107,7 +1131,13 @@ public class Box<T> {
             let fields: Vec<_> = class
                 .children
                 .iter()
-                .filter_map(|n| if let ir::Node::Field(f) = n { Some(f) } else { None })
+                .filter_map(|n| {
+                    if let ir::Node::Field(f) = n {
+                        Some(f)
+                    } else {
+                        None
+                    }
+                })
                 .collect();
 
             assert_eq!(fields.len(), 1);
@@ -1116,7 +1146,13 @@ public class Box<T> {
             let methods: Vec<_> = class
                 .children
                 .iter()
-                .filter_map(|n| if let ir::Node::Function(f) = n { Some(f) } else { None })
+                .filter_map(|n| {
+                    if let ir::Node::Function(f) = n {
+                        Some(f)
+                    } else {
+                        None
+                    }
+                })
                 .collect();
 
             assert_eq!(methods.len(), 2);
@@ -1151,7 +1187,13 @@ public class LegacyService {
             let methods: Vec<_> = class
                 .children
                 .iter()
-                .filter_map(|n| if let ir::Node::Function(f) = n { Some(f) } else { None })
+                .filter_map(|n| {
+                    if let ir::Node::Function(f) = n {
+                        Some(f)
+                    } else {
+                        None
+                    }
+                })
                 .collect();
 
             assert_eq!(methods.len(), 1);
@@ -1193,7 +1235,13 @@ public class Outer {
             let nested_classes: Vec<_> = outer
                 .children
                 .iter()
-                .filter_map(|n| if let ir::Node::Class(c) = n { Some(c) } else { None })
+                .filter_map(|n| {
+                    if let ir::Node::Class(c) = n {
+                        Some(c)
+                    } else {
+                        None
+                    }
+                })
                 .collect();
 
             assert_eq!(nested_classes.len(), 1, "Expected one nested class");
@@ -1232,7 +1280,13 @@ public class Outer {
             let nested_classes: Vec<_> = outer
                 .children
                 .iter()
-                .filter_map(|n| if let ir::Node::Class(c) = n { Some(c) } else { None })
+                .filter_map(|n| {
+                    if let ir::Node::Class(c) = n {
+                        Some(c)
+                    } else {
+                        None
+                    }
+                })
                 .collect();
 
             assert_eq!(nested_classes.len(), 1, "Expected one static nested class");
@@ -1291,7 +1345,13 @@ public class Util {
             let methods: Vec<_> = class
                 .children
                 .iter()
-                .filter_map(|n| if let ir::Node::Function(f) = n { Some(f) } else { None })
+                .filter_map(|n| {
+                    if let ir::Node::Function(f) = n {
+                        Some(f)
+                    } else {
+                        None
+                    }
+                })
                 .collect();
 
             assert_eq!(methods.len(), 1);
@@ -1334,7 +1394,13 @@ public class Counter {
             let methods: Vec<_> = class
                 .children
                 .iter()
-                .filter_map(|n| if let ir::Node::Function(f) = n { Some(f) } else { None })
+                .filter_map(|n| {
+                    if let ir::Node::Function(f) = n {
+                        Some(f)
+                    } else {
+                        None
+                    }
+                })
                 .collect();
 
             assert_eq!(methods.len(), 2);
@@ -1367,28 +1433,46 @@ public final class Constants {
         assert_eq!(file.children.len(), 1);
         if let ir::Node::Class(class) = &file.children[0] {
             assert_eq!(class.name, "Constants");
-            assert!(class.modifiers.contains(&Modifier::Final),
-                   "Expected final modifier on class");
+            assert!(
+                class.modifiers.contains(&Modifier::Final),
+                "Expected final modifier on class"
+            );
 
             let fields: Vec<_> = class
                 .children
                 .iter()
-                .filter_map(|n| if let ir::Node::Field(f) = n { Some(f) } else { None })
+                .filter_map(|n| {
+                    if let ir::Node::Field(f) = n {
+                        Some(f)
+                    } else {
+                        None
+                    }
+                })
                 .collect();
 
             assert_eq!(fields.len(), 2);
-            assert!(fields[0].modifiers.contains(&Modifier::Final),
-                   "Expected final modifier on field");
+            assert!(
+                fields[0].modifiers.contains(&Modifier::Final),
+                "Expected final modifier on field"
+            );
 
             let methods: Vec<_> = class
                 .children
                 .iter()
-                .filter_map(|n| if let ir::Node::Function(f) = n { Some(f) } else { None })
+                .filter_map(|n| {
+                    if let ir::Node::Function(f) = n {
+                        Some(f)
+                    } else {
+                        None
+                    }
+                })
                 .collect();
 
             assert_eq!(methods.len(), 1);
-            assert!(methods[0].modifiers.contains(&Modifier::Final),
-                   "Expected final modifier on method");
+            assert!(
+                methods[0].modifiers.contains(&Modifier::Final),
+                "Expected final modifier on method"
+            );
         } else {
             panic!("Expected class node");
         }
@@ -1398,11 +1482,11 @@ public final class Constants {
 mod debug_tests {
     use super::*;
     use tree_sitter::Node as TSNode;
-    
+
     fn print_tree(node: TSNode, source: &str, depth: usize) {
         let indent = "  ".repeat(depth);
         let kind = node.kind();
-        
+
         let start = node.start_byte();
         let end = node.end_byte();
         let text = if end > start && end <= source.len() {
@@ -1410,21 +1494,21 @@ mod debug_tests {
         } else {
             ""
         };
-        
+
         let text_preview = if text.len() > 60 {
             format!("{}...", &text[..60].replace('\n', "\\n"))
         } else {
             text.replace('\n', "\\n")
         };
-        
+
         eprintln!("{}[{}] \"{}\"", indent, kind, text_preview);
-        
+
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
             print_tree(child, source, depth + 1);
         }
     }
-    
+
     #[test]
     #[ignore]
     fn debug_enum_ast() {
@@ -1445,15 +1529,15 @@ mod debug_tests {
         return this == ACTIVE;
     }
 }"#;
-        
+
         let processor = JavaProcessor::new().unwrap();
         let mut parser = processor.parser.lock();
         let tree = parser.parse(source, None).unwrap();
         let root = tree.root_node();
-        
+
         eprintln!("\n=== Java Enum AST Structure ===\n");
         print_tree(root, source, 0);
-        
+
         panic!("Debug output - check stderr");
     }
     #[test]
@@ -1468,15 +1552,15 @@ mod debug_tests {
         return total;
     }
 }"#;
-        
+
         let processor = JavaProcessor::new().unwrap();
         let mut parser = processor.parser.lock();
         let tree = parser.parse(source, None).unwrap();
         let root = tree.root_node();
-        
+
         eprintln!("\n=== Java Varargs AST Structure ===\n");
         print_tree(root, source, 0);
-        
+
         panic!("Debug output - check stderr");
     }
 
@@ -1492,15 +1576,15 @@ public class LegacyService {
         return "LegacyService";
     }
 }"#;
-        
+
         let processor = JavaProcessor::new().unwrap();
         let mut parser = processor.parser.lock();
         let tree = parser.parse(source, None).unwrap();
         let root = tree.root_node();
-        
+
         eprintln!("\n=== Java Annotations AST Structure ===\n");
         print_tree(root, source, 0);
-        
+
         panic!("Debug output - check stderr");
     }
 }

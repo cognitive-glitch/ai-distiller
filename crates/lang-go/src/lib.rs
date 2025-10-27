@@ -70,10 +70,10 @@ impl GoProcessor {
                 "import_spec_list" => {
                     let mut list_cursor = child.walk();
                     for list_child in child.children(&mut list_cursor) {
-                        if list_child.kind() == "import_spec" {
-                            if let Some(import) = self.parse_import_spec(list_child, source)? {
-                                imports.push(import);
-                            }
+                        if list_child.kind() == "import_spec"
+                            && let Some(import) = self.parse_import_spec(list_child, source)?
+                        {
+                            imports.push(import);
                         }
                     }
                 }
@@ -176,10 +176,10 @@ impl GoProcessor {
 
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
-            if child.kind() == "field_declaration" {
-                if let Some(field) = self.parse_field_declaration(child, source)? {
-                    fields.push(field);
-                }
+            if child.kind() == "field_declaration"
+                && let Some(field) = self.parse_field_declaration(child, source)?
+            {
+                fields.push(field);
             }
         }
 
@@ -256,10 +256,10 @@ impl GoProcessor {
                 "interface_type" => {
                     let mut interface_cursor = child.walk();
                     for interface_child in child.children(&mut interface_cursor) {
-                        if interface_child.kind() == "method_elem" {
-                            if let Some(method) = self.parse_method_spec(interface_child, source)? {
-                                methods.push(method);
-                            }
+                        if interface_child.kind() == "method_elem"
+                            && let Some(method) = self.parse_method_spec(interface_child, source)?
+                        {
+                            methods.push(method);
                         }
                     }
                 }
@@ -338,7 +338,7 @@ impl GoProcessor {
         }))
     }
 
-        fn parse_function(&self, node: tree_sitter::Node, source: &str) -> Result<Option<Function>> {
+    fn parse_function(&self, node: tree_sitter::Node, source: &str) -> Result<Option<Function>> {
         let mut name = String::new();
         let mut parameters = Vec::new();
         let mut return_type = None;
@@ -416,8 +416,7 @@ impl GoProcessor {
         }))
     }
 
-
-        fn parse_parameters(&self, node: tree_sitter::Node, source: &str) -> Result<Vec<Parameter>> {
+    fn parse_parameters(&self, node: tree_sitter::Node, source: &str) -> Result<Vec<Parameter>> {
         let mut parameters = Vec::new();
 
         let mut cursor = node.walk();
@@ -435,7 +434,6 @@ impl GoProcessor {
 
         Ok(parameters)
     }
-
 
     fn parse_parameter_declaration(
         &self,
@@ -536,7 +534,6 @@ impl GoProcessor {
         }])
     }
 
-
     fn extract_type_from_parameter(
         &self,
         node: tree_sitter::Node,
@@ -570,10 +567,10 @@ impl GoProcessor {
 
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
-            if child.kind() == "type_parameter_declaration" {
-                if let Some(tp) = self.parse_type_parameter(child, source)? {
-                    type_params.push(tp);
-                }
+            if child.kind() == "type_parameter_declaration"
+                && let Some(tp) = self.parse_type_parameter(child, source)?
+            {
+                type_params.push(tp);
             }
         }
 
@@ -887,7 +884,9 @@ type Repository[T any] interface {
         let source = "package main\n";
         let opts = ProcessOptions::default();
 
-        let file = processor.process(source, Path::new("test.go"), &opts).unwrap();
+        let file = processor
+            .process(source, Path::new("test.go"), &opts)
+            .unwrap();
         assert_eq!(file.children.len(), 0, "Empty file should have no children");
     }
 
@@ -911,10 +910,20 @@ func Process(data []byte, count int) ([]byte, error) {
 "#;
         let opts = ProcessOptions::default();
 
-        let file = processor.process(source, Path::new("test.go"), &opts).unwrap();
+        let file = processor
+            .process(source, Path::new("test.go"), &opts)
+            .unwrap();
 
-        let functions: Vec<_> = file.children.iter()
-            .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+        let functions: Vec<_> = file
+            .children
+            .iter()
+            .filter_map(|n| {
+                if let Node::Function(f) = n {
+                    Some(f)
+                } else {
+                    None
+                }
+            })
             .collect();
 
         assert_eq!(functions.len(), 3);
@@ -954,17 +963,35 @@ func (c *Counter) Increment() {
 "#;
         let opts = ProcessOptions::default();
 
-        let file = processor.process(source, Path::new("test.go"), &opts).unwrap();
+        let file = processor
+            .process(source, Path::new("test.go"), &opts)
+            .unwrap();
 
-        let structs: Vec<_> = file.children.iter()
-            .filter_map(|n| if let Node::Class(cls) = n { Some(cls) } else { None })
+        let structs: Vec<_> = file
+            .children
+            .iter()
+            .filter_map(|n| {
+                if let Node::Class(cls) = n {
+                    Some(cls)
+                } else {
+                    None
+                }
+            })
             .collect();
 
         assert_eq!(structs.len(), 1);
         assert_eq!(structs[0].name, "Counter");
 
-        let methods: Vec<_> = file.children.iter()
-            .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+        let methods: Vec<_> = file
+            .children
+            .iter()
+            .filter_map(|n| {
+                if let Node::Function(f) = n {
+                    Some(f)
+                } else {
+                    None
+                }
+            })
             .collect();
 
         assert_eq!(methods.len(), 2);
@@ -989,10 +1016,20 @@ type Writer interface {
 "#;
         let opts = ProcessOptions::default();
 
-        let file = processor.process(source, Path::new("test.go"), &opts).unwrap();
+        let file = processor
+            .process(source, Path::new("test.go"), &opts)
+            .unwrap();
 
-        let interfaces: Vec<_> = file.children.iter()
-            .filter_map(|n| if let Node::Interface(iface) = n { Some(iface) } else { None })
+        let interfaces: Vec<_> = file
+            .children
+            .iter()
+            .filter_map(|n| {
+                if let Node::Interface(iface) = n {
+                    Some(iface)
+                } else {
+                    None
+                }
+            })
             .collect();
 
         assert_eq!(interfaces.len(), 1);
@@ -1031,10 +1068,20 @@ type Extended struct {
 "#;
         let opts = ProcessOptions::default();
 
-        let file = processor.process(source, Path::new("test.go"), &opts).unwrap();
+        let file = processor
+            .process(source, Path::new("test.go"), &opts)
+            .unwrap();
 
-        let structs: Vec<_> = file.children.iter()
-            .filter_map(|n| if let Node::Class(cls) = n { Some(cls) } else { None })
+        let structs: Vec<_> = file
+            .children
+            .iter()
+            .filter_map(|n| {
+                if let Node::Class(cls) = n {
+                    Some(cls)
+                } else {
+                    None
+                }
+            })
             .collect();
 
         assert_eq!(structs.len(), 2);
@@ -1048,13 +1095,27 @@ type Extended struct {
         assert_eq!(structs[1].children.len(), 2);
 
         // Check for embedded Base field
-        let fields: Vec<_> = structs[1].children.iter()
-            .filter_map(|n| if let Node::Field(f) = n { Some(f) } else { None })
+        let fields: Vec<_> = structs[1]
+            .children
+            .iter()
+            .filter_map(|n| {
+                if let Node::Field(f) = n {
+                    Some(f)
+                } else {
+                    None
+                }
+            })
             .collect();
 
         assert_eq!(fields.len(), 2);
-        assert!(fields.iter().any(|f| f.name == "Base"), "Expected embedded Base field");
-        assert!(fields.iter().any(|f| f.name == "Name"), "Expected Name field");
+        assert!(
+            fields.iter().any(|f| f.name == "Base"),
+            "Expected embedded Base field"
+        );
+        assert!(
+            fields.iter().any(|f| f.name == "Name"),
+            "Expected Name field"
+        );
     }
 
     #[test]
@@ -1077,23 +1138,37 @@ func Map[T any, R any](slice []T, fn func(T) R) []R {
 "#;
         let opts = ProcessOptions::default();
 
-        let file = processor.process(source, Path::new("test.go"), &opts).unwrap();
+        let file = processor
+            .process(source, Path::new("test.go"), &opts)
+            .unwrap();
 
-        let functions: Vec<_> = file.children.iter()
-            .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+        let functions: Vec<_> = file
+            .children
+            .iter()
+            .filter_map(|n| {
+                if let Node::Function(f) = n {
+                    Some(f)
+                } else {
+                    None
+                }
+            })
             .collect();
 
         assert_eq!(functions.len(), 2);
 
         // Validate Max function with type parameters
         assert_eq!(functions[0].name, "Max");
-        assert!(!functions[0].type_params.is_empty(),
-               "Expected type parameters for generic function");
+        assert!(
+            !functions[0].type_params.is_empty(),
+            "Expected type parameters for generic function"
+        );
 
         // Validate Map function with multiple type parameters
         assert_eq!(functions[1].name, "Map");
-        assert!(!functions[1].type_params.is_empty(),
-               "Expected type parameters for generic function");
+        assert!(
+            !functions[1].type_params.is_empty(),
+            "Expected type parameters for generic function"
+        );
     }
 
     #[test]
@@ -1111,7 +1186,9 @@ var (
         let opts = ProcessOptions::default();
 
         // Note: Current implementation may not parse package-level vars as separate nodes
-        let file = processor.process(source, Path::new("test.go"), &opts).unwrap();
+        let file = processor
+            .process(source, Path::new("test.go"), &opts)
+            .unwrap();
         assert!(file.path.contains("test.go"));
 
         // This test validates the processor doesn't crash on package-level variables
@@ -1138,36 +1215,79 @@ type internalInterface interface {
 "#;
         let opts = ProcessOptions::default();
 
-        let file = processor.process(source, Path::new("test.go"), &opts).unwrap();
+        let file = processor
+            .process(source, Path::new("test.go"), &opts)
+            .unwrap();
 
         // Validate visibility detection
-        let structs: Vec<_> = file.children.iter()
-            .filter_map(|n| if let Node::Class(cls) = n { Some(cls) } else { None })
+        let structs: Vec<_> = file
+            .children
+            .iter()
+            .filter_map(|n| {
+                if let Node::Class(cls) = n {
+                    Some(cls)
+                } else {
+                    None
+                }
+            })
             .collect();
 
         assert_eq!(structs.len(), 1);
         assert_eq!(structs[0].name, "publicStruct");
-        assert_eq!(structs[0].visibility, Visibility::Internal,
-                  "Lowercase struct should be internal/unexported");
+        assert_eq!(
+            structs[0].visibility,
+            Visibility::Internal,
+            "Lowercase struct should be internal/unexported"
+        );
 
         // Check field visibility
-        let fields: Vec<_> = structs[0].children.iter()
-            .filter_map(|n| if let Node::Field(f) = n { Some(f) } else { None })
+        let fields: Vec<_> = structs[0]
+            .children
+            .iter()
+            .filter_map(|n| {
+                if let Node::Field(f) = n {
+                    Some(f)
+                } else {
+                    None
+                }
+            })
             .collect();
 
-        assert_eq!(fields[0].visibility, Visibility::Public, "Uppercase field should be public");
-        assert_eq!(fields[1].visibility, Visibility::Internal, "Lowercase field should be internal");
+        assert_eq!(
+            fields[0].visibility,
+            Visibility::Public,
+            "Uppercase field should be public"
+        );
+        assert_eq!(
+            fields[1].visibility,
+            Visibility::Internal,
+            "Lowercase field should be internal"
+        );
 
         // Validate functions
-        let functions: Vec<_> = file.children.iter()
-            .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+        let functions: Vec<_> = file
+            .children
+            .iter()
+            .filter_map(|n| {
+                if let Node::Function(f) = n {
+                    Some(f)
+                } else {
+                    None
+                }
+            })
             .collect();
 
         assert_eq!(functions.len(), 2);
-        assert_eq!(functions[0].visibility, Visibility::Internal,
-                  "Lowercase function should be internal");
-        assert_eq!(functions[1].visibility, Visibility::Internal,
-                  "Lowercase function should be internal");
+        assert_eq!(
+            functions[0].visibility,
+            Visibility::Internal,
+            "Lowercase function should be internal"
+        );
+        assert_eq!(
+            functions[1].visibility,
+            Visibility::Internal,
+            "Lowercase function should be internal"
+        );
     }
 
     #[test]
@@ -1189,10 +1309,20 @@ func GetUser(id int) (*User, bool, error) {
 "#;
         let opts = ProcessOptions::default();
 
-        let file = processor.process(source, Path::new("test.go"), &opts).unwrap();
+        let file = processor
+            .process(source, Path::new("test.go"), &opts)
+            .unwrap();
 
-        let functions: Vec<_> = file.children.iter()
-            .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+        let functions: Vec<_> = file
+            .children
+            .iter()
+            .filter_map(|n| {
+                if let Node::Function(f) = n {
+                    Some(f)
+                } else {
+                    None
+                }
+            })
             .collect();
 
         assert_eq!(functions.len(), 2);
@@ -1227,22 +1357,36 @@ func (b *Buffer) Reset() {
 "#;
         let opts = ProcessOptions::default();
 
-        let file = processor.process(source, Path::new("test.go"), &opts).unwrap();
+        let file = processor
+            .process(source, Path::new("test.go"), &opts)
+            .unwrap();
 
-        let methods: Vec<_> = file.children.iter()
-            .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+        let methods: Vec<_> = file
+            .children
+            .iter()
+            .filter_map(|n| {
+                if let Node::Function(f) = n {
+                    Some(f)
+                } else {
+                    None
+                }
+            })
             .collect();
 
         assert_eq!(methods.len(), 2);
 
         // Both methods have pointer receivers
         assert_eq!(methods[0].name, "Write");
-        assert!(methods[0].modifiers.contains(&Modifier::Static),
-               "Pointer receiver method should have Static modifier");
+        assert!(
+            methods[0].modifiers.contains(&Modifier::Static),
+            "Pointer receiver method should have Static modifier"
+        );
 
         assert_eq!(methods[1].name, "Reset");
-        assert!(methods[1].modifiers.contains(&Modifier::Static),
-               "Pointer receiver method should have Static modifier");
+        assert!(
+            methods[1].modifiers.contains(&Modifier::Static),
+            "Pointer receiver method should have Static modifier"
+        );
     }
 
     #[test]
@@ -1265,22 +1409,37 @@ func Printf(format string, args ...interface{}) (int, error) {
 "#;
         let opts = ProcessOptions::default();
 
-        let file = processor.process(source, Path::new("test.go"), &opts).unwrap();
+        let file = processor
+            .process(source, Path::new("test.go"), &opts)
+            .unwrap();
 
-        let functions: Vec<_> = file.children.iter()
-            .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+        let functions: Vec<_> = file
+            .children
+            .iter()
+            .filter_map(|n| {
+                if let Node::Function(f) = n {
+                    Some(f)
+                } else {
+                    None
+                }
+            })
             .collect();
 
         assert_eq!(functions.len(), 2);
 
         // Validate Sum function with variadic parameter
         assert_eq!(functions[0].name, "Sum");
-        assert!(!functions[0].parameters.is_empty(), "Expected at least one parameter");
+        assert!(
+            !functions[0].parameters.is_empty(),
+            "Expected at least one parameter"
+        );
 
         // Validate Printf function with format string and variadic args
         assert_eq!(functions[1].name, "Printf");
-        assert!(functions[1].parameters.len() >= 1,
-               "Expected at least format parameter");
+        assert!(
+            functions[1].parameters.len() >= 1,
+            "Expected at least format parameter"
+        );
     }
 }
 
@@ -1288,11 +1447,11 @@ func Printf(format string, args ...interface{}) (int, error) {
 mod debug_tests {
     use super::*;
     use tree_sitter::Node as TSNode;
-    
+
     fn print_tree(node: TSNode, source: &str, depth: usize) {
         let indent = "  ".repeat(depth);
         let kind = node.kind();
-        
+
         let start = node.start_byte();
         let end = node.end_byte();
         let text = if end > start && end <= source.len() {
@@ -1300,21 +1459,21 @@ mod debug_tests {
         } else {
             ""
         };
-        
+
         let text_preview = if text.len() > 60 {
             format!("{}...", &text[..60].replace('\n', "\\n"))
         } else {
             text.replace('\n', "\\n")
         };
-        
+
         eprintln!("{}[{}] \"{}\"", indent, kind, text_preview);
-        
+
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
             print_tree(child, source, depth + 1);
         }
     }
-    
+
     #[test]
     #[ignore]
     fn debug_multiple_return_values() {
@@ -1323,18 +1482,18 @@ mod debug_tests {
 func GetUser(id int) (*User, bool, error) {
     return nil, false, nil
 }"#;
-        
+
         let processor = GoProcessor::new().unwrap();
         let mut parser = processor.parser.lock();
         let tree = parser.parse(source, None).unwrap();
         let root = tree.root_node();
-        
+
         eprintln!("\n=== Go Multiple Return Values AST ===\n");
         print_tree(root, source, 0);
-        
+
         panic!("Debug output - check stderr");
     }
-    
+
     #[test]
     #[ignore]
     fn debug_variadic_parameters() {
@@ -1343,15 +1502,15 @@ func GetUser(id int) (*User, bool, error) {
 func Sum(numbers ...int) int {
     return 0
 }"#;
-        
+
         let processor = GoProcessor::new().unwrap();
         let mut parser = processor.parser.lock();
         let tree = parser.parse(source, None).unwrap();
         let root = tree.root_node();
-        
+
         eprintln!("\n=== Go Variadic Parameters AST ===\n");
         print_tree(root, source, 0);
-        
+
         panic!("Debug output - check stderr");
     }
 
@@ -1359,21 +1518,25 @@ func Sum(numbers ...int) int {
 
     #[test]
     fn test_malformed_go() {
-        let source = std::fs::read_to_string("../../testdata/edge-cases/malformed/go_syntax_error.go")
-            .expect("Failed to read malformed Go file");
-        
+        let source =
+            std::fs::read_to_string("../../testdata/edge-cases/malformed/go_syntax_error.go")
+                .expect("Failed to read malformed Go file");
+
         let processor = GoProcessor::new().unwrap();
         let opts = ProcessOptions::default();
-        
+
         // Should not panic - tree-sitter handles malformed code
         let result = processor.process(&source, Path::new("error.go"), &opts);
-        
+
         match result {
             Ok(file) => {
                 println!("✓ Malformed Go: Partial parse successful");
                 println!("  Found {} top-level nodes", file.children.len());
                 // Tree-sitter should recover and parse valid nodes
-                assert!(file.children.len() >= 1, "Should find at least some valid nodes");
+                assert!(
+                    file.children.len() >= 1,
+                    "Should find at least some valid nodes"
+                );
             }
             Err(e) => {
                 println!("✓ Malformed Go: Error handled gracefully: {}", e);
@@ -1386,50 +1549,70 @@ func Sum(numbers ...int) int {
     fn test_unicode_go() {
         let source = std::fs::read_to_string("../../testdata/edge-cases/unicode/go_unicode.go")
             .expect("Failed to read Unicode Go file");
-        
+
         let processor = GoProcessor::new().unwrap();
         let opts = ProcessOptions::default();
-        
+
         let result = processor.process(&source, Path::new("unicode.go"), &opts);
-        
+
         assert!(result.is_ok(), "Unicode Go file should parse successfully");
-        
+
         let file = result.unwrap();
-        let struct_count = file.children.iter()
+        let struct_count = file
+            .children
+            .iter()
             .filter(|n| matches!(n, Node::Class(_)))
             .count();
-        
-        println!("✓ Unicode Go: {} structs with Unicode identifiers", struct_count);
-        
+
+        println!(
+            "✓ Unicode Go: {} structs with Unicode identifiers",
+            struct_count
+        );
+
         // Should find structs with Unicode names
-        assert!(struct_count >= 5, "Should find at least 5 structs with Unicode names");
+        assert!(
+            struct_count >= 5,
+            "Should find at least 5 structs with Unicode names"
+        );
     }
 
     #[test]
     fn test_large_go_file() {
         let source = std::fs::read_to_string("../../testdata/edge-cases/large-files/large_go.go")
             .expect("Failed to read large Go file");
-        
+
         let processor = GoProcessor::new().unwrap();
         let opts = ProcessOptions::default();
-        
+
         println!("Testing large Go file: {} lines", source.lines().count());
-        
+
         let start = std::time::Instant::now();
         let result = processor.process(&source, Path::new("large.go"), &opts);
         let duration = start.elapsed();
-        
+
         assert!(result.is_ok(), "Large Go file should parse successfully");
-        
+
         let file = result.unwrap();
-        let struct_count = file.children.iter()
+        let struct_count = file
+            .children
+            .iter()
             .filter(|n| matches!(n, Node::Class(_)))
             .count();
-        
-        println!("✓ Large Go: {} structs parsed in {:?}", struct_count, duration);
-        println!("  Performance: ~{} lines/ms", source.lines().count() / duration.as_millis().max(1) as usize);
-        
+
+        println!(
+            "✓ Large Go: {} structs parsed in {:?}",
+            struct_count, duration
+        );
+        println!(
+            "  Performance: ~{} lines/ms",
+            source.lines().count() / duration.as_millis().max(1) as usize
+        );
+
         // Performance target: should parse in reasonable time (< 1 second for 17k lines)
-        assert!(duration.as_secs() < 1, "Large file parsing took too long: {:?}", duration);
+        assert!(
+            duration.as_secs() < 1,
+            "Large file parsing took too long: {:?}",
+            duration
+        );
     }
 }

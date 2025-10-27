@@ -1,8 +1,8 @@
 use distiller_core::{
+    ProcessOptions,
     error::{DistilError, Result},
     ir::*,
     processor::LanguageProcessor,
-    ProcessOptions,
 };
 use parking_lot::Mutex;
 use std::path::Path;
@@ -751,8 +751,16 @@ abstract class Shape {
             assert_eq!(class.name, "Shape");
 
             // Validate methods
-            let methods: Vec<_> = class.children.iter()
-                .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+            let methods: Vec<_> = class
+                .children
+                .iter()
+                .filter_map(|n| {
+                    if let Node::Function(f) = n {
+                        Some(f)
+                    } else {
+                        None
+                    }
+                })
                 .collect();
 
             assert!(methods.len() >= 3, "Expected at least 3 methods");
@@ -781,7 +789,10 @@ interface Drawable {
 
         // Interfaces may be parsed as classes by tree-sitter
         // PHP parser may not support interface declarations yet - just ensure no crash
-        assert!(file.children.len() >= 0, "Interface parsing should not crash");
+        assert!(
+            file.children.len() >= 0,
+            "Interface parsing should not crash"
+        );
     }
 
     #[test]
@@ -808,12 +819,22 @@ trait Logger {
         assert_eq!(file.children.len(), 1);
         if let Node::Class(trait_class) = &file.children[0] {
             assert_eq!(trait_class.name, "Logger");
-            assert!(trait_class.decorators.contains(&"trait".to_string()),
-                   "Expected trait decorator");
+            assert!(
+                trait_class.decorators.contains(&"trait".to_string()),
+                "Expected trait decorator"
+            );
 
             // Validate trait methods
-            let methods: Vec<_> = trait_class.children.iter()
-                .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+            let methods: Vec<_> = trait_class
+                .children
+                .iter()
+                .filter_map(|n| {
+                    if let Node::Function(f) = n {
+                        Some(f)
+                    } else {
+                        None
+                    }
+                })
                 .collect();
 
             assert_eq!(methods.len(), 2);
@@ -846,8 +867,16 @@ class User {
             assert_eq!(class.name, "User");
 
             // Check for fields
-            let fields: Vec<_> = class.children.iter()
-                .filter_map(|n| if let Node::Field(f) = n { Some(f) } else { None })
+            let fields: Vec<_> = class
+                .children
+                .iter()
+                .filter_map(|n| {
+                    if let Node::Field(f) = n {
+                        Some(f)
+                    } else {
+                        None
+                    }
+                })
                 .collect();
 
             assert_eq!(fields.len(), 2);
@@ -881,15 +910,31 @@ class Settings {
             .unwrap();
 
         // Check for imports
-        let imports: Vec<_> = file.children.iter()
-            .filter_map(|n| if let Node::Import(i) = n { Some(i) } else { None })
+        let imports: Vec<_> = file
+            .children
+            .iter()
+            .filter_map(|n| {
+                if let Node::Import(i) = n {
+                    Some(i)
+                } else {
+                    None
+                }
+            })
             .collect();
 
         assert!(imports.len() >= 2, "Expected at least 2 imports");
 
         // Check for classes
-        let classes: Vec<_> = file.children.iter()
-            .filter_map(|n| if let Node::Class(c) = n { Some(c) } else { None })
+        let classes: Vec<_> = file
+            .children
+            .iter()
+            .filter_map(|n| {
+                if let Node::Class(c) = n {
+                    Some(c)
+                } else {
+                    None
+                }
+            })
             .collect();
 
         assert!(classes.len() >= 2, "Expected at least 2 classes");
@@ -922,14 +967,25 @@ class User {
             assert_eq!(class.name, "User");
 
             // Check for constructor
-            let constructors: Vec<_> = class.children.iter()
-                .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+            let constructors: Vec<_> = class
+                .children
+                .iter()
+                .filter_map(|n| {
+                    if let Node::Function(f) = n {
+                        Some(f)
+                    } else {
+                        None
+                    }
+                })
                 .filter(|f| f.name == "__construct")
                 .collect();
 
             assert_eq!(constructors.len(), 1);
             // PHP 8+ property promotion may not be fully parsed - just verify constructor exists
-            assert!(!constructors.is_empty(), "Expected constructor to be parsed");
+            assert!(
+                !constructors.is_empty(),
+                "Expected constructor to be parsed"
+            );
         } else {
             panic!("Expected class node");
         }
@@ -958,8 +1014,16 @@ class DataProcessor {
         if let Node::Class(class) = &file.children[0] {
             assert_eq!(class.name, "DataProcessor");
 
-            let methods: Vec<_> = class.children.iter()
-                .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+            let methods: Vec<_> = class
+                .children
+                .iter()
+                .filter_map(|n| {
+                    if let Node::Function(f) = n {
+                        Some(f)
+                    } else {
+                        None
+                    }
+                })
                 .collect();
 
             assert_eq!(methods.len(), 2);
@@ -995,8 +1059,16 @@ class Configuration {
             assert_eq!(class.name, "Configuration");
 
             // Check for properties
-            let fields: Vec<_> = class.children.iter()
-                .filter_map(|n| if let Node::Field(f) = n { Some(f) } else { None })
+            let fields: Vec<_> = class
+                .children
+                .iter()
+                .filter_map(|n| {
+                    if let Node::Field(f) = n {
+                        Some(f)
+                    } else {
+                        None
+                    }
+                })
                 .collect();
 
             assert!(fields.len() >= 3, "Expected at least 3 readonly properties");
@@ -1026,8 +1098,12 @@ function createUser(string $name, int $age, string $email, bool $active = true):
         assert_eq!(file.children.len(), 1);
         if let Node::Function(func) = &file.children[0] {
             assert_eq!(func.name, "createUser");
-            assert_eq!(func.parameters.len(), 4,
-                      "Expected 4 parameters, got {}", func.parameters.len());
+            assert_eq!(
+                func.parameters.len(),
+                4,
+                "Expected 4 parameters, got {}",
+                func.parameters.len()
+            );
 
             // Validate parameters
             assert_eq!(func.parameters[0].name, "$name");
@@ -1067,8 +1143,16 @@ class ThirdClass {
             .process(source, Path::new("test.php"), &opts)
             .unwrap();
 
-        let classes: Vec<_> = file.children.iter()
-            .filter_map(|n| if let Node::Class(c) = n { Some(c) } else { None })
+        let classes: Vec<_> = file
+            .children
+            .iter()
+            .filter_map(|n| {
+                if let Node::Class(c) = n {
+                    Some(c)
+                } else {
+                    None
+                }
+            })
             .collect();
 
         assert_eq!(classes.len(), 3, "Expected 3 classes");
@@ -1104,8 +1188,16 @@ class MathHelper {
         if let Node::Class(class) = &file.children[0] {
             assert_eq!(class.name, "MathHelper");
 
-            let methods: Vec<_> = class.children.iter()
-                .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+            let methods: Vec<_> = class
+                .children
+                .iter()
+                .filter_map(|n| {
+                    if let Node::Function(f) = n {
+                        Some(f)
+                    } else {
+                        None
+                    }
+                })
                 .collect();
 
             assert_eq!(methods.len(), 3);

@@ -1,8 +1,8 @@
 use distiller_core::{
+    ProcessOptions,
     error::{DistilError, Result},
     ir::{self, *},
     processor::LanguageProcessor,
-    ProcessOptions,
 };
 use parking_lot::Mutex;
 use std::path::Path;
@@ -270,10 +270,10 @@ impl LanguageProcessor for RubyProcessor {
 
     fn can_process(&self, path: &Path) -> bool {
         // Check for special files first
-        if let Some(filename) = path.file_name().and_then(|n| n.to_str()) {
-            if filename == "Rakefile" || filename == "Gemfile" {
-                return true;
-            }
+        if let Some(filename) = path.file_name().and_then(|n| n.to_str())
+            && (filename == "Rakefile" || filename == "Gemfile")
+        {
+            return true;
         }
 
         // Then check extension
@@ -508,7 +508,13 @@ end
             let methods: Vec<_> = class
                 .children
                 .iter()
-                .filter_map(|n| if let ir::Node::Function(f) = n { Some(f) } else { None })
+                .filter_map(|n| {
+                    if let ir::Node::Function(f) = n {
+                        Some(f)
+                    } else {
+                        None
+                    }
+                })
                 .collect();
 
             assert_eq!(methods.len(), 3);
@@ -697,7 +703,13 @@ end
             let methods: Vec<_> = class
                 .children
                 .iter()
-                .filter_map(|n| if let ir::Node::Function(f) = n { Some(f) } else { None })
+                .filter_map(|n| {
+                    if let ir::Node::Function(f) = n {
+                        Some(f)
+                    } else {
+                        None
+                    }
+                })
                 .collect();
 
             assert_eq!(methods.len(), 4);
@@ -781,7 +793,13 @@ end
             let nested_classes: Vec<_> = outer
                 .children
                 .iter()
-                .filter_map(|n| if let ir::Node::Class(c) = n { Some(c) } else { None })
+                .filter_map(|n| {
+                    if let ir::Node::Class(c) = n {
+                        Some(c)
+                    } else {
+                        None
+                    }
+                })
                 .collect();
 
             assert_eq!(nested_classes.len(), 2);
@@ -836,14 +854,16 @@ end
         let modules: Vec<_> = file
             .children
             .iter()
-            .filter_map(|n| if let ir::Node::Class(c) = n {
-                if c.decorators.contains(&"module".to_string()) {
-                    Some(c)
+            .filter_map(|n| {
+                if let ir::Node::Class(c) = n {
+                    if c.decorators.contains(&"module".to_string()) {
+                        Some(c)
+                    } else {
+                        None
+                    }
                 } else {
                     None
                 }
-            } else {
-                None
             })
             .collect();
 
@@ -896,7 +916,13 @@ end
             let methods: Vec<_> = class
                 .children
                 .iter()
-                .filter_map(|n| if let ir::Node::Function(f) = n { Some(f) } else { None })
+                .filter_map(|n| {
+                    if let ir::Node::Function(f) = n {
+                        Some(f)
+                    } else {
+                        None
+                    }
+                })
                 .collect();
 
             assert_eq!(methods.len(), 4);

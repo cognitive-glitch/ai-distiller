@@ -3,7 +3,7 @@
 //! All language-specific processors implement this trait.
 //! Each language (Python, TypeScript, etc.) has its own crate.
 
-use crate::{ir::File, ProcessOptions, Result};
+use crate::{ProcessOptions, Result, ir::File};
 use std::path::Path;
 
 /// Trait for language-specific processors
