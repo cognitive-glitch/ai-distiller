@@ -1354,4 +1354,82 @@ func Sum(numbers ...int) int {
         
         panic!("Debug output - check stderr");
     }
+
+    // ===== EDGE CASE TESTS (Phase C3) =====
+
+    #[test]
+    fn test_malformed_go() {
+        let source = std::fs::read_to_string("../../testdata/edge-cases/malformed/go_syntax_error.go")
+            .expect("Failed to read malformed Go file");
+        
+        let processor = GoProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        
+        // Should not panic - tree-sitter handles malformed code
+        let result = processor.process(&source, Path::new("error.go"), &opts);
+        
+        match result {
+            Ok(file) => {
+                println!("✓ Malformed Go: Partial parse successful");
+                println!("  Found {} top-level nodes", file.children.len());
+                // Tree-sitter should recover and parse valid nodes
+                assert!(file.children.len() >= 1, "Should find at least some valid nodes");
+            }
+            Err(e) => {
+                println!("✓ Malformed Go: Error handled gracefully: {}", e);
+                // As long as it doesn't panic, we're good
+            }
+        }
+    }
+
+    #[test]
+    fn test_unicode_go() {
+        let source = std::fs::read_to_string("../../testdata/edge-cases/unicode/go_unicode.go")
+            .expect("Failed to read Unicode Go file");
+        
+        let processor = GoProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        
+        let result = processor.process(&source, Path::new("unicode.go"), &opts);
+        
+        assert!(result.is_ok(), "Unicode Go file should parse successfully");
+        
+        let file = result.unwrap();
+        let struct_count = file.children.iter()
+            .filter(|n| matches!(n, Node::Class(_)))
+            .count();
+        
+        println!("✓ Unicode Go: {} structs with Unicode identifiers", struct_count);
+        
+        // Should find structs with Unicode names
+        assert!(struct_count >= 5, "Should find at least 5 structs with Unicode names");
+    }
+
+    #[test]
+    fn test_large_go_file() {
+        let source = std::fs::read_to_string("../../testdata/edge-cases/large-files/large_go.go")
+            .expect("Failed to read large Go file");
+        
+        let processor = GoProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        
+        println!("Testing large Go file: {} lines", source.lines().count());
+        
+        let start = std::time::Instant::now();
+        let result = processor.process(&source, Path::new("large.go"), &opts);
+        let duration = start.elapsed();
+        
+        assert!(result.is_ok(), "Large Go file should parse successfully");
+        
+        let file = result.unwrap();
+        let struct_count = file.children.iter()
+            .filter(|n| matches!(n, Node::Class(_)))
+            .count();
+        
+        println!("✓ Large Go: {} structs parsed in {:?}", struct_count, duration);
+        println!("  Performance: ~{} lines/ms", source.lines().count() / duration.as_millis().max(1) as usize);
+        
+        // Performance target: should parse in reasonable time (< 1 second for 17k lines)
+        assert!(duration.as_secs() < 1, "Large file parsing took too long: {:?}", duration);
+    }
 }

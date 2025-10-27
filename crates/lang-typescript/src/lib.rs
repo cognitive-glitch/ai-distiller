@@ -1469,3 +1469,105 @@ type Result = Success | Error;
         println!("✅ Generic component parse: {} functions, {} generic", 
                  functions.len(), generic_functions.len());
     }
+
+    // ===== EDGE CASE TESTS (Phase C3) =====
+
+    #[test]
+    fn test_malformed_typescript() {
+        let source = std::fs::read_to_string("../../testdata/edge-cases/malformed/typescript_syntax_error.ts")
+            .expect("Failed to read malformed TypeScript file");
+        
+        let processor = TypeScriptProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        
+        // Should not panic - tree-sitter handles malformed code
+        let result = processor.process(&source, Path::new("error.ts"), &opts);
+        
+        match result {
+            Ok(file) => {
+                println!("✓ Malformed TypeScript: Partial parse successful");
+                println!("  Found {} top-level nodes", file.children.len());
+                // Tree-sitter should recover and parse valid nodes
+                assert!(file.children.len() >= 1, "Should find at least some valid nodes");
+            }
+            Err(e) => {
+                println!("✓ Malformed TypeScript: Error handled gracefully: {}", e);
+                // As long as it doesn't panic, we're good
+            }
+        }
+    }
+
+    #[test]
+    fn test_unicode_typescript() {
+        let source = std::fs::read_to_string("../../testdata/edge-cases/unicode/typescript_unicode.ts")
+            .expect("Failed to read Unicode TypeScript file");
+        
+        let processor = TypeScriptProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        
+        let result = processor.process(&source, Path::new("unicode.ts"), &opts);
+        
+        assert!(result.is_ok(), "Unicode TypeScript file should parse successfully");
+        
+        let file = result.unwrap();
+        let class_count = file.children.iter()
+            .filter(|n| matches!(n, Node::Class(_)))
+            .count();
+        
+        println!("✓ Unicode TypeScript: {} classes with Unicode identifiers", class_count);
+        
+        // Should find classes with Unicode names
+        assert!(class_count >= 5, "Should find at least 5 classes with Unicode names");
+    }
+
+    #[test]
+    fn test_large_typescript_file() {
+        let source = std::fs::read_to_string("../../testdata/edge-cases/large-files/large_typescript.ts")
+            .expect("Failed to read large TypeScript file");
+        
+        let processor = TypeScriptProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        
+        println!("Testing large TypeScript file: {} lines", source.lines().count());
+        
+        let start = std::time::Instant::now();
+        let result = processor.process(&source, Path::new("large.ts"), &opts);
+        let duration = start.elapsed();
+        
+        assert!(result.is_ok(), "Large TypeScript file should parse successfully");
+        
+        let file = result.unwrap();
+        let class_count = file.children.iter()
+            .filter(|n| matches!(n, Node::Class(_)))
+            .count();
+        
+        println!("✓ Large TypeScript: {} classes parsed in {:?}", class_count, duration);
+        println!("  Performance: ~{} lines/ms", source.lines().count() / duration.as_millis().max(1) as usize);
+        
+        // Performance target: should parse in reasonable time (< 1 second for 17k lines)
+        assert!(duration.as_secs() < 1, "Large file parsing took too long: {:?}", duration);
+    }
+
+    #[test]
+    fn test_complex_generics_typescript() {
+        let source = std::fs::read_to_string("../../testdata/edge-cases/syntax-edge/complex_generics.ts")
+            .expect("Failed to read complex generics TypeScript file");
+        
+        let processor = TypeScriptProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        
+        let result = processor.process(&source, Path::new("generics.ts"), &opts);
+        
+        assert!(result.is_ok(), "Complex generics TypeScript file should parse successfully");
+        
+        let file = result.unwrap();
+        
+        println!("✓ Complex generics TypeScript: {} top-level nodes", file.children.len());
+        
+        // Should handle complex generic constraints
+        let classes = file.children.iter()
+            .filter(|n| matches!(n, Node::Class(_)))
+            .count();
+        
+        assert!(classes >= 2, "Should find GenericManager and GenericStatic classes");
+    }

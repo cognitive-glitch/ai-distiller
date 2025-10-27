@@ -1039,3 +1039,121 @@ class ComplexService(BaseService, Mixin):
         println!("✅ Django views parse: {} functions, {} decorated", 
                  functions.len(), decorated);
     }
+
+    // ===== EDGE CASE TESTS (Phase C3) =====
+
+    #[test]
+    fn test_malformed_python() {
+        let source = std::fs::read_to_string("../../testdata/edge-cases/malformed/python_syntax_error.py")
+            .expect("Failed to read malformed Python file");
+        
+        let processor = PythonProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        
+        // Should not panic - tree-sitter handles malformed code
+        let result = processor.process(&source, Path::new("error.py"), &opts);
+        
+        match result {
+            Ok(file) => {
+                println!("✓ Malformed Python: Partial parse successful");
+                println!("  Found {} top-level nodes", file.children.len());
+                // Tree-sitter should recover and parse valid nodes
+                assert!(file.children.len() >= 1, "Should find at least some valid nodes");
+            }
+            Err(e) => {
+                println!("✓ Malformed Python: Error handled gracefully: {}", e);
+                // As long as it doesn't panic, we're good
+            }
+        }
+    }
+
+    #[test]
+    fn test_unicode_python() {
+        let source = std::fs::read_to_string("../../testdata/edge-cases/unicode/python_unicode.py")
+            .expect("Failed to read Unicode Python file");
+        
+        let processor = PythonProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        
+        let result = processor.process(&source, Path::new("unicode.py"), &opts);
+        
+        assert!(result.is_ok(), "Unicode Python file should parse successfully");
+        
+        let file = result.unwrap();
+        let class_count = file.children.iter()
+            .filter(|n| matches!(n, Node::Class(_)))
+            .count();
+        
+        println!("✓ Unicode Python: {} classes with Unicode identifiers", class_count);
+        
+        // Should find classes with Unicode names (Пользователь, 🚀Rocket, etc.)
+        assert!(class_count >= 5, "Should find at least 5 classes with Unicode names");
+    }
+
+    #[test]
+    fn test_large_python_file() {
+        let source = std::fs::read_to_string("../../testdata/edge-cases/large-files/large_python.py")
+            .expect("Failed to read large Python file");
+        
+        let processor = PythonProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        
+        println!("Testing large Python file: {} lines", source.lines().count());
+        
+        let start = std::time::Instant::now();
+        let result = processor.process(&source, Path::new("large.py"), &opts);
+        let duration = start.elapsed();
+        
+        assert!(result.is_ok(), "Large Python file should parse successfully");
+        
+        let file = result.unwrap();
+        let class_count = file.children.iter()
+            .filter(|n| matches!(n, Node::Class(_)))
+            .count();
+        
+        println!("✓ Large Python: {} classes parsed in {:?}", class_count, duration);
+        println!("  Performance: ~{} lines/ms", source.lines().count() / duration.as_millis().max(1) as usize);
+        
+        // Performance target: should parse in reasonable time (< 1 second for 15k lines)
+        assert!(duration.as_secs() < 1, "Large file parsing took too long: {:?}", duration);
+    }
+
+    #[test]
+    fn test_empty_python_file_edge() {
+        let source = std::fs::read_to_string("../../testdata/edge-cases/syntax-edge/empty.py")
+            .expect("Failed to read empty Python file");
+        
+        let processor = PythonProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        
+        let result = processor.process(&source, Path::new("empty.py"), &opts);
+        
+        assert!(result.is_ok(), "Empty Python file should parse successfully");
+        
+        let file = result.unwrap();
+        
+        println!("✓ Empty Python file: {} nodes", file.children.len());
+        
+        // Empty file should have 0 or very few nodes
+        assert!(file.children.len() <= 1, "Empty file should have minimal nodes");
+    }
+
+    #[test]
+    fn test_deeply_nested_python() {
+        let source = std::fs::read_to_string("../../testdata/edge-cases/syntax-edge/deeply_nested.py")
+            .expect("Failed to read deeply nested Python file");
+        
+        let processor = PythonProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        
+        let result = processor.process(&source, Path::new("nested.py"), &opts);
+        
+        assert!(result.is_ok(), "Deeply nested Python file should parse successfully");
+        
+        let file = result.unwrap();
+        
+        println!("✓ Deeply nested Python: {} top-level nodes", file.children.len());
+        
+        // Should handle deep nesting without stack overflow
+        assert!(file.children.len() >= 2, "Should find Level1 class and complex_nesting function");
+    }
