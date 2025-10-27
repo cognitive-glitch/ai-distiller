@@ -34,7 +34,7 @@ impl KotlinProcessor {
         source[start..end].to_string()
     }
 
-    fn parse_modifiers(&self, node: TSNode, source: &str) -> (Visibility, Vec<Modifier>) {
+    fn parse_modifiers(node: TSNode, source: &str) -> (Visibility, Vec<Modifier>) {
         let mut visibility = Visibility::Public; // Kotlin default
         let mut modifiers = Vec::new();
         let mut cursor = node.walk();
@@ -71,7 +71,7 @@ impl KotlinProcessor {
         let mut name = String::new();
         let extends = Vec::new();
         let implements = Vec::new();
-        let (visibility, modifiers) = self.parse_modifiers(node, source);
+        let (visibility, modifiers) = Self::parse_modifiers(node, source);
         let type_params = Vec::new();
         let decorators = Vec::new();
         let mut children = Vec::new();
@@ -115,7 +115,7 @@ impl KotlinProcessor {
         let mut name = String::new();
         let extends = Vec::new();
         let implements = Vec::new();
-        let (visibility, modifiers) = self.parse_modifiers(node, source);
+        let (visibility, modifiers) = Self::parse_modifiers(node, source);
         let type_params = Vec::new();
         let decorators = vec!["object".to_string()];
         let mut children = Vec::new();
@@ -189,7 +189,7 @@ impl KotlinProcessor {
         let mut name = String::new();
         let return_type = None;
         let mut parameters = Vec::new();
-        let (visibility, modifiers) = self.parse_modifiers(node, source);
+        let (visibility, modifiers) = Self::parse_modifiers(node, source);
         let type_params = Vec::new();
         let decorators = Vec::new();
         let line_start = node.start_position().row + 1;
@@ -231,7 +231,7 @@ impl KotlinProcessor {
     fn parse_property(&self, node: TSNode, source: &str) -> Result<Option<Field>> {
         let mut name = String::new();
         let field_type = None;
-        let (visibility, modifiers) = self.parse_modifiers(node, source);
+        let (visibility, modifiers) = Self::parse_modifiers(node, source);
         let line = node.start_position().row + 1;
 
         let mut cursor = node.walk();

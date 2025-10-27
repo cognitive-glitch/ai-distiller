@@ -34,7 +34,7 @@ impl CSharpProcessor {
         source[start..end].to_string()
     }
 
-    fn parse_modifiers(&self, node: TSNode, source: &str) -> (Visibility, Vec<Modifier>) {
+    fn parse_modifiers(node: TSNode, source: &str) -> (Visibility, Vec<Modifier>) {
         let mut visibility = Visibility::Private; // C# default
         let mut modifiers = Vec::new();
         let mut has_visibility_keyword = false;
@@ -182,7 +182,7 @@ impl CSharpProcessor {
         let mut name = String::new();
         let mut extends = Vec::new();
         let mut implements = Vec::new();
-        let (visibility, modifiers) = self.parse_modifiers(node, source);
+        let (visibility, modifiers) = Self::parse_modifiers(node, source);
         let mut type_params = Vec::new();
         let mut children = Vec::new();
         let line_start = node.start_position().row + 1;
@@ -252,7 +252,7 @@ impl CSharpProcessor {
         let mut name = String::new();
         let extends = Vec::new();
         let mut implements = Vec::new();
-        let (visibility, modifiers) = self.parse_modifiers(node, source);
+        let (visibility, modifiers) = Self::parse_modifiers(node, source);
         let mut type_params = Vec::new();
         let mut children = Vec::new();
         let line_start = node.start_position().row + 1;
@@ -342,7 +342,7 @@ impl CSharpProcessor {
     }
 
     fn parse_field(&self, node: TSNode, source: &str) -> Result<Option<Field>> {
-        let (visibility, modifiers) = self.parse_modifiers(node, source);
+        let (visibility, modifiers) = Self::parse_modifiers(node, source);
         let mut field_type = None;
         let mut name = String::new();
         let line = node.start_position().row + 1;
@@ -383,7 +383,7 @@ impl CSharpProcessor {
     }
 
     fn parse_property(&self, node: TSNode, source: &str) -> Result<Option<Field>> {
-        let (visibility, modifiers) = self.parse_modifiers(node, source);
+        let (visibility, modifiers) = Self::parse_modifiers(node, source);
         let mut field_type = None;
         let mut name = String::new();
         let line = node.start_position().row + 1;
@@ -419,7 +419,7 @@ impl CSharpProcessor {
     }
 
     fn parse_event(&self, node: TSNode, source: &str) -> Result<Option<Field>> {
-        let (visibility, mut modifiers) = self.parse_modifiers(node, source);
+        let (visibility, mut modifiers) = Self::parse_modifiers(node, source);
         modifiers.push(Modifier::Event);
         let mut field_type = None;
         let mut name = String::new();
@@ -471,7 +471,7 @@ impl CSharpProcessor {
     }
 
     fn parse_method(&self, node: TSNode, source: &str) -> Result<Option<Function>> {
-        let (visibility, modifiers) = self.parse_modifiers(node, source);
+        let (visibility, modifiers) = Self::parse_modifiers(node, source);
         let mut name = String::new();
         let mut return_type = None;
         let mut parameters = Vec::new();
@@ -525,7 +525,7 @@ impl CSharpProcessor {
     }
 
     fn parse_constructor(&self, node: TSNode, source: &str) -> Result<Option<Function>> {
-        let (visibility, modifiers) = self.parse_modifiers(node, source);
+        let (visibility, modifiers) = Self::parse_modifiers(node, source);
         let mut name = String::new();
         let mut parameters = Vec::new();
         let line_start = node.start_position().row + 1;
@@ -565,7 +565,7 @@ impl CSharpProcessor {
     }
 
     fn parse_operator(&self, node: TSNode, source: &str) -> Result<Option<Function>> {
-        let (visibility, mut modifiers) = self.parse_modifiers(node, source);
+        let (visibility, mut modifiers) = Self::parse_modifiers(node, source);
         modifiers.push(Modifier::Static); // Operators are always static
         let mut name = String::new();
         let mut return_type = None;

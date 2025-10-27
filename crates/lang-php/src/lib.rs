@@ -55,7 +55,7 @@ impl PhpProcessor {
                     }
                 }
                 "base_clause" => {
-                    extends = self.parse_base_clause(child, source);
+                    extends = Self::parse_base_clause(child, source);
                 }
                 "declaration_list" => {
                     self.parse_class_body(child, source, &mut children)?;
@@ -127,7 +127,7 @@ impl PhpProcessor {
         }))
     }
 
-    fn parse_base_clause(&self, node: TSNode, source: &str) -> Vec<TypeRef> {
+    fn parse_base_clause(node: TSNode, source: &str) -> Vec<TypeRef> {
         let mut bases = Vec::new();
         let mut cursor = node.walk();
 
@@ -151,7 +151,7 @@ impl PhpProcessor {
                     }
                 }
                 "property_declaration" => {
-                    if let Some(property) = self.parse_property(child, source)? {
+                    if let Some(property) = Self::parse_property(child, source)? {
                         children.push(Node::Field(property));
                     }
                 }
@@ -185,7 +185,7 @@ impl PhpProcessor {
                     }
                 }
                 "formal_parameters" => {
-                    parameters = self.parse_parameters(child, source);
+                    parameters = Self::parse_parameters(child, source);
                 }
                 "primitive_type" | "named_type" | "optional_type" => {
                     if return_type.is_none() {
@@ -224,7 +224,7 @@ impl PhpProcessor {
         }
     }
 
-    fn parse_parameters(&self, node: TSNode, source: &str) -> Vec<Parameter> {
+    fn parse_parameters(node: TSNode, source: &str) -> Vec<Parameter> {
         let mut parameters = Vec::new();
         let mut cursor = node.walk();
 
@@ -262,7 +262,7 @@ impl PhpProcessor {
         parameters
     }
 
-    fn parse_property(&self, node: TSNode, source: &str) -> Result<Option<Field>> {
+    fn parse_property(node: TSNode, source: &str) -> Result<Option<Field>> {
         let mut name = String::new();
         let mut field_type = None;
         let mut visibility = Visibility::Public;
@@ -306,7 +306,7 @@ impl PhpProcessor {
         }))
     }
 
-    fn parse_use(&self, node: TSNode, source: &str) -> Option<Import> {
+    fn parse_use(node: TSNode, source: &str) -> Option<Import> {
         let mut module = String::new();
         let mut cursor = node.walk();
 
@@ -342,7 +342,7 @@ impl PhpProcessor {
                 }
             }
             "namespace_use_declaration" => {
-                if let Some(import) = self.parse_use(node, source) {
+                if let Some(import) = Self::parse_use(node, source) {
                     file.children.push(Node::Import(import));
                 }
             }
@@ -383,7 +383,7 @@ impl PhpProcessor {
                     }
                 }
                 "formal_parameters" => {
-                    parameters = self.parse_parameters(child, source);
+                    parameters = Self::parse_parameters(child, source);
                 }
                 "primitive_type" | "named_type" | "optional_type" => {
                     if return_type.is_none() {

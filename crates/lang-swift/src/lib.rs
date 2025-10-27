@@ -32,7 +32,7 @@ impl SwiftProcessor {
         source[node.start_byte()..node.end_byte()].to_string()
     }
 
-    fn parse_modifiers(&self, node: TSNode, source: &str) -> (Visibility, Vec<String>) {
+    fn parse_modifiers(node: TSNode, source: &str) -> (Visibility, Vec<String>) {
         let mut visibility = Visibility::Internal; // Swift default
         let mut modifiers = Vec::new();
 
@@ -122,7 +122,7 @@ impl SwiftProcessor {
         let mut name = String::new();
         let mut extends = Vec::new();
         let mut children = Vec::new();
-        let (visibility, extra_modifiers) = self.parse_modifiers(node, source);
+        let (visibility, extra_modifiers) = Self::parse_modifiers(node, source);
         let type_params = self.parse_type_parameters(node, source);
 
         let line_start = node.start_position().row + 1;
@@ -184,7 +184,7 @@ impl SwiftProcessor {
         let mut name = String::new();
         let mut extends = Vec::new();
         let mut children = Vec::new();
-        let (visibility, _) = self.parse_modifiers(node, source);
+        let (visibility, _) = Self::parse_modifiers(node, source);
 
         let line_start = node.start_position().row + 1;
         let line_end = node.end_position().row + 1;
@@ -243,7 +243,7 @@ impl SwiftProcessor {
         let mut name = String::new();
         let mut parameters = Vec::new();
         let mut return_type = None;
-        let (visibility, _) = self.parse_modifiers(node, source);
+        let (visibility, _) = Self::parse_modifiers(node, source);
         let type_params = self.parse_type_parameters(node, source);
 
         let line_start = node.start_position().row + 1;
@@ -386,7 +386,7 @@ impl SwiftProcessor {
     fn parse_property(&self, node: TSNode, source: &str) -> Result<Option<Field>> {
         let mut name = String::new();
         let mut field_type = None;
-        let (visibility, _) = self.parse_modifiers(node, source);
+        let (visibility, _) = Self::parse_modifiers(node, source);
         let line = node.start_position().row + 1;
 
         let mut cursor = node.walk();

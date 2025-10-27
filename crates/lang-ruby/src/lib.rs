@@ -165,7 +165,7 @@ impl RubyProcessor {
                     }
                 }
                 "method_parameters" => {
-                    self.parse_parameters(child, source, &mut parameters)?;
+                    Self::parse_parameters(child, source, &mut parameters)?;
                 }
                 _ => {}
             }
@@ -185,12 +185,7 @@ impl RubyProcessor {
         }))
     }
 
-    fn parse_parameters(
-        &self,
-        node: TSNode,
-        source: &str,
-        params: &mut Vec<Parameter>,
-    ) -> Result<()> {
+    fn parse_parameters(node: TSNode, source: &str, params: &mut Vec<Parameter>) -> Result<()> {
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
             match child.kind() {

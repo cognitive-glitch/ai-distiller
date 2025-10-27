@@ -72,7 +72,7 @@ impl PythonProcessor {
                 }
             }
             "import_statement" | "import_from_statement" => {
-                if let Some(import) = self.parse_import(node, source)? {
+                if let Some(import) = Self::parse_import(node, source)? {
                     file.children.push(Node::Import(import));
                 }
             }
@@ -105,7 +105,7 @@ impl PythonProcessor {
     }
 
     /// Parse an import statement
-    fn parse_import(&self, node: tree_sitter::Node, source: &str) -> Result<Option<Import>> {
+    fn parse_import(node: tree_sitter::Node, source: &str) -> Result<Option<Import>> {
         match node.kind() {
             "import_statement" => {
                 // import foo, bar

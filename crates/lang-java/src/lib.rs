@@ -32,11 +32,7 @@ impl JavaProcessor {
         source[node.start_byte()..node.end_byte()].to_string()
     }
 
-    fn parse_modifiers(
-        &self,
-        node: TSNode,
-        source: &str,
-    ) -> (Visibility, Vec<Modifier>, Vec<String>) {
+    fn parse_modifiers(node: TSNode, source: &str) -> (Visibility, Vec<Modifier>, Vec<String>) {
         let mut visibility = Visibility::Internal; // Java default is package-private
         let mut modifiers = Vec::new();
         let mut decorators = Vec::new();
@@ -144,7 +140,7 @@ impl JavaProcessor {
         let mut name = String::new();
         let mut extends = Vec::new();
         let mut implements = Vec::new();
-        let (visibility, modifiers, _) = self.parse_modifiers(node, source);
+        let (visibility, modifiers, _) = Self::parse_modifiers(node, source);
         let mut type_params = Vec::new();
         let mut children = Vec::new();
         let line_start = node.start_position().row + 1;
@@ -194,7 +190,7 @@ impl JavaProcessor {
     fn parse_interface(&self, node: TSNode, source: &str) -> Result<Option<Class>> {
         let mut name = String::new();
         let mut extends = Vec::new();
-        let (visibility, modifiers, _) = self.parse_modifiers(node, source);
+        let (visibility, modifiers, _) = Self::parse_modifiers(node, source);
         let mut type_params = Vec::new();
         let mut children = Vec::new();
         let line_start = node.start_position().row + 1;
@@ -238,7 +234,7 @@ impl JavaProcessor {
 
     fn parse_annotation(&self, node: TSNode, source: &str) -> Result<Option<Class>> {
         let mut name = String::new();
-        let (visibility, modifiers, _) = self.parse_modifiers(node, source);
+        let (visibility, modifiers, _) = Self::parse_modifiers(node, source);
         let mut children = Vec::new();
         let line_start = node.start_position().row + 1;
         let line_end = node.end_position().row + 1;
@@ -275,7 +271,7 @@ impl JavaProcessor {
 
     fn parse_enum(&self, node: TSNode, source: &str) -> Result<Option<Class>> {
         let mut name = String::new();
-        let (visibility, modifiers, _) = self.parse_modifiers(node, source);
+        let (visibility, modifiers, _) = Self::parse_modifiers(node, source);
         let mut children = Vec::new();
         let mut enum_constants = Vec::new();
         let line_start = node.start_position().row + 1;
@@ -476,7 +472,7 @@ impl JavaProcessor {
 
     fn parse_field(&self, node: TSNode, source: &str) -> Result<Vec<Field>> {
         let mut fields = Vec::new();
-        let (visibility, modifiers, _) = self.parse_modifiers(node, source);
+        let (visibility, modifiers, _) = Self::parse_modifiers(node, source);
         let mut field_type = None;
         let line = node.start_position().row + 1;
 
@@ -518,7 +514,7 @@ impl JavaProcessor {
 
     fn parse_method(&self, node: TSNode, source: &str) -> Result<Option<Function>> {
         let mut name = String::new();
-        let (visibility, modifiers, method_decorators) = self.parse_modifiers(node, source);
+        let (visibility, modifiers, method_decorators) = Self::parse_modifiers(node, source);
         let mut type_params = Vec::new();
         let mut return_type = None;
         let mut parameters = Vec::new();
@@ -579,7 +575,7 @@ impl JavaProcessor {
 
     fn parse_constructor(&self, node: TSNode, source: &str) -> Result<Option<Function>> {
         let mut name = String::new();
-        let (visibility, modifiers, _) = self.parse_modifiers(node, source);
+        let (visibility, modifiers, _) = Self::parse_modifiers(node, source);
         let mut parameters = Vec::new();
         let line_start = node.start_position().row + 1;
         let line_end = node.end_position().row + 1;

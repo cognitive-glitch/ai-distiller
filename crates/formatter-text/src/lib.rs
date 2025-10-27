@@ -75,7 +75,7 @@ impl TextFormatter {
             Node::Field(field) => self.format_field(output, field, indent)?,
             Node::Comment(comment) => self.format_comment(output, comment, indent)?,
             Node::Package(package) => self.format_package(output, package, indent)?,
-            Node::RawContent(raw) => self.format_raw(output, raw, indent)?,
+            Node::RawContent(raw) => Self::format_raw(output, raw, indent)?,
             Node::File(_) | Node::Directory(_) => {
                 // Files and directories are handled separately
             }
@@ -90,7 +90,7 @@ impl TextFormatter {
         import: &Import,
         indent: usize,
     ) -> Result<(), std::fmt::Error> {
-        let ind = self.indent(indent);
+        let ind = Self::indent(indent);
 
         if import.import_type == "from" {
             // Python-style: from module import symbol1, symbol2
@@ -138,8 +138,8 @@ impl TextFormatter {
         class: &Class,
         indent: usize,
     ) -> Result<(), std::fmt::Error> {
-        let ind = self.indent(indent);
-        let vis_symbol = self.visibility_symbol(class.visibility);
+        let ind = Self::indent(indent);
+        let vis_symbol = Self::visibility_symbol(class.visibility);
 
         // Write decorators
         for decorator in &class.decorators {
@@ -183,8 +183,8 @@ impl TextFormatter {
         interface: &Interface,
         indent: usize,
     ) -> Result<(), std::fmt::Error> {
-        let ind = self.indent(indent);
-        let vis_symbol = self.visibility_symbol(interface.visibility);
+        let ind = Self::indent(indent);
+        let vis_symbol = Self::visibility_symbol(interface.visibility);
 
         write!(output, "{}{}interface {}", ind, vis_symbol, interface.name)?;
 
@@ -222,8 +222,8 @@ impl TextFormatter {
         struct_node: &Struct,
         indent: usize,
     ) -> Result<(), std::fmt::Error> {
-        let ind = self.indent(indent);
-        let vis_symbol = self.visibility_symbol(struct_node.visibility);
+        let ind = Self::indent(indent);
+        let vis_symbol = Self::visibility_symbol(struct_node.visibility);
 
         write!(output, "{}{}struct {}", ind, vis_symbol, struct_node.name)?;
 
@@ -251,8 +251,8 @@ impl TextFormatter {
         enum_node: &Enum,
         indent: usize,
     ) -> Result<(), std::fmt::Error> {
-        let ind = self.indent(indent);
-        let vis_symbol = self.visibility_symbol(enum_node.visibility);
+        let ind = Self::indent(indent);
+        let vis_symbol = Self::visibility_symbol(enum_node.visibility);
 
         write!(output, "{}{}enum {}", ind, vis_symbol, enum_node.name)?;
 
@@ -276,8 +276,8 @@ impl TextFormatter {
         alias: &TypeAlias,
         indent: usize,
     ) -> Result<(), std::fmt::Error> {
-        let ind = self.indent(indent);
-        let vis_symbol = self.visibility_symbol(alias.visibility);
+        let ind = Self::indent(indent);
+        let vis_symbol = Self::visibility_symbol(alias.visibility);
 
         write!(output, "{}{}type {}", ind, vis_symbol, alias.name)?;
 
@@ -297,8 +297,8 @@ impl TextFormatter {
         func: &Function,
         indent: usize,
     ) -> Result<(), std::fmt::Error> {
-        let ind = self.indent(indent);
-        let vis_symbol = self.visibility_symbol(func.visibility);
+        let ind = Self::indent(indent);
+        let vis_symbol = Self::visibility_symbol(func.visibility);
 
         // Write decorators
         for decorator in &func.decorators {
@@ -369,8 +369,8 @@ impl TextFormatter {
         field: &Field,
         indent: usize,
     ) -> Result<(), std::fmt::Error> {
-        let ind = self.indent(indent);
-        let vis_symbol = self.visibility_symbol(field.visibility);
+        let ind = Self::indent(indent);
+        let vis_symbol = Self::visibility_symbol(field.visibility);
 
         // Modifiers
         let mut modifiers = field
@@ -411,7 +411,7 @@ impl TextFormatter {
         comment: &Comment,
         indent: usize,
     ) -> Result<(), std::fmt::Error> {
-        let ind = self.indent(indent);
+        let ind = Self::indent(indent);
 
         for line in comment.text.lines() {
             writeln!(output, "{}# {}", ind, line)?;
@@ -427,7 +427,7 @@ impl TextFormatter {
         package: &Package,
         indent: usize,
     ) -> Result<(), std::fmt::Error> {
-        let ind = self.indent(indent);
+        let ind = Self::indent(indent);
         writeln!(output, "{}package {}", ind, package.name)?;
 
         for child in &package.children {
@@ -439,7 +439,6 @@ impl TextFormatter {
 
     /// Format raw content
     fn format_raw(
-        &self,
         output: &mut String,
         raw: &RawContent,
         _indent: usize,
@@ -516,7 +515,7 @@ impl TextFormatter {
     }
 
     /// Get visibility symbol
-    fn visibility_symbol(&self, visibility: Visibility) -> &'static str {
+    fn visibility_symbol(visibility: Visibility) -> &'static str {
         match visibility {
             Visibility::Public => "",
             Visibility::Private => "-",
@@ -526,7 +525,7 @@ impl TextFormatter {
     }
 
     /// Generate indentation string
-    fn indent(&self, level: usize) -> String {
+    fn indent(level: usize) -> String {
         "    ".repeat(level)
     }
 }
@@ -589,10 +588,10 @@ mod tests {
     #[test]
     fn test_visibility_symbols() {
         let formatter = TextFormatter::new();
-        assert_eq!(formatter.visibility_symbol(Visibility::Public), "");
-        assert_eq!(formatter.visibility_symbol(Visibility::Private), "-");
-        assert_eq!(formatter.visibility_symbol(Visibility::Protected), "*");
-        assert_eq!(formatter.visibility_symbol(Visibility::Internal), "~");
+        assert_eq!(TextFormatter::visibility_symbol(Visibility::Public), "");
+        assert_eq!(TextFormatter::visibility_symbol(Visibility::Private), "-");
+        assert_eq!(TextFormatter::visibility_symbol(Visibility::Protected), "*");
+        assert_eq!(TextFormatter::visibility_symbol(Visibility::Internal), "~");
     }
 
     #[test]

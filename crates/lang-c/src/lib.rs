@@ -85,7 +85,7 @@ impl CProcessor {
 
         for child in node.children(&mut cursor) {
             if child.kind() == "field_declaration"
-                && let Some(field) = self.parse_field(child, source)?
+                && let Some(field) = Self::parse_field(child, source)?
             {
                 children.push(Node::Field(field));
             }
@@ -171,7 +171,7 @@ impl CProcessor {
                     }
                 }
                 "parameter_list" => {
-                    *parameters = self.parse_parameters(child, source);
+                    *parameters = Self::parse_parameters(child, source);
                 }
                 "pointer_declarator" => {
                     // Function pointer or pointer-returning function
@@ -202,7 +202,7 @@ impl CProcessor {
                     name = self.parse_function_declarator(child, source, parameters);
                 }
                 "parameter_list" => {
-                    *parameters = self.parse_parameters(child, source);
+                    *parameters = Self::parse_parameters(child, source);
                 }
                 _ => {}
             }
@@ -211,7 +211,7 @@ impl CProcessor {
         name
     }
 
-    fn parse_parameters(&self, node: TSNode, source: &str) -> Vec<Parameter> {
+    fn parse_parameters(node: TSNode, source: &str) -> Vec<Parameter> {
         let mut parameters = Vec::new();
         let mut cursor = node.walk();
 
@@ -271,7 +271,7 @@ impl CProcessor {
         parameters
     }
 
-    fn parse_field(&self, node: TSNode, source: &str) -> Result<Option<Field>> {
+    fn parse_field(node: TSNode, source: &str) -> Result<Option<Field>> {
         let mut name = String::new();
         let mut field_type = None;
         let visibility = Visibility::Public; // C struct fields are always public
@@ -316,7 +316,7 @@ impl CProcessor {
         }))
     }
 
-    fn parse_typedef(&self, node: TSNode, source: &str) -> Option<Node> {
+    fn parse_typedef(node: TSNode, source: &str) -> Option<Node> {
         // Parse typedef as a type alias (represented as a simple class)
         let mut name = String::new();
         let mut cursor = node.walk();
@@ -346,7 +346,7 @@ impl CProcessor {
         }))
     }
 
-    fn parse_enum(&self, node: TSNode, source: &str) -> Option<Class> {
+    fn parse_enum(node: TSNode, source: &str) -> Option<Class> {
         let mut name = String::new();
         let mut cursor = node.walk();
 
@@ -374,7 +374,7 @@ impl CProcessor {
         })
     }
 
-    fn parse_union(&self, node: TSNode, source: &str) -> Option<Class> {
+    fn parse_union(node: TSNode, source: &str) -> Option<Class> {
         let mut name = String::new();
         let mut cursor = node.walk();
 
@@ -428,23 +428,23 @@ impl CProcessor {
                 }
             }
             "type_definition" => {
-                if let Some(typedef_node) = self.parse_typedef(node, source) {
+                if let Some(typedef_node) = Self::parse_typedef(node, source) {
                     file.children.push(typedef_node);
                 }
             }
             "enum_specifier" => {
-                if let Some(enum_node) = self.parse_enum(node, source) {
+                if let Some(enum_node) = Self::parse_enum(node, source) {
                     file.children.push(Node::Class(enum_node));
                 }
             }
             "union_specifier" => {
-                if let Some(union_node) = self.parse_union(node, source) {
+                if let Some(union_node) = Self::parse_union(node, source) {
                     file.children.push(Node::Class(union_node));
                 }
             }
             "preproc_include" => {
                 let text = Self::node_text(node, source);
-                if let Some(import) = self.parse_include(text) {
+                if let Some(import) = Self::parse_include(text) {
                     file.children.push(Node::Import(import));
                 }
             }
@@ -459,7 +459,7 @@ impl CProcessor {
         Ok(())
     }
 
-    fn parse_include(&self, text: String) -> Option<Import> {
+    fn parse_include(text: String) -> Option<Import> {
         let text = text.trim();
         if !text.starts_with("#include") {
             return None;
