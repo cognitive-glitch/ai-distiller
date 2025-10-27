@@ -249,6 +249,7 @@ impl SwiftProcessor {
         let line_start = node.start_position().row + 1;
         let line_end = node.end_position().row + 1;
 
+        let mut saw_arrow = false;
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
             match child.kind() {
@@ -257,14 +258,34 @@ impl SwiftProcessor {
                         name = self.node_text(child, source);
                     }
                 }
+                // Direct parameter handling (tree-sitter-swift puts parameters as direct children)
+                "parameter" => {
+                    self.parse_single_parameter(child, source, &mut parameters)?;
+                }
+                // Legacy parameter wrapper handling (for compatibility)
                 "function_value_parameters" | "parameter_clause" => {
                     self.parse_parameters(child, source, &mut parameters)?;
                 }
+                // Track arrow operator for return type
+                "->" => {
+                    saw_arrow = true;
+                }
+                // Return type handling (appears after ->) 
+                "user_type" | "optional_type" | "type_identifier" => {
+                    if saw_arrow && return_type.is_none() {
+                        // Extract full type text including optional marker
+                        return_type = Some(TypeRef::new(self.node_text(child, source)));
+                        saw_arrow = false; // Reset flag after capturing
+                    }
+                }
+                // Legacy function_type wrapper handling
                 "function_type" => {
-                    let mut ft_cursor = child.walk();
-                    for ft_child in child.children(&mut ft_cursor) {
-                        if ft_child.kind() == "type_identifier" {
-                            return_type = Some(TypeRef::new(self.node_text(ft_child, source)));
+                    if return_type.is_none() {
+                        let mut ft_cursor = child.walk();
+                        for ft_child in child.children(&mut ft_cursor) {
+                            if ft_child.kind() == "type_identifier" || ft_child.kind() == "user_type" {
+                                return_type = Some(TypeRef::new(self.node_text(ft_child, source)));
+                            }
                         }
                     }
                 }
@@ -321,10 +342,19 @@ impl SwiftProcessor {
                 "simple_identifier" => {
                     name = self.node_text(child, source);
                 }
+                // Direct type handling (tree-sitter-swift puts types as direct children)
+                "user_type" | "optional_type" => {
+                    if param_type.name.is_empty() {
+                        param_type = TypeRef::new(self.node_text(child, source));
+                    }
+                }
+                // Legacy type_annotation wrapper handling (for compatibility)
                 "type_annotation" => {
                     let mut ta_cursor = child.walk();
                     for ta_child in child.children(&mut ta_cursor) {
-                        if ta_child.kind() == "type_identifier" || ta_child.kind() == "user_type" {
+                        if ta_child.kind() == "type_identifier" 
+                            || ta_child.kind() == "user_type" 
+                            || ta_child.kind() == "optional_type" {
                             param_type = TypeRef::new(self.node_text(ta_child, source));
                         }
                     }
@@ -1049,5 +1079,62 @@ class User {
         } else {
             panic!("Expected a class");
         }
+    }
+}
+
+#[cfg(test)]
+mod debug_tests {
+    use super::*;
+    
+    fn print_tree(node: TSNode, source: &str, depth: usize) {
+        let indent = "  ".repeat(depth);
+        let kind = node.kind();
+        
+        let start = node.start_byte();
+        let end = node.end_byte();
+        let text = if end > start && end <= source.len() {
+            &source[start..end]
+        } else {
+            ""
+        };
+        
+        let text_preview = if text.len() > 60 {
+            format!("{}...", &text[..60].replace('\n', "\\n"))
+        } else {
+            text.replace('\n', "\\n")
+        };
+        
+        eprintln!("{}[{}] \"{}\"", indent, kind, text_preview);
+        
+        let mut cursor = node.walk();
+        for child in node.children(&mut cursor) {
+            print_tree(child, source, depth + 1);
+        }
+    }
+    
+    #[test]
+    #[ignore]
+    fn debug_function_parameters_ast() {
+        let source = r#"func greet(name: String, age: Int) {
+    print("Hello")
+}
+
+func calculate(x: Int, y: Int) -> Int {
+    return x + y
+}
+
+func findUser(id: Int?) -> String? {
+    return "User"
+}"#;
+        
+        let processor = SwiftProcessor::new().unwrap();
+        let mut parser = processor.parser.lock();
+        let tree = parser.parse(source, None).unwrap();
+        let root = tree.root_node();
+        
+        eprintln!("\n=== Swift AST Structure ===\n");
+        print_tree(root, source, 0);
+        
+        panic!("Debug output - check stderr");
     }
 }
