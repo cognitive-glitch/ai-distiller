@@ -23,6 +23,7 @@ pub struct Processor {
 
 impl Processor {
     /// Create a new processor with options
+    #[must_use]
     pub fn new(options: ProcessOptions) -> Self {
         Self {
             options,
@@ -31,6 +32,7 @@ impl Processor {
     }
 
     /// Create processor with default options
+    #[must_use]
     pub fn with_defaults() -> Self {
         Self::new(ProcessOptions::default())
     }
@@ -44,6 +46,10 @@ impl Processor {
     ///
     /// Automatically detects whether the path is a file or directory
     /// and dispatches to the appropriate processor.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the path does not exist, is not accessible, or processing fails.
     pub fn process_path(&self, path: &Path) -> Result<Node> {
         if path.is_dir() {
             // Process directory
@@ -86,11 +92,13 @@ impl Processor {
     }
 
     /// Get reference to language registry (for testing/inspection)
+    #[must_use]
     pub fn language_registry(&self) -> &LanguageRegistry {
         &self.language_registry
     }
 
     /// Get reference to options (for testing/inspection)
+    #[must_use]
     pub fn options(&self) -> &ProcessOptions {
         &self.options
     }

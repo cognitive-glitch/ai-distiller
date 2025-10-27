@@ -1,6 +1,9 @@
 //! Visitor pattern for IR traversal
 
-use super::nodes::*;
+use super::nodes::{
+    Class, Comment, Directory, Enum, Field, File, Function, Import, Interface, Node, Package,
+    RawContent, Struct, TypeAlias,
+};
 
 /// Visitor trait for IR node traversal
 ///

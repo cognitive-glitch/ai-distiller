@@ -27,6 +27,7 @@ pub struct DirectoryProcessor {
 
 impl DirectoryProcessor {
     /// Create a new directory processor
+    #[must_use]
     pub fn new(options: ProcessOptions) -> Self {
         Self {
             options: Arc::new(options),
@@ -121,7 +122,7 @@ impl DirectoryProcessor {
         let mut results: Vec<FileResult> = files
             .par_iter()
             .map(|(path, index)| {
-                let result = self.process_single_file(path, language_registry, &opts);
+                let result = Self::process_single_file(path, language_registry, &opts);
 
                 FileResult {
                     result,
@@ -145,7 +146,6 @@ impl DirectoryProcessor {
 
     /// Process a single file
     fn process_single_file(
-        &self,
         path: &Path,
         language_registry: &LanguageRegistry,
         opts: &ProcessOptions,
@@ -179,6 +179,7 @@ pub struct LanguageRegistry {
 
 impl LanguageRegistry {
     /// Create an empty registry
+    #[must_use]
     pub fn new() -> Self {
         Self {
             processors: Vec::new(),

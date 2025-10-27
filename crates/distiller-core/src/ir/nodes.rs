@@ -1,6 +1,6 @@
 //! IR node types
 
-use super::types::*;
+use super::types::{ImportedSymbol, Modifier, Parameter, TypeParam, TypeRef, Visibility};
 use serde::{Deserialize, Serialize};
 
 /// Root IR node - can be any type

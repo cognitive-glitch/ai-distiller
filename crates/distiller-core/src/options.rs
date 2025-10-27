@@ -24,6 +24,7 @@ impl Default for PathType {
 /// Controls what content is included in the distilled output and how
 /// processing should be performed.
 #[derive(Debug, Clone)]
+#[allow(clippy::struct_excessive_bools)]
 pub struct ProcessOptions {
     // Visibility filtering
     /// Include public members (default: true)
@@ -110,7 +111,8 @@ impl Default for ProcessOptions {
 }
 
 impl ProcessOptions {
-    /// Create a new builder for ProcessOptions
+    /// Create a new builder for `ProcessOptions`
+    #[must_use]
     pub fn builder() -> ProcessOptionsBuilder {
         ProcessOptionsBuilder::default()
     }
@@ -118,6 +120,7 @@ impl ProcessOptions {
     /// Get the number of worker threads to use
     ///
     /// Returns 0 if auto-detection should be used (80% of CPU cores).
+    #[must_use]
     pub fn worker_count(&self) -> usize {
         if self.workers == 0 {
             // Auto: 80% of available parallelism
@@ -129,6 +132,7 @@ impl ProcessOptions {
     }
 
     /// Check if any visibility filters are enabled
+    #[must_use]
     pub fn has_visibility_filters(&self) -> bool {
         !self.include_public
             || self.include_protected
@@ -137,6 +141,7 @@ impl ProcessOptions {
     }
 
     /// Check if content should be stripped (not in raw mode)
+    #[must_use]
     pub fn should_strip_content(&self) -> bool {
         !self.raw_mode
             && (!self.include_comments
@@ -145,58 +150,69 @@ impl ProcessOptions {
     }
 }
 
-/// Builder for ProcessOptions
+/// Builder for `ProcessOptions`
 #[derive(Default)]
+#[allow(clippy::struct_excessive_bools)]
 pub struct ProcessOptionsBuilder {
     options: ProcessOptions,
 }
 
 impl ProcessOptionsBuilder {
+    #[must_use]
     pub fn include_private(mut self, value: bool) -> Self {
         self.options.include_private = value;
         self
     }
 
+    #[must_use]
     pub fn include_protected(mut self, value: bool) -> Self {
         self.options.include_protected = value;
         self
     }
 
+    #[must_use]
     pub fn include_internal(mut self, value: bool) -> Self {
         self.options.include_internal = value;
         self
     }
 
+    #[must_use]
     pub fn include_implementation(mut self, value: bool) -> Self {
         self.options.include_implementation = value;
         self
     }
 
+    #[must_use]
     pub fn include_comments(mut self, value: bool) -> Self {
         self.options.include_comments = value;
         self
     }
 
+    #[must_use]
     pub fn workers(mut self, count: usize) -> Self {
         self.options.workers = count;
         self
     }
 
+    #[must_use]
     pub fn recursive(mut self, value: bool) -> Self {
         self.options.recursive = value;
         self
     }
 
+    #[must_use]
     pub fn include_patterns(mut self, patterns: Vec<String>) -> Self {
         self.options.include_patterns = patterns;
         self
     }
 
+    #[must_use]
     pub fn exclude_patterns(mut self, patterns: Vec<String>) -> Self {
         self.options.exclude_patterns = patterns;
         self
     }
 
+    #[must_use]
     pub fn build(self) -> ProcessOptions {
         self.options
     }

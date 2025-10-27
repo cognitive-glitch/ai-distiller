@@ -1,7 +1,7 @@
 //! Thread-safe parser pool for tree-sitter parsers
 //!
 //! Manages a pool of tree-sitter parsers per language to avoid
-//! expensive parser creation on every file. Uses parking_lot for
+//! expensive parser creation on every file. Uses `parking_lot` for
 //! efficient locking.
 
 use crate::error::{DistilError, Result};
@@ -31,6 +31,7 @@ impl ParserPool {
     ///
     /// # Arguments
     /// * `max_per_language` - Maximum parsers to cache per language (default: 32)
+    #[must_use]
     pub fn new(max_per_language: usize) -> Self {
         Self {
             inner: Arc::new(Mutex::new(PoolInner {
@@ -47,6 +48,10 @@ impl ParserPool {
     /// # Arguments
     /// * `language_name` - Name of the language (e.g., "python", "rust")
     /// * `language_fn` - Function to get tree-sitter Language (only called if needed)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the language cannot be loaded or set on the parser.
     pub fn acquire<F>(&self, language_name: &str, language_fn: F) -> Result<ParserGuard>
     where
         F: FnOnce() -> Result<Language>,
@@ -75,7 +80,7 @@ impl ParserPool {
 
         parser
             .set_language(&language)
-            .map_err(|e| DistilError::TreeSitter(format!("Failed to set language: {}", e)))?;
+            .map_err(|e| DistilError::TreeSitter(format!("Failed to set language: {e}")))?;
 
         Ok(ParserGuard {
             parser: Some(parser),
@@ -86,7 +91,7 @@ impl ParserPool {
 
     /// Return a parser to the pool
     ///
-    /// Called automatically by ParserGuard::drop, but can be called manually
+    /// Called automatically by `ParserGuard::drop`, but can be called manually
     /// for early return.
     fn release(&self, language_name: String, parser: Parser) {
         let mut inner = self.inner.lock();
@@ -103,6 +108,7 @@ impl ParserPool {
     }
 
     /// Get current pool statistics (for debugging/monitoring)
+    #[must_use]
     pub fn stats(&self) -> PoolStats {
         let inner = self.inner.lock();
 
@@ -142,6 +148,10 @@ pub struct ParserGuard {
 
 impl ParserGuard {
     /// Get mutable reference to the parser
+    ///
+    /// # Panics
+    ///
+    /// Panics if the parser has already been returned to the pool (should never happen).
     pub fn get_mut(&mut self) -> &mut Parser {
         self.parser
             .as_mut()
@@ -149,6 +159,11 @@ impl ParserGuard {
     }
 
     /// Get immutable reference to the parser
+    ///
+    /// # Panics
+    ///
+    /// Panics if the parser has already been returned to the pool (should never happen).
+    #[must_use]
     pub fn get(&self) -> &Parser {
         self.parser
             .as_ref()

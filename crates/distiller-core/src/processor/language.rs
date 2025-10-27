@@ -26,13 +26,16 @@ pub trait LanguageProcessor: Send + Sync {
     fn can_process(&self, path: &Path) -> bool {
         path.extension()
             .and_then(|ext| ext.to_str())
-            .map(|ext| self.supported_extensions().contains(&ext))
-            .unwrap_or(false)
+            .is_some_and(|ext| self.supported_extensions().contains(&ext))
     }
 
     /// Process a source file
     ///
     /// This method is SYNCHRONOUS for simplicity and performance.
     /// Parsing is CPU-bound, so async provides no benefit.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if parsing fails or source code is invalid.
     fn process(&self, source: &str, path: &Path, opts: &ProcessOptions) -> Result<File>;
 }

@@ -13,6 +13,7 @@ pub struct Stripper {
 }
 
 impl Stripper {
+    #[must_use]
     pub fn new(options: ProcessOptions) -> Self {
         Self { _options: options }
     }
@@ -74,6 +75,7 @@ impl Visitor for Stripper {
 }
 
 /// Apply stripper to a node tree (placeholder)
+#[must_use]
 pub fn strip(node: &Node, _options: &ProcessOptions) -> Node {
     node.clone()
 }
