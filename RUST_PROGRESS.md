@@ -1485,11 +1485,13 @@ Output (file or stdout)
 
 Last updated: 2025-10-27 (Session 10)
 
-## Session 11: Phase G - MCP Server (COMPLETE ✅)
+## Session 11: Phase G - MCP Server (COMPLETE ✅) - Migration to rmcp Pending
 
 **Duration**: 1 session
-**Status**: ✅ Complete
+**Status**: ✅ Complete (Custom JSON-RPC) → 🔄 Migration to Official SDK Needed
 **Commits**: 459bf5c
+
+**Note**: Current implementation uses custom JSON-RPC with tokio. Should migrate to official `rmcp` SDK (github.com/modelcontextprotocol/rust-sdk) for standards compliance and better maintainability.
 
 ### Work Completed
 
@@ -2072,5 +2074,56 @@ All changes pass pre-commit hooks:
 
 ---
 
-Last updated: 2025-10-27 (Session 12 - Phase A.3)
+---
+
+## Session 13: MCP Server Migration to Official rmcp SDK (IN PROGRESS 🔄)
+
+**Duration**: Current session
+**Status**: 🔄 In Progress
+**Goal**: Migrate from custom JSON-RPC to official `rmcp` SDK
+
+### Official SDK Research
+
+**SDK**: `rmcp` (github.com/modelcontextprotocol/rust-sdk)
+- Official Rust implementation from Anthropic
+- Version: 0.3.2+ (requires Rust nightly for Edition 2024)
+- Transport: stdio (standard input/output)
+- Features: Macro-based tool definitions (#[tool])
+- Performance: 4,700+ QPS native, 1,700+ QPS in Docker
+
+### Migration Plan
+
+**Phase 1: Setup** ✅
+- [x] Research official SDK
+- [x] Identify rmcp crate and features
+- [x] Document migration requirements
+
+**Phase 2: Implementation** (Current)
+- [ ] Add rmcp dependency to workspace
+- [ ] Rewrite MCP server using rmcp SDK
+- [ ] Implement 4 core operations as rmcp tools:
+  - distil_directory
+  - distil_file
+  - list_dir
+  - get_capa
+- [ ] Configure stdio transport
+- [ ] Test with Claude Desktop
+
+**Phase 3: Validation**
+- [ ] Verify stdio communication
+- [ ] Test all 4 operations
+- [ ] Validate with real Claude Desktop integration
+- [ ] Performance benchmarking
+
+### Benefits of Migration
+
+1. **Standards Compliance**: Official MCP protocol implementation
+2. **Maintainability**: Supported by Anthropic, community updates
+3. **Cleaner API**: Macro-based tool definitions reduce boilerplate
+4. **Better Integration**: Native Claude Desktop support
+5. **Type Safety**: Automatic JSON schema generation from Rust types
+
+---
+
+Last updated: 2025-10-28 (Session 13 - rmcp Migration)
 

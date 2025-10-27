@@ -1,8 +1,26 @@
 # Roadmap to 100% Language Coverage
 
 > **Current Status**: Phase 3 - 🎉 100% COMPLETE (12/12 languages) 🎉
-> **Status**: ✅ Phase 3 Complete - All 12 Languages Implemented across all 12 supported languages
-> **Achievement**: Completed 2025-10-27, then enhance all processors
+> **MCP Server**: 🔄 Migration to official `rmcp` SDK in progress
+> **Achievement**: All 12 languages implemented (2025-10-27)
+
+---
+
+## 🔄 Current Focus: MCP Server Migration
+
+### Migrating to Official rmcp SDK
+
+**Current State**: Custom JSON-RPC implementation with tokio
+**Target State**: Official `rmcp` SDK (github.com/modelcontextprotocol/rust-sdk)
+
+**Why Migrate?**
+- Standards compliance with official MCP protocol
+- Better maintainability and community support
+- Cleaner API with macro-based tool definitions
+- Native Claude Desktop integration
+- Automatic JSON schema generation
+
+**Implementation**: See RUST_PROGRESS.md Session 13 for details
 
 ---
 
