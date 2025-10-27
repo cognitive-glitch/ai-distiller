@@ -343,6 +343,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
 
 [[package]]
+name = "formatter-json"
+version = "2.0.0"
+dependencies = [
+ "distiller-core",
+ "serde_json",
+]
+
+[[package]]
+name = "formatter-jsonl"
+version = "2.0.0"
+dependencies = [
+ "distiller-core",
+ "serde_json",
+]
+
+[[package]]
 name = "formatter-markdown"
 version = "2.0.0"
 dependencies = [
