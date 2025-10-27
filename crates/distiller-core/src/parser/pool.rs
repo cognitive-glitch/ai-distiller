@@ -54,17 +54,17 @@ impl ParserPool {
         let mut inner = self.inner.lock();
 
         // Try to get existing parser from pool
-        if let Some(pool) = inner.pools.get_mut(language_name) {
-            if let Some(mut parser) = pool.pop() {
-                // Reset parser state for reuse
-                parser.reset();
+        if let Some(pool) = inner.pools.get_mut(language_name)
+            && let Some(mut parser) = pool.pop()
+        {
+            // Reset parser state for reuse
+            parser.reset();
 
-                return Ok(ParserGuard {
-                    parser: Some(parser),
-                    language_name: language_name.to_string(),
-                    pool: self.clone(),
-                });
-            }
+            return Ok(ParserGuard {
+                parser: Some(parser),
+                language_name: language_name.to_string(),
+                pool: self.clone(),
+            });
         }
 
         // No available parser, create new one

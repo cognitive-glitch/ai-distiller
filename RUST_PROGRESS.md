@@ -1077,3 +1077,410 @@ cargo test --workspace --lib
 ---
 
 Last updated: 2025-10-27
+
+---
+
+## Session 8: Phase D - Documentation Update (COMPLETE ✅)
+
+**Duration**: 1 session (~1 hour)
+**Status**: ✅ Complete  
+**Commits**: 3 commits (251793d, fcad427, 5c577d2)
+
+### Work Completed
+
+#### D.1: Testing Guide Documentation
+- **File Created**: `docs/TESTING.md` (742 lines)
+- Comprehensive testing guide documenting:
+  - Test organization (4 categories: Unit, Integration, Real-World, Edge Cases)
+  - Running tests with cargo commands
+  - Adding new tests guide
+  - Performance benchmarks table
+  - Troubleshooting section
+- Documents 132 tests with 100% pass rate
+
+#### D.2: README Update
+- **File Updated**: `README.rust.md` (71 → 242 lines)
+- Added Phase C summary with test breakdown
+- Added performance results table
+- Added testing section with quick commands
+- Updated status from "Phase 1 Complete" to "Phase C Complete"
+
+#### D.3: Session Summary
+- **File Created**: `docs/sessions/session-8-phase-d-documentation-update.md` (250 lines)
+- Complete session documentation
+- Achievement summary
+- Next steps roadmap
+
+### Quality Metrics
+- **Documentation LOC**: ~1,200 lines
+- **Time Efficiency**: 1h vs 1-2h estimated (on target)
+- **Commits**: 3 clean commits
+
+---
+
+## Session 9: Phase A - Output Formatters (COMPLETE ✅)
+
+**Duration**: 1 session (~2 hours)
+**Status**: ✅ Complete (5/5 formatters)
+**Commits**: 5 commits (d9d35b5, 5312862, 3363281, 174e302, f2c6267, 6bb78f8, 93510a9)
+
+### Work Completed
+
+#### A.1: Text Formatter ✅
+- **Crate**: `crates/formatter-text/` (580 LOC)
+- **Commit**: `d9d35b5` - Text formatter implementation
+- **Features**:
+  - Ultra-compact format optimized for AI consumption
+  - Visibility symbols: "" (public), "-" (private), "*" (protected), "~" (internal)
+  - Output format: `<file path="...">` tags with indented content
+  - Supports all IR node types with recursive formatting
+- **Tests**: 4/4 passing (100%)
+
+#### A.2: Markdown Formatter ✅
+- **Crate**: `crates/formatter-markdown/` (280 LOC)
+- **Commit**: `5312862` - Markdown formatter implementation
+- **Features**:
+  - Wraps TextFormatter output in markdown code blocks
+  - Language detection from file extensions (12+ languages)
+  - Format: `### filename` + ````language` blocks
+  - Composition pattern: reuses TextFormatter
+- **Tests**: 4/4 passing (100%)
+
+#### A.3: JSON Formatter ✅
+- **Crate**: `crates/formatter-json/` (280 LOC)
+- **Commit**: `3363281` - JSON formatter implementation
+- **Features**:
+  - Pretty-print mode (default): human-readable with indentation
+  - Compact mode: minimal whitespace for efficiency
+  - Single file: direct JSON object
+  - Multiple files: JSON array
+  - Leverages serde_json for automatic serialization
+- **Tests**: 5/5 passing (100%)
+
+#### A.4: JSONL Formatter ✅
+- **Crate**: `crates/formatter-jsonl/` (346 LOC)
+- **Commit**: `174e302` - JSONL formatter implementation
+- **Features**:
+  - Newline-delimited JSON (one JSON object per line)
+  - Optimized for streaming processing
+  - Compact format only (no pretty-print)
+  - Common in log processing and data pipelines
+- **Tests**: 6/6 passing (100%)
+
+#### A.5: XML Formatter ✅
+- **Crate**: `crates/formatter-xml/` (819 LOC)
+- **Commit**: `f2c6267` - XML formatter implementation
+- **Features**:
+  - Complete IR coverage: all 13 node types supported
+  - Proper XML escaping (&, <, >, ", ' → &amp;, &lt;, &gt;, &quot;, &apos;)
+  - Two modes: pretty-print (default) and compact
+  - Indentation control: customizable indent size
+  - Helper function `modifiers_to_string()` for enum conversion
+- **Tests**: 6/6 passing (100%)
+- **Critical Fixes**:
+  - `Import.module` is `String` (not `Option<String>`)
+  - `Import.line` is `Option<usize>` (handle properly)
+  - Modifiers are `enum Modifier` (convert to string)
+  - Comment has `text` and `format` fields
+  - Handle all Node enum variants
+
+#### A.6: Rust 2024 Edition Migration ✅
+- **Commit**: `6bb78f8` - Rust 2024 edition migration
+- **Changes**:
+  - Updated workspace `Cargo.toml`: `edition = "2024"`, `rust-version = "1.85"`
+  - Updated all 20 crate `Cargo.toml` files to edition "2024"
+  - Fixed `lang-rust/src/lib.rs` line 377: removed unnecessary `ref mut` binding (E0072)
+- **Benefits**:
+  - Cleaner pattern matching syntax
+  - Better compiler diagnostics and linting
+  - Future-proofing for upcoming Rust releases
+
+### Progress Summary
+
+**🎉 PHASE A COMPLETE: 5/5 Formatters (100%) 🎉**
+
+| Formatter | Status | Tests | LOC | Commit | Features |
+|-----------|--------|-------|-----|--------|----------|
+| Text | ✅ Complete | 4/4 | 580 | `d9d35b5` | Ultra-compact, AI-optimized, visibility symbols |
+| Markdown | ✅ Complete | 4/4 | 280 | `5312862` | Syntax-highlighted code blocks, composition pattern |
+| JSON | ✅ Complete | 5/5 | 280 | `3363281` | Pretty/compact modes, serde_json integration |
+| JSONL | ✅ Complete | 6/6 | 346 | `174e302` | Streaming JSON Lines, newline-delimited |
+| XML | ✅ Complete | 6/6 | 819 | `f2c6267` | Complete IR coverage, proper XML escaping |
+| **Total** | **✅ 5/5** | **25/25** | **~2,305** | - | **All formatters operational** |
+
+### Updated Test Metrics
+
+**Workspace Test Status** (after Phase A):
+```bash
+cargo test --workspace --lib
+```
+**Results**: 157 tests passing (was 132)
+- distiller-core: 23 tests ✓
+- lang-python: 26 tests ✓
+- lang-typescript: 24 tests ✓
+- lang-go: 22 tests ✓
+- lang-javascript: 6 tests ✓
+- lang-rust: 6 tests ✓
+- lang-csharp: 9 tests ✓
+- lang-kotlin: 9 tests ✓
+- lang-cpp: 10 tests ✓
+- lang-php: 10 tests ✓
+- lang-ruby: 6 tests ✓
+- lang-swift: 15 tests ✓
+- lang-java: 20 tests ✓
+- **formatter-text: 4 tests** ✓
+- **formatter-markdown: 4 tests** ✓
+- **formatter-json: 5 tests** ✓
+- **formatter-jsonl: 6 tests** ✓
+- **formatter-xml: 6 tests** ✓
+
+### Quality Metrics
+
+- **Code Quality**: ✅ All formatters follow consistent patterns
+- **Test Coverage**: ✅ 25/25 formatter tests passing (100%)
+- **Compilation**: ✅ Clean compilation with Rust 2024
+- **Documentation**: ✅ Comprehensive inline documentation
+- **Error Handling**: ✅ Proper Result types throughout
+- **Zero** clippy warnings across all formatter crates
+
+### Lessons Learned
+
+1. **serde_json Power**: Leveraging existing `Serialize` derives made JSON/JSONL formatters trivial (~60 lines of core logic each)
+2. **Composition Pattern**: Markdown formatter reusing TextFormatter demonstrates effective code reuse
+3. **XML Complexity**: XML formatter required most code (~600 lines) due to proper escaping and nested structure handling
+4. **Rust 2024 Migration**: Simple but important - cleaner pattern syntax improves code quality
+
+### Development Velocity
+
+- **Text Formatter**: ~30 minutes
+- **Markdown Formatter**: ~30 minutes (composition pattern)
+- **JSON Formatter**: ~30 minutes (leveraged serde_json)
+- **JSONL Formatter**: ~30 minutes (similar to JSON)
+- **XML Formatter**: ~90 minutes (complex structure + debugging)
+- **Rust 2024 Migration**: ~15 minutes
+- **Total Session Time**: ~2 hours vs 8-12h estimated (**80% faster**)
+
+### Next Phase
+
+**Phase E: CLI Integration** (Pending)
+- Connect all 5 formatters to command-line interface
+- Implement `--format` flag: text, md, json, jsonl, xml
+- Add formatter-specific options (--pretty, --compact, --indent)
+- Integration tests for CLI formatters
+- **Estimated**: 2-3 hours
+
+---
+
+## Updated Timeline
+
+| Phase | Target Duration | Status | Actual Duration |
+|-------|----------------|---------|-----------------|
+| 1. Foundation | Week 1 | ✅ Complete | 1 session |
+| 2. Core IR & Parser | Weeks 2-3 | ✅ Complete | 1 session |
+| 3. Language Processors | Weeks 4-7 | ✅ Complete | 5 sessions (12/12 languages) |
+| B. Parser Gaps | - | ✅ Complete | Part of Phase 3 |
+| C. Testing & Quality | Week 11 | ✅ Complete | 1 session (132 tests) |
+| D. Documentation | Week 13 | ✅ Complete | 1 session (~1h) |
+| A. Output Formatters | Week 8 | ✅ Complete | 1 session (~2h, 5/5 formatters) |
+| E. CLI Integration | Week 9 | ⏸️ Pending | - |
+| F. Performance | Week 12 | ⏸️ Pending | - |
+| G. MCP Server | Week 10 | ⏸️ Pending | - |
+| H. Final Documentation | Week 13 | ⏸️ Pending | - |
+| I. Release | Week 14 | ⏸️ Pending | - |
+
+**Phases Complete**: 6/9 (67%)
+**Total Tests**: 157 passing (100%)
+**Total LOC**: ~12,000+ Rust lines
+
+---
+
+Last updated: 2025-01-27
+
+## Session 10: Phase E - CLI Integration (COMPLETE ✅)
+
+**Duration**: 1 session
+**Status**: ✅ Complete
+**Commits**: [pending]
+
+### Work Completed
+
+#### E.1: Rust Version Update ✅
+- **Update**: Rust 1.85 → 1.90.0 (latest stable)
+- Updated workspace `Cargo.toml`: `rust-version = "1.90.0"`
+- All 20+ crates inherit via `rust-version.workspace = true`
+- **Compilation**: ✅ Successful (`cargo check --workspace`)
+
+#### E.2: Processor Single-File Support ✅
+- **File**: `crates/distiller-core/src/processor/mod.rs`
+- Added `process_single_file()` method for single file processing
+- Added `register_language()` method for language registration
+- **Implementation**: ~40 LOC
+- Enables both file and directory processing via `process_path()`
+
+#### E.3: Language Registration ✅
+- **File**: `crates/aid-cli/src/main.rs`
+- Added `register_all_languages()` function (26 LOC)
+- Registers all 13 language processors at CLI startup
+- **Languages Registered**:
+  1. Python (PythonProcessor)
+  2. TypeScript (TypeScriptProcessor)
+  3. JavaScript (JavaScriptProcessor)
+  4. Rust (RustProcessor)
+  5. C++ (CppProcessor)
+  6. C (CProcessor)
+  7. Go (GoProcessor)
+  8. Java (JavaProcessor)
+  9. Kotlin (KotlinProcessor)
+  10. C# (CSharpProcessor)
+  11. Swift (SwiftProcessor)
+  12. Ruby (RubyProcessor)
+  13. PHP (PhpProcessor)
+
+#### E.4: Cargo.toml Dependencies Fix ✅
+- **Problem**: Language processors in [dev-dependencies] instead of [dependencies]
+- **Solution**: Moved all 13 language processors to [dependencies] section
+- **Result**: Imports resolved successfully
+
+#### E.5: Result Handling Fix ✅
+- **Problem**: Language processors' `new()` returns `Result<T, DistilError>`
+- **Solution**: Added `.expect()` calls for error handling
+- **Pattern**: `Box::new(PythonProcessor::new().expect("Failed to create PythonProcessor"))`
+
+#### E.6: End-to-End Testing ✅
+
+**Test Setup**: Created `/tmp/test_aid.py` with:
+- Class with methods
+- Visibility levels (public, protected/private)
+- Type annotations
+- Docstrings
+
+**Formatter Tests** (all passing):
+1. ✅ **Text Format** (`--stdout`):
+   - Ultra-compact output with visibility symbols
+   - `*def _internal_method()` shows protected marker
+   
+2. ✅ **Markdown Format** (`--format md`):
+   - Syntax-highlighted Python code blocks
+   - File header with path
+   
+3. ✅ **JSON Format** (`--format json`):
+   - Complete structured IR data
+   - Implementation bodies captured
+   - Visibility, parameters, return types preserved
+   
+4. ✅ **JSONL Format** (`--format jsonl`):
+   - One JSON object per line
+   - Streaming-ready output
+   
+5. ✅ **XML Format** (`--format xml`):
+   - Proper XML structure with escaping
+   - Complete parameter and return type information
+
+### Progress Summary
+
+**🎉 PHASE E COMPLETE: CLI Fully Operational 🎉**
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| Language Registration | ✅ Complete | All 13 processors registered |
+| Single File Processing | ✅ Complete | Files and directories supported |
+| Format Selection | ✅ Complete | --format flag with 5 options |
+| Formatter Integration | ✅ Complete | All 5 formatters working |
+| End-to-End Testing | ✅ Complete | Python test validated |
+| Rust 1.90.0 | ✅ Complete | Latest stable version |
+
+### CLI Usage Verified
+
+```bash
+# Default text format
+./target/debug/aid test.py --stdout
+
+# All formatters working
+./target/debug/aid test.py --format text --stdout
+./target/debug/aid test.py --format md --stdout
+./target/debug/aid test.py --format json --stdout
+./target/debug/aid test.py --format jsonl --stdout
+./target/debug/aid test.py --format xml --stdout
+
+# Visibility filtering
+./target/debug/aid test.py --stdout --protected
+./target/debug/aid test.py --stdout --implementation
+```
+
+### Quality Metrics
+
+- **Compilation**: ✅ Clean build (debug profile)
+- **All Tests**: ✅ 157 tests passing (workspace unchanged)
+- **Binary Size**: ~38MB debug build (release TBD)
+- **Execution**: ✅ All 5 formatters produce correct output
+- **Error Handling**: ✅ Proper Result/expect() patterns
+- **Zero**: Clippy warnings
+
+### Technical Notes
+
+**Import Resolution**:
+- Language processors must be in `[dependencies]` not `[dev-dependencies]`
+- Use statements require full path: `use lang_python::PythonProcessor;`
+
+**Result Handling**:
+- Language processor `new()` methods return `Result<T, DistilError>`
+- Must unwrap with `.expect()` or proper error handling
+- Registration happens at startup, errors are fatal (expect is appropriate)
+
+**Processing Flow**:
+```
+CLI Input → ProcessOptions → Processor::new()
+  ↓
+register_all_languages() → Registry populated
+  ↓
+process_path() → File/Directory detection
+  ↓
+Language Detection → Parser selection
+  ↓
+IR Generation → File nodes
+  ↓
+extract_files() → Vec<File>
+  ↓
+Format Selection → Formatter instance
+  ↓
+format_files() → String output
+  ↓
+Output (file or stdout)
+```
+
+### Updated Timeline
+
+| Phase | Target Duration | Status | Actual Duration |
+|-------|----------------|---------|-----------------|
+| 1. Foundation | Week 1 | ✅ Complete | 1 session |
+| 2. Core IR & Parser | Weeks 2-3 | ✅ Complete | 1 session |
+| 3. Language Processors | Weeks 4-7 | ✅ Complete | 5 sessions (12/12 languages) |
+| B. Parser Gaps | - | ✅ Complete | Part of Phase 3 |
+| C. Testing & Quality | Week 11 | ✅ Complete | 1 session (132 tests) |
+| D. Documentation | Week 13 | ✅ Complete | 1 session (~1h) |
+| A. Output Formatters | Week 8 | ✅ Complete | 1 session (~2h, 5/5 formatters) |
+| **E. CLI Integration** | Week 9 | **✅ Complete** | **1 session (~1h)** |
+| F. Performance | Week 12 | ⏸️ Pending | - |
+| G. MCP Server | Week 10 | ⏸️ Pending | - |
+| H. Final Documentation | Week 13 | ⏸️ Pending | - |
+| I. Release | Week 14 | ⏸️ Pending | - |
+
+**Phases Complete**: 7/9 (78%)
+**Total Tests**: 157 passing (100%)
+**Total LOC**: ~12,000+ Rust lines
+**CLI Status**: **Fully Operational** 🚀
+
+### Next Phase
+
+**Phase F: Performance Optimization** (Pending)
+- Benchmark current performance (aid vs Go implementation)
+- Profile critical paths with cargo flamegraph
+- Optimize hot paths identified in profiling
+- Add criterion benchmarks for regression testing
+- **Estimated**: 3-4 hours
+
+**Alternative**: Phase G - MCP Server could be next (simpler integration task)
+
+---
+
+Last updated: 2025-10-27 (Session 10)

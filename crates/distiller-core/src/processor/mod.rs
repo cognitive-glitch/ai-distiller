@@ -35,6 +35,11 @@ impl Processor {
         Self::new(ProcessOptions::default())
     }
 
+    /// Register a language processor
+    pub fn register_language(&mut self, processor: Box<dyn language::LanguageProcessor>) {
+        self.language_registry.register(processor);
+    }
+
     /// Process a file or directory
     ///
     /// Automatically detects whether the path is a file or directory
@@ -47,14 +52,37 @@ impl Processor {
             Ok(Node::Directory(directory))
         } else if path.is_file() {
             // Process single file
-            // TODO: Implement single file processing
-            todo!("Single file processing - Phase 2.4")
+            let file = self.process_single_file(path)?;
+            Ok(Node::File(file))
         } else {
             Err(crate::error::DistilError::InvalidConfig(format!(
                 "Path does not exist or is not accessible: {}",
                 path.display()
             )))
         }
+    }
+
+    /// Process a single file
+    fn process_single_file(&self, path: &Path) -> Result<crate::ir::File> {
+        use crate::error::DistilError;
+
+        // Find processor for this file
+        let processor = self.language_registry.find_processor(path).ok_or_else(|| {
+            DistilError::UnsupportedLanguage {
+                path: path.display().to_string(),
+                lang: path
+                    .extension()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or("unknown")
+                    .to_string(),
+            }
+        })?;
+
+        // Read file
+        let source = std::fs::read_to_string(path).map_err(DistilError::Io)?;
+
+        // Process with language-specific processor
+        processor.process(&source, path, &self.options)
     }
 
     /// Get reference to language registry (for testing/inspection)
