@@ -1,3 +1,0 @@
-[submodule "internal/parser/grammars/tree-sitter-typescript/source"]
-	path = internal/parser/grammars/tree-sitter-typescript/source
-	url = https://github.com/tree-sitter/tree-sitter-typescript
