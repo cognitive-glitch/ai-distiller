@@ -141,7 +141,6 @@ All processing is synchronous. Parallelism is achieved via rayon's thread pool.
 
 - Uses native Rust bindings (`tree-sitter` crate)
 - Parser pooling for thread-safe access (`ParserPool`)
-- No CGO dependencies (unlike Go version)
 - All grammars compiled into binary
 
 ### 3. Visitor Pattern for Filtering
@@ -357,18 +356,6 @@ cargo test test_python_class -- --nocapture --test-threads=1
 - Validate all tree-sitter node positions
 - Use AST-based traversal
 - Test against real parser output
-
-## Performance Targets
-
-- **Single file**: < 50ms
-- **Directory (1000 files)**: < 2 seconds
-- **Binary size**: < 30MB (release, stripped)
-- **Memory**: < 500MB for 10k files
-
-Current performance:
-- Python: 473ms for 15k lines (31 lines/ms)
-- TypeScript: 382ms for 17k lines (44 lines/ms)
-- Go: 319ms for 17k lines (53 lines/ms)
 
 ## Git Commit Style
 

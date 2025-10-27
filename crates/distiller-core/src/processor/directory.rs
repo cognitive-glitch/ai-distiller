@@ -8,6 +8,7 @@ use crate::{
     error::{DistilError, Result},
     ir::{Directory, File, Node},
 };
+use glob::Pattern;
 use ignore::WalkBuilder;
 use rayon::prelude::*;
 use std::path::{Path, PathBuf};
@@ -74,6 +75,37 @@ impl DirectoryProcessor {
         })
     }
 
+    /// Check if a file path matches include/exclude patterns
+    fn should_include_file(&self, path: &Path) -> bool {
+        let path_str = path.to_string_lossy();
+
+        // If include patterns are specified, file must match at least one
+        if !self.options.include_patterns.is_empty() {
+            let matches_include = self.options.include_patterns.iter().any(|pattern| {
+                Pattern::new(pattern)
+                    .map(|p| p.matches(&path_str))
+                    .unwrap_or(false)
+            });
+            if !matches_include {
+                return false;
+            }
+        }
+
+        // If exclude patterns are specified, file must not match any
+        if !self.options.exclude_patterns.is_empty() {
+            let matches_exclude = self.options.exclude_patterns.iter().any(|pattern| {
+                Pattern::new(pattern)
+                    .map(|p| p.matches(&path_str))
+                    .unwrap_or(false)
+            });
+            if matches_exclude {
+                return false;
+            }
+        }
+
+        true
+    }
+
     /// Discover files in directory respecting .gitignore
     fn discover_files(&self, root: &Path) -> Result<Vec<(PathBuf, usize)>> {
         let mut builder = WalkBuilder::new(root);
@@ -100,8 +132,8 @@ impl DirectoryProcessor {
 
             let path = entry.path();
 
-            // Only process regular files
-            if path.is_file() {
+            // Only process regular files that match include/exclude patterns
+            if path.is_file() && self.should_include_file(path) {
                 files.push((path.to_path_buf(), index));
                 index += 1;
             }

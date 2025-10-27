@@ -27,4 +27,4 @@ pub mod stripper;
 pub use error::{DistilError, Result};
 pub use options::ProcessOptions;
 pub use parser::ParserPool;
-pub use stripper::{Stripper, strip};
+pub use stripper::Stripper;

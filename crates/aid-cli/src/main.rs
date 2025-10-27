@@ -233,16 +233,22 @@ fn main() -> Result<()> {
 
     // Step 1: Create processor with options
     let options = args.to_process_options();
-    let processor = Processor::new(options);
+    let processor = Processor::new(options.clone());
 
     // Register all language processors
     let mut processor = processor;
     register_all_languages(&mut processor);
 
     // Step 2: Process path to get IR
-    let node = processor
+    let mut node = processor
         .process_path(path)
         .context("Failed to process path")?;
+
+    // Step 2.5: Apply stripper to filter IR based on options
+    use distiller_core::ir::Visitor;
+    use distiller_core::stripper::Stripper;
+    let mut stripper = Stripper::new(options);
+    stripper.visit_node(&mut node);
 
     // Step 3: Extract files from IR node
     let files = extract_files(&node);
