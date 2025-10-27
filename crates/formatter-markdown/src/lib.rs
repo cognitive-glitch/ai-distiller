@@ -30,6 +30,10 @@ impl MarkdownFormatter {
     }
 
     /// Format a single file as Markdown
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if formatting or serialization fails
     pub fn format_file(&self, file: &File) -> Result<String, std::fmt::Error> {
         // First, format as text
         let text = self.text_formatter.format_file(file)?;
@@ -55,6 +59,10 @@ impl MarkdownFormatter {
     }
 
     /// Format multiple files as Markdown
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if formatting or serialization fails
     pub fn format_files(&self, files: &[File]) -> Result<String, std::fmt::Error> {
         let mut output = String::new();
 

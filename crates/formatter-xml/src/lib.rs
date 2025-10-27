@@ -48,6 +48,10 @@ impl XmlFormatter {
     }
 
     /// Format a single file as XML
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if formatting or serialization fails
     pub fn format_file(&self, file: &File) -> Result<String, std::fmt::Error> {
         let mut output = String::new();
         writeln!(output, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>")?;
@@ -56,6 +60,10 @@ impl XmlFormatter {
     }
 
     /// Format multiple files as XML
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if formatting or serialization fails
     pub fn format_files(&self, files: &[File]) -> Result<String, std::fmt::Error> {
         let mut output = String::new();
         writeln!(output, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>")?;

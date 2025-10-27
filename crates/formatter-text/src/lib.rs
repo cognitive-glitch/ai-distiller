@@ -41,6 +41,10 @@ impl TextFormatter {
     }
 
     /// Format a single file
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if formatting or serialization fails
     pub fn format_file(&self, file: &File) -> Result<String, std::fmt::Error> {
         let mut output = String::new();
         writeln!(output, "<file path=\"{}\">", file.path)?;
@@ -54,6 +58,10 @@ impl TextFormatter {
     }
 
     /// Format multiple files
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if formatting or serialization fails
     pub fn format_files(&self, files: &[File]) -> Result<String, std::fmt::Error> {
         let mut output = String::new();
 

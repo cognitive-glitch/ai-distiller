@@ -14,6 +14,11 @@ pub struct SwiftProcessor {
 }
 
 impl SwiftProcessor {
+    /// Create a new Swift processor
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if parsing or tree-sitter operations fail
     pub fn new() -> Result<Self> {
         let mut parser = Parser::new();
         parser

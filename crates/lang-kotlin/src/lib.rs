@@ -14,6 +14,11 @@ pub struct KotlinProcessor {
 }
 
 impl KotlinProcessor {
+    /// Create a new Kotlin processor
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if parsing or tree-sitter operations fail
     pub fn new() -> Result<Self> {
         let mut parser = Parser::new();
         parser

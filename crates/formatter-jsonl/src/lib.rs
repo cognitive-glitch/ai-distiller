@@ -18,11 +18,19 @@ impl JsonlFormatter {
     }
 
     /// Format a single file as compact JSON
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if formatting or serialization fails
     pub fn format_file(&self, file: &File) -> Result<String, serde_json::Error> {
         serde_json::to_string(file)
     }
 
     /// Format multiple files as JSONL (one JSON object per line)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if formatting or serialization fails
     pub fn format_files(&self, files: &[File]) -> Result<String, serde_json::Error> {
         let mut output = String::new();
 

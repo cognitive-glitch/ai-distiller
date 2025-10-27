@@ -40,6 +40,10 @@ impl JsonFormatter {
     }
 
     /// Format a single file as JSON
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if formatting or serialization fails
     pub fn format_file(&self, file: &File) -> Result<String, serde_json::Error> {
         if self.options.pretty {
             serde_json::to_string_pretty(file)
@@ -49,6 +53,10 @@ impl JsonFormatter {
     }
 
     /// Format multiple files as JSON array
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if formatting or serialization fails
     pub fn format_files(&self, files: &[File]) -> Result<String, serde_json::Error> {
         if self.options.pretty {
             serde_json::to_string_pretty(files)

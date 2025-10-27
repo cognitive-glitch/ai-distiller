@@ -14,6 +14,11 @@ pub struct RubyProcessor {
 }
 
 impl RubyProcessor {
+    /// Create a new Ruby processor
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if parsing or tree-sitter operations fail
     pub fn new() -> Result<Self> {
         let mut parser = Parser::new();
         parser

@@ -27,6 +27,10 @@ pub struct PythonProcessor {
 
 impl PythonProcessor {
     /// Create a new Python processor
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if parsing or tree-sitter operations fail
     pub fn new() -> Result<Self> {
         let mut parser = Parser::new();
         parser

@@ -17,6 +17,11 @@ pub struct JavaProcessor {
 }
 
 impl JavaProcessor {
+    /// Create a new Java processor
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if parsing or tree-sitter operations fail
     pub fn new() -> Result<Self> {
         let mut parser = Parser::new();
         parser

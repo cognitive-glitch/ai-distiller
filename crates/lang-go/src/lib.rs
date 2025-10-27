@@ -17,6 +17,11 @@ pub struct GoProcessor {
 }
 
 impl GoProcessor {
+    /// Create a new Go processor
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if parsing or tree-sitter operations fail
     pub fn new() -> Result<Self> {
         let mut parser = Parser::new();
         let language = tree_sitter_go::LANGUAGE;

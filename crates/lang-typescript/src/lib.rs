@@ -26,6 +26,11 @@ pub struct TypeScriptProcessor {
 }
 
 impl TypeScriptProcessor {
+    /// Create a new Typescript processor
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if parsing or tree-sitter operations fail
     pub fn new() -> Result<Self> {
         let mut parser = Parser::new();
         parser

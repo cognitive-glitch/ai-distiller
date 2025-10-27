@@ -15,6 +15,11 @@ pub struct JavaScriptProcessor {
 }
 
 impl JavaScriptProcessor {
+    /// Create a new Javascript processor
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if parsing or tree-sitter operations fail
     pub fn new() -> Result<Self> {
         let mut parser = tree_sitter::Parser::new();
         parser

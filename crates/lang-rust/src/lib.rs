@@ -16,6 +16,11 @@ pub struct RustProcessor {
 }
 
 impl RustProcessor {
+    /// Create a new Rust processor
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if parsing or tree-sitter operations fail
     pub fn new() -> Result<Self> {
         let mut parser = tree_sitter::Parser::new();
         parser
