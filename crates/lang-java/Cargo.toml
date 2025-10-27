@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 distiller-core = { path = "../distiller-core" }
-tree-sitter = "0.24"
+tree-sitter = "0.25"
 tree-sitter-java = "0.23"
 parking_lot = "0.12"
 

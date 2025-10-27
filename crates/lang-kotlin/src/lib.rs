@@ -581,4 +581,341 @@ suspend fun fetchUser(id: Long): User? {
         });
         assert!(has_suspend, "Expected suspend function");
     }
+    // ===== Enhanced Test Coverage =====
+
+    #[test]
+    fn test_simple_function_with_parameters() {
+        let source = r#"
+fun greet(name: String, age: Int) {
+    println("Hello $name, age $age")
+}
+"#;
+        let processor = KotlinProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let file = processor
+            .process(source, &PathBuf::from("Test.kt"), &opts)
+            .unwrap();
+
+        assert_eq!(file.children.len(), 1);
+        if let Node::Function(func) = &file.children[0] {
+            assert_eq!(func.name, "greet");
+            assert_eq!(func.parameters.len(), 2);
+            
+            // Validate typed parameters
+            assert_eq!(func.parameters[0].name, "name");
+            assert_eq!(func.parameters[0].param_type.name, "String");
+            assert_eq!(func.parameters[1].name, "age");
+            assert_eq!(func.parameters[1].param_type.name, "Int");
+        } else {
+            panic!("Expected function node");
+        }
+    }
+
+    #[test]
+    fn test_class_with_multiple_methods() {
+        let source = r#"
+class Calculator {
+    fun add(a: Int, b: Int): Int {
+        return a + b
+    }
+    
+    fun multiply(x: Int, y: Int): Int {
+        return x * y
+    }
+    
+    private fun helper() {
+        // private helper
+    }
+}
+"#;
+        let processor = KotlinProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let file = processor
+            .process(source, &PathBuf::from("Calculator.kt"), &opts)
+            .unwrap();
+
+        assert_eq!(file.children.len(), 1);
+        if let Node::Class(class) = &file.children[0] {
+            assert_eq!(class.name, "Calculator");
+            assert_eq!(class.children.len(), 3);
+            
+            // Count functions
+            let funcs: Vec<_> = class.children.iter()
+                .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+                .collect();
+            
+            assert_eq!(funcs.len(), 3);
+            assert_eq!(funcs[0].name, "add");
+            assert_eq!(funcs[1].name, "multiply");
+            assert_eq!(funcs[2].name, "helper");
+            assert_eq!(funcs[2].visibility, Visibility::Private);
+        } else {
+            panic!("Expected class node");
+        }
+    }
+
+    #[test]
+    fn test_abstract_class_with_abstract_method() {
+        let source = r#"
+abstract class Shape {
+    abstract fun area(): Double
+    
+    open fun describe() {
+        println("I am a shape")
+    }
+}
+"#;
+        let processor = KotlinProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let file = processor
+            .process(source, &PathBuf::from("Shape.kt"), &opts)
+            .unwrap();
+
+        assert!(!file.children.is_empty());
+        if let Node::Class(class) = &file.children[0] {
+            assert_eq!(class.name, "Shape");
+            assert!(class.modifiers.contains(&Modifier::Abstract), 
+                   "Expected abstract modifier on class");
+            
+            // Find abstract method
+            let abstract_methods: Vec<_> = class.children.iter()
+                .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+                .filter(|f| f.modifiers.contains(&Modifier::Abstract))
+                .collect();
+            
+            assert!(!abstract_methods.is_empty(), "Expected abstract method");
+            assert_eq!(abstract_methods[0].name, "area");
+        } else {
+            panic!("Expected class node");
+        }
+    }
+
+    #[test]
+    fn test_interface_declaration() {
+        let source = r#"
+interface Drawable {
+    fun draw()
+    fun getColor(): String
+}
+"#;
+        let processor = KotlinProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let file = processor
+            .process(source, &PathBuf::from("Drawable.kt"), &opts)
+            .unwrap();
+
+        // Interfaces might be parsed as classes in tree-sitter
+        assert!(!file.children.is_empty(), "Expected interface/class node");
+    }
+
+    #[test]
+    fn test_nested_class() {
+        let source = r#"
+class Outer {
+    class Inner {
+        fun innerMethod() {}
+    }
+}
+"#;
+        let processor = KotlinProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let file = processor
+            .process(source, &PathBuf::from("Nested.kt"), &opts)
+            .unwrap();
+
+        assert_eq!(file.children.len(), 1);
+        if let Node::Class(outer) = &file.children[0] {
+            assert_eq!(outer.name, "Outer");
+            
+            // Find nested class
+            let nested_classes: Vec<_> = outer.children.iter()
+                .filter_map(|n| if let Node::Class(c) = n { Some(c) } else { None })
+                .collect();
+            
+            assert!(!nested_classes.is_empty(), "Expected nested class");
+            assert_eq!(nested_classes[0].name, "Inner");
+        } else {
+            panic!("Expected class node");
+        }
+    }
+
+    #[test]
+    fn test_object_declaration() {
+        let source = r#"
+object Singleton {
+    val name = "Singleton"
+    
+    fun getInstance() = this
+}
+"#;
+        let processor = KotlinProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let file = processor
+            .process(source, &PathBuf::from("Singleton.kt"), &opts)
+            .unwrap();
+
+        assert!(!file.children.is_empty());
+        if let Node::Class(obj) = &file.children[0] {
+            assert_eq!(obj.name, "Singleton");
+            assert!(obj.decorators.contains(&"object".to_string()), 
+                   "Expected 'object' decorator");
+        } else {
+            panic!("Expected class node for object");
+        }
+    }
+
+    #[test]
+    fn test_properties_with_types() {
+        let source = r#"
+class User {
+    val id: Long = 1
+    var name: String = "John"
+    private val password: String = "secret"
+}
+"#;
+        let processor = KotlinProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let file = processor
+            .process(source, &PathBuf::from("User.kt"), &opts)
+            .unwrap();
+
+        assert!(!file.children.is_empty());
+        if let Node::Class(class) = &file.children[0] {
+            assert_eq!(class.name, "User");
+            
+            let fields: Vec<_> = class.children.iter()
+                .filter_map(|n| if let Node::Field(f) = n { Some(f) } else { None })
+                .collect();
+            
+            assert_eq!(fields.len(), 3);
+            assert_eq!(fields[0].name, "id");
+            assert_eq!(fields[1].name, "name");
+            assert_eq!(fields[2].name, "password");
+            assert_eq!(fields[2].visibility, Visibility::Private);
+        } else {
+            panic!("Expected class node");
+        }
+    }
+
+    #[test]
+    fn test_inline_function() {
+        let source = r#"
+inline fun <reified T> isInstance(value: Any): Boolean {
+    return value is T
+}
+"#;
+        let processor = KotlinProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let file = processor
+            .process(source, &PathBuf::from("Inline.kt"), &opts)
+            .unwrap();
+
+        assert!(!file.children.is_empty());
+        if let Node::Function(func) = &file.children[0] {
+            assert_eq!(func.name, "isInstance");
+            assert!(func.modifiers.contains(&Modifier::Inline), 
+                   "Expected inline modifier");
+        } else {
+            panic!("Expected function node");
+        }
+    }
+
+    #[test]
+    fn test_empty_file() {
+        let source = "";
+        let processor = KotlinProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let file = processor
+            .process(source, &PathBuf::from("Empty.kt"), &opts)
+            .unwrap();
+
+        assert_eq!(file.children.len(), 0, "Empty file should have no children");
+    }
+
+    #[test]
+    fn test_multiple_top_level_declarations() {
+        let source = r#"
+fun topLevelFunction() {}
+
+class MyClass {}
+
+val topLevelProperty = 42
+
+object MySingleton {}
+"#;
+        let processor = KotlinProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let file = processor
+            .process(source, &PathBuf::from("Multiple.kt"), &opts)
+            .unwrap();
+
+        assert!(file.children.len() >= 3, 
+               "Expected at least 3 top-level declarations, got {}", 
+               file.children.len());
+    }
+
+    #[test]
+    fn test_final_override_modifiers() {
+        let source = r#"
+open class Base {
+    open fun method() {}
+}
+
+class Derived : Base() {
+    final override fun method() {}
+}
+"#;
+        let processor = KotlinProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let file = processor
+            .process(source, &PathBuf::from("Override.kt"), &opts)
+            .unwrap();
+
+        assert_eq!(file.children.len(), 2);
+        
+        // Check Base class
+        if let Node::Class(base) = &file.children[0] {
+            assert_eq!(base.name, "Base");
+            assert!(base.modifiers.contains(&Modifier::Virtual), 
+                   "Expected open (virtual) modifier on base class");
+        }
+        
+        // Check Derived class
+        if let Node::Class(derived) = &file.children[1] {
+            assert_eq!(derived.name, "Derived");
+            
+            // Find override method
+            let override_methods: Vec<_> = derived.children.iter()
+                .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+                .filter(|f| f.modifiers.contains(&Modifier::Override))
+                .collect();
+            
+            assert!(!override_methods.is_empty(), "Expected override method");
+            assert!(override_methods[0].modifiers.contains(&Modifier::Final), 
+                   "Expected final modifier on override method");
+        }
+    }
+
+    #[test]
+    fn test_internal_visibility() {
+        let source = r#"
+internal class InternalClass {
+    internal fun internalMethod() {}
+}
+"#;
+        let processor = KotlinProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let file = processor
+            .process(source, &PathBuf::from("Internal.kt"), &opts)
+            .unwrap();
+
+        assert!(!file.children.is_empty());
+        if let Node::Class(class) = &file.children[0] {
+            assert_eq!(class.name, "InternalClass");
+            assert_eq!(class.visibility, Visibility::Internal, 
+                      "Expected internal visibility");
+        } else {
+            panic!("Expected class node");
+        }
+    }
 }

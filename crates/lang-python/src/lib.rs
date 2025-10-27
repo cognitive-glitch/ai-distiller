@@ -642,3 +642,340 @@ mod tests {
         }
     }
 }
+
+    // ===== Enhanced Test Coverage =====
+
+    #[test]
+    fn test_function_with_return_type() {
+        let processor = PythonProcessor::new().unwrap();
+        let source = "def calculate(x: int, y: int) -> int:\n    return x + y";
+        let opts = ProcessOptions::default();
+
+        let file = processor.process(source, Path::new("test.py"), &opts).unwrap();
+        assert_eq!(file.children.len(), 1);
+
+        if let Node::Function(func) = &file.children[0] {
+            assert_eq!(func.name, "calculate");
+            assert!(func.parameters.len() >= 1, "Expected at least 1 parameter, got {}", func.parameters.len());
+            
+            // Validate typed parameters
+            assert_eq!(func.parameters[0].name, "x");
+            assert_eq!(func.parameters[0].param_type.name, "int");
+            assert_eq!(func.parameters[1].name, "y");
+            assert_eq!(func.parameters[1].param_type.name, "int");
+            
+            // Validate return type
+            assert!(func.return_type.is_some());
+            assert_eq!(func.return_type.as_ref().unwrap().name, "int");
+        } else {
+            panic!("Expected function node, got {:?}", file.children[0]);
+        }
+    }
+
+    #[test]
+    fn test_async_function() {
+        let processor = PythonProcessor::new().unwrap();
+        let source = "async def fetch_data():\n    pass";
+        let opts = ProcessOptions::default();
+
+        let file = processor.process(source, Path::new("test.py"), &opts).unwrap();
+        assert_eq!(file.children.len(), 1);
+
+        if let Node::Function(func) = &file.children[0] {
+            assert_eq!(func.name, "fetch_data");
+            assert!(func.modifiers.contains(&Modifier::Async), 
+                    "Expected async modifier, got {:?}", func.modifiers);
+        } else {
+            panic!("Expected function node");
+        }
+    }
+
+    #[test]
+    fn test_decorated_function() {
+        let processor = PythonProcessor::new().unwrap();
+        let source = "@staticmethod\ndef helper():\n    pass";
+        let opts = ProcessOptions::default();
+
+        let file = processor.process(source, Path::new("test.py"), &opts).unwrap();
+        assert_eq!(file.children.len(), 1);
+
+        if let Node::Function(func) = &file.children[0] {
+            assert_eq!(func.name, "helper");
+            assert_eq!(func.decorators.len(), 1);
+            assert_eq!(func.decorators[0], "@staticmethod");
+        } else {
+            panic!("Expected function node");
+        }
+    }
+
+    #[test]
+    fn test_class_with_inheritance() {
+        let processor = PythonProcessor::new().unwrap();
+        let source = "class Child(Parent):\n    pass";
+        let opts = ProcessOptions::default();
+
+        let file = processor.process(source, Path::new("test.py"), &opts).unwrap();
+        assert_eq!(file.children.len(), 1);
+
+        if let Node::Class(class) = &file.children[0] {
+            assert_eq!(class.name, "Child");
+            assert_eq!(class.extends.len(), 1);
+            assert_eq!(class.extends[0].name, "Parent");
+        } else {
+            panic!("Expected class node");
+        }
+    }
+
+    #[test]
+    fn test_class_with_multiple_inheritance() {
+        let processor = PythonProcessor::new().unwrap();
+        let source = "class MultiChild(Parent1, Parent2, Parent3):\n    pass";
+        let opts = ProcessOptions::default();
+
+        let file = processor.process(source, Path::new("test.py"), &opts).unwrap();
+        assert_eq!(file.children.len(), 1);
+
+        if let Node::Class(class) = &file.children[0] {
+            assert_eq!(class.name, "MultiChild");
+            assert_eq!(class.extends.len(), 3, 
+                      "Expected 3 base classes, got {}", class.extends.len());
+            assert_eq!(class.extends[0].name, "Parent1");
+            assert_eq!(class.extends[1].name, "Parent2");
+            assert_eq!(class.extends[2].name, "Parent3");
+        } else {
+            panic!("Expected class node");
+        }
+    }
+
+    #[test]
+    fn test_class_with_mixed_visibility_methods() {
+        let processor = PythonProcessor::new().unwrap();
+        let source = r#"class Service:
+    def public_method(self):
+        pass
+    
+    def _protected_method(self):
+        pass
+    
+    def __private_method(self):
+        pass
+    
+    def __init__(self):
+        pass
+"#;
+        let opts = ProcessOptions::default();
+
+        let file = processor.process(source, Path::new("test.py"), &opts).unwrap();
+        assert_eq!(file.children.len(), 1);
+
+        if let Node::Class(class) = &file.children[0] {
+            assert_eq!(class.name, "Service");
+            assert_eq!(class.children.len(), 4);
+
+            // Validate visibility levels
+            let methods: Vec<_> = class.children.iter()
+                .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+                .collect();
+            
+            assert_eq!(methods.len(), 4);
+            
+            // public_method
+            assert_eq!(methods[0].name, "public_method");
+            assert_eq!(methods[0].visibility, Visibility::Public);
+            
+            // _protected_method
+            assert_eq!(methods[1].name, "_protected_method");
+            assert_eq!(methods[1].visibility, Visibility::Protected);
+            
+            // __private_method
+            assert_eq!(methods[2].name, "__private_method");
+            assert_eq!(methods[2].visibility, Visibility::Private);
+            
+            // __init__ (dunder, public)
+            assert_eq!(methods[3].name, "__init__");
+            assert_eq!(methods[3].visibility, Visibility::Public);
+        } else {
+            panic!("Expected class node");
+        }
+    }
+
+    #[test]
+    fn test_decorated_class() {
+        let processor = PythonProcessor::new().unwrap();
+        let source = "@dataclass\nclass Point:\n    x: int\n    y: int";
+        let opts = ProcessOptions::default();
+
+        let file = processor.process(source, Path::new("test.py"), &opts).unwrap();
+        assert_eq!(file.children.len(), 1);
+
+        if let Node::Class(class) = &file.children[0] {
+            assert_eq!(class.name, "Point");
+            assert_eq!(class.decorators.len(), 1);
+            assert_eq!(class.decorators[0], "@dataclass");
+        } else {
+            panic!("Expected class node");
+        }
+    }
+
+    #[test]
+    fn test_function_with_typed_parameters() {
+        let processor = PythonProcessor::new().unwrap();
+        let source = "def greet(name: str, count: int) -> str:\n    return name * count";
+        let opts = ProcessOptions::default();
+
+        let file = processor.process(source, Path::new("test.py"), &opts).unwrap();
+        assert_eq!(file.children.len(), 1);
+
+        if let Node::Function(func) = &file.children[0] {
+            assert_eq!(func.name, "greet");
+            assert!(func.parameters.len() >= 2, "Expected at least 2 parameters, got {}", func.parameters.len());
+            
+            // Validate typed parameters
+            assert_eq!(func.parameters[0].name, "name");
+            assert_eq!(func.parameters[0].param_type.name, "str");
+            
+            if func.parameters.len() >= 2 {
+                assert_eq!(func.parameters[1].name, "count");
+                assert_eq!(func.parameters[1].param_type.name, "int");
+            }
+            
+            // Validate return type
+            assert!(func.return_type.is_some());
+            assert_eq!(func.return_type.as_ref().unwrap().name, "str");
+        } else {
+            panic!("Expected function node");
+        }
+    }
+
+    #[test]
+    fn test_multiple_decorators() {
+        let processor = PythonProcessor::new().unwrap();
+        let source = "@decorator1\n@decorator2\n@decorator3\ndef decorated():\n    pass";
+        let opts = ProcessOptions::default();
+
+        let file = processor.process(source, Path::new("test.py"), &opts).unwrap();
+        assert_eq!(file.children.len(), 1);
+
+        if let Node::Function(func) = &file.children[0] {
+            assert_eq!(func.name, "decorated");
+            assert_eq!(func.decorators.len(), 3, 
+                      "Expected 3 decorators, got {}", func.decorators.len());
+            assert_eq!(func.decorators[0], "@decorator1");
+            assert_eq!(func.decorators[1], "@decorator2");
+            assert_eq!(func.decorators[2], "@decorator3");
+        } else {
+            panic!("Expected function node");
+        }
+    }
+
+    #[test]
+    fn test_empty_file() {
+        let processor = PythonProcessor::new().unwrap();
+        let source = "";
+        let opts = ProcessOptions::default();
+
+        let file = processor.process(source, Path::new("test.py"), &opts).unwrap();
+        assert_eq!(file.children.len(), 0, "Empty file should have no children");
+    }
+
+    #[test]
+    fn test_multiple_imports() {
+        let processor = PythonProcessor::new().unwrap();
+        let source = r#"import os
+import sys
+from typing import List, Dict, Optional
+from pathlib import Path
+"#;
+        let opts = ProcessOptions::default();
+
+        let file = processor.process(source, Path::new("test.py"), &opts).unwrap();
+        assert_eq!(file.children.len(), 4);
+
+        // Validate import types
+        let imports: Vec<_> = file.children.iter()
+            .filter_map(|n| if let Node::Import(i) = n { Some(i) } else { None })
+            .collect();
+        
+        assert_eq!(imports.len(), 4);
+        assert_eq!(imports[0].module, "os");
+        assert_eq!(imports[0].import_type, "import");
+        assert_eq!(imports[1].module, "sys");
+        assert_eq!(imports[1].import_type, "import");
+        assert_eq!(imports[2].module, "typing");
+        assert_eq!(imports[2].import_type, "from");
+        assert_eq!(imports[3].module, "pathlib");
+        assert_eq!(imports[3].import_type, "from");
+    }
+
+    #[test]
+    fn test_complex_class_with_everything() {
+        let processor = PythonProcessor::new().unwrap();
+        let source = r#"@dataclass
+class ComplexService(BaseService, Mixin):
+    def __init__(self):
+        self.public_field = 0
+        self._protected_field = 1
+        self.__private_field = 2
+    
+    @property
+    def value(self) -> int:
+        return self.public_field
+    
+    @staticmethod
+    def helper() -> str:
+        return "help"
+    
+    async def fetch(self, url: str) -> str:
+        pass
+"#;
+        let opts = ProcessOptions::default();
+
+        let file = processor.process(source, Path::new("test.py"), &opts).unwrap();
+        assert_eq!(file.children.len(), 1);
+
+        if let Node::Class(class) = &file.children[0] {
+            assert_eq!(class.name, "ComplexService");
+            
+            // Validate decorators
+            assert_eq!(class.decorators.len(), 1);
+            assert_eq!(class.decorators[0], "@dataclass");
+            
+            // Validate inheritance
+            assert_eq!(class.extends.len(), 2);
+            assert_eq!(class.extends[0].name, "BaseService");
+            assert_eq!(class.extends[1].name, "Mixin");
+            
+            // Validate children (1 __init__ + 3 fields + 3 methods)
+            assert!(class.children.len() >= 4, 
+                   "Expected at least 4 children, got {}", class.children.len());
+            
+            // Find the async method
+            let async_methods: Vec<_> = class.children.iter()
+                .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+                .filter(|f| f.modifiers.contains(&Modifier::Async))
+                .collect();
+            
+            assert!(!async_methods.is_empty(), "Expected to find async method");
+            assert_eq!(async_methods[0].name, "fetch");
+        } else {
+            panic!("Expected class node");
+        }
+    }
+
+    #[test]
+    fn test_private_class() {
+        let processor = PythonProcessor::new().unwrap();
+        let source = "class _PrivateClass:\n    pass";
+        let opts = ProcessOptions::default();
+
+        let file = processor.process(source, Path::new("test.py"), &opts).unwrap();
+        assert_eq!(file.children.len(), 1);
+
+        if let Node::Class(class) = &file.children[0] {
+            assert_eq!(class.name, "_PrivateClass");
+            assert_eq!(class.visibility, Visibility::Protected, 
+                      "Classes starting with _ should be protected");
+        } else {
+            panic!("Expected class node");
+        }
+    }
