@@ -216,6 +216,7 @@ impl PythonProcessor {
 
     /// Parse base classes from argument list
     #[allow(clippy::unused_self)]
+    #[allow(clippy::unnecessary_wraps)]
     fn parse_base_classes(
         &self,
         node: tree_sitter::Node,

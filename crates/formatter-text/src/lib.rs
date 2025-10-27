@@ -477,7 +477,7 @@ impl TextFormatter {
                 .map(|t| self.format_type_ref(t))
                 .collect::<Vec<_>>()
                 .join(", ");
-            result.push_str(&format!("<{args}>"));
+            write!(result, "<{args}>").unwrap();
         }
 
         if type_ref.is_array {
@@ -504,7 +504,7 @@ impl TextFormatter {
                         .map(|t| self.format_type_ref(t))
                         .collect::<Vec<_>>()
                         .join(" + ");
-                    result.push_str(&format!(": {constraints}"));
+                    write!(result, ": {constraints}").unwrap();
                 }
                 result
             })
@@ -515,10 +515,10 @@ impl TextFormatter {
     /// Format a parameter
     fn format_parameter(&self, param: &Parameter) -> String {
         let mut result = param.name.clone();
-        result.push_str(&format!(": {}", self.format_type_ref(&param.param_type)));
+        write!(result, ": {}", self.format_type_ref(&param.param_type)).unwrap();
 
         if let Some(ref default) = param.default_value {
-            result.push_str(&format!(" = {default}"));
+            write!(result, " = {default}").unwrap();
         }
 
         if param.is_optional {

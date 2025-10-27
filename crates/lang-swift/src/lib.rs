@@ -227,6 +227,7 @@ impl SwiftProcessor {
         }))
     }
 
+    #[allow(clippy::unnecessary_wraps)]
     fn parse_type_inheritance(
         node: TSNode,
         source: &str,
@@ -333,6 +334,8 @@ impl SwiftProcessor {
         }
         Ok(())
     }
+
+#[allow(clippy::unnecessary_wraps)]
 
     fn parse_single_parameter(
         node: TSNode,

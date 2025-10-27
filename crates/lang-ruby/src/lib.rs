@@ -191,6 +191,7 @@ impl RubyProcessor {
         }))
     }
 
+    #[allow(clippy::unnecessary_wraps)]
     fn parse_parameters(node: TSNode, source: &str, params: &mut Vec<Parameter>) -> Result<()> {
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
