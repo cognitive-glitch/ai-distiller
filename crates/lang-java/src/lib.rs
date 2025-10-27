@@ -5,15 +5,15 @@ use distiller_core::{
         self, Class, Field, File, Function, Import, Modifier, Parameter, TypeParam, TypeRef,
         Visibility,
     },
+    parser::ParserPool,
     processor::LanguageProcessor,
 };
-use parking_lot::Mutex;
 use std::path::Path;
 use std::sync::Arc;
-use tree_sitter::{Node as TSNode, Parser};
+use tree_sitter::Node as TSNode;
 
 pub struct JavaProcessor {
-    parser: Arc<Mutex<Parser>>,
+    pool: Arc<ParserPool>,
 }
 
 impl JavaProcessor {
@@ -23,13 +23,8 @@ impl JavaProcessor {
     ///
     /// Returns an error if parsing or tree-sitter operations fail
     pub fn new() -> Result<Self> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_java::LANGUAGE.into())
-            .map_err(|e| DistilError::parse_error("java", e.to_string()))?;
-
         Ok(Self {
-            parser: Arc::new(Mutex::new(parser)),
+            pool: Arc::new(ParserPool::default()),
         })
     }
 
@@ -707,7 +702,11 @@ impl LanguageProcessor for JavaProcessor {
 
     #[allow(clippy::match_same_arms)]
     fn process(&self, source: &str, path: &Path, _opts: &ProcessOptions) -> Result<File> {
-        let mut parser = self.parser.lock();
+        let mut parser_guard = self
+            .pool
+            .acquire("java", || Ok(tree_sitter_java::LANGUAGE.into()))?;
+        let parser = parser_guard.get_mut();
+
         let tree = parser.parse(source, None).ok_or_else(|| {
             DistilError::parse_error(path.display().to_string(), "Failed to parse Java source")
         })?;
@@ -1546,7 +1545,11 @@ mod debug_tests {
 }"#;
 
         let processor = JavaProcessor::new().unwrap();
-        let mut parser = processor.parser.lock();
+        let mut parser_guard = processor
+            .pool
+            .acquire("java", || Ok(tree_sitter_java::LANGUAGE.into()))
+            .unwrap();
+        let parser = parser_guard.get_mut();
         let tree = parser.parse(source, None).unwrap();
         let root = tree.root_node();
 
@@ -1569,7 +1572,11 @@ mod debug_tests {
 }"#;
 
         let processor = JavaProcessor::new().unwrap();
-        let mut parser = processor.parser.lock();
+        let mut parser_guard = processor
+            .pool
+            .acquire("java", || Ok(tree_sitter_java::LANGUAGE.into()))
+            .unwrap();
+        let parser = parser_guard.get_mut();
         let tree = parser.parse(source, None).unwrap();
         let root = tree.root_node();
 
@@ -1593,7 +1600,11 @@ public class LegacyService {
 }"#;
 
         let processor = JavaProcessor::new().unwrap();
-        let mut parser = processor.parser.lock();
+        let mut parser_guard = processor
+            .pool
+            .acquire("java", || Ok(tree_sitter_java::LANGUAGE.into()))
+            .unwrap();
+        let parser = parser_guard.get_mut();
         let tree = parser.parse(source, None).unwrap();
         let root = tree.root_node();
 

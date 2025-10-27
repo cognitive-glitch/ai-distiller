@@ -2,15 +2,15 @@ use distiller_core::{
     ProcessOptions,
     error::{DistilError, Result},
     ir::{self, Class, File, Function, Parameter, TypeRef, Visibility},
+    parser::ParserPool,
     processor::LanguageProcessor,
 };
-use parking_lot::Mutex;
 use std::path::Path;
 use std::sync::Arc;
-use tree_sitter::{Node as TSNode, Parser};
+use tree_sitter::Node as TSNode;
 
 pub struct RubyProcessor {
-    parser: Arc<Mutex<Parser>>,
+    pool: Arc<ParserPool>,
 }
 
 impl RubyProcessor {
@@ -20,13 +20,8 @@ impl RubyProcessor {
     ///
     /// Returns an error if parsing or tree-sitter operations fail
     pub fn new() -> Result<Self> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_ruby::LANGUAGE.into())
-            .map_err(|e| DistilError::parse_error("ruby", e.to_string()))?;
-
         Ok(Self {
-            parser: Arc::new(Mutex::new(parser)),
+            pool: Arc::new(ParserPool::default()),
         })
     }
 
@@ -285,7 +280,11 @@ impl LanguageProcessor for RubyProcessor {
     }
 
     fn process(&self, source: &str, path: &Path, _opts: &ProcessOptions) -> Result<File> {
-        let mut parser = self.parser.lock();
+        let mut parser_guard = self
+            .pool
+            .acquire("ruby", || Ok(tree_sitter_ruby::LANGUAGE.into()))?;
+        let parser = parser_guard.get_mut();
+
         let tree = parser.parse(source, None).ok_or_else(|| {
             DistilError::parse_error(path.display().to_string(), "Failed to parse Ruby source")
         })?;

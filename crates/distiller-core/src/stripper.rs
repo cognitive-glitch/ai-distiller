@@ -198,8 +198,10 @@ mod tests {
 
     #[test]
     fn test_implementation_removal() {
-        let mut opts = ProcessOptions::default();
-        opts.include_implementation = false;
+        let opts = ProcessOptions {
+            include_implementation: false,
+            ..Default::default()
+        };
 
         let mut stripper = Stripper::new(opts);
         let mut func = Function {

@@ -2,15 +2,15 @@ use distiller_core::{
     ProcessOptions,
     error::{DistilError, Result},
     ir::{Class, Field, File, Function, Import, Modifier, Node, Parameter, TypeRef, Visibility},
+    parser::ParserPool,
     processor::LanguageProcessor,
 };
-use parking_lot::Mutex;
 use std::path::Path;
 use std::sync::Arc;
-use tree_sitter::{Node as TSNode, Parser};
+use tree_sitter::Node as TSNode;
 
 pub struct CProcessor {
-    parser: Arc<Mutex<Parser>>,
+    pool: Arc<ParserPool>,
 }
 
 impl CProcessor {
@@ -20,12 +20,8 @@ impl CProcessor {
     ///
     /// Returns an error if parsing or tree-sitter operations fail
     pub fn new() -> Result<Self> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_c::LANGUAGE.into())
-            .map_err(|e| DistilError::parse_error("c", e.to_string()))?;
         Ok(Self {
-            parser: Arc::new(Mutex::new(parser)),
+            pool: Arc::new(ParserPool::default()),
         })
     }
 
@@ -122,19 +118,33 @@ impl CProcessor {
         }
 
         // Parse return type and function declarator
+        // Collect ALL type-related nodes before the declarator for multi-word types
+        let mut return_type_parts = Vec::new();
         let mut cursor = node.walk();
         let mut found_declarator = false;
+
         for child in node.children(&mut cursor) {
             match child.kind() {
-                "primitive_type" | "type_identifier" if !found_declarator => {
-                    return_type = Some(TypeRef::new(Self::node_text(child, source)));
+                "primitive_type"
+                | "type_identifier"
+                | "sized_type_specifier"
+                | "type_qualifier"
+                    if !found_declarator =>
+                {
+                    return_type_parts.push(Self::node_text(child, source));
                 }
                 "function_declarator" => {
                     found_declarator = true;
+                    if !return_type_parts.is_empty() {
+                        return_type = Some(TypeRef::new(return_type_parts.join(" ")));
+                    }
                     name = self.parse_function_declarator(child, source, &mut parameters);
                 }
                 "pointer_declarator" => {
                     found_declarator = true;
+                    if !return_type_parts.is_empty() {
+                        return_type = Some(TypeRef::new(return_type_parts.join(" ")));
+                    }
                     // Handle pointer return types
                     name = self.parse_pointer_declarator(child, source, &mut parameters);
                 }
@@ -449,8 +459,7 @@ impl CProcessor {
                 }
             }
             "preproc_include" => {
-                let text = Self::node_text(node, source);
-                if let Some(import) = Self::parse_include(text) {
+                if let Some(import) = self.parse_include_node(node, source) {
                     file.children.push(Node::Import(import));
                 }
             }
@@ -465,39 +474,42 @@ impl CProcessor {
         Ok(())
     }
 
-    fn parse_include(text: String) -> Option<Import> {
-        let text = text.trim();
-        if !text.starts_with("#include") {
-            return None;
-        }
-
-        let module = if let Some(start) = text.find('<') {
-            if let Some(end) = text.find('>') {
-                text[start + 1..end].to_string()
-            } else {
-                return None;
-            }
-        } else if let Some(start) = text.find('"') {
-            if let Some(end) = text.rfind('"') {
-                if end > start {
-                    text[start + 1..end].to_string()
-                } else {
-                    return None;
+    fn parse_include_node(&self, node: TSNode, source: &str) -> Option<Import> {
+        // Use AST traversal to extract include path from child nodes
+        let mut cursor = node.walk();
+        for child in node.children(&mut cursor) {
+            match child.kind() {
+                "string_literal" => {
+                    // #include "file.h" - extract content between quotes
+                    let text = Self::node_text(child, source);
+                    let module = text.trim_matches('"').to_string();
+                    return Some(Import {
+                        import_type: "include".to_string(),
+                        module,
+                        symbols: Vec::new(),
+                        is_type: false,
+                        line: Some(node.start_position().row + 1),
+                    });
                 }
-            } else {
-                return None;
+                "system_lib_string" => {
+                    // #include <stdio.h> - extract content between angle brackets
+                    let text = Self::node_text(child, source);
+                    let module = text
+                        .trim_start_matches('<')
+                        .trim_end_matches('>')
+                        .to_string();
+                    return Some(Import {
+                        import_type: "include".to_string(),
+                        module,
+                        symbols: Vec::new(),
+                        is_type: false,
+                        line: Some(node.start_position().row + 1),
+                    });
+                }
+                _ => {}
             }
-        } else {
-            return None;
-        };
-
-        Some(Import {
-            import_type: "include".to_string(),
-            module,
-            symbols: Vec::new(),
-            is_type: false,
-            line: None,
-        })
+        }
+        None
     }
 }
 
@@ -517,7 +529,11 @@ impl LanguageProcessor for CProcessor {
     }
 
     fn process(&self, source: &str, path: &Path, _opts: &ProcessOptions) -> Result<File> {
-        let mut parser = self.parser.lock();
+        let mut parser_guard = self
+            .pool
+            .acquire("c", || Ok(tree_sitter_c::LANGUAGE.into()))?;
+        let parser = parser_guard.get_mut();
+
         let tree = parser
             .parse(source, None)
             .ok_or_else(|| DistilError::parse_error("c", "Failed to parse source"))?;

@@ -8,6 +8,7 @@
 //! - Generics and decorators
 
 use distiller_core::error::Result;
+use distiller_core::parser::ParserPool;
 use distiller_core::{
     error::DistilError,
     ir::{
@@ -17,12 +18,12 @@ use distiller_core::{
     options::ProcessOptions,
     processor::language::LanguageProcessor,
 };
-use parking_lot::Mutex;
 use std::path::Path;
-use tree_sitter::{Parser, TreeCursor};
+use std::sync::Arc;
+use tree_sitter::TreeCursor;
 
 pub struct TypeScriptProcessor {
-    parser: Mutex<Parser>,
+    pool: Arc<distiller_core::parser::ParserPool>,
 }
 
 impl TypeScriptProcessor {
@@ -32,20 +33,16 @@ impl TypeScriptProcessor {
     ///
     /// Returns an error if parsing or tree-sitter operations fail
     pub fn new() -> Result<Self> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into())
-            .map_err(|e| {
-                DistilError::TreeSitter(format!("Failed to set TypeScript language: {e}"))
-            })?;
-
         Ok(Self {
-            parser: Mutex::new(parser),
+            pool: Arc::new(ParserPool::default()),
         })
     }
 
     fn parse_source(&self, source: &str, filename: &str) -> Result<File> {
-        let mut parser = self.parser.lock();
+        let mut parser_guard = self.pool.acquire("typescript", || {
+            Ok(tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into())
+        })?;
+        let parser = parser_guard.get_mut();
         let tree = parser
             .parse(source, None)
             .ok_or_else(|| DistilError::TreeSitter("Failed to parse TypeScript".to_string()))?;

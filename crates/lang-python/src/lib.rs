@@ -14,15 +14,15 @@ use distiller_core::{
         Visibility,
     },
     options::ProcessOptions,
+    parser::ParserPool,
     processor::language::LanguageProcessor,
 };
-use parking_lot::Mutex;
 use std::path::Path;
-use tree_sitter::Parser;
+use std::sync::Arc;
 
 /// Python language processor
 pub struct PythonProcessor {
-    parser: Mutex<Parser>,
+    pool: Arc<ParserPool>,
 }
 
 impl PythonProcessor {
@@ -32,19 +32,17 @@ impl PythonProcessor {
     ///
     /// Returns an error if parsing or tree-sitter operations fail
     pub fn new() -> Result<Self> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_python::LANGUAGE.into())
-            .map_err(|e| DistilError::TreeSitter(format!("Failed to set Python language: {e}")))?;
-
         Ok(Self {
-            parser: Mutex::new(parser),
+            pool: Arc::new(ParserPool::default()),
         })
     }
 
     /// Parse source code into IR
     fn parse_source(&self, source: &str, filename: &str) -> Result<File> {
-        let mut parser = self.parser.lock();
+        let mut parser_guard = self
+            .pool
+            .acquire("python", || Ok(tree_sitter_python::LANGUAGE.into()))?;
+        let parser = parser_guard.get_mut();
 
         let tree = parser
             .parse(source, None)

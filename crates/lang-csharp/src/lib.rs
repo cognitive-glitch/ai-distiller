@@ -2,15 +2,15 @@ use distiller_core::{
     ProcessOptions,
     error::{DistilError, Result},
     ir::{Class, Field, File, Function, Modifier, Node, Parameter, TypeParam, TypeRef, Visibility},
+    parser::ParserPool,
     processor::LanguageProcessor,
 };
-use parking_lot::Mutex;
 use std::path::Path;
 use std::sync::Arc;
-use tree_sitter::{Node as TSNode, Parser};
+use tree_sitter::Node as TSNode;
 
 pub struct CSharpProcessor {
-    parser: Arc<Mutex<Parser>>,
+    pool: Arc<ParserPool>,
 }
 
 impl CSharpProcessor {
@@ -20,12 +20,8 @@ impl CSharpProcessor {
     ///
     /// Returns an error if parsing or tree-sitter operations fail
     pub fn new() -> Result<Self> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_c_sharp::LANGUAGE.into())
-            .map_err(|e| DistilError::parse_error("csharp", e.to_string()))?;
         Ok(Self {
-            parser: Arc::new(Mutex::new(parser)),
+            pool: Arc::new(ParserPool::default()),
         })
     }
 
@@ -683,7 +679,11 @@ impl LanguageProcessor for CSharpProcessor {
     }
 
     fn process(&self, source: &str, path: &Path, _opts: &ProcessOptions) -> Result<File> {
-        let mut parser = self.parser.lock();
+        let mut parser_guard = self
+            .pool
+            .acquire("csharp", || Ok(tree_sitter_c_sharp::LANGUAGE.into()))?;
+        let parser = parser_guard.get_mut();
+
         let tree = parser
             .parse(source, None)
             .ok_or_else(|| DistilError::parse_error("csharp", "Failed to parse source"))?;

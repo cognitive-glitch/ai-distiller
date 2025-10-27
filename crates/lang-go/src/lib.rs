@@ -6,14 +6,14 @@ use distiller_core::{
         TypeRef, Visibility,
     },
     options::ProcessOptions,
+    parser::ParserPool,
     processor::language::LanguageProcessor,
 };
-use parking_lot::Mutex;
 use std::path::Path;
-use tree_sitter::Parser;
+use std::sync::Arc;
 
 pub struct GoProcessor {
-    parser: Mutex<Parser>,
+    pool: Arc<ParserPool>,
 }
 
 impl GoProcessor {
@@ -23,14 +23,8 @@ impl GoProcessor {
     ///
     /// Returns an error if parsing or tree-sitter operations fail
     pub fn new() -> Result<Self> {
-        let mut parser = Parser::new();
-        let language = tree_sitter_go::LANGUAGE;
-        parser
-            .set_language(&language.into())
-            .map_err(|e| DistilError::parse_error("", format!("Failed to set Go language: {e}")))?;
-
         Ok(Self {
-            parser: Mutex::new(parser),
+            pool: Arc::new(ParserPool::default()),
         })
     }
 
@@ -695,7 +689,11 @@ impl LanguageProcessor for GoProcessor {
     }
 
     fn process(&self, source: &str, path: &Path, _opts: &ProcessOptions) -> Result<File> {
-        let mut parser = self.parser.lock();
+        let mut parser_guard = self
+            .pool
+            .acquire("go", || Ok(tree_sitter_go::LANGUAGE.into()))?;
+        let parser = parser_guard.get_mut();
+
         let tree = parser.parse(source, None).ok_or_else(|| {
             DistilError::parse_error(path.display().to_string(), "Failed to parse Go source")
         })?;
@@ -1495,7 +1493,11 @@ func GetUser(id int) (*User, bool, error) {
 }"#;
 
         let processor = GoProcessor::new().unwrap();
-        let mut parser = processor.parser.lock();
+        let mut parser_guard = processor
+            .pool
+            .acquire("go", || Ok(tree_sitter_go::LANGUAGE.into()))
+            .unwrap();
+        let parser = parser_guard.get_mut();
         let tree = parser.parse(source, None).unwrap();
         let root = tree.root_node();
 
@@ -1515,7 +1517,11 @@ func Sum(numbers ...int) int {
 }"#;
 
         let processor = GoProcessor::new().unwrap();
-        let mut parser = processor.parser.lock();
+        let mut parser_guard = processor
+            .pool
+            .acquire("go", || Ok(tree_sitter_go::LANGUAGE.into()))
+            .unwrap();
+        let parser = parser_guard.get_mut();
         let tree = parser.parse(source, None).unwrap();
         let root = tree.root_node();
 

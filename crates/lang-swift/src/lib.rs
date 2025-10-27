@@ -2,15 +2,15 @@ use distiller_core::{
     ProcessOptions,
     error::{DistilError, Result},
     ir::{self, Class, Field, File, Function, Modifier, Parameter, TypeParam, TypeRef, Visibility},
+    parser::ParserPool,
     processor::LanguageProcessor,
 };
-use parking_lot::Mutex;
 use std::path::Path;
 use std::sync::Arc;
-use tree_sitter::{Node as TSNode, Parser};
+use tree_sitter::Node as TSNode;
 
 pub struct SwiftProcessor {
-    parser: Arc<Mutex<Parser>>,
+    pool: Arc<ParserPool>,
 }
 
 impl SwiftProcessor {
@@ -20,13 +20,8 @@ impl SwiftProcessor {
     ///
     /// Returns an error if parsing or tree-sitter operations fail
     pub fn new() -> Result<Self> {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_swift::LANGUAGE.into())
-            .map_err(|e| DistilError::parse_error("swift", e.to_string()))?;
-
         Ok(Self {
-            parser: Arc::new(Mutex::new(parser)),
+            pool: Arc::new(ParserPool::default()),
         })
     }
 
@@ -475,7 +470,11 @@ impl LanguageProcessor for SwiftProcessor {
     }
 
     fn process(&self, source: &str, path: &Path, _opts: &ProcessOptions) -> Result<File> {
-        let mut parser = self.parser.lock();
+        let mut parser_guard = self
+            .pool
+            .acquire("swift", || Ok(tree_sitter_swift::LANGUAGE.into()))?;
+        let parser = parser_guard.get_mut();
+
         let tree = parser.parse(source, None).ok_or_else(|| {
             DistilError::parse_error(path.display().to_string(), "Failed to parse Swift source")
         })?;
@@ -1200,7 +1199,11 @@ func findUser(id: Int?) -> String? {
 }"#;
 
         let processor = SwiftProcessor::new().unwrap();
-        let mut parser = processor.parser.lock();
+        let mut parser_guard = processor
+            .pool
+            .acquire("swift", || Ok(tree_sitter_swift::LANGUAGE.into()))
+            .unwrap();
+        let parser = parser_guard.get_mut();
         let tree = parser.parse(source, None).unwrap();
         let root = tree.root_node();
 
