@@ -1173,5 +1173,5 @@ MIT License - see [LICENSE](LICENSE) for details.
 ## 🙏 Acknowledgments
 
 - Built on [tree-sitter](https://tree-sitter.github.io/) for accurate parsing
-- Inspired by the need for better AI-code interaction
-- Created with ❤️ by Claude Code & Ján Regeš from [SiteOne](https://www.siteone.io/) (Czech Republic).
+- Inspired by the need for better AI-code interaction from ❤️ from [SiteOne](https://www.siteone.io/) (Czech Republic).
+- Fully rewritten and improved by [cognitive-glitch](https://github.com/cognitive-glitch) due to the original version being abandoned by the original author.
