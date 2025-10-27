@@ -338,13 +338,14 @@ impl GoProcessor {
         }))
     }
 
-    fn parse_function(&self, node: tree_sitter::Node, source: &str) -> Result<Option<Function>> {
+        fn parse_function(&self, node: tree_sitter::Node, source: &str) -> Result<Option<Function>> {
         let mut name = String::new();
         let mut parameters = Vec::new();
         let mut return_type = None;
         let mut type_params = Vec::new();
         let mut receiver_type = None;
         let mut has_seen_name = false;
+        let mut has_seen_parameters = false;
 
         let line_start = node.start_position().row + 1;
         let line_end = node.end_position().row + 1;
@@ -357,16 +358,22 @@ impl GoProcessor {
                     has_seen_name = true;
                 }
                 "parameter_list" => {
-                    // If we haven't seen the name yet, this is a receiver (for methods)
-                    // If we have seen the name, this is the parameter list
+                    // Go functions can have multiple parameter_list nodes:
+                    // 1. Receiver (for methods) - before name
+                    // 2. Parameters - after name
+                    // 3. Return types - wrapped in parameter_list after parameters
                     if !has_seen_name {
+                        // This is a receiver (for methods)
                         let receiver_params = self.parse_parameters(child, source)?;
                         if !receiver_params.is_empty() {
                             receiver_type = Some(receiver_params[0].param_type.clone());
                         }
-                    } else {
+                    } else if !has_seen_parameters {
+                        // This is the actual parameter list
                         parameters = self.parse_parameters(child, source)?;
+                        has_seen_parameters = true;
                     }
+                    // Skip subsequent parameter_list nodes (return types)
                 }
                 "type_parameter_list" => {
                     type_params = self.parse_type_parameters(child, source)?;
@@ -409,18 +416,26 @@ impl GoProcessor {
         }))
     }
 
-    fn parse_parameters(&self, node: tree_sitter::Node, source: &str) -> Result<Vec<Parameter>> {
+
+        fn parse_parameters(&self, node: tree_sitter::Node, source: &str) -> Result<Vec<Parameter>> {
         let mut parameters = Vec::new();
 
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
-            if child.kind() == "parameter_declaration" {
-                parameters.extend(self.parse_parameter_declaration(child, source)?);
+            match child.kind() {
+                "parameter_declaration" => {
+                    parameters.extend(self.parse_parameter_declaration(child, source)?);
+                }
+                "variadic_parameter_declaration" => {
+                    parameters.extend(self.parse_variadic_parameter(child, source)?);
+                }
+                _ => {}
             }
         }
 
         Ok(parameters)
     }
+
 
     fn parse_parameter_declaration(
         &self,
@@ -472,6 +487,55 @@ impl GoProcessor {
             })
             .collect())
     }
+
+    fn parse_variadic_parameter(
+        &self,
+        node: tree_sitter::Node,
+        source: &str,
+    ) -> Result<Vec<Parameter>> {
+        let mut name = String::new();
+        let mut param_type = None;
+
+        let mut cursor = node.walk();
+        for child in node.children(&mut cursor) {
+            match child.kind() {
+                "identifier" | "field_identifier" => {
+                    name = self.node_text(child, source);
+                }
+                "type_identifier" | "qualified_type" | "pointer_type" | "array_type"
+                | "slice_type" | "map_type" | "channel_type" | "function_type"
+                | "interface_type" | "struct_type" => {
+                    param_type = Some(TypeRef::new(self.node_text(child, source)));
+                }
+                "..." => {
+                    // Variadic marker, already captured by node kind
+                }
+                _ => {}
+            }
+        }
+
+        if name.is_empty() && param_type.is_some() {
+            // Unnamed variadic parameter
+            return Ok(vec![Parameter {
+                name: String::new(),
+                param_type: param_type.unwrap(),
+                default_value: None,
+                is_variadic: true,
+                is_optional: false,
+                decorators: vec![],
+            }]);
+        }
+
+        Ok(vec![Parameter {
+            name,
+            param_type: param_type.unwrap_or_else(|| TypeRef::new("".to_string())),
+            default_value: None,
+            is_variadic: true,
+            is_optional: false,
+            decorators: vec![],
+        }])
+    }
+
 
     fn extract_type_from_parameter(
         &self,
@@ -1217,5 +1281,77 @@ func Printf(format string, args ...interface{}) (int, error) {
         assert_eq!(functions[1].name, "Printf");
         assert!(functions[1].parameters.len() >= 1,
                "Expected at least format parameter");
+    }
+}
+
+#[cfg(test)]
+mod debug_tests {
+    use super::*;
+    use tree_sitter::Node as TSNode;
+    
+    fn print_tree(node: TSNode, source: &str, depth: usize) {
+        let indent = "  ".repeat(depth);
+        let kind = node.kind();
+        
+        let start = node.start_byte();
+        let end = node.end_byte();
+        let text = if end > start && end <= source.len() {
+            &source[start..end]
+        } else {
+            ""
+        };
+        
+        let text_preview = if text.len() > 60 {
+            format!("{}...", &text[..60].replace('\n', "\\n"))
+        } else {
+            text.replace('\n', "\\n")
+        };
+        
+        eprintln!("{}[{}] \"{}\"", indent, kind, text_preview);
+        
+        let mut cursor = node.walk();
+        for child in node.children(&mut cursor) {
+            print_tree(child, source, depth + 1);
+        }
+    }
+    
+    #[test]
+    #[ignore]
+    fn debug_multiple_return_values() {
+        let source = r#"package main
+
+func GetUser(id int) (*User, bool, error) {
+    return nil, false, nil
+}"#;
+        
+        let processor = GoProcessor::new().unwrap();
+        let mut parser = processor.parser.lock();
+        let tree = parser.parse(source, None).unwrap();
+        let root = tree.root_node();
+        
+        eprintln!("\n=== Go Multiple Return Values AST ===\n");
+        print_tree(root, source, 0);
+        
+        panic!("Debug output - check stderr");
+    }
+    
+    #[test]
+    #[ignore]
+    fn debug_variadic_parameters() {
+        let source = r#"package main
+
+func Sum(numbers ...int) int {
+    return 0
+}"#;
+        
+        let processor = GoProcessor::new().unwrap();
+        let mut parser = processor.parser.lock();
+        let tree = parser.parse(source, None).unwrap();
+        let root = tree.root_node();
+        
+        eprintln!("\n=== Go Variadic Parameters AST ===\n");
+        print_tree(root, source, 0);
+        
+        panic!("Debug output - check stderr");
     }
 }
