@@ -335,8 +335,7 @@ impl SwiftProcessor {
         Ok(())
     }
 
-#[allow(clippy::unnecessary_wraps)]
-
+    #[allow(clippy::unnecessary_wraps)]
     fn parse_single_parameter(
         node: TSNode,
         source: &str,
