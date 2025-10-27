@@ -51,3 +51,8 @@ log = "0.4"
 [dev-dependencies]
 assert_cmd = "2.0"
 predicates = "3.1"
+criterion = "0.5"
+
+[[bench]]
+name = "processing"
+harness = false
