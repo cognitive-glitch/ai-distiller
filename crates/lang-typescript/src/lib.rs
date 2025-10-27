@@ -744,6 +744,7 @@ impl TypeScriptProcessor {
         }
     }
 
+    #[allow(clippy::match_same_arms)]
     fn parse_type_annotation(
         &self,
         node: tree_sitter::Node,
@@ -803,6 +804,7 @@ impl TypeScriptProcessor {
         }))
     }
 
+    #[allow(clippy::match_same_arms)]
     fn parse_visibility(node: tree_sitter::Node, source: &str) -> Visibility {
         match Self::node_text(node, source).as_str() {
             "private" => Visibility::Private,

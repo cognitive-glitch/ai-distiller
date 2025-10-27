@@ -144,6 +144,7 @@ impl JavaProcessor {
         interfaces
     }
 
+    #[allow(clippy::match_same_arms)]
     fn parse_class(&self, node: TSNode, source: &str) -> Result<Option<Class>> {
         let mut name = String::new();
         let mut extends = Vec::new();
@@ -195,6 +196,7 @@ impl JavaProcessor {
         }))
     }
 
+    #[allow(clippy::match_same_arms)]
     fn parse_interface(&self, node: TSNode, source: &str) -> Result<Option<Class>> {
         let mut name = String::new();
         let mut extends = Vec::new();
@@ -240,6 +242,7 @@ impl JavaProcessor {
         }))
     }
 
+    #[allow(clippy::match_same_arms)]
     fn parse_annotation(&self, node: TSNode, source: &str) -> Result<Option<Class>> {
         let mut name = String::new();
         let (visibility, modifiers, _) = Self::parse_modifiers(node, source);
@@ -277,6 +280,7 @@ impl JavaProcessor {
         }))
     }
 
+    #[allow(clippy::match_same_arms)]
     fn parse_enum(&self, node: TSNode, source: &str) -> Result<Option<Class>> {
         let mut name = String::new();
         let (visibility, modifiers, _) = Self::parse_modifiers(node, source);
@@ -479,6 +483,7 @@ impl JavaProcessor {
         }
     }
 
+    #[allow(clippy::match_same_arms)]
     fn parse_field(node: TSNode, source: &str) -> Result<Vec<Field>> {
         let mut fields = Vec::new();
         let (visibility, modifiers, _) = Self::parse_modifiers(node, source);
@@ -522,6 +527,7 @@ impl JavaProcessor {
     }
 
     #[allow(clippy::unused_self)]
+    #[allow(clippy::match_same_arms)]
     fn parse_method(&self, node: TSNode, source: &str) -> Result<Option<Function>> {
         let mut name = String::new();
         let (visibility, modifiers, method_decorators) = Self::parse_modifiers(node, source);
@@ -584,6 +590,7 @@ impl JavaProcessor {
     }
 
     #[allow(clippy::unused_self)]
+    #[allow(clippy::match_same_arms)]
     fn parse_constructor(&self, node: TSNode, source: &str) -> Result<Option<Function>> {
         let mut name = String::new();
         let (visibility, modifiers, _) = Self::parse_modifiers(node, source);
@@ -698,6 +705,7 @@ impl LanguageProcessor for JavaProcessor {
         &["java"]
     }
 
+    #[allow(clippy::match_same_arms)]
     fn process(&self, source: &str, path: &Path, _opts: &ProcessOptions) -> Result<File> {
         let mut parser = self.parser.lock();
         let tree = parser.parse(source, None).ok_or_else(|| {

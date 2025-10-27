@@ -220,6 +220,7 @@ impl PhpProcessor {
         }))
     }
 
+    #[allow(clippy::match_same_arms)]
     fn parse_visibility(node: TSNode, source: &str) -> Visibility {
         let text = Self::node_text(node, source);
         match text.as_str() {

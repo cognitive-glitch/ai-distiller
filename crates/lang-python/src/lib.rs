@@ -403,6 +403,7 @@ impl PythonProcessor {
     }
 
     /// Parse decorated definition (class or function with decorators)
+    #[allow(clippy::match_same_arms)]
     fn parse_decorated(&self, node: tree_sitter::Node, source: &str) -> Result<Option<Node>> {
         let mut decorators = Vec::new();
         let mut definition_node = None;

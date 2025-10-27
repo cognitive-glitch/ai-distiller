@@ -122,6 +122,7 @@ impl SwiftProcessor {
         None
     }
 
+    #[allow(clippy::match_same_arms)]
     fn parse_class_declaration(&self, node: TSNode, source: &str) -> Result<Option<Class>> {
         let class_type = Self::get_class_type(node, source);
         let mut name = String::new();

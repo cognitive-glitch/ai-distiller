@@ -495,6 +495,7 @@ impl GoProcessor {
     }
 
     #[allow(clippy::unused_self)]
+    #[allow(clippy::match_same_arms)]
     fn parse_variadic_parameter(
         &self,
         node: tree_sitter::Node,

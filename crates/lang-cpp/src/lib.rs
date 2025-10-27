@@ -176,6 +176,7 @@ impl CppProcessor {
         Ok(())
     }
 
+    #[allow(clippy::match_same_arms)]
     fn parse_access_specifier(node: TSNode, source: &str) -> Visibility {
         let text = Self::node_text(node, source);
         match text.as_str() {
