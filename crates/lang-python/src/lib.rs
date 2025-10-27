@@ -109,7 +109,7 @@ impl PythonProcessor {
         match node.kind() {
             "import_statement" => {
                 // import foo, bar
-                let text = self.node_text(node, source);
+                let text = Self::node_text(node, source);
                 let module = text
                     .strip_prefix("import ")
                     .unwrap_or(&text)
@@ -139,18 +139,18 @@ impl PythonProcessor {
                         "dotted_name" => {
                             if !seen_import_keyword {
                                 // This is the module name
-                                module = self.node_text(child, source);
+                                module = Self::node_text(child, source);
                             } else {
                                 // This is an imported symbol
                                 symbols.push(ImportedSymbol {
-                                    name: self.node_text(child, source),
+                                    name: Self::node_text(child, source),
                                     alias: None,
                                 });
                             }
                         }
                         "aliased_import" => {
                             symbols.push(ImportedSymbol {
-                                name: self.node_text(child, source),
+                                name: Self::node_text(child, source),
                                 alias: None,
                             });
                         }
@@ -189,7 +189,7 @@ impl PythonProcessor {
         for child in node.children(&mut cursor) {
             match child.kind() {
                 "identifier" => {
-                    class.name = self.node_text(child, source);
+                    class.name = Self::node_text(child, source);
                     // Detect visibility from name
                     class.visibility = self.detect_visibility(&class.name);
                 }
@@ -222,7 +222,7 @@ impl PythonProcessor {
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
             if child.kind() == "identifier" || child.kind() == "attribute" {
-                let base_name = self.node_text(child, source);
+                let base_name = Self::node_text(child, source);
                 class.extends.push(TypeRef::new(base_name));
             }
         }
@@ -295,7 +295,7 @@ impl PythonProcessor {
         for child in node.children(&mut cursor) {
             match child.kind() {
                 "identifier" => {
-                    function.name = self.node_text(child, source);
+                    function.name = Self::node_text(child, source);
                     // Override visibility if needed
                     if function.visibility == Visibility::Public {
                         function.visibility = self.detect_visibility(&function.name);
@@ -306,12 +306,12 @@ impl PythonProcessor {
                 }
                 "type" => {
                     // Return type annotation
-                    let return_type = self.node_text(child, source);
+                    let return_type = Self::node_text(child, source);
                     function.return_type = Some(TypeRef::new(return_type));
                 }
                 "block" => {
                     // Function body
-                    function.implementation = Some(self.node_text(child, source));
+                    function.implementation = Some(Self::node_text(child, source));
                 }
                 _ => {}
             }
@@ -344,7 +344,7 @@ impl PythonProcessor {
     fn parse_parameter(&self, node: tree_sitter::Node, source: &str) -> Result<Option<Parameter>> {
         match node.kind() {
             "identifier" => {
-                let name = self.node_text(node, source);
+                let name = Self::node_text(node, source);
                 // Skip 'self' and 'cls' special parameters
                 if name == "self" || name == "cls" {
                     return Ok(None);
@@ -373,16 +373,16 @@ impl PythonProcessor {
                 for child in node.children(&mut cursor) {
                     match child.kind() {
                         "identifier" => {
-                            param.name = self.node_text(child, source);
+                            param.name = Self::node_text(child, source);
                         }
                         "type" => {
-                            let type_name = self.node_text(child, source);
+                            let type_name = Self::node_text(child, source);
                             param.param_type = TypeRef::new(type_name);
                         }
                         _ => {
                             // Could be default value
                             if !child.kind().starts_with('(') && !child.kind().starts_with(')') {
-                                param.default_value = Some(self.node_text(child, source));
+                                param.default_value = Some(Self::node_text(child, source));
                             }
                         }
                     }
@@ -407,7 +407,7 @@ impl PythonProcessor {
         for child in node.children(&mut cursor) {
             match child.kind() {
                 "decorator" => {
-                    let decorator_text = self.node_text(child, source);
+                    let decorator_text = Self::node_text(child, source);
                     decorators.push(decorator_text);
                 }
                 "class_definition" => {
@@ -449,7 +449,7 @@ impl PythonProcessor {
         source: &str,
     ) -> Result<Option<Field>> {
         // Look for patterns like: self.field_name = value
-        let text = self.node_text(node, source);
+        let text = Self::node_text(node, source);
         if !text.starts_with("self.") {
             return Ok(None);
         }
@@ -493,7 +493,7 @@ impl PythonProcessor {
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
             if child.kind() == "identifier" {
-                let name = self.node_text(child, source);
+                let name = Self::node_text(child, source);
                 return self.detect_visibility(&name);
             }
         }
@@ -501,7 +501,7 @@ impl PythonProcessor {
     }
 
     /// Get text content of a node
-    fn node_text(&self, node: tree_sitter::Node, source: &str) -> String {
+    fn node_text(node: tree_sitter::Node, source: &str) -> String {
         let start = node.start_byte();
         let end = node.end_byte();
         if start > end || end > source.len() {

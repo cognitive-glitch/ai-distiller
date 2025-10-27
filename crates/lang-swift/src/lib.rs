@@ -25,7 +25,7 @@ impl SwiftProcessor {
         })
     }
 
-    fn node_text(&self, node: TSNode, source: &str) -> String {
+    fn node_text(node: TSNode, source: &str) -> String {
         if node.start_byte() > node.end_byte() || node.end_byte() > source.len() {
             return String::new();
         }
@@ -39,7 +39,7 @@ impl SwiftProcessor {
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
             if child.kind() == "modifiers" {
-                let text = self.node_text(child, source);
+                let text = Self::node_text(child, source);
                 if text.contains("private") || text.contains("fileprivate") {
                     visibility = Visibility::Private;
                 } else if text.contains("public") || text.contains("open") {
@@ -74,11 +74,11 @@ impl SwiftProcessor {
                             match param_child.kind() {
                                 "type_identifier" => {
                                     if name.is_empty() {
-                                        name = self.node_text(param_child, source);
+                                        name = Self::node_text(param_child, source);
                                     }
                                 }
                                 "type_constraint" | "inheritance_constraint" => {
-                                    let constraint_text = self.node_text(param_child, source);
+                                    let constraint_text = Self::node_text(param_child, source);
                                     if !constraint_text.is_empty() {
                                         constraints.push(TypeRef::new(
                                             constraint_text.trim_start_matches(": "),
@@ -133,7 +133,7 @@ impl SwiftProcessor {
             match child.kind() {
                 "type_identifier" => {
                     if name.is_empty() {
-                        name = self.node_text(child, source);
+                        name = Self::node_text(child, source);
                     }
                 }
                 "type_inheritance_clause" | "inheritance_specifier" => {
@@ -194,7 +194,7 @@ impl SwiftProcessor {
             match child.kind() {
                 "type_identifier" => {
                     if name.is_empty() {
-                        name = self.node_text(child, source);
+                        name = Self::node_text(child, source);
                     }
                 }
                 "type_inheritance_clause" | "inheritance_specifier" => {
@@ -230,7 +230,7 @@ impl SwiftProcessor {
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
             if child.kind() == "type_identifier" || child.kind() == "user_type" {
-                let type_name = self.node_text(child, source);
+                let type_name = Self::node_text(child, source);
                 if !type_name.is_empty() && type_name != ":" {
                     extends.push(TypeRef::new(type_name));
                 }
@@ -255,7 +255,7 @@ impl SwiftProcessor {
             match child.kind() {
                 "simple_identifier" => {
                     if name.is_empty() {
-                        name = self.node_text(child, source);
+                        name = Self::node_text(child, source);
                     }
                 }
                 // Direct parameter handling (tree-sitter-swift puts parameters as direct children)
@@ -274,7 +274,7 @@ impl SwiftProcessor {
                 "user_type" | "optional_type" | "type_identifier" => {
                     if saw_arrow && return_type.is_none() {
                         // Extract full type text including optional marker
-                        return_type = Some(TypeRef::new(self.node_text(child, source)));
+                        return_type = Some(TypeRef::new(Self::node_text(child, source)));
                         saw_arrow = false; // Reset flag after capturing
                     }
                 }
@@ -286,7 +286,7 @@ impl SwiftProcessor {
                             if ft_child.kind() == "type_identifier"
                                 || ft_child.kind() == "user_type"
                             {
-                                return_type = Some(TypeRef::new(self.node_text(ft_child, source)));
+                                return_type = Some(TypeRef::new(Self::node_text(ft_child, source)));
                             }
                         }
                     }
@@ -342,12 +342,12 @@ impl SwiftProcessor {
         for child in node.children(&mut cursor) {
             match child.kind() {
                 "simple_identifier" => {
-                    name = self.node_text(child, source);
+                    name = Self::node_text(child, source);
                 }
                 // Direct type handling (tree-sitter-swift puts types as direct children)
                 "user_type" | "optional_type" => {
                     if param_type.name.is_empty() {
-                        param_type = TypeRef::new(self.node_text(child, source));
+                        param_type = TypeRef::new(Self::node_text(child, source));
                     }
                 }
                 // Legacy type_annotation wrapper handling (for compatibility)
@@ -358,7 +358,7 @@ impl SwiftProcessor {
                             || ta_child.kind() == "user_type"
                             || ta_child.kind() == "optional_type"
                         {
-                            param_type = TypeRef::new(self.node_text(ta_child, source));
+                            param_type = TypeRef::new(Self::node_text(ta_child, source));
                         }
                     }
                 }
@@ -396,13 +396,13 @@ impl SwiftProcessor {
                     let mut pattern_cursor = child.walk();
                     for pattern_child in child.children(&mut pattern_cursor) {
                         if pattern_child.kind() == "simple_identifier" {
-                            name = self.node_text(pattern_child, source);
+                            name = Self::node_text(pattern_child, source);
                         } else if pattern_child.kind() == "type_annotation" {
                             let mut ta_cursor = pattern_child.walk();
                             for ta_child in pattern_child.children(&mut ta_cursor) {
                                 if ta_child.kind() == "type_identifier" {
                                     field_type =
-                                        Some(TypeRef::new(self.node_text(ta_child, source)));
+                                        Some(TypeRef::new(Self::node_text(ta_child, source)));
                                 }
                             }
                         }

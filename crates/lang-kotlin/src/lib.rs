@@ -24,7 +24,7 @@ impl KotlinProcessor {
         })
     }
 
-    fn node_text(&self, node: TSNode, source: &str) -> String {
+    fn node_text(node: TSNode, source: &str) -> String {
         let start = node.start_byte();
         let end = node.end_byte();
         let source_len = source.len();
@@ -43,7 +43,7 @@ impl KotlinProcessor {
             if child.kind() == "modifiers" {
                 let mut mod_cursor = child.walk();
                 for mod_child in child.children(&mut mod_cursor) {
-                    let text = self.node_text(mod_child, source);
+                    let text = Self::node_text(mod_child, source);
                     match text.as_str() {
                         "public" => visibility = Visibility::Public,
                         "private" => visibility = Visibility::Private,
@@ -83,7 +83,7 @@ impl KotlinProcessor {
             match child.kind() {
                 "identifier" => {
                     if name.is_empty() {
-                        name = self.node_text(child, source);
+                        name = Self::node_text(child, source);
                     }
                 }
                 "class_body" => {
@@ -127,7 +127,7 @@ impl KotlinProcessor {
             match child.kind() {
                 "identifier" => {
                     if name.is_empty() {
-                        name = self.node_text(child, source);
+                        name = Self::node_text(child, source);
                     }
                 }
                 "class_body" => {
@@ -200,7 +200,7 @@ impl KotlinProcessor {
             match child.kind() {
                 "identifier" => {
                     if name.is_empty() {
-                        name = self.node_text(child, source);
+                        name = Self::node_text(child, source);
                     }
                 }
                 "function_value_parameters" => {
@@ -240,7 +240,7 @@ impl KotlinProcessor {
                 let mut var_cursor = child.walk();
                 for var_child in child.children(&mut var_cursor) {
                     if var_child.kind() == "identifier" && name.is_empty() {
-                        name = self.node_text(var_child, source);
+                        name = Self::node_text(var_child, source);
                     }
                 }
             }
@@ -273,10 +273,10 @@ impl KotlinProcessor {
                 for param_child in child.children(&mut param_cursor) {
                     match param_child.kind() {
                         "identifier" => {
-                            name = self.node_text(param_child, source);
+                            name = Self::node_text(param_child, source);
                         }
                         "user_type" => {
-                            param_type = TypeRef::new(self.node_text(param_child, source));
+                            param_type = TypeRef::new(Self::node_text(param_child, source));
                         }
                         _ => {}
                     }
@@ -299,7 +299,7 @@ impl KotlinProcessor {
     }
 
     fn parse_import(&self, node: TSNode, source: &str) -> Option<Import> {
-        let import_text = self.node_text(node, source);
+        let import_text = Self::node_text(node, source);
         let text = import_text.strip_prefix("import ")?.trim();
 
         Some(Import {

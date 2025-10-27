@@ -139,7 +139,7 @@ impl TypeScriptProcessor {
                             "identifier" => {
                                 // Default import
                                 symbols.push(ImportedSymbol {
-                                    name: self.node_text(clause_child, source),
+                                    name: Self::node_text(clause_child, source),
                                     alias: None,
                                 });
                             }
@@ -150,7 +150,7 @@ impl TypeScriptProcessor {
                                     if ns_child.kind() == "identifier" {
                                         symbols.push(ImportedSymbol {
                                             name: "*".to_string(),
-                                            alias: Some(self.node_text(ns_child, source)),
+                                            alias: Some(Self::node_text(ns_child, source)),
                                         });
                                     }
                                 }
@@ -160,8 +160,7 @@ impl TypeScriptProcessor {
                     }
                 }
                 "string" => {
-                    module = self
-                        .node_text(child, source)
+                    module = Self::node_text(child, source)
                         .trim_matches(|c| c == '"' || c == '\'')
                         .to_string();
                 }
@@ -193,9 +192,9 @@ impl TypeScriptProcessor {
         for child in node.children(&mut cursor) {
             if child.kind() == "identifier" {
                 if name.is_empty() {
-                    name = self.node_text(child, source);
+                    name = Self::node_text(child, source);
                 } else {
-                    alias = Some(self.node_text(child, source));
+                    alias = Some(Self::node_text(child, source));
                 }
             }
         }
@@ -216,7 +215,7 @@ impl TypeScriptProcessor {
         if let Some(parent) = node.parent()
             && parent.kind() == "decorator"
         {
-            decorators.push(self.node_text(parent, source));
+            decorators.push(Self::node_text(parent, source));
         }
 
         let line_start = node.start_position().row + 1;
@@ -227,7 +226,7 @@ impl TypeScriptProcessor {
             match child.kind() {
                 "type_identifier" | "identifier" => {
                     if name.is_empty() {
-                        name = self.node_text(child, source);
+                        name = Self::node_text(child, source);
                     }
                 }
                 "class_heritage" => {
@@ -304,7 +303,7 @@ impl TypeScriptProcessor {
         for child in node.children(&mut cursor) {
             match child.kind() {
                 "type_identifier" => {
-                    name = self.node_text(child, source);
+                    name = Self::node_text(child, source);
                 }
                 "extends_type_clause" => {
                     extends = self.parse_extends_type_clause(child, source)?;
@@ -361,7 +360,7 @@ impl TypeScriptProcessor {
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
             if child.kind() == "identifier" || child.kind() == "type_identifier" {
-                extends.push(TypeRef::new(self.node_text(child, source)));
+                extends.push(TypeRef::new(Self::node_text(child, source)));
             }
         }
         Ok(extends)
@@ -376,7 +375,7 @@ impl TypeScriptProcessor {
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
             if child.kind() == "type_identifier" || child.kind() == "identifier" {
-                implements.push(TypeRef::new(self.node_text(child, source)));
+                implements.push(TypeRef::new(Self::node_text(child, source)));
             }
         }
         Ok(implements)
@@ -391,7 +390,7 @@ impl TypeScriptProcessor {
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
             if child.kind() == "type_identifier" {
-                extends.push(TypeRef::new(self.node_text(child, source)));
+                extends.push(TypeRef::new(Self::node_text(child, source)));
             }
         }
         Ok(extends)
@@ -410,7 +409,7 @@ impl TypeScriptProcessor {
                 for param_child in child.children(&mut param_cursor) {
                     if param_child.kind() == "type_identifier" {
                         params.push(TypeParam {
-                            name: self.node_text(param_child, source),
+                            name: Self::node_text(param_child, source),
                             constraints: Vec::new(),
                             default: None,
                         });
@@ -439,7 +438,7 @@ impl TypeScriptProcessor {
             match child.kind() {
                 "property_identifier" | "identifier" => {
                     if name.is_empty() {
-                        name = self.node_text(child, source);
+                        name = Self::node_text(child, source);
                     }
                 }
                 "formal_parameters" => {
@@ -452,7 +451,7 @@ impl TypeScriptProcessor {
                     type_params = self.parse_type_parameters(child, source)?;
                 }
                 "accessibility_modifier" => {
-                    visibility = self.parse_visibility(child, source);
+                    visibility = Self::parse_visibility(child, source);
                 }
                 "static" => {
                     modifiers.push(Modifier::Static);
@@ -461,7 +460,7 @@ impl TypeScriptProcessor {
                     modifiers.push(Modifier::Async);
                 }
                 "decorator" => {
-                    decorators.push(self.node_text(child, source));
+                    decorators.push(Self::node_text(child, source));
                 }
                 _ => {}
             }
@@ -500,7 +499,7 @@ impl TypeScriptProcessor {
             match child.kind() {
                 "identifier" => {
                     if name.is_empty() {
-                        name = self.node_text(child, source);
+                        name = Self::node_text(child, source);
                     }
                 }
                 "formal_parameters" => {
@@ -548,7 +547,7 @@ impl TypeScriptProcessor {
         for child in node.children(&mut cursor) {
             match child.kind() {
                 "identifier" => {
-                    name = self.node_text(child, source);
+                    name = Self::node_text(child, source);
                 }
                 "arrow_function" | "function" | "function_expression" => {
                     if let Some(mut func) = self.parse_arrow_function(child, source)? {
@@ -629,13 +628,13 @@ impl TypeScriptProcessor {
         for child in node.children(&mut cursor) {
             match child.kind() {
                 "property_identifier" => {
-                    name = self.node_text(child, source);
+                    name = Self::node_text(child, source);
                 }
                 "type_annotation" => {
                     field_type = self.parse_type_annotation(child, source)?;
                 }
                 "accessibility_modifier" => {
-                    visibility = self.parse_visibility(child, source);
+                    visibility = Self::parse_visibility(child, source);
                 }
                 "static" => {
                     modifiers.push(Modifier::Static);
@@ -678,7 +677,7 @@ impl TypeScriptProcessor {
         for child in node.children(&mut cursor) {
             match child.kind() {
                 "property_identifier" => {
-                    name = self.node_text(child, source);
+                    name = Self::node_text(child, source);
                 }
                 "type_annotation" => {
                     field_type = self.parse_type_annotation(child, source)?;
@@ -724,7 +723,7 @@ impl TypeScriptProcessor {
                 for child in node.children(&mut cursor) {
                     match child.kind() {
                         "identifier" => {
-                            name = self.node_text(child, source);
+                            name = Self::node_text(child, source);
                         }
                         "type_annotation" => {
                             if let Some(t) = self.parse_type_annotation(child, source)? {
@@ -764,13 +763,13 @@ impl TypeScriptProcessor {
         for child in node.children(&mut cursor) {
             match child.kind() {
                 "type_identifier" | "predefined_type" => {
-                    return Ok(Some(TypeRef::new(self.node_text(child, source))));
+                    return Ok(Some(TypeRef::new(Self::node_text(child, source))));
                 }
                 "generic_type" => {
                     return self.parse_generic_type(child, source);
                 }
                 "union_type" | "intersection_type" => {
-                    return Ok(Some(TypeRef::new(self.node_text(child, source))));
+                    return Ok(Some(TypeRef::new(Self::node_text(child, source))));
                 }
                 _ => {}
             }
@@ -786,7 +785,7 @@ impl TypeScriptProcessor {
         for child in node.children(&mut cursor) {
             match child.kind() {
                 "type_identifier" => {
-                    name = self.node_text(child, source);
+                    name = Self::node_text(child, source);
                 }
                 "type_arguments" => {
                     let mut args_cursor = child.walk();
@@ -814,8 +813,8 @@ impl TypeScriptProcessor {
         }))
     }
 
-    fn parse_visibility(&self, node: tree_sitter::Node, source: &str) -> Visibility {
-        match self.node_text(node, source).as_str() {
+    fn parse_visibility(node: tree_sitter::Node, source: &str) -> Visibility {
+        match Self::node_text(node, source).as_str() {
             "private" => Visibility::Private,
             "protected" => Visibility::Protected,
             "public" => Visibility::Public,
@@ -823,7 +822,7 @@ impl TypeScriptProcessor {
         }
     }
 
-    fn node_text(&self, node: tree_sitter::Node, source: &str) -> String {
+    fn node_text(node: tree_sitter::Node, source: &str) -> String {
         let start = node.start_byte();
         let end = node.end_byte();
         if start > end || end > source.len() {

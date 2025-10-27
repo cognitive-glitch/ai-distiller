@@ -1,13 +1,17 @@
 //! Simplified MCP Server for AI Distiller
 //!
 //! Provides 4 core operations via JSON-RPC:
-//! 1. distil_directory - Process entire directory
-//! 2. distil_file - Process single file
-//! 3. list_dir - List directory contents with metadata
-//! 4. get_capa - Get server capabilities
+//! 1. `distil_directory` - Process entire directory
+//! 2. `distil_file` - Process single file
+//! 3. `list_dir` - List directory contents with metadata
+//! 4. `get_capa` - Get server capabilities
 
 use anyhow::{Context, Result};
-use distiller_core::{ProcessOptions, ir::*, processor::Processor};
+use distiller_core::{
+    ProcessOptions,
+    ir::{File, Node},
+    processor::Processor,
+};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
@@ -64,7 +68,7 @@ struct JsonRpcError {
     data: Option<serde_json::Value>,
 }
 
-/// Parameters for distil_directory operation
+/// Parameters for `distil_directory` operation
 #[derive(Debug, Deserialize)]
 struct DistilDirectoryParams {
     path: PathBuf,
@@ -72,7 +76,7 @@ struct DistilDirectoryParams {
     options: DistilOptions,
 }
 
-/// Parameters for distil_file operation
+/// Parameters for `distil_file` operation
 #[derive(Debug, Deserialize)]
 struct DistilFileParams {
     path: PathBuf,
@@ -80,7 +84,7 @@ struct DistilFileParams {
     options: DistilOptions,
 }
 
-/// Parameters for list_dir operation
+/// Parameters for `list_dir` operation
 #[derive(Debug, Deserialize)]
 struct ListDirParams {
     path: PathBuf,
@@ -164,7 +168,7 @@ impl McpServer {
         Self { processor }
     }
 
-    /// Handle distil_directory operation
+    /// Handle `distil_directory` operation
     async fn handle_distil_directory(&self, params: DistilDirectoryParams) -> Result<String> {
         let path = &params.path;
         if !path.exists() {
@@ -203,7 +207,7 @@ impl McpServer {
         Ok(output)
     }
 
-    /// Handle distil_file operation
+    /// Handle `distil_file` operation
     async fn handle_distil_file(&self, params: DistilFileParams) -> Result<String> {
         let path = &params.path;
         if !path.exists() {
@@ -242,7 +246,7 @@ impl McpServer {
         Ok(output)
     }
 
-    /// Handle list_dir operation
+    /// Handle `list_dir` operation
     async fn handle_list_dir(&self, params: ListDirParams) -> Result<Vec<FileInfo>> {
         let path = &params.path;
         if !path.exists() {
@@ -282,7 +286,7 @@ impl McpServer {
         Ok(entries)
     }
 
-    /// Handle get_capa operation
+    /// Handle `get_capa` operation
     async fn handle_get_capa(&self) -> Result<ServerCapabilities> {
         Ok(ServerCapabilities {
             version: env!("CARGO_PKG_VERSION").to_string(),
@@ -350,12 +354,12 @@ impl McpServer {
                     .format_files(files)
                     .context("Failed to format as XML")
             }
-            _ => anyhow::bail!("Unsupported format: {}", format),
+            _ => anyhow::bail!("Unsupported format: {format}"),
         }
     }
 }
 
-/// File information for list_dir response
+/// File information for `list_dir` response
 #[derive(Debug, Serialize)]
 struct FileInfo {
     path: String,
@@ -494,7 +498,7 @@ async fn main() -> Result<()> {
                 let request: JsonRpcRequest = match serde_json::from_str(line) {
                     Ok(req) => req,
                     Err(e) => {
-                        log::error!("❌ Failed to parse JSON-RPC request: {}", e);
+                        log::error!("❌ Failed to parse JSON-RPC request: {e}");
                         continue;
                     }
                 };
@@ -521,7 +525,7 @@ async fn main() -> Result<()> {
                                     result: None,
                                     error: Some(JsonRpcError {
                                         code: -32602,
-                                        message: format!("Invalid params: {}", e),
+                                        message: format!("Invalid params: {e}"),
                                         data: None,
                                     }),
                                 };
@@ -565,7 +569,7 @@ async fn main() -> Result<()> {
                                     result: None,
                                     error: Some(JsonRpcError {
                                         code: -32602,
-                                        message: format!("Invalid params: {}", e),
+                                        message: format!("Invalid params: {e}"),
                                         data: None,
                                     }),
                                 };
@@ -609,7 +613,7 @@ async fn main() -> Result<()> {
                                     result: None,
                                     error: Some(JsonRpcError {
                                         code: -32602,
-                                        message: format!("Invalid params: {}", e),
+                                        message: format!("Invalid params: {e}"),
                                         data: None,
                                     }),
                                 };
@@ -677,7 +681,7 @@ async fn main() -> Result<()> {
                 log::info!("📤 Sent response for id={:?}", response.id);
             }
             Err(e) => {
-                log::error!("❌ Failed to read from stdin: {}", e);
+                log::error!("❌ Failed to read from stdin: {e}");
                 break;
             }
         }

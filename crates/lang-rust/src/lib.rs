@@ -26,18 +26,18 @@ impl RustProcessor {
         })
     }
 
-    fn node_text(&self, node: tree_sitter::Node, source: &str) -> String {
+    fn node_text(node: tree_sitter::Node, source: &str) -> String {
         if node.start_byte() > node.end_byte() || node.end_byte() > source.len() {
             return String::new();
         }
         source[node.start_byte()..node.end_byte()].to_string()
     }
 
-    fn parse_visibility(&self, node: tree_sitter::Node, source: &str) -> Visibility {
+    fn parse_visibility(node: tree_sitter::Node, source: &str) -> Visibility {
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
             if child.kind() == "visibility_modifier" {
-                let text = self.node_text(child, source);
+                let text = Self::node_text(child, source);
                 return match text.as_str() {
                     "pub" => Visibility::Public,
                     text if text.contains("pub(crate)") => Visibility::Internal,
@@ -54,17 +54,17 @@ impl RustProcessor {
     fn parse_field(&self, node: tree_sitter::Node, source: &str) -> Result<Option<Field>> {
         let mut name = String::new();
         let mut field_type = TypeRef::new("".to_string());
-        let visibility = self.parse_visibility(node, source);
+        let visibility = Self::parse_visibility(node, source);
         let line = node.start_position().row + 1;
 
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
             match child.kind() {
                 "field_identifier" => {
-                    name = self.node_text(child, source);
+                    name = Self::node_text(child, source);
                 }
                 "type_identifier" | "primitive_type" | "generic_type" => {
-                    field_type = TypeRef::new(self.node_text(child, source));
+                    field_type = TypeRef::new(Self::node_text(child, source));
                 }
                 _ => {}
             }
@@ -108,14 +108,14 @@ impl RustProcessor {
             match child.kind() {
                 "identifier" => {
                     if name.is_empty() {
-                        name = self.node_text(child, source);
+                        name = Self::node_text(child, source);
                     }
                 }
                 "self" => {
                     name = "self".to_string();
                 }
                 "type_identifier" | "primitive_type" | "reference_type" | "generic_type" => {
-                    param_type = TypeRef::new(self.node_text(child, source));
+                    param_type = TypeRef::new(Self::node_text(child, source));
                 }
                 _ => {}
             }
@@ -148,7 +148,7 @@ impl RustProcessor {
             match child.kind() {
                 "type_identifier" => {
                     if type_name.is_empty() {
-                        type_name = self.node_text(child, source);
+                        type_name = Self::node_text(child, source);
                     }
                 }
                 "declaration_list" => {
@@ -177,7 +177,7 @@ impl RustProcessor {
 
         for child in node.children(&mut cursor) {
             if child.kind() == "use_clause" || child.kind() == "scoped_identifier" {
-                module = self.node_text(child, source);
+                module = Self::node_text(child, source);
                 break;
             }
         }
@@ -194,7 +194,7 @@ impl RustProcessor {
     fn parse_struct(&self, node: tree_sitter::Node, source: &str) -> Result<Option<Class>> {
         let mut name = String::new();
         let mut fields = Vec::new();
-        let visibility = self.parse_visibility(node, source);
+        let visibility = Self::parse_visibility(node, source);
 
         let line_start = node.start_position().row + 1;
         let line_end = node.end_position().row + 1;
@@ -204,7 +204,7 @@ impl RustProcessor {
             match child.kind() {
                 "type_identifier" => {
                     if name.is_empty() {
-                        name = self.node_text(child, source);
+                        name = Self::node_text(child, source);
                     }
                 }
                 "field_declaration_list" => {
@@ -241,14 +241,14 @@ impl RustProcessor {
 
     fn parse_trait(&self, node: tree_sitter::Node, source: &str) -> Result<Option<Interface>> {
         let mut name = String::new();
-        let visibility = self.parse_visibility(node, source);
+        let visibility = Self::parse_visibility(node, source);
         let line_start = node.start_position().row + 1;
         let line_end = node.end_position().row + 1;
 
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
             if child.kind() == "type_identifier" {
-                name = self.node_text(child, source);
+                name = Self::node_text(child, source);
                 break;
             }
         }
@@ -273,7 +273,7 @@ impl RustProcessor {
         let mut parameters = Vec::new();
         let mut return_type = None;
         let mut is_async = false;
-        let visibility = self.parse_visibility(node, source);
+        let visibility = Self::parse_visibility(node, source);
 
         let line_start = node.start_position().row + 1;
         let line_end = node.end_position().row + 1;
@@ -283,7 +283,7 @@ impl RustProcessor {
             match child.kind() {
                 "identifier" => {
                     if name.is_empty() {
-                        name = self.node_text(child, source);
+                        name = Self::node_text(child, source);
                     }
                 }
                 "parameters" => {
@@ -291,11 +291,11 @@ impl RustProcessor {
                 }
                 "type_identifier" | "primitive_type" | "generic_type" => {
                     // This might be return type
-                    return_type = Some(TypeRef::new(self.node_text(child, source)));
+                    return_type = Some(TypeRef::new(Self::node_text(child, source)));
                 }
                 "function_modifiers" => {
                     // Check for async in function_modifiers
-                    let text = self.node_text(child, source);
+                    let text = Self::node_text(child, source);
                     if text.contains("async") {
                         is_async = true;
                     }

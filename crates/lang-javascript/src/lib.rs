@@ -27,7 +27,7 @@ impl JavaScriptProcessor {
         })
     }
 
-    fn node_text(&self, node: tree_sitter::Node, source: &str) -> String {
+    fn node_text(node: tree_sitter::Node, source: &str) -> String {
         if node.start_byte() > node.end_byte() || node.end_byte() > source.len() {
             return String::new();
         }
@@ -49,7 +49,7 @@ impl JavaScriptProcessor {
                         match clause_child.kind() {
                             "identifier" => {
                                 symbols.push(ImportedSymbol {
-                                    name: self.node_text(clause_child, source),
+                                    name: Self::node_text(clause_child, source),
                                     alias: None,
                                 });
                             }
@@ -61,7 +61,7 @@ impl JavaScriptProcessor {
                                         for spec_child in import_child.children(&mut spec_cursor) {
                                             if spec_child.kind() == "identifier" {
                                                 symbols.push(ImportedSymbol {
-                                                    name: self.node_text(spec_child, source),
+                                                    name: Self::node_text(spec_child, source),
                                                     alias: None,
                                                 });
                                             }
@@ -74,7 +74,7 @@ impl JavaScriptProcessor {
                     }
                 }
                 "string" => {
-                    let text = self.node_text(child, source);
+                    let text = Self::node_text(child, source);
                     module = text
                         .trim_matches(|c| c == '"' || c == '\'' || c == '`')
                         .to_string();
@@ -105,14 +105,14 @@ impl JavaScriptProcessor {
             match child.kind() {
                 "identifier" => {
                     if name.is_empty() {
-                        name = self.node_text(child, source);
+                        name = Self::node_text(child, source);
                     }
                 }
                 "class_heritage" => {
                     let mut heritage_cursor = child.walk();
                     for heritage_child in child.children(&mut heritage_cursor) {
                         if heritage_child.kind() == "identifier" {
-                            extends.push(TypeRef::new(self.node_text(heritage_child, source)));
+                            extends.push(TypeRef::new(Self::node_text(heritage_child, source)));
                         }
                     }
                 }
@@ -170,7 +170,7 @@ impl JavaScriptProcessor {
             match child.kind() {
                 "property_identifier" | "identifier" | "private_property_identifier" => {
                     if name.is_empty() {
-                        let text = self.node_text(child, source);
+                        let text = Self::node_text(child, source);
                         // Check for private field syntax
                         if text.starts_with('#') {
                             is_private = true;
@@ -238,7 +238,7 @@ impl JavaScriptProcessor {
             match child.kind() {
                 "identifier" => {
                     if name.is_empty() {
-                        name = self.node_text(child, source);
+                        name = Self::node_text(child, source);
                     }
                 }
                 "formal_parameters" => {
@@ -287,7 +287,7 @@ impl JavaScriptProcessor {
         for child in node.children(&mut cursor) {
             match child.kind() {
                 "identifier" => {
-                    let name = self.node_text(child, source);
+                    let name = Self::node_text(child, source);
                     parameters.push(Parameter {
                         name,
                         param_type: TypeRef::new("any".to_string()),
@@ -301,7 +301,7 @@ impl JavaScriptProcessor {
                     let mut rest_cursor = child.walk();
                     for rest_child in child.children(&mut rest_cursor) {
                         if rest_child.kind() == "identifier" {
-                            let name = self.node_text(rest_child, source);
+                            let name = Self::node_text(rest_child, source);
                             parameters.push(Parameter {
                                 name,
                                 param_type: TypeRef::new("any[]".to_string()),

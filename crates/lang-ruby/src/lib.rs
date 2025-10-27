@@ -25,18 +25,18 @@ impl RubyProcessor {
         })
     }
 
-    fn node_text(&self, node: TSNode, source: &str) -> String {
+    fn node_text(node: TSNode, source: &str) -> String {
         if node.start_byte() > node.end_byte() || node.end_byte() > source.len() {
             return String::new();
         }
         source[node.start_byte()..node.end_byte()].to_string()
     }
 
-    fn parse_visibility(&self, node: TSNode, source: &str) -> Visibility {
+    fn parse_visibility(node: TSNode, source: &str) -> Visibility {
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
             if child.kind() == "visibility" {
-                let text = self.node_text(child, source);
+                let text = Self::node_text(child, source);
                 return match text.as_str() {
                     "private" => Visibility::Private,
                     "protected" => Visibility::Protected,
@@ -50,7 +50,7 @@ impl RubyProcessor {
             let mut cursor = parent.walk();
             for sibling in parent.children(&mut cursor) {
                 if sibling.kind() == "comment" {
-                    let comment = self.node_text(sibling, source);
+                    let comment = Self::node_text(sibling, source);
                     if comment.contains("@private") {
                         return Visibility::Private;
                     }
@@ -65,7 +65,7 @@ impl RubyProcessor {
         let mut name = String::new();
         let mut extends = Vec::new();
         let mut children = Vec::new();
-        let visibility = self.parse_visibility(node, source);
+        let visibility = Self::parse_visibility(node, source);
 
         let line_start = node.start_position().row + 1;
         let line_end = node.end_position().row + 1;
@@ -75,14 +75,14 @@ impl RubyProcessor {
             match child.kind() {
                 "constant" => {
                     if name.is_empty() {
-                        name = self.node_text(child, source);
+                        name = Self::node_text(child, source);
                     }
                 }
                 "superclass" => {
                     let mut sc_cursor = child.walk();
                     for sc_child in child.children(&mut sc_cursor) {
                         if sc_child.kind() == "constant" {
-                            extends.push(TypeRef::new(self.node_text(sc_child, source)));
+                            extends.push(TypeRef::new(Self::node_text(sc_child, source)));
                         }
                     }
                 }
@@ -111,7 +111,7 @@ impl RubyProcessor {
         // Ruby modules are similar to classes
         let mut name = String::new();
         let mut children = Vec::new();
-        let visibility = self.parse_visibility(node, source);
+        let visibility = Self::parse_visibility(node, source);
 
         let line_start = node.start_position().row + 1;
         let line_end = node.end_position().row + 1;
@@ -121,7 +121,7 @@ impl RubyProcessor {
             match child.kind() {
                 "constant" => {
                     if name.is_empty() {
-                        name = self.node_text(child, source);
+                        name = Self::node_text(child, source);
                     }
                 }
                 "body_statement" => {
@@ -148,7 +148,7 @@ impl RubyProcessor {
     fn parse_method(&self, node: TSNode, source: &str) -> Result<Option<Function>> {
         let mut name = String::new();
         let mut parameters = Vec::new();
-        let visibility = self.parse_visibility(node, source);
+        let visibility = Self::parse_visibility(node, source);
 
         let line_start = node.start_position().row + 1;
         let line_end = node.end_position().row + 1;
@@ -159,7 +159,7 @@ impl RubyProcessor {
                 "identifier" | "constant" => {
                     // For singleton methods like "def self.method_name",
                     // we want the last identifier (the method name, not "self")
-                    let text = self.node_text(child, source);
+                    let text = Self::node_text(child, source);
                     if !text.is_empty() {
                         name = text;
                     }
@@ -207,13 +207,13 @@ impl RubyProcessor {
                         let mut found_name = String::new();
                         for param_child in child.children(&mut param_cursor) {
                             if param_child.kind() == "identifier" {
-                                found_name = self.node_text(param_child, source);
+                                found_name = Self::node_text(param_child, source);
                                 break;
                             }
                         }
                         found_name
                     } else {
-                        self.node_text(child, source)
+                        Self::node_text(child, source)
                     };
 
                     if !param_name.is_empty() {

@@ -25,7 +25,7 @@ impl JavaProcessor {
         })
     }
 
-    fn node_text(&self, node: TSNode, source: &str) -> String {
+    fn node_text(node: TSNode, source: &str) -> String {
         if node.start_byte() > node.end_byte() || node.end_byte() > source.len() {
             return String::new();
         }
@@ -66,7 +66,7 @@ impl JavaProcessor {
                         "final" => modifiers.push(Modifier::Final),
                         "abstract" => modifiers.push(Modifier::Abstract),
                         "marker_annotation" | "annotation" => {
-                            decorators.push(self.node_text(mod_child, source));
+                            decorators.push(Self::node_text(mod_child, source));
                         }
                         _ => {}
                     }
@@ -94,7 +94,7 @@ impl JavaProcessor {
                 let mut name = String::new();
                 for type_child in child.children(&mut type_cursor) {
                     if type_child.kind() == "type_identifier" {
-                        name = self.node_text(type_child, source);
+                        name = Self::node_text(type_child, source);
                         break;
                     }
                 }
@@ -102,7 +102,7 @@ impl JavaProcessor {
                     let mut constraints = Vec::new();
 
                     if let Some(bound_node) = child.child_by_field_name("bound") {
-                        constraints.push(TypeRef::new(self.node_text(bound_node, source)));
+                        constraints.push(TypeRef::new(Self::node_text(bound_node, source)));
                     }
 
                     params.push(TypeParam {
@@ -128,12 +128,12 @@ impl JavaProcessor {
                 for type_child in child.children(&mut type_cursor) {
                     if type_child.kind() == "type_identifier" || type_child.kind() == "generic_type"
                     {
-                        interfaces.push(TypeRef::new(self.node_text(type_child, source)));
+                        interfaces.push(TypeRef::new(Self::node_text(type_child, source)));
                     }
                 }
             } else if child.kind() == "type_identifier" || child.kind() == "generic_type" {
                 // Direct type nodes (for extends_interfaces)
-                interfaces.push(TypeRef::new(self.node_text(child, source)));
+                interfaces.push(TypeRef::new(Self::node_text(child, source)));
             }
         }
 
@@ -157,14 +157,14 @@ impl JavaProcessor {
                     // Already parsed
                 }
                 "identifier" => {
-                    name = self.node_text(child, source);
+                    name = Self::node_text(child, source);
                 }
                 "type_parameters" => {
                     type_params = self.parse_type_parameters(child, source);
                 }
                 "superclass" => {
                     if let Some(type_node) = child.child_by_field_name("type") {
-                        extends.push(TypeRef::new(self.node_text(type_node, source)));
+                        extends.push(TypeRef::new(Self::node_text(type_node, source)));
                     }
                 }
                 "super_interfaces" => {
@@ -207,7 +207,7 @@ impl JavaProcessor {
                     // Already parsed
                 }
                 "identifier" => {
-                    name = self.node_text(child, source);
+                    name = Self::node_text(child, source);
                 }
                 "type_parameters" => {
                     type_params = self.parse_type_parameters(child, source);
@@ -250,7 +250,7 @@ impl JavaProcessor {
                     // Already parsed
                 }
                 "identifier" => {
-                    name = self.node_text(child, source);
+                    name = Self::node_text(child, source);
                 }
                 "annotation_type_body" => {
                     self.parse_annotation_body(child, source, &mut children)?;
@@ -286,7 +286,7 @@ impl JavaProcessor {
             match child.kind() {
                 "modifiers" => {}
                 "identifier" => {
-                    name = self.node_text(child, source);
+                    name = Self::node_text(child, source);
                 }
                 "enum_body" => {
                     let mut body_cursor = child.walk();
@@ -296,7 +296,7 @@ impl JavaProcessor {
                                 let mut const_cursor = body_child.walk();
                                 for const_child in body_child.children(&mut const_cursor) {
                                     if const_child.kind() == "identifier" {
-                                        let const_name = self.node_text(const_child, source);
+                                        let const_name = Self::node_text(const_child, source);
                                         enum_constants.push(const_name);
                                         break;
                                     }
@@ -447,10 +447,10 @@ impl JavaProcessor {
         for child in node.children(&mut cursor) {
             match child.kind() {
                 "type" | "integral_type" | "floating_point_type" | "boolean_type" => {
-                    return_type = Some(TypeRef::new(self.node_text(child, source)));
+                    return_type = Some(TypeRef::new(Self::node_text(child, source)));
                 }
                 "identifier" => {
-                    name = self.node_text(child, source);
+                    name = Self::node_text(child, source);
                 }
                 _ => {}
             }
@@ -494,11 +494,11 @@ impl JavaProcessor {
                 | "generic_type"
                 | "type_identifier"
                 | "array_type" => {
-                    field_type = Some(TypeRef::new(self.node_text(child, source)));
+                    field_type = Some(TypeRef::new(Self::node_text(child, source)));
                 }
                 "variable_declarator" => {
                     if let Some(name_node) = child.child_by_field_name("name") {
-                        let name = self.node_text(name_node, source);
+                        let name = Self::node_text(name_node, source);
                         fields.push(Field {
                             name,
                             visibility,
@@ -543,17 +543,17 @@ impl JavaProcessor {
                 | "generic_type"
                 | "type_identifier"
                 | "array_type" => {
-                    return_type = Some(TypeRef::new(self.node_text(child, source)));
+                    return_type = Some(TypeRef::new(Self::node_text(child, source)));
                 }
                 "identifier" => {
-                    name = self.node_text(child, source);
+                    name = Self::node_text(child, source);
                 }
                 "formal_parameters" => {
                     parameters = self.parse_parameters(child, source)?;
                 }
                 "marker_annotation" | "annotation" => {
                     // This case probably never executes since annotations are in modifiers
-                    decorators.push(self.node_text(child, source));
+                    decorators.push(Self::node_text(child, source));
                 }
                 _ => {}
             }
@@ -591,7 +591,7 @@ impl JavaProcessor {
                     // Already parsed
                 }
                 "identifier" => {
-                    name = self.node_text(child, source);
+                    name = Self::node_text(child, source);
                 }
                 "formal_parameters" => {
                     parameters = self.parse_parameters(child, source)?;
@@ -638,21 +638,21 @@ impl JavaProcessor {
                         | "generic_type"
                         | "type_identifier"
                         | "array_type" => {
-                            param_type = TypeRef::new(self.node_text(param_child, source));
+                            param_type = TypeRef::new(Self::node_text(param_child, source));
                         }
                         "identifier" => {
-                            name = self.node_text(param_child, source);
+                            name = Self::node_text(param_child, source);
                         }
                         "variable_declarator" => {
                             // For spread_parameter, identifier is inside variable_declarator
                             if let Some(id_node) = param_child.child_by_field_name("name") {
-                                name = self.node_text(id_node, source);
+                                name = Self::node_text(id_node, source);
                             } else {
                                 // Fallback: find first identifier child
                                 let mut var_cursor = param_child.walk();
                                 for var_child in param_child.children(&mut var_cursor) {
                                     if var_child.kind() == "identifier" {
-                                        name = self.node_text(var_child, source);
+                                        name = Self::node_text(var_child, source);
                                         break;
                                     }
                                 }
@@ -712,7 +712,7 @@ impl LanguageProcessor for JavaProcessor {
                 }
                 "import_declaration" => {
                     if let Some(import_node) = child.child_by_field_name("name") {
-                        let module = self.node_text(import_node, source);
+                        let module = Self::node_text(import_node, source);
                         file.children.push(ir::Node::Import(Import {
                             import_type: "import".to_string(),
                             module,

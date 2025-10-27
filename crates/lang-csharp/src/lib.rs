@@ -24,7 +24,7 @@ impl CSharpProcessor {
         })
     }
 
-    fn node_text(&self, node: TSNode, source: &str) -> String {
+    fn node_text(node: TSNode, source: &str) -> String {
         let start = node.start_byte();
         let end = node.end_byte();
         let source_len = source.len();
@@ -43,7 +43,7 @@ impl CSharpProcessor {
         for child in node.children(&mut cursor) {
             match child.kind() {
                 "modifier" | "modifiers" => {
-                    let text = self.node_text(child, source);
+                    let text = Self::node_text(child, source);
                     match text.as_str() {
                         "public" => {
                             visibility = Visibility::Public;
@@ -87,7 +87,7 @@ impl CSharpProcessor {
         match node.kind() {
             "identifier" | "type_identifier" | "generic_name" | "predefined_type"
             | "qualified_name" => {
-                results.push(TypeRef::new(self.node_text(node, source)));
+                results.push(TypeRef::new(Self::node_text(node, source)));
             }
             _ => {
                 let mut cursor = node.walk();
@@ -101,7 +101,7 @@ impl CSharpProcessor {
     fn collect_type_param_names(&self, node: TSNode, source: &str, results: &mut Vec<String>) {
         match node.kind() {
             "type_parameter" | "type_identifier" => {
-                results.push(self.node_text(node, source));
+                results.push(Self::node_text(node, source));
             }
             _ => {
                 let mut cursor = node.walk();
@@ -148,15 +148,15 @@ impl CSharpProcessor {
                     match constraint_child.kind() {
                         "type_identifier" => {
                             if param_name.is_empty() {
-                                param_name = self.node_text(constraint_child, source);
+                                param_name = Self::node_text(constraint_child, source);
                             } else {
                                 constraints
-                                    .push(TypeRef::new(self.node_text(constraint_child, source)));
+                                    .push(TypeRef::new(Self::node_text(constraint_child, source)));
                             }
                         }
                         "generic_name" | "predefined_type" => {
                             constraints
-                                .push(TypeRef::new(self.node_text(constraint_child, source)));
+                                .push(TypeRef::new(Self::node_text(constraint_child, source)));
                         }
                         _ => {}
                     }
@@ -193,7 +193,7 @@ impl CSharpProcessor {
             match child.kind() {
                 "identifier" => {
                     if name.is_empty() {
-                        name = self.node_text(child, source);
+                        name = Self::node_text(child, source);
                     }
                 }
                 "type_parameter_list" => {
@@ -263,7 +263,7 @@ impl CSharpProcessor {
             match child.kind() {
                 "identifier" => {
                     if name.is_empty() {
-                        name = self.node_text(child, source);
+                        name = Self::node_text(child, source);
                     }
                 }
                 "type_parameter_list" => {
@@ -355,11 +355,11 @@ impl CSharpProcessor {
                     match var_child.kind() {
                         "type_identifier" | "predefined_type" | "generic_name" | "array_type"
                         | "nullable_type" => {
-                            field_type = Some(TypeRef::new(self.node_text(var_child, source)));
+                            field_type = Some(TypeRef::new(Self::node_text(var_child, source)));
                         }
                         "variable_declarator" => {
                             if let Some(name_node) = var_child.child_by_field_name("name") {
-                                name = self.node_text(name_node, source);
+                                name = Self::node_text(name_node, source);
                             }
                         }
                         _ => {}
@@ -393,12 +393,12 @@ impl CSharpProcessor {
             match child.kind() {
                 "identifier" => {
                     if name.is_empty() {
-                        name = self.node_text(child, source);
+                        name = Self::node_text(child, source);
                     }
                 }
                 "type_identifier" | "predefined_type" | "generic_name" | "array_type"
                 | "nullable_type" => {
-                    field_type = Some(TypeRef::new(self.node_text(child, source)));
+                    field_type = Some(TypeRef::new(Self::node_text(child, source)));
                 }
                 _ => {}
             }
@@ -430,22 +430,22 @@ impl CSharpProcessor {
             match child.kind() {
                 "identifier" => {
                     if name.is_empty() {
-                        name = self.node_text(child, source);
+                        name = Self::node_text(child, source);
                     }
                 }
                 "type_identifier" | "generic_name" | "predefined_type" => {
-                    field_type = Some(TypeRef::new(self.node_text(child, source)));
+                    field_type = Some(TypeRef::new(Self::node_text(child, source)));
                 }
                 "variable_declaration" => {
                     let mut var_cursor = child.walk();
                     for var_child in child.children(&mut var_cursor) {
                         match var_child.kind() {
                             "type_identifier" | "generic_name" => {
-                                field_type = Some(TypeRef::new(self.node_text(var_child, source)));
+                                field_type = Some(TypeRef::new(Self::node_text(var_child, source)));
                             }
                             "variable_declarator" => {
                                 if let Some(name_node) = var_child.child_by_field_name("name") {
-                                    name = self.node_text(name_node, source);
+                                    name = Self::node_text(name_node, source);
                                 }
                             }
                             _ => {}
@@ -484,13 +484,13 @@ impl CSharpProcessor {
             match child.kind() {
                 "identifier" => {
                     if name.is_empty() {
-                        name = self.node_text(child, source);
+                        name = Self::node_text(child, source);
                     }
                 }
                 "type_identifier" | "predefined_type" | "generic_name" | "array_type"
                 | "nullable_type" => {
                     if return_type.is_none() {
-                        return_type = Some(TypeRef::new(self.node_text(child, source)));
+                        return_type = Some(TypeRef::new(Self::node_text(child, source)));
                     }
                 }
                 "void_keyword" => {
@@ -536,7 +536,7 @@ impl CSharpProcessor {
             match child.kind() {
                 "identifier" => {
                     if name.is_empty() {
-                        name = self.node_text(child, source);
+                        name = Self::node_text(child, source);
                     }
                 }
                 "parameter_list" => {
@@ -577,7 +577,7 @@ impl CSharpProcessor {
         for child in node.children(&mut cursor) {
             match child.kind() {
                 "operator_token" => {
-                    name = format!("operator{}", self.node_text(child, source));
+                    name = format!("operator{}", Self::node_text(child, source));
                 }
                 "implicit_keyword" => {
                     name = "implicit".to_string();
@@ -587,7 +587,7 @@ impl CSharpProcessor {
                 }
                 "type_identifier" | "predefined_type" | "generic_name" => {
                     if return_type.is_none() {
-                        return_type = Some(TypeRef::new(self.node_text(child, source)));
+                        return_type = Some(TypeRef::new(Self::node_text(child, source)));
                     }
                 }
                 "parameter_list" => {
@@ -630,15 +630,15 @@ impl CSharpProcessor {
                 for param_child in child.children(&mut param_cursor) {
                     match param_child.kind() {
                         "identifier" => {
-                            name = self.node_text(param_child, source);
+                            name = Self::node_text(param_child, source);
                         }
                         "type_identifier" | "predefined_type" | "generic_name" | "array_type"
                         | "nullable_type" => {
-                            param_type = TypeRef::new(self.node_text(param_child, source));
+                            param_type = TypeRef::new(Self::node_text(param_child, source));
                         }
                         "this_expression" | "ref_keyword" | "out_keyword" | "in_keyword"
                         | "params_keyword" => {
-                            let decorator = self.node_text(param_child, source);
+                            let decorator = Self::node_text(param_child, source);
                             decorators.push(decorator.clone());
                             if decorator == "params" {
                                 is_variadic = true;

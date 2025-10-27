@@ -4,7 +4,11 @@
 
 use anyhow::{Context, Result};
 use clap::{Parser, ValueEnum};
-use distiller_core::{ProcessOptions, ir::*, processor::Processor};
+use distiller_core::{
+    ProcessOptions,
+    ir::{File, Node},
+    processor::Processor,
+};
 use std::path::{Path, PathBuf};
 
 // Language processors
@@ -148,7 +152,7 @@ struct Args {
 }
 
 impl Args {
-    /// Convert CLI args to ProcessOptions
+    /// Convert CLI args to `ProcessOptions`
     fn to_process_options(&self) -> ProcessOptions {
         let mut options = ProcessOptions {
             include_public: self.public,
@@ -297,7 +301,7 @@ fn main() -> Result<()> {
 
     // Step 5: Write output
     if args.stdout {
-        println!("{}", output);
+        println!("{output}");
         log::info!("Output written to stdout");
     } else {
         let output_path = if let Some(ref path) = args.output {
@@ -341,7 +345,7 @@ fn generate_output_path(input: &Path, format: Format) -> Result<PathBuf> {
             .unwrap_or("output")
     };
 
-    Ok(PathBuf::from(format!(".aid.{}.{}", basename, extension)))
+    Ok(PathBuf::from(format!(".aid.{basename}.{extension}")))
 }
 
 /// Register all supported language processors

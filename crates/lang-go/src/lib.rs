@@ -29,7 +29,7 @@ impl GoProcessor {
         })
     }
 
-    fn node_text(&self, node: tree_sitter::Node, source: &str) -> String {
+    fn node_text(node: tree_sitter::Node, source: &str) -> String {
         let start = node.start_byte();
         let end = node.end_byte();
         let source_len = source.len();
@@ -92,10 +92,10 @@ impl GoProcessor {
         for child in node.children(&mut cursor) {
             match child.kind() {
                 "interpreted_string_literal" => {
-                    module = self.node_text(child, source).trim_matches('"').to_string();
+                    module = Self::node_text(child, source).trim_matches('"').to_string();
                 }
                 "package_identifier" => {
-                    let alias = self.node_text(child, source);
+                    let alias = Self::node_text(child, source);
                     import_type = format!("import {} as", alias);
                 }
                 "dot" => {
@@ -130,7 +130,7 @@ impl GoProcessor {
         for child in node.children(&mut cursor) {
             match child.kind() {
                 "type_identifier" => {
-                    name = self.node_text(child, source);
+                    name = Self::node_text(child, source);
                 }
                 "type_parameter_list" => {
                     type_params = self.parse_type_parameters(child, source)?;
@@ -200,16 +200,16 @@ impl GoProcessor {
         for child in node.children(&mut cursor) {
             match child.kind() {
                 "field_identifier" => {
-                    name = self.node_text(child, source);
+                    name = Self::node_text(child, source);
                 }
                 "type_identifier" | "qualified_type" | "pointer_type" | "array_type"
                 | "slice_type" | "map_type" => {
                     if name.is_empty() {
                         // Embedded field: type name IS the field name
-                        name = self.node_text(child, source);
+                        name = Self::node_text(child, source);
                         field_type = Some(TypeRef::new(name.clone()));
                     } else {
-                        field_type = Some(TypeRef::new(self.node_text(child, source)));
+                        field_type = Some(TypeRef::new(Self::node_text(child, source)));
                     }
                 }
                 _ => {}
@@ -248,7 +248,7 @@ impl GoProcessor {
         for child in node.children(&mut cursor) {
             match child.kind() {
                 "type_identifier" => {
-                    name = self.node_text(child, source);
+                    name = Self::node_text(child, source);
                 }
                 "type_parameter_list" => {
                     type_params = self.parse_type_parameters(child, source)?;
@@ -300,7 +300,7 @@ impl GoProcessor {
         for child in node.children(&mut cursor) {
             match child.kind() {
                 "field_identifier" => {
-                    name = self.node_text(child, source);
+                    name = Self::node_text(child, source);
                 }
                 "parameter_list" => {
                     parameters = self.parse_parameters(child, source)?;
@@ -354,7 +354,7 @@ impl GoProcessor {
         for child in node.children(&mut cursor) {
             match child.kind() {
                 "identifier" | "field_identifier" => {
-                    name = self.node_text(child, source);
+                    name = Self::node_text(child, source);
                     has_seen_name = true;
                 }
                 "parameter_list" => {
@@ -447,12 +447,12 @@ impl GoProcessor {
         for child in node.children(&mut cursor) {
             match child.kind() {
                 "identifier" | "field_identifier" => {
-                    names.push(self.node_text(child, source));
+                    names.push(Self::node_text(child, source));
                 }
                 "type_identifier" | "qualified_type" | "pointer_type" | "array_type"
                 | "slice_type" | "map_type" | "channel_type" | "function_type"
                 | "interface_type" | "struct_type" => {
-                    param_type = Some(TypeRef::new(self.node_text(child, source)));
+                    param_type = Some(TypeRef::new(Self::node_text(child, source)));
                 }
                 _ => {}
             }
@@ -498,12 +498,12 @@ impl GoProcessor {
         for child in node.children(&mut cursor) {
             match child.kind() {
                 "identifier" | "field_identifier" => {
-                    name = self.node_text(child, source);
+                    name = Self::node_text(child, source);
                 }
                 "type_identifier" | "qualified_type" | "pointer_type" | "array_type"
                 | "slice_type" | "map_type" | "channel_type" | "function_type"
                 | "interface_type" | "struct_type" => {
-                    param_type = Some(TypeRef::new(self.node_text(child, source)));
+                    param_type = Some(TypeRef::new(Self::node_text(child, source)));
                 }
                 "..." => {
                     // Variadic marker, already captured by node kind
@@ -552,7 +552,7 @@ impl GoProcessor {
         match node.kind() {
             "type_identifier" | "qualified_type" | "pointer_type" | "array_type" | "slice_type"
             | "map_type" | "channel_type" | "function_type" | "interface_type" | "struct_type" => {
-                Some(TypeRef::new(self.node_text(node, source)))
+                Some(TypeRef::new(Self::node_text(node, source)))
             }
             _ => None,
         }
@@ -590,13 +590,13 @@ impl GoProcessor {
             match child.kind() {
                 "identifier" | "type_identifier" => {
                     if name.is_empty() {
-                        name = self.node_text(child, source);
+                        name = Self::node_text(child, source);
                     } else {
-                        constraint = Some(TypeRef::new(self.node_text(child, source)));
+                        constraint = Some(TypeRef::new(Self::node_text(child, source)));
                     }
                 }
                 "qualified_type" | "interface_type" => {
-                    constraint = Some(TypeRef::new(self.node_text(child, source)));
+                    constraint = Some(TypeRef::new(Self::node_text(child, source)));
                 }
                 _ => {}
             }

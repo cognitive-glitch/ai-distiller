@@ -24,7 +24,7 @@ impl PhpProcessor {
         })
     }
 
-    fn node_text(&self, node: TSNode, source: &str) -> String {
+    fn node_text(node: TSNode, source: &str) -> String {
         let start = node.start_byte();
         let end = node.end_byte();
         let source_len = source.len();
@@ -51,7 +51,7 @@ impl PhpProcessor {
             match child.kind() {
                 "name" => {
                     if name.is_empty() {
-                        name = self.node_text(child, source);
+                        name = Self::node_text(child, source);
                     }
                 }
                 "base_clause" => {
@@ -99,7 +99,7 @@ impl PhpProcessor {
             match child.kind() {
                 "name" => {
                     if name.is_empty() {
-                        name = self.node_text(child, source);
+                        name = Self::node_text(child, source);
                     }
                 }
                 "declaration_list" => {
@@ -133,7 +133,7 @@ impl PhpProcessor {
 
         for child in node.children(&mut cursor) {
             if child.kind() == "name" {
-                bases.push(TypeRef::new(self.node_text(child, source)));
+                bases.push(TypeRef::new(Self::node_text(child, source)));
             }
         }
 
@@ -177,11 +177,11 @@ impl PhpProcessor {
         for child in node.children(&mut cursor) {
             match child.kind() {
                 "visibility_modifier" => {
-                    visibility = self.parse_visibility(child, source);
+                    visibility = Self::parse_visibility(child, source);
                 }
                 "name" => {
                     if name.is_empty() {
-                        name = self.node_text(child, source);
+                        name = Self::node_text(child, source);
                     }
                 }
                 "formal_parameters" => {
@@ -189,7 +189,7 @@ impl PhpProcessor {
                 }
                 "primitive_type" | "named_type" | "optional_type" => {
                     if return_type.is_none() {
-                        return_type = Some(TypeRef::new(self.node_text(child, source)));
+                        return_type = Some(TypeRef::new(Self::node_text(child, source)));
                     }
                 }
                 _ => {}
@@ -214,8 +214,8 @@ impl PhpProcessor {
         }))
     }
 
-    fn parse_visibility(&self, node: TSNode, source: &str) -> Visibility {
-        let text = self.node_text(node, source);
+    fn parse_visibility(node: TSNode, source: &str) -> Visibility {
+        let text = Self::node_text(node, source);
         match text.as_str() {
             "public" => Visibility::Public,
             "protected" => Visibility::Protected,
@@ -237,10 +237,10 @@ impl PhpProcessor {
                 for param_child in child.children(&mut param_cursor) {
                     match param_child.kind() {
                         "primitive_type" | "named_type" | "optional_type" => {
-                            param_type = TypeRef::new(self.node_text(param_child, source));
+                            param_type = TypeRef::new(Self::node_text(param_child, source));
                         }
                         "variable_name" => {
-                            name = self.node_text(param_child, source);
+                            name = Self::node_text(param_child, source);
                         }
                         _ => {}
                     }
@@ -273,18 +273,18 @@ impl PhpProcessor {
         for child in node.children(&mut cursor) {
             match child.kind() {
                 "visibility_modifier" => {
-                    visibility = self.parse_visibility(child, source);
+                    visibility = Self::parse_visibility(child, source);
                 }
                 "primitive_type" | "named_type" | "optional_type" => {
                     if field_type.is_none() {
-                        field_type = Some(TypeRef::new(self.node_text(child, source)));
+                        field_type = Some(TypeRef::new(Self::node_text(child, source)));
                     }
                 }
                 "property_element" => {
                     let mut elem_cursor = child.walk();
                     for elem_child in child.children(&mut elem_cursor) {
                         if elem_child.kind() == "variable_name" {
-                            name = self.node_text(elem_child, source);
+                            name = Self::node_text(elem_child, source);
                         }
                     }
                 }
@@ -312,7 +312,7 @@ impl PhpProcessor {
 
         for child in node.children(&mut cursor) {
             if child.kind() == "namespace_use_clause" {
-                module = self.node_text(child, source);
+                module = Self::node_text(child, source);
             }
         }
 
@@ -379,7 +379,7 @@ impl PhpProcessor {
             match child.kind() {
                 "name" => {
                     if name.is_empty() {
-                        name = self.node_text(child, source);
+                        name = Self::node_text(child, source);
                     }
                 }
                 "formal_parameters" => {
@@ -387,7 +387,7 @@ impl PhpProcessor {
                 }
                 "primitive_type" | "named_type" | "optional_type" => {
                     if return_type.is_none() {
-                        return_type = Some(TypeRef::new(self.node_text(child, source)));
+                        return_type = Some(TypeRef::new(Self::node_text(child, source)));
                     }
                 }
                 _ => {}

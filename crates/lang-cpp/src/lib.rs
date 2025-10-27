@@ -24,7 +24,7 @@ impl CppProcessor {
         })
     }
 
-    fn node_text(&self, node: TSNode, source: &str) -> String {
+    fn node_text(node: TSNode, source: &str) -> String {
         let start = node.start_byte();
         let end = node.end_byte();
         let source_len = source.len();
@@ -59,7 +59,7 @@ impl CppProcessor {
             match child.kind() {
                 "type_identifier" => {
                     if name.is_empty() {
-                        name = self.node_text(child, source);
+                        name = Self::node_text(child, source);
                     }
                 }
                 "base_class_clause" => {
@@ -103,7 +103,7 @@ impl CppProcessor {
                         let mut param_text_cursor = param_child.walk();
                         for text_child in param_child.children(&mut param_text_cursor) {
                             if text_child.kind() == "type_identifier" {
-                                name = self.node_text(text_child, source);
+                                name = Self::node_text(text_child, source);
                             }
                         }
                         if !name.is_empty() {
@@ -127,7 +127,7 @@ impl CppProcessor {
 
         for child in node.children(&mut cursor) {
             if child.kind() == "type_identifier" {
-                bases.push(TypeRef::new(self.node_text(child, source)));
+                bases.push(TypeRef::new(Self::node_text(child, source)));
             }
         }
 
@@ -169,7 +169,7 @@ impl CppProcessor {
     }
 
     fn parse_access_specifier(&self, node: TSNode, source: &str) -> Visibility {
-        let text = self.node_text(node, source);
+        let text = Self::node_text(node, source);
         match text.as_str() {
             "public" => Visibility::Public,
             "protected" => Visibility::Protected,
@@ -195,7 +195,7 @@ impl CppProcessor {
         for child in node.children(&mut cursor) {
             match child.kind() {
                 "primitive_type" | "type_identifier" if first && return_type.is_none() => {
-                    return_type = Some(TypeRef::new(self.node_text(child, source)));
+                    return_type = Some(TypeRef::new(Self::node_text(child, source)));
                     first = false;
                 }
                 "function_declarator" => {
@@ -207,7 +207,7 @@ impl CppProcessor {
                         &mut modifiers,
                     );
                 }
-                "type_qualifier" if self.node_text(child, source) == "virtual" => {
+                "type_qualifier" if Self::node_text(child, source) == "virtual" => {
                     modifiers.push(Modifier::Virtual);
                 }
                 _ => {
@@ -248,23 +248,23 @@ impl CppProcessor {
             match child.kind() {
                 "field_identifier" | "identifier" => {
                     if name.is_empty() {
-                        name = self.node_text(child, source);
+                        name = Self::node_text(child, source);
                     }
                 }
                 "destructor_name" => {
-                    name = self.node_text(child, source);
+                    name = Self::node_text(child, source);
                 }
                 "parameter_list" => {
                     *parameters = self.parse_parameters(child, source);
                 }
                 "type_qualifier" => {
-                    let text = self.node_text(child, source);
+                    let text = Self::node_text(child, source);
                     if text == "const" {
                         modifiers.push(Modifier::Const);
                     }
                 }
                 "virtual_specifier" => {
-                    let text = self.node_text(child, source);
+                    let text = Self::node_text(child, source);
                     if text == "override" {
                         modifiers.push(Modifier::Override);
                     } else if text == "final" {
@@ -293,10 +293,10 @@ impl CppProcessor {
                 for param_child in child.children(&mut param_cursor) {
                     match param_child.kind() {
                         "primitive_type" | "type_identifier" => {
-                            param_type = TypeRef::new(self.node_text(param_child, source));
+                            param_type = TypeRef::new(Self::node_text(param_child, source));
                         }
                         "identifier" => {
-                            name = self.node_text(param_child, source);
+                            name = Self::node_text(param_child, source);
                         }
                         _ => {}
                     }
@@ -333,11 +333,11 @@ impl CppProcessor {
             match child.kind() {
                 "primitive_type" | "type_identifier" => {
                     if field_type.is_none() {
-                        field_type = Some(TypeRef::new(self.node_text(child, source)));
+                        field_type = Some(TypeRef::new(Self::node_text(child, source)));
                     }
                 }
                 "field_identifier" => {
-                    name = self.node_text(child, source);
+                    name = Self::node_text(child, source);
                 }
                 _ => {}
             }
@@ -399,7 +399,7 @@ impl CppProcessor {
             }
             "preproc_include" => {
                 // Parse includes as imports
-                let text = self.node_text(node, source);
+                let text = Self::node_text(node, source);
                 if let Some(import) = self.parse_include(text) {
                     file.children.push(Node::Import(import));
                 }

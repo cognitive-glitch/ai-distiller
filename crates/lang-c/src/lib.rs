@@ -24,7 +24,7 @@ impl CProcessor {
         })
     }
 
-    fn node_text(&self, node: TSNode, source: &str) -> String {
+    fn node_text(node: TSNode, source: &str) -> String {
         let start = node.start_byte();
         let end = node.end_byte();
         let source_len = source.len();
@@ -47,7 +47,7 @@ impl CProcessor {
             match child.kind() {
                 "type_identifier" => {
                     if name.is_empty() {
-                        name = self.node_text(child, source);
+                        name = Self::node_text(child, source);
                     }
                 }
                 "field_declaration_list" => {
@@ -107,7 +107,7 @@ impl CProcessor {
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
             if child.kind() == "storage_class_specifier" {
-                let text = self.node_text(child, source);
+                let text = Self::node_text(child, source);
                 if text == "static" {
                     modifiers.push(Modifier::Static);
                     visibility = Visibility::Internal;
@@ -121,7 +121,7 @@ impl CProcessor {
         for child in node.children(&mut cursor) {
             match child.kind() {
                 "primitive_type" | "type_identifier" if !found_declarator => {
-                    return_type = Some(TypeRef::new(self.node_text(child, source)));
+                    return_type = Some(TypeRef::new(Self::node_text(child, source)));
                 }
                 "function_declarator" => {
                     found_declarator = true;
@@ -167,7 +167,7 @@ impl CProcessor {
             match child.kind() {
                 "identifier" => {
                     if name.is_empty() {
-                        name = self.node_text(child, source);
+                        name = Self::node_text(child, source);
                     }
                 }
                 "parameter_list" => {
@@ -196,7 +196,7 @@ impl CProcessor {
         for child in node.children(&mut cursor) {
             match child.kind() {
                 "identifier" => {
-                    name = self.node_text(child, source);
+                    name = Self::node_text(child, source);
                 }
                 "function_declarator" => {
                     name = self.parse_function_declarator(child, source, parameters);
@@ -224,17 +224,17 @@ impl CProcessor {
                 for param_child in child.children(&mut param_cursor) {
                     match param_child.kind() {
                         "primitive_type" | "type_identifier" => {
-                            param_type = TypeRef::new(self.node_text(param_child, source));
+                            param_type = TypeRef::new(Self::node_text(param_child, source));
                         }
                         "identifier" => {
-                            name = self.node_text(param_child, source);
+                            name = Self::node_text(param_child, source);
                         }
                         "pointer_declarator" => {
                             // Handle pointer parameters
                             let mut ptr_cursor = param_child.walk();
                             for ptr_child in param_child.children(&mut ptr_cursor) {
                                 if ptr_child.kind() == "identifier" {
-                                    name = self.node_text(ptr_child, source);
+                                    name = Self::node_text(ptr_child, source);
                                 }
                             }
                         }
@@ -283,18 +283,18 @@ impl CProcessor {
             match child.kind() {
                 "primitive_type" | "type_identifier" => {
                     if field_type.is_none() {
-                        field_type = Some(TypeRef::new(self.node_text(child, source)));
+                        field_type = Some(TypeRef::new(Self::node_text(child, source)));
                     }
                 }
                 "field_identifier" | "identifier" => {
-                    name = self.node_text(child, source);
+                    name = Self::node_text(child, source);
                 }
                 "pointer_declarator" => {
                     // Handle pointer fields
                     let mut ptr_cursor = child.walk();
                     for ptr_child in child.children(&mut ptr_cursor) {
                         if ptr_child.kind() == "field_identifier" {
-                            name = self.node_text(ptr_child, source);
+                            name = Self::node_text(ptr_child, source);
                         }
                     }
                 }
@@ -323,7 +323,7 @@ impl CProcessor {
 
         for child in node.children(&mut cursor) {
             if child.kind() == "type_identifier" {
-                name = self.node_text(child, source);
+                name = Self::node_text(child, source);
             }
         }
 
@@ -352,7 +352,7 @@ impl CProcessor {
 
         for child in node.children(&mut cursor) {
             if child.kind() == "type_identifier" {
-                name = self.node_text(child, source);
+                name = Self::node_text(child, source);
             }
         }
 
@@ -380,7 +380,7 @@ impl CProcessor {
 
         for child in node.children(&mut cursor) {
             if child.kind() == "type_identifier" {
-                name = self.node_text(child, source);
+                name = Self::node_text(child, source);
             }
         }
 
@@ -443,7 +443,7 @@ impl CProcessor {
                 }
             }
             "preproc_include" => {
-                let text = self.node_text(node, source);
+                let text = Self::node_text(node, source);
                 if let Some(import) = self.parse_include(text) {
                     file.children.push(Node::Import(import));
                 }
