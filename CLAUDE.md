@@ -86,6 +86,21 @@ File Input → Language Processor (tree-sitter) → IR Generation →
 Stripper (filtering) → Formatter → Output
 ```
 
+### MCP Server
+
+**Transport**: stdio (standard input/output)
+**Protocol**: JSON-RPC 2.0
+**Status**: ✅ Production-ready (custom implementation) | 🔄 rmcp SDK migration planned
+
+The MCP server provides 4 core operations:
+- `distil_directory` - Process entire directory
+- `distil_file` - Process single file
+- `list_dir` - List directory contents with metadata
+- `get_capa` - Get server capabilities
+
+**Integration**: Claude Desktop, Cursor, VS Code via stdio transport
+**Future**: Migration to official `rmcp` SDK planned for better standards compliance
+
 ### Core Abstractions
 
 **LanguageProcessor Trait** (`distiller-core/src/processor.rs`):

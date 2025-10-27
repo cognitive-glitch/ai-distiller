@@ -38,8 +38,12 @@ formatter-json = { path = "../formatter-json" }
 formatter-jsonl = { path = "../formatter-jsonl" }
 formatter-xml = { path = "../formatter-xml" }
 
-# JSON-RPC and async runtime (minimal tokio usage)
-tokio = { workspace = true, features = ["rt-multi-thread", "io-std", "macros", "io-util"] }
+tokio = { version = "*", features = [
+    "rt-multi-thread",
+    "io-std",
+    "macros",
+    "io-util",
+] } # JSON-RPC and async runtime (minimal tokio usage)
 serde = { workspace = true }
 serde_json = { workspace = true }
 

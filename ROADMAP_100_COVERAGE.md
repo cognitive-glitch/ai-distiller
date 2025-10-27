@@ -1,16 +1,17 @@
 # Roadmap to 100% Language Coverage
 
 > **Current Status**: Phase 3 - 🎉 100% COMPLETE (12/12 languages) 🎉
-> **MCP Server**: 🔄 Migration to official `rmcp` SDK in progress
+> **MCP Server**: ✅ Custom JSON-RPC (stdio) | 🔄 rmcp SDK migration planned
 > **Achievement**: All 12 languages implemented (2025-10-27)
+> **Test Status**: 289 tests passing, 0 failures (100% pass rate)
 
 ---
 
-## 🔄 Current Focus: MCP Server Migration
+## 🔄 Future: MCP Server Migration to rmcp SDK
 
-### Migrating to Official rmcp SDK
+### Planned Migration to Official rmcp SDK
 
-**Current State**: Custom JSON-RPC implementation with tokio
+**Current State**: ✅ Custom JSON-RPC implementation with tokio (stdio transport)
 **Target State**: Official `rmcp` SDK (github.com/modelcontextprotocol/rust-sdk)
 
 **Why Migrate?**
@@ -20,6 +21,7 @@
 - Native Claude Desktop integration
 - Automatic JSON schema generation
 
+**Status**: Research complete (Phase 1) ✅ | Implementation not started (Phase 2) ⏸️
 **Implementation**: See RUST_PROGRESS.md Session 13 for details
 
 ---
@@ -30,7 +32,7 @@
 
 #### 1. ✅ C++ Language Processor (Phase 3.11) - COMPLETE
 
-**Achievement**: 730 LOC, 10/10 tests passing
+**Achievement**: 1,167 LOC, 21 tests passing
 **Completed**: 2025-10-27 (Session 5)
 
 **Core Features**:
@@ -70,7 +72,7 @@
 
 #### 2. ✅ PHP Language Processor (Phase 3.12) - COMPLETE
 
-**Achievement**: 710 LOC, 10/10 tests passing
+**Achievement**: 1,216 LOC, 22 tests passing
 **Completed**: 2025-10-27 (Session 5)
 
 **Core Features**:
@@ -121,9 +123,9 @@ After completing C++ and PHP processors, enhance all 12 language processors to a
 
 ### Python Enhancement (Phase 3+.1)
 
-**Status**: Complete (6/6 tests), needs enhancements
-**Current LOC**: 644
-**Target LOC**: ~800-900
+**Status**: Complete (26 tests passing), needs enhancements
+**Current LOC**: 1,338
+**Target LOC**: ~1,500-1,600
 
 **Advanced Features to Add**:
 - [ ] List/dict/set comprehensions with walrus operator
@@ -132,7 +134,7 @@ After completing C++ and PHP processors, enhance all 12 language processors to a
 - [ ] Type hints and annotations (full PEP 484 support)
 - [ ] Generic types (TypeVar, Generic)
 - [ ] Protocol classes for structural subtyping
-- [ ] Dataclass detection and field extraction
+- [x] Dataclass detection and field extraction ✅
 - [ ] Context managers (`__enter__`/`__exit__`)
 - [ ] Coroutine detection (async generators)
 - [ ] Exception handling (try/except/finally)
@@ -150,9 +152,9 @@ After completing C++ and PHP processors, enhance all 12 language processors to a
 
 ### TypeScript Enhancement (Phase 3+.2)
 
-**Status**: Complete (6/6 tests), needs enhancements
-**Current LOC**: 1040
-**Target LOC**: ~1200-1300
+**Status**: Complete (24 tests passing), needs enhancements
+**Current LOC**: 1,674
+**Target LOC**: ~1,800-1,900
 
 **Advanced Features to Add**:
 - [ ] Conditional types (`T extends U ? X : Y`)
@@ -178,9 +180,9 @@ After completing C++ and PHP processors, enhance all 12 language processors to a
 
 ### Go Enhancement (Phase 3+.3)
 
-**Status**: Complete (6/6 tests), needs enhancements
-**Current LOC**: 817
-**Target LOC**: ~950-1050
+**Status**: Complete (20 tests passing, 2 ignored), needs enhancements
+**Current LOC**: 1,629
+**Target LOC**: ~1,750-1,850
 
 **Advanced Features to Add**:
 - [ ] Context package detection (`context.Context` parameters)
@@ -205,9 +207,9 @@ After completing C++ and PHP processors, enhance all 12 language processors to a
 
 ### JavaScript Enhancement (Phase 3+.4)
 
-**Status**: Complete (6/6 tests), needs enhancements
-**Current LOC**: 602
-**Target LOC**: ~750-850
+**Status**: Complete (17 tests passing), needs enhancements
+**Current LOC**: 1,157
+**Target LOC**: ~1,300-1,400
 
 **Advanced Features to Add**:
 - [ ] Optional chaining (`?.`) operator
@@ -232,9 +234,9 @@ After completing C++ and PHP processors, enhance all 12 language processors to a
 
 ### Rust Enhancement (Phase 3+.5)
 
-**Status**: Complete (6/6 tests), needs enhancements
-**Current LOC**: 666
-**Target LOC**: ~850-950
+**Status**: Complete (17 tests passing), needs enhancements
+**Current LOC**: 1,233
+**Target LOC**: ~1,400-1,500
 
 **Advanced Features to Add**:
 - [ ] Macro expansion tracking (declarative and procedural)
@@ -260,9 +262,9 @@ After completing C++ and PHP processors, enhance all 12 language processors to a
 
 ### Ruby Enhancement (Phase 3+.6)
 
-**Status**: Complete (6/6 tests), needs enhancements
-**Current LOC**: 463
-**Target LOC**: ~600-700
+**Status**: Complete (17 tests passing), needs enhancements
+**Current LOC**: 942
+**Target LOC**: ~1,100-1,200
 
 **Advanced Features to Add**:
 - [ ] Metaprogramming detection (define_method, method_missing)
@@ -287,9 +289,9 @@ After completing C++ and PHP processors, enhance all 12 language processors to a
 
 ### Swift Enhancement (Phase 3+.7)
 
-**Status**: Complete (7/7 tests), needs enhancements
-**Current LOC**: 611
-**Target LOC**: ~750-850
+**Status**: Complete (18 tests passing, 1 ignored), needs enhancements
+**Current LOC**: 1,212
+**Target LOC**: ~1,350-1,450
 
 **Advanced Features to Add**:
 - [ ] Property wrappers (`@State`, `@Published`, etc.)
@@ -314,9 +316,9 @@ After completing C++ and PHP processors, enhance all 12 language processors to a
 
 ### Java Enhancement (Phase 3+.8)
 
-**Status**: Complete (8/8 tests), needs enhancements
-**Current LOC**: 768
-**Target LOC**: ~900-1000
+**Status**: Complete (19 tests passing, 3 ignored), needs enhancements
+**Current LOC**: 1,605
+**Target LOC**: ~1,750-1,850
 
 **Advanced Features to Add**:
 - [ ] Record classes (Java 14+)
@@ -340,9 +342,9 @@ After completing C++ and PHP processors, enhance all 12 language processors to a
 
 ### C# Enhancement (Phase 3+.9)
 
-**Status**: Complete (9/9 tests), needs enhancements
-**Current LOC**: 1040
-**Target LOC**: ~1200-1300
+**Status**: Complete (20 tests passing), needs enhancements
+**Current LOC**: 1,457
+**Target LOC**: ~1,600-1,700
 
 **Advanced Features to Add**:
 - [ ] Nullable reference types (`string?`)
@@ -367,12 +369,12 @@ After completing C++ and PHP processors, enhance all 12 language processors to a
 
 ### Kotlin Enhancement (Phase 3+.10)
 
-**Status**: Complete (9/9 tests), needs enhancements
-**Current LOC**: 589
-**Target LOC**: ~750-850
+**Status**: Complete (21 tests passing), needs enhancements
+**Current LOC**: 983
+**Target LOC**: ~1,150-1,250
 
 **Advanced Features to Add**:
-- [ ] Coroutines (suspend, launch, async)
+- [x] Coroutines (suspend functions) ✅
 - [ ] Flow and StateFlow detection
 - [ ] Delegates (by lazy, by observable)
 - [ ] Delegation pattern (by keyword)
@@ -394,8 +396,9 @@ After completing C++ and PHP processors, enhance all 12 language processors to a
 
 ### C++ Enhancement (Phase 3+.11)
 
-**Status**: To be completed
-**Target LOC**: ~900-1050 (after enhancements)
+**Status**: Complete (21 tests passing)
+**Current LOC**: 1,167
+**Target LOC**: ~1,350-1,450 (after enhancements)
 
 **Advanced Features to Add**:
 - [ ] Concepts and requires clauses (C++20)
@@ -420,13 +423,14 @@ After completing C++ and PHP processors, enhance all 12 language processors to a
 
 ### PHP Enhancement (Phase 3+.12)
 
-**Status**: To be completed
-**Target LOC**: ~750-900 (after enhancements)
+**Status**: Complete (22 tests passing)
+**Current LOC**: 1,216
+**Target LOC**: ~1,400-1,500 (after enhancements)
 
 **Advanced Features to Add**:
 - [ ] Attributes with argument parsing (PHP 8.0+)
 - [ ] Enums with backed values (PHP 8.1+)
-- [ ] Readonly properties (PHP 8.1+)
+- [x] Readonly properties (PHP 8.1+) ✅
 - [ ] Readonly classes (PHP 8.2+)
 - [ ] Fibers (PHP 8.1+)
 - [ ] First-class callable syntax (PHP 8.1+)
@@ -435,7 +439,8 @@ After completing C++ and PHP processors, enhance all 12 language processors to a
 - [ ] `true`, `false`, `null` standalone types
 - [ ] Constants in traits
 - [ ] Final class constants (PHP 8.1+)
-- [ ] Intersection types (PHP 8.1+)
+- [x] Intersection types (PHP 8.1+) ✅
+- [x] Union types (PHP 8.0+) ✅
 
 **Testing**:
 - [ ] Attribute detection tests
@@ -615,4 +620,4 @@ After completing C++ and PHP processors, enhance all 12 language processors to a
 
 ---
 
-Last updated: 2025-10-27
+Last updated: 2025-10-28
