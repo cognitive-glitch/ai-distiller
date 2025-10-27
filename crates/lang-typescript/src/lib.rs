@@ -31,7 +31,7 @@ impl TypeScriptProcessor {
         parser
             .set_language(&tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into())
             .map_err(|e| {
-                DistilError::TreeSitter(format!("Failed to set TypeScript language: {}", e))
+                DistilError::TreeSitter(format!("Failed to set TypeScript language: {e}"))
             })?;
 
         Ok(Self {
@@ -829,8 +829,7 @@ impl LanguageProcessor for TypeScriptProcessor {
     fn can_process(&self, path: &Path) -> bool {
         path.extension()
             .and_then(|ext| ext.to_str())
-            .map(|ext| ext == "ts" || ext == "tsx")
-            .unwrap_or(false)
+            .is_some_and(|ext| ext == "ts" || ext == "tsx")
     }
 
     fn process(&self, source: &str, path: &Path, _opts: &ProcessOptions) -> Result<File> {

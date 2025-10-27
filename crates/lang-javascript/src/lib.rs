@@ -20,7 +20,7 @@ impl JavaScriptProcessor {
         parser
             .set_language(&tree_sitter_javascript::LANGUAGE.into())
             .map_err(|e| {
-                DistilError::TreeSitter(format!("Failed to set JavaScript language: {}", e))
+                DistilError::TreeSitter(format!("Failed to set JavaScript language: {e}"))
             })?;
         Ok(Self {
             parser: Arc::new(Mutex::new(parser)),
@@ -84,7 +84,9 @@ impl JavaScriptProcessor {
             }
         }
 
-        if !module.is_empty() {
+        if module.is_empty() {
+            Ok(None)
+        } else {
             Ok(Some(Import {
                 import_type,
                 module,
@@ -92,8 +94,6 @@ impl JavaScriptProcessor {
                 is_type: false,
                 line: Some(line),
             }))
-        } else {
-            Ok(None)
         }
     }
     fn parse_class(&self, node: tree_sitter::Node, source: &str) -> Result<Option<Class>> {

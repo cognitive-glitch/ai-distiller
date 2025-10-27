@@ -1,7 +1,7 @@
 use distiller_core::{
     ProcessOptions,
     error::{DistilError, Result},
-    ir::{self, *},
+    ir::{self, Class, File, Function, Parameter, TypeRef, Visibility},
     processor::LanguageProcessor,
 };
 use parking_lot::Mutex;
@@ -275,8 +275,7 @@ impl LanguageProcessor for RubyProcessor {
         // Then check extension
         path.extension()
             .and_then(|ext| ext.to_str())
-            .map(|ext| self.supported_extensions().contains(&ext))
-            .unwrap_or(false)
+            .is_some_and(|ext| self.supported_extensions().contains(&ext))
     }
 
     fn process(&self, source: &str, path: &Path, _opts: &ProcessOptions) -> Result<File> {

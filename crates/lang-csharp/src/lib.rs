@@ -1,7 +1,7 @@
 use distiller_core::{
     ProcessOptions,
     error::{DistilError, Result},
-    ir::*,
+    ir::{Class, Field, File, Function, Modifier, Node, Parameter, TypeParam, TypeRef, Visibility},
     processor::LanguageProcessor,
 };
 use parking_lot::Mutex;
@@ -674,8 +674,7 @@ impl LanguageProcessor for CSharpProcessor {
     fn can_process(&self, path: &Path) -> bool {
         path.extension()
             .and_then(|ext| ext.to_str())
-            .map(|ext| self.supported_extensions().contains(&ext))
-            .unwrap_or(false)
+            .is_some_and(|ext| self.supported_extensions().contains(&ext))
     }
 
     fn process(&self, source: &str, path: &Path, _opts: &ProcessOptions) -> Result<File> {

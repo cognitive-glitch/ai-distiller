@@ -3,6 +3,7 @@
 //! Human-readable Markdown format with syntax highlighting.
 //! Wraps the text formatter output in Markdown code blocks with proper language identifiers.
 
+#[allow(clippy::wildcard_imports)]
 use distiller_core::ir::*;
 use formatter_text::{TextFormatter, TextFormatterOptions};
 
@@ -13,6 +14,7 @@ pub struct MarkdownFormatter {
 
 impl MarkdownFormatter {
     /// Create a new markdown formatter with default options
+    #[must_use]
     pub fn new() -> Self {
         Self {
             text_formatter: TextFormatter::new(),
@@ -20,6 +22,7 @@ impl MarkdownFormatter {
     }
 
     /// Create a new markdown formatter with custom text formatter options
+    #[must_use]
     pub fn with_options(options: TextFormatterOptions) -> Self {
         Self {
             text_formatter: TextFormatter::with_options(options),
@@ -41,7 +44,7 @@ impl MarkdownFormatter {
         // Determine language for syntax highlighting
         let lang = get_language_from_path(&file.path);
 
-        output.push_str(&format!("```{}\n", lang));
+        output.push_str(&format!("```{lang}\n"));
         output.push_str(&content);
         if !content.ends_with('\n') {
             output.push('\n');
@@ -67,7 +70,7 @@ impl MarkdownFormatter {
 
     /// Extract content from between <file path="..."> and </file> tags
     fn extract_file_content(&self, text: &str, path: &str) -> String {
-        let start_tag = format!("<file path=\"{}\">", path);
+        let start_tag = format!("<file path=\"{path}\">");
         let end_tag = "</file>";
 
         if let Some(start_idx) = text.find(&start_tag) {

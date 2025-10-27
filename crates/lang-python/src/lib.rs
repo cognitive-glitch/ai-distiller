@@ -31,9 +31,7 @@ impl PythonProcessor {
         let mut parser = Parser::new();
         parser
             .set_language(&tree_sitter_python::LANGUAGE.into())
-            .map_err(|e| {
-                DistilError::TreeSitter(format!("Failed to set Python language: {}", e))
-            })?;
+            .map_err(|e| DistilError::TreeSitter(format!("Failed to set Python language: {e}")))?;
 
         Ok(Self {
             parser: Mutex::new(parser),
@@ -137,15 +135,15 @@ impl PythonProcessor {
                             seen_import_keyword = true;
                         }
                         "dotted_name" => {
-                            if !seen_import_keyword {
-                                // This is the module name
-                                module = Self::node_text(child, source);
-                            } else {
+                            if seen_import_keyword {
                                 // This is an imported symbol
                                 symbols.push(ImportedSymbol {
                                     name: Self::node_text(child, source),
                                     alias: None,
                                 });
+                            } else {
+                                // This is the module name
+                                module = Self::node_text(child, source);
                             }
                         }
                         "aliased_import" => {
@@ -459,7 +457,7 @@ impl PythonProcessor {
         // Extract field name
         if let Some(eq_pos) = text.find('=') {
             let field_part = &text[5..eq_pos].trim();
-            let field_name = field_part.to_string();
+            let field_name = (*field_part).to_string();
 
             Ok(Some(Field {
                 name: field_name.clone(),
@@ -532,8 +530,7 @@ impl LanguageProcessor for PythonProcessor {
     fn can_process(&self, path: &Path) -> bool {
         path.extension()
             .and_then(|ext| ext.to_str())
-            .map(|ext| ext == "py" || ext == "pyw")
-            .unwrap_or(false)
+            .is_some_and(|ext| ext == "py" || ext == "pyw")
     }
 
     fn process(&self, source: &str, path: &Path, _opts: &ProcessOptions) -> Result<File> {

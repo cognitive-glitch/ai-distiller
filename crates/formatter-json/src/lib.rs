@@ -3,6 +3,7 @@
 //! Structured JSON format for tools and programmatic processing.
 //! Provides both pretty-printed and compact JSON output.
 
+#[allow(clippy::wildcard_imports)]
 use distiller_core::ir::*;
 
 /// JSON formatter options
@@ -25,6 +26,7 @@ pub struct JsonFormatter {
 
 impl JsonFormatter {
     /// Create a new JSON formatter with default options (pretty-printed)
+    #[must_use]
     pub fn new() -> Self {
         Self {
             options: JsonFormatterOptions::default(),
@@ -32,6 +34,7 @@ impl JsonFormatter {
     }
 
     /// Create a new JSON formatter with custom options
+    #[must_use]
     pub fn with_options(options: JsonFormatterOptions) -> Self {
         Self { options }
     }

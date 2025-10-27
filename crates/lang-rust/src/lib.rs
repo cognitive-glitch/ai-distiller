@@ -20,7 +20,7 @@ impl RustProcessor {
         let mut parser = tree_sitter::Parser::new();
         parser
             .set_language(&tree_sitter_rust::LANGUAGE.into())
-            .map_err(|e| DistilError::TreeSitter(format!("Failed to set Rust language: {}", e)))?;
+            .map_err(|e| DistilError::TreeSitter(format!("Failed to set Rust language: {e}")))?;
         Ok(Self {
             parser: Arc::new(Mutex::new(parser)),
         })
@@ -54,7 +54,7 @@ impl RustProcessor {
     #[allow(clippy::unused_self)]
     fn parse_field(&self, node: tree_sitter::Node, source: &str) -> Result<Option<Field>> {
         let mut name = String::new();
-        let mut field_type = TypeRef::new("".to_string());
+        let mut field_type = TypeRef::new(String::new());
         let visibility = Self::parse_visibility(node, source);
         let line = node.start_position().row + 1;
 
@@ -103,7 +103,7 @@ impl RustProcessor {
     #[allow(clippy::unused_self)]
     fn parse_parameter(&self, node: tree_sitter::Node, source: &str) -> Result<Option<Parameter>> {
         let mut name = String::new();
-        let mut param_type = TypeRef::new("".to_string());
+        let mut param_type = TypeRef::new(String::new());
 
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
@@ -372,29 +372,26 @@ impl RustProcessor {
         source: &str,
         file: &mut File,
     ) -> Result<()> {
-        match node.kind() {
-            "impl_item" => {
-                let (type_name, methods) = self.parse_impl_block(node, source)?;
-                if !type_name.is_empty() {
-                    // Find the struct and add methods
-                    for child in &mut file.children {
-                        if let Node::Class(class) = child
-                            && class.name == type_name
-                        {
-                            // Add methods to the struct
-                            for method in methods {
-                                class.children.push(Node::Function(method));
-                            }
-                            break;
+        if node.kind() == "impl_item" {
+            let (type_name, methods) = self.parse_impl_block(node, source)?;
+            if !type_name.is_empty() {
+                // Find the struct and add methods
+                for child in &mut file.children {
+                    if let Node::Class(class) = child
+                        && class.name == type_name
+                    {
+                        // Add methods to the struct
+                        for method in methods {
+                            class.children.push(Node::Function(method));
                         }
+                        break;
                     }
                 }
             }
-            _ => {
-                let mut cursor = node.walk();
-                for child in node.children(&mut cursor) {
-                    self.associate_impl_blocks(child, source, file)?;
-                }
+        } else {
+            let mut cursor = node.walk();
+            for child in node.children(&mut cursor) {
+                self.associate_impl_blocks(child, source, file)?;
             }
         }
         Ok(())

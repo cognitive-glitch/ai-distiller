@@ -1,7 +1,10 @@
 use distiller_core::{
     ProcessOptions,
     error::{DistilError, Result},
-    ir::{self, *},
+    ir::{
+        self, Class, Field, File, Function, Import, Modifier, Parameter, TypeParam, TypeRef,
+        Visibility,
+    },
     processor::LanguageProcessor,
 };
 use parking_lot::Mutex;
@@ -453,7 +456,9 @@ impl JavaProcessor {
             }
         }
 
-        if !name.is_empty() {
+        if name.is_empty() {
+            Ok(None)
+        } else {
             Ok(Some(Function {
                 name,
                 visibility: Visibility::Public,
@@ -466,8 +471,6 @@ impl JavaProcessor {
                 line_start,
                 line_end,
             }))
-        } else {
-            Ok(None)
         }
     }
 
@@ -557,7 +560,9 @@ impl JavaProcessor {
             }
         }
 
-        if !name.is_empty() {
+        if name.is_empty() {
+            Ok(None)
+        } else {
             Ok(Some(Function {
                 name,
                 visibility,
@@ -570,8 +575,6 @@ impl JavaProcessor {
                 line_start,
                 line_end,
             }))
-        } else {
-            Ok(None)
         }
     }
 
@@ -599,7 +602,9 @@ impl JavaProcessor {
             }
         }
 
-        if !name.is_empty() {
+        if name.is_empty() {
+            Ok(None)
+        } else {
             Ok(Some(Function {
                 name,
                 visibility,
@@ -612,8 +617,6 @@ impl JavaProcessor {
                 line_start,
                 line_end,
             }))
-        } else {
-            Ok(None)
         }
     }
 

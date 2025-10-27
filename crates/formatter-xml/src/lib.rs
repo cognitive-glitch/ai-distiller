@@ -3,7 +3,10 @@
 //! Structured XML output for legacy systems and XML-based tooling.
 //! Provides proper XML escaping and semantic structure.
 
-use distiller_core::ir::*;
+use distiller_core::ir::{
+    Class, Comment, Directory, Enum, Field, File, Function, Import, Interface, Modifier, Node,
+    Package, Parameter, RawContent, Struct, TypeAlias, TypeParam, TypeRef, Visibility,
+};
 use std::fmt::Write;
 
 /// XML formatter options
@@ -31,6 +34,7 @@ pub struct XmlFormatter {
 
 impl XmlFormatter {
     /// Create a new XML formatter with default options
+    #[must_use]
     pub fn new() -> Self {
         Self {
             options: XmlFormatterOptions::default(),
@@ -38,6 +42,7 @@ impl XmlFormatter {
     }
 
     /// Create a new XML formatter with custom options
+    #[must_use]
     pub fn with_options(options: XmlFormatterOptions) -> Self {
         Self { options }
     }
@@ -78,7 +83,7 @@ impl XmlFormatter {
             self.format_node(output, child, indent + 1)?;
         }
 
-        writeln!(output, "{}</file>", ind)?;
+        writeln!(output, "{ind}</file>")?;
         Ok(())
     }
 
@@ -123,7 +128,7 @@ impl XmlFormatter {
         for child in &dir.children {
             self.format_node(output, child, indent + 1)?;
         }
-        writeln!(output, "{}</directory>", ind)?;
+        writeln!(output, "{ind}</directory>")?;
         Ok(())
     }
 
@@ -144,7 +149,7 @@ impl XmlFormatter {
         for child in &pkg.children {
             self.format_node(output, child, indent + 1)?;
         }
-        writeln!(output, "{}</package>", ind)?;
+        writeln!(output, "{ind}</package>")?;
         Ok(())
     }
 
@@ -156,11 +161,11 @@ impl XmlFormatter {
         indent: usize,
     ) -> Result<(), std::fmt::Error> {
         let ind = self.indent(indent);
-        write!(output, "{}<import", ind)?;
+        write!(output, "{ind}<import")?;
         write!(output, " type=\"{}\"", import.import_type)?;
         write!(output, " module=\"{}\"", escape_xml(&import.module))?;
         if let Some(line) = import.line {
-            write!(output, " line=\"{}\"", line)?;
+            write!(output, " line=\"{line}\"")?;
         }
 
         if import.symbols.is_empty() {
@@ -180,7 +185,7 @@ impl XmlFormatter {
                 }
                 writeln!(output, " />")?;
             }
-            writeln!(output, "{}</import>", ind)?;
+            writeln!(output, "{ind}</import>")?;
         }
         Ok(())
     }
@@ -202,7 +207,7 @@ impl XmlFormatter {
             )?;
         }
 
-        write!(output, "{}<class", ind)?;
+        write!(output, "{ind}<class")?;
         write!(output, " name=\"{}\"", escape_xml(&class.name))?;
         write!(
             output,
@@ -222,36 +227,36 @@ impl XmlFormatter {
 
         if !class.type_params.is_empty() {
             let type_params_ind = self.indent(indent + 1);
-            writeln!(output, "{}<type-params>", type_params_ind)?;
+            writeln!(output, "{type_params_ind}<type-params>")?;
             for param in &class.type_params {
                 self.format_type_param(output, param, indent + 2)?;
             }
-            writeln!(output, "{}</type-params>", type_params_ind)?;
+            writeln!(output, "{type_params_ind}</type-params>")?;
         }
 
         if !class.extends.is_empty() {
             let extends_ind = self.indent(indent + 1);
-            writeln!(output, "{}<extends>", extends_ind)?;
+            writeln!(output, "{extends_ind}<extends>")?;
             for type_ref in &class.extends {
                 self.format_type_ref(output, type_ref, indent + 2)?;
             }
-            writeln!(output, "{}</extends>", extends_ind)?;
+            writeln!(output, "{extends_ind}</extends>")?;
         }
 
         if !class.implements.is_empty() {
             let implements_ind = self.indent(indent + 1);
-            writeln!(output, "{}<implements>", implements_ind)?;
+            writeln!(output, "{implements_ind}<implements>")?;
             for type_ref in &class.implements {
                 self.format_type_ref(output, type_ref, indent + 2)?;
             }
-            writeln!(output, "{}</implements>", implements_ind)?;
+            writeln!(output, "{implements_ind}</implements>")?;
         }
 
         for child in &class.children {
             self.format_node(output, child, indent + 1)?;
         }
 
-        writeln!(output, "{}</class>", ind)?;
+        writeln!(output, "{ind}</class>")?;
         Ok(())
     }
 
@@ -263,7 +268,7 @@ impl XmlFormatter {
         indent: usize,
     ) -> Result<(), std::fmt::Error> {
         let ind = self.indent(indent);
-        write!(output, "{}<interface", ind)?;
+        write!(output, "{ind}<interface")?;
         write!(output, " name=\"{}\"", escape_xml(&interface.name))?;
         write!(
             output,
@@ -276,27 +281,27 @@ impl XmlFormatter {
 
         if !interface.type_params.is_empty() {
             let type_params_ind = self.indent(indent + 1);
-            writeln!(output, "{}<type-params>", type_params_ind)?;
+            writeln!(output, "{type_params_ind}<type-params>")?;
             for param in &interface.type_params {
                 self.format_type_param(output, param, indent + 2)?;
             }
-            writeln!(output, "{}</type-params>", type_params_ind)?;
+            writeln!(output, "{type_params_ind}</type-params>")?;
         }
 
         if !interface.extends.is_empty() {
             let extends_ind = self.indent(indent + 1);
-            writeln!(output, "{}<extends>", extends_ind)?;
+            writeln!(output, "{extends_ind}<extends>")?;
             for type_ref in &interface.extends {
                 self.format_type_ref(output, type_ref, indent + 2)?;
             }
-            writeln!(output, "{}</extends>", extends_ind)?;
+            writeln!(output, "{extends_ind}</extends>")?;
         }
 
         for child in &interface.children {
             self.format_node(output, child, indent + 1)?;
         }
 
-        writeln!(output, "{}</interface>", ind)?;
+        writeln!(output, "{ind}</interface>")?;
         Ok(())
     }
 
@@ -308,7 +313,7 @@ impl XmlFormatter {
         indent: usize,
     ) -> Result<(), std::fmt::Error> {
         let ind = self.indent(indent);
-        write!(output, "{}<struct", ind)?;
+        write!(output, "{ind}<struct")?;
         write!(output, " name=\"{}\"", escape_xml(&struct_node.name))?;
         write!(
             output,
@@ -321,18 +326,18 @@ impl XmlFormatter {
 
         if !struct_node.type_params.is_empty() {
             let type_params_ind = self.indent(indent + 1);
-            writeln!(output, "{}<type-params>", type_params_ind)?;
+            writeln!(output, "{type_params_ind}<type-params>")?;
             for param in &struct_node.type_params {
                 self.format_type_param(output, param, indent + 2)?;
             }
-            writeln!(output, "{}</type-params>", type_params_ind)?;
+            writeln!(output, "{type_params_ind}</type-params>")?;
         }
 
         for child in &struct_node.children {
             self.format_node(output, child, indent + 1)?;
         }
 
-        writeln!(output, "{}</struct>", ind)?;
+        writeln!(output, "{ind}</struct>")?;
         Ok(())
     }
 
@@ -344,7 +349,7 @@ impl XmlFormatter {
         indent: usize,
     ) -> Result<(), std::fmt::Error> {
         let ind = self.indent(indent);
-        write!(output, "{}<enum", ind)?;
+        write!(output, "{ind}<enum")?;
         write!(output, " name=\"{}\"", escape_xml(&enum_node.name))?;
         write!(
             output,
@@ -357,13 +362,13 @@ impl XmlFormatter {
         if let Some(ref enum_type) = enum_node.enum_type {
             writeln!(output, ">")?;
             let type_ind = self.indent(indent + 1);
-            writeln!(output, "{}<type>", type_ind)?;
+            writeln!(output, "{type_ind}<type>")?;
             self.format_type_ref(output, enum_type, indent + 2)?;
-            writeln!(output, "{}</type>", type_ind)?;
+            writeln!(output, "{type_ind}</type>")?;
             for child in &enum_node.children {
                 self.format_node(output, child, indent + 1)?;
             }
-            writeln!(output, "{}</enum>", ind)?;
+            writeln!(output, "{ind}</enum>")?;
         } else if enum_node.children.is_empty() {
             writeln!(output, " />")?;
         } else {
@@ -371,7 +376,7 @@ impl XmlFormatter {
             for child in &enum_node.children {
                 self.format_node(output, child, indent + 1)?;
             }
-            writeln!(output, "{}</enum>", ind)?;
+            writeln!(output, "{ind}</enum>")?;
         }
         Ok(())
     }
@@ -384,7 +389,7 @@ impl XmlFormatter {
         indent: usize,
     ) -> Result<(), std::fmt::Error> {
         let ind = self.indent(indent);
-        write!(output, "{}<type-alias", ind)?;
+        write!(output, "{ind}<type-alias")?;
         write!(output, " name=\"{}\"", escape_xml(&type_alias.name))?;
         write!(
             output,
@@ -396,19 +401,19 @@ impl XmlFormatter {
 
         if !type_alias.type_params.is_empty() {
             let type_params_ind = self.indent(indent + 1);
-            writeln!(output, "{}<type-params>", type_params_ind)?;
+            writeln!(output, "{type_params_ind}<type-params>")?;
             for param in &type_alias.type_params {
                 self.format_type_param(output, param, indent + 2)?;
             }
-            writeln!(output, "{}</type-params>", type_params_ind)?;
+            writeln!(output, "{type_params_ind}</type-params>")?;
         }
 
         let alias_ind = self.indent(indent + 1);
-        writeln!(output, "{}<alias-type>", alias_ind)?;
+        writeln!(output, "{alias_ind}<alias-type>")?;
         self.format_type_ref(output, &type_alias.alias_type, indent + 2)?;
-        writeln!(output, "{}</alias-type>", alias_ind)?;
+        writeln!(output, "{alias_ind}</alias-type>")?;
 
-        writeln!(output, "{}</type-alias>", ind)?;
+        writeln!(output, "{ind}</type-alias>")?;
         Ok(())
     }
 
@@ -429,7 +434,7 @@ impl XmlFormatter {
             )?;
         }
 
-        write!(output, "{}<function", ind)?;
+        write!(output, "{ind}<function")?;
         write!(output, " name=\"{}\"", escape_xml(&function.name))?;
         write!(
             output,
@@ -449,37 +454,37 @@ impl XmlFormatter {
 
         if !function.type_params.is_empty() {
             let type_params_ind = self.indent(indent + 1);
-            writeln!(output, "{}<type-params>", type_params_ind)?;
+            writeln!(output, "{type_params_ind}<type-params>")?;
             for param in &function.type_params {
                 self.format_type_param(output, param, indent + 2)?;
             }
-            writeln!(output, "{}</type-params>", type_params_ind)?;
+            writeln!(output, "{type_params_ind}</type-params>")?;
         }
 
         if !function.parameters.is_empty() {
             let params_ind = self.indent(indent + 1);
-            writeln!(output, "{}<parameters>", params_ind)?;
+            writeln!(output, "{params_ind}<parameters>")?;
             for param in &function.parameters {
                 self.format_parameter(output, param, indent + 2)?;
             }
-            writeln!(output, "{}</parameters>", params_ind)?;
+            writeln!(output, "{params_ind}</parameters>")?;
         }
 
         if let Some(ref return_type) = function.return_type {
             let return_ind = self.indent(indent + 1);
-            writeln!(output, "{}<return-type>", return_ind)?;
+            writeln!(output, "{return_ind}<return-type>")?;
             self.format_type_ref(output, return_type, indent + 2)?;
-            writeln!(output, "{}</return-type>", return_ind)?;
+            writeln!(output, "{return_ind}</return-type>")?;
         }
 
         if let Some(ref impl_body) = function.implementation {
             let impl_ind = self.indent(indent + 1);
-            writeln!(output, "{}<implementation>", impl_ind)?;
+            writeln!(output, "{impl_ind}<implementation>")?;
             writeln!(output, "{}", escape_xml(impl_body))?;
-            writeln!(output, "{}</implementation>", impl_ind)?;
+            writeln!(output, "{impl_ind}</implementation>")?;
         }
 
-        writeln!(output, "{}</function>", ind)?;
+        writeln!(output, "{ind}</function>")?;
         Ok(())
     }
 
@@ -491,7 +496,7 @@ impl XmlFormatter {
         indent: usize,
     ) -> Result<(), std::fmt::Error> {
         let ind = self.indent(indent);
-        write!(output, "{}<field", ind)?;
+        write!(output, "{ind}<field")?;
         write!(output, " name=\"{}\"", escape_xml(&field.name))?;
         write!(
             output,
@@ -510,9 +515,9 @@ impl XmlFormatter {
         if let Some(ref field_type) = field.field_type {
             writeln!(output, ">")?;
             let type_ind = self.indent(indent + 1);
-            writeln!(output, "{}<type>", type_ind)?;
+            writeln!(output, "{type_ind}<type>")?;
             self.format_type_ref(output, field_type, indent + 2)?;
-            writeln!(output, "{}</type>", type_ind)?;
+            writeln!(output, "{type_ind}</type>")?;
             if let Some(ref default_value) = field.default_value {
                 writeln!(
                     output,
@@ -521,7 +526,7 @@ impl XmlFormatter {
                     escape_xml(default_value)
                 )?;
             }
-            writeln!(output, "{}</field>", ind)?;
+            writeln!(output, "{ind}</field>")?;
         } else {
             if let Some(ref default_value) = field.default_value {
                 write!(output, " default=\"{}\"", escape_xml(default_value))?;
@@ -539,12 +544,12 @@ impl XmlFormatter {
         indent: usize,
     ) -> Result<(), std::fmt::Error> {
         let ind = self.indent(indent);
-        write!(output, "{}<comment", ind)?;
+        write!(output, "{ind}<comment")?;
         write!(output, " format=\"{}\"", comment.format)?;
         write!(output, " line=\"{}\"", comment.line)?;
         writeln!(output, ">")?;
         writeln!(output, "{}", escape_xml(&comment.text))?;
-        writeln!(output, "{}</comment>", ind)?;
+        writeln!(output, "{ind}</comment>")?;
         Ok(())
     }
 
@@ -556,9 +561,9 @@ impl XmlFormatter {
         indent: usize,
     ) -> Result<(), std::fmt::Error> {
         let ind = self.indent(indent);
-        writeln!(output, "{}<raw-content>", ind)?;
+        writeln!(output, "{ind}<raw-content>")?;
         writeln!(output, "{}", escape_xml(&raw.content))?;
-        writeln!(output, "{}</raw-content>", ind)?;
+        writeln!(output, "{ind}</raw-content>")?;
         Ok(())
     }
 
@@ -583,19 +588,19 @@ impl XmlFormatter {
             writeln!(output, ">")?;
             if !param.constraints.is_empty() {
                 let constraints_ind = self.indent(indent + 1);
-                writeln!(output, "{}<constraints>", constraints_ind)?;
+                writeln!(output, "{constraints_ind}<constraints>")?;
                 for constraint in &param.constraints {
                     self.format_type_ref(output, constraint, indent + 2)?;
                 }
-                writeln!(output, "{}</constraints>", constraints_ind)?;
+                writeln!(output, "{constraints_ind}</constraints>")?;
             }
             if let Some(ref default) = param.default {
                 let default_ind = self.indent(indent + 1);
-                writeln!(output, "{}<default>", default_ind)?;
+                writeln!(output, "{default_ind}<default>")?;
                 self.format_type_ref(output, default, indent + 2)?;
-                writeln!(output, "{}</default>", default_ind)?;
+                writeln!(output, "{default_ind}</default>")?;
             }
-            writeln!(output, "{}</type-param>", ind)?;
+            writeln!(output, "{ind}</type-param>")?;
         }
         Ok(())
     }
@@ -620,12 +625,12 @@ impl XmlFormatter {
         } else {
             writeln!(output, ">")?;
             let args_ind = self.indent(indent + 1);
-            writeln!(output, "{}<type-args>", args_ind)?;
+            writeln!(output, "{args_ind}<type-args>")?;
             for arg in &type_ref.type_args {
                 self.format_type_ref(output, arg, indent + 2)?;
             }
-            writeln!(output, "{}</type-args>", args_ind)?;
-            writeln!(output, "{}</type>", ind)?;
+            writeln!(output, "{args_ind}</type-args>")?;
+            writeln!(output, "{ind}</type>")?;
         }
         Ok(())
     }
@@ -653,9 +658,9 @@ impl XmlFormatter {
         writeln!(output, ">")?;
 
         let type_ind = self.indent(indent + 1);
-        writeln!(output, "{}<type>", type_ind)?;
+        writeln!(output, "{type_ind}<type>")?;
         self.format_type_ref(output, &param.param_type, indent + 2)?;
-        writeln!(output, "{}</type>", type_ind)?;
+        writeln!(output, "{type_ind}</type>")?;
 
         if let Some(ref default_value) = param.default_value {
             writeln!(
@@ -666,7 +671,7 @@ impl XmlFormatter {
             )?;
         }
 
-        writeln!(output, "{}</parameter>", ind)?;
+        writeln!(output, "{ind}</parameter>")?;
         Ok(())
     }
 

@@ -1,7 +1,7 @@
 use distiller_core::{
     ProcessOptions,
     error::{DistilError, Result},
-    ir::{self, *},
+    ir::{self, Class, Field, File, Function, Modifier, Parameter, TypeParam, TypeRef, Visibility},
     processor::LanguageProcessor,
 };
 use parking_lot::Mutex;
@@ -161,7 +161,7 @@ impl SwiftProcessor {
         // Classes can have superclass but we can't distinguish without type info
         // So we treat all as protocols (implements) for simplicity
         let (extends_final, implements_final) = match class_type.as_deref() {
-            Some("struct") | Some("enum") | Some("class") => (vec![], extends),
+            Some("struct" | "enum" | "class") => (vec![], extends),
             Some("protocol") => (extends, vec![]),
             _ => (vec![], extends),
         };
@@ -294,7 +294,9 @@ impl SwiftProcessor {
             }
         }
 
-        if !name.is_empty() {
+        if name.is_empty() {
+            Ok(None)
+        } else {
             Ok(Some(Function {
                 name,
                 visibility,
@@ -307,8 +309,6 @@ impl SwiftProcessor {
                 line_start,
                 line_end,
             }))
-        } else {
-            Ok(None)
         }
     }
 
@@ -411,7 +411,9 @@ impl SwiftProcessor {
             }
         }
 
-        if !name.is_empty() {
+        if name.is_empty() {
+            Ok(None)
+        } else {
             Ok(Some(Field {
                 name,
                 visibility,
@@ -420,8 +422,6 @@ impl SwiftProcessor {
                 modifiers: vec![],
                 line,
             }))
-        } else {
-            Ok(None)
         }
     }
 
@@ -463,8 +463,7 @@ impl LanguageProcessor for SwiftProcessor {
     fn can_process(&self, path: &Path) -> bool {
         path.extension()
             .and_then(|ext| ext.to_str())
-            .map(|ext| self.supported_extensions().contains(&ext))
-            .unwrap_or(false)
+            .is_some_and(|ext| self.supported_extensions().contains(&ext))
     }
 
     fn process(&self, source: &str, path: &Path, _opts: &ProcessOptions) -> Result<File> {

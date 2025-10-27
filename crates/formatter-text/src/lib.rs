@@ -4,8 +4,14 @@
 //! This is the most compact format with minimal syntax overhead, designed for
 //! optimal AI consumption.
 
-use distiller_core::ir::*;
+use distiller_core::ir::{
+    Class, Comment, Enum, Field, File, Function, Import, Interface, Node, Package,
+    Parameter, RawContent, Struct, TypeAlias, TypeParam, TypeRef, Visibility,
+};
 use std::fmt::Write as FmtWrite;
+
+#[cfg(test)]
+use distiller_core::ir::ImportedSymbol;
 
 /// Text formatter options
 #[derive(Debug, Clone, Default)]
@@ -21,6 +27,7 @@ pub struct TextFormatter {
 
 impl TextFormatter {
     /// Create a new text formatter with default options
+    #[must_use]
     pub fn new() -> Self {
         Self {
             options: TextFormatterOptions::default(),
@@ -28,6 +35,7 @@ impl TextFormatter {
     }
 
     /// Create a new text formatter with custom options
+    #[must_use]
     pub fn with_options(options: TextFormatterOptions) -> Self {
         Self { options }
     }
@@ -144,7 +152,7 @@ impl TextFormatter {
 
         // Write decorators
         for decorator in &class.decorators {
-            writeln!(output, "{}@{}", ind, decorator)?;
+            writeln!(output, "{ind}@{decorator}")?;
         }
 
         // Write class declaration
@@ -204,7 +212,7 @@ impl TextFormatter {
                 .map(|t| self.format_type_ref(t))
                 .collect::<Vec<_>>()
                 .join(", ");
-            write!(output, "({})", extends)?;
+            write!(output, "({extends})")?;
         }
 
         writeln!(output, ":")?;
@@ -303,20 +311,20 @@ impl TextFormatter {
 
         // Write decorators
         for decorator in &func.decorators {
-            writeln!(output, "{}@{}", ind, decorator)?;
+            writeln!(output, "{ind}@{decorator}")?;
         }
 
         // Modifiers
         let mut modifiers = func
             .modifiers
             .iter()
-            .map(|m| format!("{:?}", m).to_lowercase())
+            .map(|m| format!("{m:?}").to_lowercase())
             .collect::<Vec<_>>();
-        let modifiers_str = if !modifiers.is_empty() {
+        let modifiers_str = if modifiers.is_empty() {
+            String::new()
+        } else {
             modifiers.push(String::new());
             modifiers.join(" ")
-        } else {
-            String::new()
         };
 
         write!(
@@ -338,7 +346,7 @@ impl TextFormatter {
             .map(|p| self.format_parameter(p))
             .collect::<Vec<_>>()
             .join(", ");
-        write!(output, "{}", params)?;
+        write!(output, "{params}")?;
         write!(output, ")")?;
 
         // Return type
@@ -351,7 +359,7 @@ impl TextFormatter {
                 writeln!(output, ":")?;
                 // Indent implementation
                 for line in implementation.lines() {
-                    writeln!(output, "{}    {}", ind, line)?;
+                    writeln!(output, "{ind}    {line}")?;
                 }
             } else {
                 writeln!(output)?;
@@ -377,13 +385,13 @@ impl TextFormatter {
         let mut modifiers = field
             .modifiers
             .iter()
-            .map(|m| format!("{:?}", m).to_lowercase())
+            .map(|m| format!("{m:?}").to_lowercase())
             .collect::<Vec<_>>();
-        let modifiers_str = if !modifiers.is_empty() {
+        let modifiers_str = if modifiers.is_empty() {
+            String::new()
+        } else {
             modifiers.push(String::new());
             modifiers.join(" ")
-        } else {
-            String::new()
         };
 
         write!(
@@ -397,7 +405,7 @@ impl TextFormatter {
         }
 
         if let Some(ref default_value) = field.default_value {
-            write!(output, " = {}", default_value)?;
+            write!(output, " = {default_value}")?;
         }
 
         writeln!(output)?;
@@ -416,7 +424,7 @@ impl TextFormatter {
         let ind = Self::indent(indent);
 
         for line in comment.text.lines() {
-            writeln!(output, "{}# {}", ind, line)?;
+            writeln!(output, "{ind}# {line}")?;
         }
 
         Ok(())
@@ -461,7 +469,7 @@ impl TextFormatter {
                 .map(|t| self.format_type_ref(t))
                 .collect::<Vec<_>>()
                 .join(", ");
-            result.push_str(&format!("<{}>", args));
+            result.push_str(&format!("<{args}>"));
         }
 
         if type_ref.is_array {
@@ -488,7 +496,7 @@ impl TextFormatter {
                         .map(|t| self.format_type_ref(t))
                         .collect::<Vec<_>>()
                         .join(" + ");
-                    result.push_str(&format!(": {}", constraints));
+                    result.push_str(&format!(": {constraints}"));
                 }
                 result
             })
@@ -502,7 +510,7 @@ impl TextFormatter {
         result.push_str(&format!(": {}", self.format_type_ref(&param.param_type)));
 
         if let Some(ref default) = param.default_value {
-            result.push_str(&format!(" = {}", default));
+            result.push_str(&format!(" = {default}"));
         }
 
         if param.is_optional {
@@ -510,7 +518,7 @@ impl TextFormatter {
         }
 
         if param.is_variadic {
-            result = format!("...{}", result);
+            result = format!("...{result}");
         }
 
         result

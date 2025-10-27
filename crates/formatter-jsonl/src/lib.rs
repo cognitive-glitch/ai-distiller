@@ -4,6 +4,7 @@
 //! Optimized for streaming processing and log aggregation.
 //! Always uses compact format (no pretty-printing).
 
+#[allow(clippy::wildcard_imports)]
 use distiller_core::ir::*;
 
 /// JSONL formatter (always compact, one JSON per line)
@@ -11,6 +12,7 @@ pub struct JsonlFormatter;
 
 impl JsonlFormatter {
     /// Create a new JSONL formatter
+    #[must_use]
     pub fn new() -> Self {
         Self
     }

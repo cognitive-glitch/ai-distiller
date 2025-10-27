@@ -20,9 +20,9 @@ impl GoProcessor {
     pub fn new() -> Result<Self> {
         let mut parser = Parser::new();
         let language = tree_sitter_go::LANGUAGE;
-        parser.set_language(&language.into()).map_err(|e| {
-            DistilError::parse_error("", format!("Failed to set Go language: {}", e))
-        })?;
+        parser
+            .set_language(&language.into())
+            .map_err(|e| DistilError::parse_error("", format!("Failed to set Go language: {e}")))?;
 
         Ok(Self {
             parser: Mutex::new(parser),
@@ -97,7 +97,7 @@ impl GoProcessor {
                 }
                 "package_identifier" => {
                     let alias = Self::node_text(child, source);
-                    import_type = format!("import {} as", alias);
+                    import_type = format!("import {alias} as");
                 }
                 "dot" => {
                     import_type = "import .".to_string();
@@ -106,7 +106,9 @@ impl GoProcessor {
             }
         }
 
-        if !module.is_empty() {
+        if module.is_empty() {
+            Ok(None)
+        } else {
             Ok(Some(Import {
                 import_type,
                 module,
@@ -114,8 +116,6 @@ impl GoProcessor {
                 is_type: false,
                 line: Some(node.start_position().row + 1),
             }))
-        } else {
-            Ok(None)
         }
     }
 
@@ -480,7 +480,7 @@ impl GoProcessor {
                 name,
                 param_type: param_type
                     .clone()
-                    .unwrap_or_else(|| TypeRef::new("".to_string())),
+                    .unwrap_or_else(|| TypeRef::new(String::new())),
                 default_value: None,
                 is_variadic: false,
                 is_optional: false,
@@ -530,7 +530,7 @@ impl GoProcessor {
 
         Ok(vec![Parameter {
             name,
-            param_type: param_type.unwrap_or_else(|| TypeRef::new("".to_string())),
+            param_type: param_type.unwrap_or_else(|| TypeRef::new(String::new())),
             default_value: None,
             is_variadic: true,
             is_optional: false,
@@ -685,8 +685,7 @@ impl LanguageProcessor for GoProcessor {
     fn can_process(&self, path: &Path) -> bool {
         path.extension()
             .and_then(|ext| ext.to_str())
-            .map(|ext| ext == "go")
-            .unwrap_or(false)
+            .is_some_and(|ext| ext == "go")
     }
 
     fn process(&self, source: &str, path: &Path, _opts: &ProcessOptions) -> Result<File> {
