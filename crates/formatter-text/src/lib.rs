@@ -5,8 +5,8 @@
 //! optimal AI consumption.
 
 use distiller_core::ir::{
-    Class, Comment, Enum, Field, File, Function, Import, Interface, Node, Package,
-    Parameter, RawContent, Struct, TypeAlias, TypeParam, TypeRef, Visibility,
+    Class, Comment, Enum, Field, File, Function, Import, Interface, Node, Package, Parameter,
+    RawContent, Struct, TypeAlias, TypeParam, TypeRef, Visibility,
 };
 use std::fmt::Write as FmtWrite;
 
@@ -605,7 +605,7 @@ mod tests {
 
     #[test]
     fn test_visibility_symbols() {
-        let formatter = TextFormatter::new();
+        let _formatter = TextFormatter::new();
         assert_eq!(TextFormatter::visibility_symbol(Visibility::Public), "");
         assert_eq!(TextFormatter::visibility_symbol(Visibility::Private), "-");
         assert_eq!(TextFormatter::visibility_symbol(Visibility::Protected), "*");

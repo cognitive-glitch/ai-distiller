@@ -88,7 +88,7 @@ impl CSharpProcessor {
         (visibility, modifiers)
     }
 
-    fn collect_type_refs(&self, node: TSNode, source: &str, results: &mut Vec<TypeRef>) {
+    fn collect_type_refs(node: TSNode, source: &str, results: &mut Vec<TypeRef>) {
         match node.kind() {
             "identifier" | "type_identifier" | "generic_name" | "predefined_type"
             | "qualified_name" => {
@@ -97,13 +97,13 @@ impl CSharpProcessor {
             _ => {
                 let mut cursor = node.walk();
                 for child in node.children(&mut cursor) {
-                    self.collect_type_refs(child, source, results);
+                    Self::collect_type_refs(child, source, results);
                 }
             }
         }
     }
 
-    fn collect_type_param_names(&self, node: TSNode, source: &str, results: &mut Vec<String>) {
+    fn collect_type_param_names(node: TSNode, source: &str, results: &mut Vec<String>) {
         match node.kind() {
             "type_parameter" | "type_identifier" => {
                 results.push(Self::node_text(node, source));
@@ -111,7 +111,7 @@ impl CSharpProcessor {
             _ => {
                 let mut cursor = node.walk();
                 for child in node.children(&mut cursor) {
-                    self.collect_type_param_names(child, source, results);
+                    Self::collect_type_param_names(child, source, results);
                 }
             }
         }
@@ -123,7 +123,7 @@ impl CSharpProcessor {
 
         for child in node.children(&mut cursor) {
             let mut names = Vec::new();
-            self.collect_type_param_names(child, source, &mut names);
+            Self::collect_type_param_names(child, source, &mut names);
             for name in names {
                 params.push(TypeParam {
                     name,
@@ -173,7 +173,7 @@ impl CSharpProcessor {
         let extends = Vec::new();
         let mut implements = Vec::new();
 
-        self.collect_type_refs(node, source, &mut implements);
+        Self::collect_type_refs(node, source, &mut implements);
 
         (extends, implements)
     }

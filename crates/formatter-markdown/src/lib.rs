@@ -77,7 +77,7 @@ impl MarkdownFormatter {
     }
 
     /// Extract content from between <file path="..."> and </file> tags
-#[allow(clippy::unused_self)]
+    #[allow(clippy::unused_self)]
     fn extract_file_content(&self, text: &str, path: &str) -> String {
         let start_tag = format!("<file path=\"{path}\">");
         let end_tag = "</file>";
