@@ -37,13 +37,13 @@ Generate specialized analysis prompts and workflows that guide AI agents through
 ### Option 1: Project-specific installation (Recommended)
 ```bash
 # Install for current project only
-claude mcp add aid -- npx -y @janreges/ai-distiller-mcp
+claude mcp add aid -- npx -y @cognitive/ai-distiller-mcp
 ```
 
 ### Option 2: User-wide installation with manual configuration
 ```bash
 # Install globally for all projects
-claude mcp add --scope=user aid -- npx -y @janreges/ai-distiller-mcp
+claude mcp add --scope=user aid -- npx -y @cognitive/ai-distiller-mcp
 ```
 
 **⚠️ Important for user-wide installation:**
@@ -55,7 +55,7 @@ Example configuration:
   "mcpServers": {
     "aid": {
       "command": "npx",
-      "args": ["-y", "@janreges/ai-distiller-mcp"],
+      "args": ["-y", "@cognitive/ai-distiller-mcp"],
       "env": {
         "AID_ROOT": "/absolute/path/to/your/project"
       }
@@ -138,7 +138,7 @@ For user-scoped installations, you MUST configure the project path:
   "mcpServers": {
     "aid": {
       "command": "npx",
-      "args": ["-y", "@janreges/ai-distiller-mcp"],
+      "args": ["-y", "@cognitive/ai-distiller-mcp"],
       "env": {
         "AID_ROOT": "/absolute/path/to/your/project"  // REQUIRED!
       }
@@ -565,5 +565,5 @@ MIT License - see [LICENSE](LICENSE) file
 ---
 
 *AI Distiller (aid) - https://github.com/cognitive-glitch/ai-distiller-reboot*
-*Authored by [Claude Code](https://claude.ai/code) & [Ján Regeš](https://github.com/janreges) from [SiteOne](https://www.siteone.io/) (Czech Republic)*
+*Authored by [Claude Code](https://claude.ai/code) & [Ján Regeš](https://github.com/cognitive) from [SiteOne](https://www.siteone.io/) (Czech Republic)*
 *Explore the project on [GitHub](https://github.com/cognitive-glitch/ai-distiller-reboot)*

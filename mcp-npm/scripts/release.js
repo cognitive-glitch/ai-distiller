@@ -77,7 +77,7 @@ async function main() {
     console.log('\nCreating test package...');
     exec('npm pack');
 
-    const tarballName = `janreges-ai-distiller-mcp-${version}.tgz`;
+    const tarballName = `cognitive-ai-distiller-mcp-${version}.tgz`;
     console.log(`\nCreated ${tarballName}`);
 
     // Test installation
@@ -147,7 +147,7 @@ async function main() {
     }
 
     console.log('\n🎉 Release complete!');
-    console.log(`\nUsers can now install with: npm install @janreges/ai-distiller-mcp`);
+    console.log(`\nUsers can now install with: npm install @cognitive/ai-distiller-mcp`);
 
   } catch (error) {
     console.error('\n❌ Error:', error.message);

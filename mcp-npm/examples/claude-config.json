@@ -2,7 +2,10 @@
   "mcpServers": {
     "ai-distiller": {
       "command": "npx",
-      "args": ["-y", "@janreges/ai-distiller-mcp"],
+      "args": [
+        "-y",
+        "@cognitive/ai-distiller-mcp"
+      ],
       "env": {
         "AID_ROOT": "/path/to/your/project"
       }

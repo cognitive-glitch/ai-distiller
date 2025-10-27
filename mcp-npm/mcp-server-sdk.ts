@@ -33,7 +33,7 @@ if (!fs.existsSync(binaryPath)) {
   console.error('');
   console.error('To fix this issue, try one of the following:');
   console.error('1. Check the installation logs above for any download errors');
-  console.error('2. Reinstall the package: npm install @janreges/ai-distiller-mcp');
+  console.error('2. Reinstall the package: npm install @cognitive/ai-distiller-mcp');
   console.error('3. Run the postinstall script manually:');
   console.error(`   cd ${path.join(__dirname, '..')} && npm run postinstall`);
   console.error('4. Download the binary manually from:');
