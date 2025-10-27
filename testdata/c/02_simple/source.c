@@ -55,7 +55,20 @@ void free_list(struct Node *head) {
 
 // Calculate rectangle area
 int rect_area(struct Rectangle *rect) {
-    return rect->width * rect->height;
+    if (rect == NULL) {
+        return 0;
+    }
+
+    // Use wider type to prevent overflow
+    long long w = rect->width;
+    long long h = rect->height;
+    long long area = w * h;
+
+    // Clamp to int range
+    if (area > INT_MAX) return INT_MAX;
+    if (area < INT_MIN) return INT_MIN;
+
+    return (int)area;
 }
 
 // Set union integer value

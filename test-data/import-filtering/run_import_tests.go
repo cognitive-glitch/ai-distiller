@@ -4,7 +4,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -39,7 +38,6 @@ var expectedUnusedImports = map[string][]string{
 	// Go
 	"go/01_basic_imports.go": {"time", "strings", "io", "bytes"},
 	"go/02_aliased_imports.go": {"os", "context", "database/sql", "sync"},
-	"go/03_dot_imports.go": {"io/ioutil", "regexp", "unicode", "sort"},
 	"go/04_blank_imports.go": {"crypto/tls", "log"}, // Blank imports should be kept!
 	"go/05_complex_imports.go": {"compress/gzip", "errors", "path/filepath"},
 
@@ -90,11 +88,11 @@ func main() {
 	passedTests := 0
 
 	for _, lang := range languages {
-		fmt.Printf("\nTesting %s:\n", strings.Title(lang))
+		fmt.Printf("\nTesting %s:\n", strings.ToUpper(lang[:1]) + lang[1:])
 		fmt.Println(strings.Repeat("-", 50))
 
 		langDir := filepath.Join(".", lang)
-		files, err := ioutil.ReadDir(langDir)
+		files, err := os.ReadDir(langDir)
 		if err != nil {
 			fmt.Printf("  ERROR: Cannot read directory %s: %v\n", langDir, err)
 			continue

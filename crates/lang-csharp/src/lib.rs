@@ -9,6 +9,15 @@ use std::path::Path;
 use std::sync::Arc;
 use tree_sitter::Node as TSNode;
 
+/// Context for C# default visibility
+#[derive(Debug, Clone, Copy)]
+#[allow(dead_code)]
+enum VisibilityContext {
+    TopLevel,        // Types: default Internal
+    InterfaceMember, // Members: default Public
+    ClassMember,     // Members: default Private
+}
+
 pub struct CSharpProcessor {
     pool: Arc<ParserPool>,
 }
@@ -35,10 +44,17 @@ impl CSharpProcessor {
         source[start..end].to_string()
     }
 
-    fn parse_modifiers(node: TSNode, source: &str) -> (Visibility, Vec<Modifier>) {
-        let mut visibility = Visibility::Private; // C# default
+    fn parse_modifiers(
+        node: TSNode,
+        source: &str,
+        context: VisibilityContext,
+    ) -> (Visibility, Vec<Modifier>) {
+        let mut visibility = match context {
+            VisibilityContext::TopLevel => Visibility::Internal,
+            VisibilityContext::InterfaceMember => Visibility::Public,
+            VisibilityContext::ClassMember => Visibility::Private,
+        };
         let mut modifiers = Vec::new();
-        let mut has_visibility_keyword = false;
         let mut cursor = node.walk();
 
         for child in node.children(&mut cursor) {
@@ -46,22 +62,10 @@ impl CSharpProcessor {
                 "modifier" | "modifiers" => {
                     let text = Self::node_text(child, source);
                     match text.as_str() {
-                        "public" => {
-                            visibility = Visibility::Public;
-                            has_visibility_keyword = true;
-                        }
-                        "protected" => {
-                            visibility = Visibility::Protected;
-                            has_visibility_keyword = true;
-                        }
-                        "private" => {
-                            visibility = Visibility::Private;
-                            has_visibility_keyword = true;
-                        }
-                        "internal" => {
-                            visibility = Visibility::Internal;
-                            has_visibility_keyword = true;
-                        }
+                        "public" => visibility = Visibility::Public,
+                        "protected" => visibility = Visibility::Protected,
+                        "private" => visibility = Visibility::Private,
+                        "internal" => visibility = Visibility::Internal,
                         "static" => modifiers.push(Modifier::Static),
                         "abstract" => modifiers.push(Modifier::Abstract),
                         "sealed" => modifiers.push(Modifier::Final),
@@ -75,10 +79,6 @@ impl CSharpProcessor {
                 }
                 _ => {}
             }
-        }
-
-        if !has_visibility_keyword {
-            visibility = Visibility::Private; // C# default
         }
 
         (visibility, modifiers)
@@ -178,7 +178,8 @@ impl CSharpProcessor {
         let mut name = String::new();
         let mut extends = Vec::new();
         let mut implements = Vec::new();
-        let (visibility, modifiers) = Self::parse_modifiers(node, source);
+        let (visibility, modifiers) =
+            Self::parse_modifiers(node, source, VisibilityContext::TopLevel);
         let mut type_params = Vec::new();
         let mut children = Vec::new();
         let line_start = node.start_position().row + 1;
@@ -248,7 +249,8 @@ impl CSharpProcessor {
         let mut name = String::new();
         let extends = Vec::new();
         let mut implements = Vec::new();
-        let (visibility, modifiers) = Self::parse_modifiers(node, source);
+        let (visibility, modifiers) =
+            Self::parse_modifiers(node, source, VisibilityContext::TopLevel);
         let mut type_params = Vec::new();
         let mut children = Vec::new();
         let line_start = node.start_position().row + 1;
@@ -338,7 +340,8 @@ impl CSharpProcessor {
     }
 
     fn parse_field(node: TSNode, source: &str) -> Result<Option<Field>> {
-        let (visibility, modifiers) = Self::parse_modifiers(node, source);
+        let (visibility, modifiers) =
+            Self::parse_modifiers(node, source, VisibilityContext::ClassMember);
         let mut field_type = None;
         let mut name = String::new();
         let line = node.start_position().row + 1;
@@ -379,7 +382,8 @@ impl CSharpProcessor {
     }
 
     fn parse_property(node: TSNode, source: &str) -> Result<Option<Field>> {
-        let (visibility, modifiers) = Self::parse_modifiers(node, source);
+        let (visibility, modifiers) =
+            Self::parse_modifiers(node, source, VisibilityContext::ClassMember);
         let mut field_type = None;
         let mut name = String::new();
         let line = node.start_position().row + 1;
@@ -415,7 +419,8 @@ impl CSharpProcessor {
     }
 
     fn parse_event(node: TSNode, source: &str) -> Result<Option<Field>> {
-        let (visibility, mut modifiers) = Self::parse_modifiers(node, source);
+        let (visibility, mut modifiers) =
+            Self::parse_modifiers(node, source, VisibilityContext::ClassMember);
         modifiers.push(Modifier::Event);
         let mut field_type = None;
         let mut name = String::new();
@@ -467,7 +472,8 @@ impl CSharpProcessor {
     }
 
     fn parse_method(&self, node: TSNode, source: &str) -> Result<Option<Function>> {
-        let (visibility, modifiers) = Self::parse_modifiers(node, source);
+        let (visibility, modifiers) =
+            Self::parse_modifiers(node, source, VisibilityContext::ClassMember);
         let mut name = String::new();
         let mut return_type = None;
         let mut parameters = Vec::new();
@@ -522,7 +528,8 @@ impl CSharpProcessor {
 
     #[allow(clippy::unused_self)]
     fn parse_constructor(&self, node: TSNode, source: &str) -> Result<Option<Function>> {
-        let (visibility, modifiers) = Self::parse_modifiers(node, source);
+        let (visibility, modifiers) =
+            Self::parse_modifiers(node, source, VisibilityContext::ClassMember);
         let mut name = String::new();
         let mut parameters = Vec::new();
         let line_start = node.start_position().row + 1;
@@ -563,7 +570,8 @@ impl CSharpProcessor {
 
     #[allow(clippy::unused_self)]
     fn parse_operator(&self, node: TSNode, source: &str) -> Result<Option<Function>> {
-        let (visibility, mut modifiers) = Self::parse_modifiers(node, source);
+        let (visibility, mut modifiers) =
+            Self::parse_modifiers(node, source, VisibilityContext::ClassMember);
         modifiers.push(Modifier::Static); // Operators are always static
         let mut name = String::new();
         let mut return_type = None;

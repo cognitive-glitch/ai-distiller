@@ -82,7 +82,10 @@ bool lfqueue_enqueue(struct LFQueue *queue, void *data) {
     node->data = data;
     atomic_store(&node->next, NULL);
 
-    while (true) {
+    const int max_spins = 1 << 20;  // Large but bounded
+    int spins = 0;
+
+    for (;;) {
         struct LFQueueNode *tail = atomic_load(&queue->tail);
         struct LFQueueNode *next = atomic_load(&tail->next);
 
@@ -97,6 +100,13 @@ bool lfqueue_enqueue(struct LFQueue *queue, void *data) {
                 atomic_compare_exchange_weak(&queue->tail, &tail, next);
             }
         }
+
+        if (++spins >= max_spins) {
+            // Give up to avoid livelock and memory leak
+            free(node);
+            return false;
+        }
+        // Optional backoff (if available): sched_yield();
     }
 }
 
@@ -309,25 +319,40 @@ struct RingBuffer* ringbuffer_create(size_t capacity, bool use_shared_memory) {
 size_t ringbuffer_write(struct RingBuffer *rb, const void *data, size_t size) {
     if (!rb || !data || size == 0) return 0;
 
+    size_t capacity = rb->capacity;
     size_t write_pos = atomic_load(&rb->write_pos);
     size_t read_pos = atomic_load(&rb->read_pos);
 
-    size_t available = rb->capacity - (write_pos - read_pos);
+    // Guard against overflow/corruption
+    size_t used = write_pos - read_pos;
+    if (used > capacity) {
+        return 0;  // Corrupted state, refuse to write
+    }
+
+    size_t available = capacity - used;
     if (size > available) {
         size = available;
     }
+    if (size == 0) return 0;
 
-    size_t write_idx = write_pos % rb->capacity;
-    size_t first_chunk = rb->capacity - write_idx;
+    size_t write_idx = write_pos % capacity;
+    size_t first_chunk = capacity - write_idx;
 
     if (size <= first_chunk) {
         memcpy(rb->buffer + write_idx, data, size);
     } else {
         memcpy(rb->buffer + write_idx, data, first_chunk);
-        memcpy(rb->buffer, (uint8_t*)data + first_chunk, size - first_chunk);
+        memcpy(rb->buffer, (const uint8_t*)data + first_chunk, size - first_chunk);
     }
 
-    atomic_store(&rb->write_pos, write_pos + size);
+    // Normalize counters periodically to avoid overflow
+    size_t new_write = write_pos + size;
+    if (new_write > SIZE_MAX / 2 && read_pos > SIZE_MAX / 2) {
+        size_t shift = (read_pos / capacity) * capacity;
+        new_write -= shift;
+        atomic_store(&rb->read_pos, read_pos - shift);
+    }
+    atomic_store(&rb->write_pos, new_write);
     return size;
 }
 
@@ -407,7 +432,9 @@ static void memory_barrier(void) {
 }
 
 static bool atomic_cas_ptr(void **ptr, void *expected, void *desired) {
-    return atomic_compare_exchange_strong((_Atomic(void*)*) ptr, &expected, desired);
+    _Atomic(void*) *aptr = (_Atomic(void*)*)ptr;
+    void *exp = expected;
+    return atomic_compare_exchange_strong(aptr, &exp, desired);
 }
 
 // Performance monitoring

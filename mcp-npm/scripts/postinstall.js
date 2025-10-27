@@ -41,37 +41,91 @@ function getPlatformInfo() {
   return mapped;
 }
 
-function downloadFile(url, dest, isStream = false) {
+function downloadFile(url, dest, isStream = false, redirectCount = 0) {
+  const MAX_REDIRECTS = 5;
+  const REQUEST_TIMEOUT_MS = 60000; // 60 seconds
+
   return new Promise((resolve, reject) => {
     console.log(`Downloading from ${url}...`);
 
-    https.get(url, (response) => {
-      if (response.statusCode === 302 || response.statusCode === 301) {
-        // Follow redirect
-        return downloadFile(response.headers.location, dest, isStream)
+    const req = https.get(url, (response) => {
+      const cleanupAndReject = (err) => {
+        // Drain response to free socket if needed
+        try { response.resume(); } catch (_) {}
+        reject(err);
+      };
+
+      // Handle redirects with max depth check
+      if (response.statusCode === 301 || response.statusCode === 302 ||
+          response.statusCode === 303 || response.statusCode === 307 ||
+          response.statusCode === 308) {
+        const location = response.headers.location;
+        if (!location) {
+          return cleanupAndReject(new Error('Redirect without Location header'));
+        }
+        if (redirectCount >= MAX_REDIRECTS) {
+          return cleanupAndReject(new Error('Too many redirects'));
+        }
+        // Drain before following
+        response.resume();
+        return downloadFile(location, dest, isStream, redirectCount + 1)
           .then(resolve)
           .catch(reject);
       }
 
       if (response.statusCode !== 200) {
-        reject(new Error(`Download failed with status code: ${response.statusCode}`));
-        return;
+        return cleanupAndReject(
+          new Error(`Download failed with status code: ${response.statusCode}`)
+        );
       }
 
+      // Attach error handler on response stream
+      response.on('error', (err) => {
+        cleanupAndReject(err);
+      });
+
       if (isStream) {
-        resolve(response);
-      } else {
-        const file = fs.createWriteStream(dest);
-        response.pipe(file);
-        file.on('finish', () => {
-          file.close(resolve);
-        });
-        file.on('error', (err) => {
-          fs.unlink(dest, () => {}); // Delete the file on error
-          reject(err);
-        });
+        return resolve(response);
       }
-    }).on('error', reject);
+
+      const file = fs.createWriteStream(dest);
+      let received = 0;
+      const total = parseInt(response.headers['content-length'] || '0', 10);
+
+      const onError = (err) => {
+        file.destroy();
+        fs.unlink(dest, () => reject(err));
+      };
+
+      response.on('data', (chunk) => {
+        received += chunk.length;
+      });
+
+      response.pipe(file);
+
+      file.on('finish', () => {
+        file.close(() => {
+          if (total > 0 && received !== total) {
+            // Size mismatch indicates truncation
+            return fs.unlink(dest, () =>
+              reject(new Error(`Incomplete download: expected ${total} bytes, got ${received}`))
+            );
+          }
+          return resolve(dest);
+        });
+      });
+
+      file.on('error', onError);
+      response.on('aborted', () => onError(new Error('Download aborted')));
+    });
+
+    req.setTimeout(REQUEST_TIMEOUT_MS, () => {
+      req.destroy(new Error('Request timed out'));
+    });
+
+    req.on('error', (err) => {
+      reject(err);
+    });
   });
 }
 
@@ -84,6 +138,13 @@ async function extractArchive(archivePath, destDir, platform) {
     fs.mkdirSync(destDir, { recursive: true });
   }
 
+  // Path traversal safety check to prevent "Zip Slip" vulnerability
+  const isPathSafe = (base, target) => {
+    const resolvedBase = path.resolve(base) + path.sep;
+    const resolvedTarget = path.resolve(target);
+    return resolvedTarget.startsWith(resolvedBase);
+  };
+
   if (platform === 'win32') {
     // For Windows, use built-in PowerShell or fallback to manual extraction
     try {
@@ -91,12 +152,42 @@ async function extractArchive(archivePath, destDir, platform) {
       execSync(`powershell -command "Expand-Archive -Path '${archivePath}' -DestinationPath '${destDir}' -Force"`, {
         stdio: 'pipe'
       });
+
+      // Verify extracted files are safe (post-extraction check)
+      const checkExtractedFiles = (dir) => {
+        const entries = fs.readdirSync(dir, { withFileTypes: true });
+        for (const entry of entries) {
+          const entryPath = path.join(dir, entry.name);
+          if (!isPathSafe(destDir, entryPath)) {
+            throw new Error(`Unsafe archive entry detected: ${entry.name}`);
+          }
+          if (entry.isDirectory()) {
+            checkExtractedFiles(entryPath);
+          }
+        }
+      };
+      checkExtractedFiles(destDir);
     } catch (e) {
       // Fallback to Node.js unzip implementation
       console.log('PowerShell extraction failed, using fallback method...');
       // For simplicity, we'll require unzip to be installed
       try {
         execSync(`unzip -o "${archivePath}" -d "${destDir}"`, { stdio: 'inherit' });
+
+        // Verify after extraction
+        const checkExtractedFiles = (dir) => {
+          const entries = fs.readdirSync(dir, { withFileTypes: true });
+          for (const entry of entries) {
+            const entryPath = path.join(dir, entry.name);
+            if (!isPathSafe(destDir, entryPath)) {
+              throw new Error(`Unsafe archive entry detected: ${entry.name}`);
+            }
+            if (entry.isDirectory()) {
+              checkExtractedFiles(entryPath);
+            }
+          }
+        };
+        checkExtractedFiles(destDir);
       } catch (e2) {
         throw new Error('Failed to extract ZIP file. Please ensure unzip is installed or extract manually.');
       }
@@ -108,12 +199,34 @@ async function extractArchive(archivePath, destDir, platform) {
       execSync(`tar -xzf "${archivePath}" -C "${destDir}"`, {
         stdio: 'inherit'
       });
+
+      // Verify extracted files for path safety
+      const checkExtractedFiles = (dir) => {
+        const entries = fs.readdirSync(dir, { withFileTypes: true });
+        for (const entry of entries) {
+          const entryPath = path.join(dir, entry.name);
+          if (!isPathSafe(destDir, entryPath)) {
+            throw new Error(`Unsafe archive entry detected: ${entry.name}`);
+          }
+          if (entry.isDirectory()) {
+            checkExtractedFiles(entryPath);
+          }
+        }
+      };
+      checkExtractedFiles(destDir);
     } catch (e) {
       console.log('System tar failed, falling back to node-tar library...');
-      // Fallback to node tar library
+      // Fallback to node tar library with filter for path safety
       await tar.x({
         file: archivePath,
         cwd: destDir,
+        filter: (p, stat) => {
+          const outPath = path.join(destDir, p);
+          if (!isPathSafe(destDir, outPath)) {
+            throw new Error(`Unsafe archive entry detected: ${p}`);
+          }
+          return true;
+        },
         onentry: (entry) => {
           // Log progress for debugging
           if (entry.path.includes('aid')) {
@@ -123,6 +236,27 @@ async function extractArchive(archivePath, destDir, platform) {
       });
     }
   }
+}
+
+// Helper function to validate binary path is safe
+function validateBinaryPath(binDir, binaryPath) {
+  const resolvedBinDir = path.resolve(binDir) + path.sep;
+  const resolvedBinary = path.resolve(binaryPath);
+
+  // Ensure binary is within binDir
+  if (!resolvedBinary.startsWith(resolvedBinDir)) {
+    throw new Error(`Unsafe binary path detected: ${binaryPath}`);
+  }
+
+  // Ensure it's a file (not directory or symlink to outside)
+  if (fs.existsSync(resolvedBinary)) {
+    const stat = fs.lstatSync(resolvedBinary);
+    if (!stat.isFile()) {
+      throw new Error(`Binary path is not a regular file: ${binaryPath}`);
+    }
+  }
+
+  return true;
 }
 
 async function install() {
@@ -151,6 +285,9 @@ async function install() {
     if (fs.existsSync(binaryPath)) {
       try {
         // Try to get version to verify it works
+        // Validate binary path for security
+        validateBinaryPath(binDir, binaryPath);
+
         const existingVersionOutput = execSync(`"${binaryPath}" --version`, {
           stdio: 'pipe',
           encoding: 'utf8'
@@ -188,6 +325,9 @@ async function install() {
       console.log(`Download complete in ${downloadTime}ms.`);
 
       // Check archive size
+        // Validate binary path for security
+        validateBinaryPath(binDir, binaryPath);
+
       const archiveStats = fs.statSync(tempFile);
       console.log(`Archive size: ${Math.round(archiveStats.size / 1024 / 1024)} MB`);
 
@@ -205,6 +345,9 @@ async function install() {
       // Set executable permissions on Unix
       if (platform !== 'windows') {
         fs.chmodSync(binaryPath, 0o755);
+        // Validate binary path for security
+        validateBinaryPath(binDir, binaryPath);
+
       }
 
       // Verify it works

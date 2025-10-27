@@ -3,6 +3,8 @@
  * Edge case: Performance testing with 10k+ lines.
  */
 package main
+import "fmt"
+
 
 // TestStruct0 is test struct number 0.
 type TestStruct0 struct {

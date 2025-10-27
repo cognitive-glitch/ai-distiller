@@ -47,9 +47,9 @@ build_platform() {
 
     # Build command
     if [ "$USE_CROSS" = true ]; then
-        cross build --release --target $TARGET -p aid-cli
+        cross build --release --target "$TARGET" -p aid-cli
     else
-        cargo build --release --target $TARGET -p aid-cli
+        cargo build --release --target "$TARGET" -p aid-cli
     fi
 
     if [ $? -eq 0 ]; then

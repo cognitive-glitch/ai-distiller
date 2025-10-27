@@ -198,15 +198,29 @@ impl XmlFormatter {
         Ok(())
     }
 
-    /// Format a class
-    fn format_class(
+    /// Generic helper for formatting container types (class, interface, struct, enum)
+    #[allow(clippy::too_many_arguments)]
+    fn format_container(
         &self,
         output: &mut String,
-        class: &Class,
+        tag: &str,
+        name: &str,
+        visibility: Visibility,
+        line_start: usize,
+        line_end: usize,
+        modifiers: &[Modifier],
+        decorators: &[String],
+        type_params: &[TypeParam],
+        extends: &[TypeRef],
+        implements: &[TypeRef],
+        children: &[Node],
+        enum_type: Option<&TypeRef>,
         indent: usize,
     ) -> Result<(), std::fmt::Error> {
         let ind = self.indent(indent);
-        for decorator in &class.decorators {
+
+        // Decorators
+        for decorator in decorators {
             writeln!(
                 output,
                 "{}<decorator value=\"{}\" />",
@@ -215,57 +229,103 @@ impl XmlFormatter {
             )?;
         }
 
-        write!(output, "{ind}<class")?;
-        write!(output, " name=\"{}\"", escape_xml(&class.name))?;
-        write!(
-            output,
-            " visibility=\"{}\"",
-            visibility_str(class.visibility)
-        )?;
-        write!(output, " line-start=\"{}\"", class.line_start)?;
-        write!(output, " line-end=\"{}\"", class.line_end)?;
-        if !class.modifiers.is_empty() {
+        // Opening tag with attributes
+        write!(output, "{ind}<{tag}")?;
+        write!(output, " name=\"{}\"", escape_xml(name))?;
+        write!(output, " visibility=\"{}\"", visibility_str(visibility))?;
+        write!(output, " line-start=\"{line_start}\"")?;
+        write!(output, " line-end=\"{line_end}\"")?;
+        if !modifiers.is_empty() {
             write!(
                 output,
                 " modifiers=\"{}\"",
-                escape_xml(&modifiers_to_string(&class.modifiers))
+                escape_xml(&modifiers_to_string(modifiers))
             )?;
         }
+
+        // Check if self-closing
+        if type_params.is_empty()
+            && extends.is_empty()
+            && implements.is_empty()
+            && children.is_empty()
+            && enum_type.is_none()
+        {
+            writeln!(output, " />")?;
+            return Ok(());
+        }
+
         writeln!(output, ">")?;
 
-        if !class.type_params.is_empty() {
+        // Type parameters
+        if !type_params.is_empty() {
             let type_params_ind = self.indent(indent + 1);
             writeln!(output, "{type_params_ind}<type-params>")?;
-            for param in &class.type_params {
+            for param in type_params {
                 self.format_type_param(output, param, indent + 2)?;
             }
             writeln!(output, "{type_params_ind}</type-params>")?;
         }
 
-        if !class.extends.is_empty() {
+        // Enum type
+        if let Some(et) = enum_type {
+            let type_ind = self.indent(indent + 1);
+            writeln!(output, "{type_ind}<type>")?;
+            self.format_type_ref(output, et, indent + 2)?;
+            writeln!(output, "{type_ind}</type>")?;
+        }
+
+        // Extends
+        if !extends.is_empty() {
             let extends_ind = self.indent(indent + 1);
             writeln!(output, "{extends_ind}<extends>")?;
-            for type_ref in &class.extends {
+            for type_ref in extends {
                 self.format_type_ref(output, type_ref, indent + 2)?;
             }
             writeln!(output, "{extends_ind}</extends>")?;
         }
 
-        if !class.implements.is_empty() {
+        // Implements
+        if !implements.is_empty() {
             let implements_ind = self.indent(indent + 1);
             writeln!(output, "{implements_ind}<implements>")?;
-            for type_ref in &class.implements {
+            for type_ref in implements {
                 self.format_type_ref(output, type_ref, indent + 2)?;
             }
             writeln!(output, "{implements_ind}</implements>")?;
         }
 
-        for child in &class.children {
+        // Children
+        for child in children {
             self.format_node(output, child, indent + 1)?;
         }
 
-        writeln!(output, "{ind}</class>")?;
+        writeln!(output, "{ind}</{tag}>")?;
         Ok(())
+    }
+
+    /// Format a class
+    fn format_class(
+        &self,
+        output: &mut String,
+        class: &Class,
+        indent: usize,
+    ) -> Result<(), std::fmt::Error> {
+        self.format_container(
+            output,
+            "class",
+            &class.name,
+            class.visibility,
+            class.line_start,
+            class.line_end,
+            &class.modifiers,
+            &class.decorators,
+            &class.type_params,
+            &class.extends,
+            &class.implements,
+            &class.children,
+            None,
+            indent,
+        )
     }
 
     /// Format an interface
@@ -275,42 +335,22 @@ impl XmlFormatter {
         interface: &Interface,
         indent: usize,
     ) -> Result<(), std::fmt::Error> {
-        let ind = self.indent(indent);
-        write!(output, "{ind}<interface")?;
-        write!(output, " name=\"{}\"", escape_xml(&interface.name))?;
-        write!(
+        self.format_container(
             output,
-            " visibility=\"{}\"",
-            visibility_str(interface.visibility)
-        )?;
-        write!(output, " line-start=\"{}\"", interface.line_start)?;
-        write!(output, " line-end=\"{}\"", interface.line_end)?;
-        writeln!(output, ">")?;
-
-        if !interface.type_params.is_empty() {
-            let type_params_ind = self.indent(indent + 1);
-            writeln!(output, "{type_params_ind}<type-params>")?;
-            for param in &interface.type_params {
-                self.format_type_param(output, param, indent + 2)?;
-            }
-            writeln!(output, "{type_params_ind}</type-params>")?;
-        }
-
-        if !interface.extends.is_empty() {
-            let extends_ind = self.indent(indent + 1);
-            writeln!(output, "{extends_ind}<extends>")?;
-            for type_ref in &interface.extends {
-                self.format_type_ref(output, type_ref, indent + 2)?;
-            }
-            writeln!(output, "{extends_ind}</extends>")?;
-        }
-
-        for child in &interface.children {
-            self.format_node(output, child, indent + 1)?;
-        }
-
-        writeln!(output, "{ind}</interface>")?;
-        Ok(())
+            "interface",
+            &interface.name,
+            interface.visibility,
+            interface.line_start,
+            interface.line_end,
+            &[], // interfaces don't have modifiers
+            &[], // interfaces don't have decorators
+            &interface.type_params,
+            &interface.extends,
+            &[], // interfaces don't implement
+            &interface.children,
+            None,
+            indent,
+        )
     }
 
     /// Format a struct
@@ -320,33 +360,22 @@ impl XmlFormatter {
         struct_node: &Struct,
         indent: usize,
     ) -> Result<(), std::fmt::Error> {
-        let ind = self.indent(indent);
-        write!(output, "{ind}<struct")?;
-        write!(output, " name=\"{}\"", escape_xml(&struct_node.name))?;
-        write!(
+        self.format_container(
             output,
-            " visibility=\"{}\"",
-            visibility_str(struct_node.visibility)
-        )?;
-        write!(output, " line-start=\"{}\"", struct_node.line_start)?;
-        write!(output, " line-end=\"{}\"", struct_node.line_end)?;
-        writeln!(output, ">")?;
-
-        if !struct_node.type_params.is_empty() {
-            let type_params_ind = self.indent(indent + 1);
-            writeln!(output, "{type_params_ind}<type-params>")?;
-            for param in &struct_node.type_params {
-                self.format_type_param(output, param, indent + 2)?;
-            }
-            writeln!(output, "{type_params_ind}</type-params>")?;
-        }
-
-        for child in &struct_node.children {
-            self.format_node(output, child, indent + 1)?;
-        }
-
-        writeln!(output, "{ind}</struct>")?;
-        Ok(())
+            "struct",
+            &struct_node.name,
+            struct_node.visibility,
+            struct_node.line_start,
+            struct_node.line_end,
+            &[], // structs don't have modifiers in IR
+            &[], // structs don't have decorators
+            &struct_node.type_params,
+            &[], // structs don't extend
+            &[], // structs don't implement
+            &struct_node.children,
+            None,
+            indent,
+        )
     }
 
     /// Format an enum
@@ -356,37 +385,22 @@ impl XmlFormatter {
         enum_node: &Enum,
         indent: usize,
     ) -> Result<(), std::fmt::Error> {
-        let ind = self.indent(indent);
-        write!(output, "{ind}<enum")?;
-        write!(output, " name=\"{}\"", escape_xml(&enum_node.name))?;
-        write!(
+        self.format_container(
             output,
-            " visibility=\"{}\"",
-            visibility_str(enum_node.visibility)
-        )?;
-        write!(output, " line-start=\"{}\"", enum_node.line_start)?;
-        write!(output, " line-end=\"{}\"", enum_node.line_end)?;
-
-        if let Some(ref enum_type) = enum_node.enum_type {
-            writeln!(output, ">")?;
-            let type_ind = self.indent(indent + 1);
-            writeln!(output, "{type_ind}<type>")?;
-            self.format_type_ref(output, enum_type, indent + 2)?;
-            writeln!(output, "{type_ind}</type>")?;
-            for child in &enum_node.children {
-                self.format_node(output, child, indent + 1)?;
-            }
-            writeln!(output, "{ind}</enum>")?;
-        } else if enum_node.children.is_empty() {
-            writeln!(output, " />")?;
-        } else {
-            writeln!(output, ">")?;
-            for child in &enum_node.children {
-                self.format_node(output, child, indent + 1)?;
-            }
-            writeln!(output, "{ind}</enum>")?;
-        }
-        Ok(())
+            "enum",
+            &enum_node.name,
+            enum_node.visibility,
+            enum_node.line_start,
+            enum_node.line_end,
+            &[], // enums don't have modifiers
+            &[], // enums don't have decorators
+            &[], // enums don't have type params
+            &[], // enums don't extend
+            &[], // enums don't implement
+            &enum_node.children,
+            enum_node.enum_type.as_ref(),
+            indent,
+        )
     }
 
     /// Format a type alias

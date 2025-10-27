@@ -83,7 +83,7 @@ async function main() {
     // Test installation
     const testInstall = await question('\nTest installation locally? (Y/n): ');
     if (testInstall.toLowerCase() !== 'n') {
-      const testDir = path.join('/tmp', `test-aid-mcp-${Date.now()}`);
+  const testDir = path.join(os.tmpdir(), `test-aid-mcp-${Date.now()}`);
       fs.mkdirSync(testDir, { recursive: true });
 
       console.log(`\nTesting in ${testDir}...`);

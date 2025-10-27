@@ -99,12 +99,34 @@ void mempool_free(struct MemoryPool *pool, void *ptr) {
 
     pthread_mutex_lock(&pool->lock);
 
-    size_t offset = (uint8_t*)ptr - (uint8_t*)pool->memory;
-    size_t index = offset / pool->block_size;
+    uintptr_t base = (uintptr_t)pool->memory;
+    uintptr_t pval = (uintptr_t)ptr;
 
+    // Validate pointer is from this pool
+    if (pval < base || pval >= base + pool->block_size * pool->num_blocks) {
+        // Pointer not from this pool
+        pthread_mutex_unlock(&pool->lock);
+        return;
+    }
+
+    size_t offset = (size_t)(pval - base);
+
+    // Validate alignment to block boundary
+    if (offset % pool->block_size != 0) {
+        // Not aligned to a block boundary
+        pthread_mutex_unlock(&pool->lock);
+        return;
+    }
+
+    size_t index = offset / pool->block_size;
     if (index < pool->num_blocks) {
-        pool->free_list[index] = 1;
-        pool->free_blocks++;
+        // Check for double-free
+        if (pool->free_list[index] == 0) {
+            pool->free_list[index] = 1;
+            if (pool->free_blocks < pool->num_blocks) {
+                pool->free_blocks++;
+            }
+        }
     }
 
     pthread_mutex_unlock(&pool->lock);
