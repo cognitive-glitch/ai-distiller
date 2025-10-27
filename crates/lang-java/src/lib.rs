@@ -32,31 +32,42 @@ impl JavaProcessor {
         source[node.start_byte()..node.end_byte()].to_string()
     }
 
-    fn parse_modifiers(&self, node: TSNode, source: &str) -> (Visibility, Vec<Modifier>) {
+            fn parse_modifiers(&self, node: TSNode, source: &str) -> (Visibility, Vec<Modifier>, Vec<String>) {
         let mut visibility = Visibility::Internal; // Java default is package-private
         let mut modifiers = Vec::new();
+        let mut decorators = Vec::new();
         let mut has_visibility_keyword = false;
         let mut cursor = node.walk();
 
+        // Find the modifiers child node
         for child in node.children(&mut cursor) {
-            let text = self.node_text(child, source);
-            match text.as_str() {
-                "public" => {
-                    visibility = Visibility::Public;
-                    has_visibility_keyword = true;
+            if child.kind() == "modifiers" {
+                // Iterate through children of the modifiers node
+                let mut mod_cursor = child.walk();
+                for mod_child in child.children(&mut mod_cursor) {
+                    match mod_child.kind() {
+                        "public" => {
+                            visibility = Visibility::Public;
+                            has_visibility_keyword = true;
+                        }
+                        "protected" => {
+                            visibility = Visibility::Protected;
+                            has_visibility_keyword = true;
+                        }
+                        "private" => {
+                            visibility = Visibility::Private;
+                            has_visibility_keyword = true;
+                        }
+                        "static" => modifiers.push(Modifier::Static),
+                        "final" => modifiers.push(Modifier::Final),
+                        "abstract" => modifiers.push(Modifier::Abstract),
+                        "marker_annotation" | "annotation" => {
+                            decorators.push(self.node_text(mod_child, source));
+                        }
+                        _ => {}
+                    }
                 }
-                "protected" => {
-                    visibility = Visibility::Protected;
-                    has_visibility_keyword = true;
-                }
-                "private" => {
-                    visibility = Visibility::Private;
-                    has_visibility_keyword = true;
-                }
-                "static" => modifiers.push(Modifier::Static),
-                "final" => modifiers.push(Modifier::Final),
-                "abstract" => modifiers.push(Modifier::Abstract),
-                _ => {}
+                break;
             }
         }
 
@@ -65,8 +76,10 @@ impl JavaProcessor {
             visibility = Visibility::Internal;
         }
 
-        (visibility, modifiers)
+        (visibility, modifiers, decorators)
     }
+
+
 
     fn parse_type_parameters(&self, node: TSNode, source: &str) -> Vec<TypeParam> {
         let mut params = Vec::new();
@@ -129,7 +142,7 @@ impl JavaProcessor {
         let mut name = String::new();
         let mut extends = Vec::new();
         let mut implements = Vec::new();
-        let (visibility, modifiers) = self.parse_modifiers(node, source);
+        let (visibility, modifiers, _) = self.parse_modifiers(node, source);
         let mut type_params = Vec::new();
         let mut children = Vec::new();
         let line_start = node.start_position().row + 1;
@@ -179,7 +192,7 @@ impl JavaProcessor {
     fn parse_interface(&self, node: TSNode, source: &str) -> Result<Option<Class>> {
         let mut name = String::new();
         let mut extends = Vec::new();
-        let (visibility, modifiers) = self.parse_modifiers(node, source);
+        let (visibility, modifiers, _) = self.parse_modifiers(node, source);
         let mut type_params = Vec::new();
         let mut children = Vec::new();
         let line_start = node.start_position().row + 1;
@@ -223,7 +236,7 @@ impl JavaProcessor {
 
     fn parse_annotation(&self, node: TSNode, source: &str) -> Result<Option<Class>> {
         let mut name = String::new();
-        let (visibility, modifiers) = self.parse_modifiers(node, source);
+        let (visibility, modifiers, _) = self.parse_modifiers(node, source);
         let mut children = Vec::new();
         let line_start = node.start_position().row + 1;
         let line_end = node.end_position().row + 1;
@@ -258,6 +271,92 @@ impl JavaProcessor {
         }))
     }
 
+
+    fn parse_enum(&self, node: TSNode, source: &str) -> Result<Option<Class>> {
+        let mut name = String::new();
+        let (visibility, modifiers, _) = self.parse_modifiers(node, source);
+        let mut children = Vec::new();
+        let mut enum_constants = Vec::new();
+        let line_start = node.start_position().row + 1;
+        let line_end = node.end_position().row + 1;
+
+        let mut cursor = node.walk();
+        for child in node.children(&mut cursor) {
+            match child.kind() {
+                "modifiers" => {}
+                "identifier" => {
+                    name = self.node_text(child, source);
+                }
+                "enum_body" => {
+                    let mut body_cursor = child.walk();
+                    for body_child in child.children(&mut body_cursor) {
+                        match body_child.kind() {
+                            "enum_constant" => {
+                                let mut const_cursor = body_child.walk();
+                                for const_child in body_child.children(&mut const_cursor) {
+                                    if const_child.kind() == "identifier" {
+                                        let const_name = self.node_text(const_child, source);
+                                        enum_constants.push(const_name);
+                                        break;
+                                    }
+                                }
+                            }
+                            "enum_body_declarations" => {
+                                let mut decl_cursor = body_child.walk();
+                                for decl_child in body_child.children(&mut decl_cursor) {
+                                    match decl_child.kind() {
+                                        "field_declaration" => {
+                                            let fields = self.parse_field(decl_child, source)?;
+                                            for field in fields {
+                                                children.push(ir::Node::Field(field));
+                                            }
+                                        }
+                                        "constructor_declaration" => {
+                                            if let Some(constructor) = self.parse_constructor(decl_child, source)? {
+                                                children.push(ir::Node::Function(constructor));
+                                            }
+                                        }
+                                        "method_declaration" => {
+                                            if let Some(method) = self.parse_method(decl_child, source)? {
+                                                children.push(ir::Node::Function(method));
+                                            }
+                                        }
+                                        _ => {}
+                                    }
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        for const_name in enum_constants {
+            children.insert(0, ir::Node::Field(Field {
+                name: const_name,
+                visibility: Visibility::Public,
+                field_type: Some(TypeRef::new(name.clone())),
+                default_value: None,
+                modifiers: vec![Modifier::Static, Modifier::Final],
+                line: line_start,
+            }));
+        }
+
+        Ok(Some(Class {
+            name,
+            visibility,
+            extends: vec![],
+            implements: vec![],
+            type_params: vec![],
+            decorators: vec!["enum".to_string()],
+            modifiers,
+            children,
+            line_start,
+            line_end,
+        }))
+    }
     fn parse_class_body(
         &self,
         node: TSNode,
@@ -297,6 +396,11 @@ impl JavaProcessor {
                 "annotation_type_declaration" => {
                     if let Some(nested_annotation) = self.parse_annotation(child, source)? {
                         children.push(ir::Node::Class(nested_annotation));
+                    }
+                }
+                "enum_declaration" => {
+                    if let Some(nested_enum) = self.parse_enum(child, source)? {
+                        children.push(ir::Node::Class(nested_enum));
                     }
                 }
                 _ => {}
@@ -364,7 +468,7 @@ impl JavaProcessor {
 
     fn parse_field(&self, node: TSNode, source: &str) -> Result<Vec<Field>> {
         let mut fields = Vec::new();
-        let (visibility, modifiers) = self.parse_modifiers(node, source);
+        let (visibility, modifiers, _) = self.parse_modifiers(node, source);
         let mut field_type = None;
         let line = node.start_position().row + 1;
 
@@ -404,13 +508,13 @@ impl JavaProcessor {
         Ok(fields)
     }
 
-    fn parse_method(&self, node: TSNode, source: &str) -> Result<Option<Function>> {
+        fn parse_method(&self, node: TSNode, source: &str) -> Result<Option<Function>> {
         let mut name = String::new();
-        let (visibility, modifiers) = self.parse_modifiers(node, source);
+        let (visibility, modifiers, method_decorators) = self.parse_modifiers(node, source);
         let mut type_params = Vec::new();
         let mut return_type = None;
         let mut parameters = Vec::new();
-        let mut decorators = Vec::new();
+        let mut decorators = method_decorators;  // Start with annotations from modifiers
         let line_start = node.start_position().row + 1;
         let line_end = node.end_position().row + 1;
 
@@ -440,6 +544,7 @@ impl JavaProcessor {
                     parameters = self.parse_parameters(child, source)?;
                 }
                 "marker_annotation" | "annotation" => {
+                    // This case probably never executes since annotations are in modifiers
                     decorators.push(self.node_text(child, source));
                 }
                 _ => {}
@@ -464,9 +569,10 @@ impl JavaProcessor {
         }
     }
 
+
     fn parse_constructor(&self, node: TSNode, source: &str) -> Result<Option<Function>> {
         let mut name = String::new();
-        let (visibility, modifiers) = self.parse_modifiers(node, source);
+        let (visibility, modifiers, _) = self.parse_modifiers(node, source);
         let mut parameters = Vec::new();
         let line_start = node.start_position().row + 1;
         let line_end = node.end_position().row + 1;
@@ -505,7 +611,7 @@ impl JavaProcessor {
         }
     }
 
-    fn parse_parameters(&self, node: TSNode, source: &str) -> Result<Vec<Parameter>> {
+        fn parse_parameters(&self, node: TSNode, source: &str) -> Result<Vec<Parameter>> {
         let mut parameters = Vec::new();
         let mut cursor = node.walk();
 
@@ -530,6 +636,21 @@ impl JavaProcessor {
                         "identifier" => {
                             name = self.node_text(param_child, source);
                         }
+                        "variable_declarator" => {
+                            // For spread_parameter, identifier is inside variable_declarator
+                            if let Some(id_node) = param_child.child_by_field_name("name") {
+                                name = self.node_text(id_node, source);
+                            } else {
+                                // Fallback: find first identifier child
+                                let mut var_cursor = param_child.walk();
+                                for var_child in param_child.children(&mut var_cursor) {
+                                    if var_child.kind() == "identifier" {
+                                        name = self.node_text(var_child, source);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
                         "..." => {
                             is_variadic = true;
                         }
@@ -552,6 +673,7 @@ impl JavaProcessor {
 
         Ok(parameters)
     }
+
 }
 
 impl LanguageProcessor for JavaProcessor {
@@ -607,6 +729,11 @@ impl LanguageProcessor for JavaProcessor {
                 "annotation_type_declaration" => {
                     if let Some(annotation) = self.parse_annotation(child, source)? {
                         file.children.push(ir::Node::Class(annotation));
+                    }
+                }
+                "enum_declaration" => {
+                    if let Some(enum_decl) = self.parse_enum(child, source)? {
+                        file.children.push(ir::Node::Class(enum_decl));
                     }
                 }
                 _ => {}
@@ -1265,5 +1392,115 @@ public final class Constants {
         } else {
             panic!("Expected class node");
         }
+    }
+}
+#[cfg(test)]
+mod debug_tests {
+    use super::*;
+    use tree_sitter::Node as TSNode;
+    
+    fn print_tree(node: TSNode, source: &str, depth: usize) {
+        let indent = "  ".repeat(depth);
+        let kind = node.kind();
+        
+        let start = node.start_byte();
+        let end = node.end_byte();
+        let text = if end > start && end <= source.len() {
+            &source[start..end]
+        } else {
+            ""
+        };
+        
+        let text_preview = if text.len() > 60 {
+            format!("{}...", &text[..60].replace('\n', "\\n"))
+        } else {
+            text.replace('\n', "\\n")
+        };
+        
+        eprintln!("{}[{}] \"{}\"", indent, kind, text_preview);
+        
+        let mut cursor = node.walk();
+        for child in node.children(&mut cursor) {
+            print_tree(child, source, depth + 1);
+        }
+    }
+    
+    #[test]
+    #[ignore]
+    fn debug_enum_ast() {
+        let source = r#"public enum Status {
+    ACTIVE, INACTIVE, PENDING;
+    
+    private final String label;
+    
+    Status(String label) {
+        this.label = label;
+    }
+    
+    public String getLabel() {
+        return label;
+    }
+    
+    public boolean isActive() {
+        return this == ACTIVE;
+    }
+}"#;
+        
+        let processor = JavaProcessor::new().unwrap();
+        let mut parser = processor.parser.lock();
+        let tree = parser.parse(source, None).unwrap();
+        let root = tree.root_node();
+        
+        eprintln!("\n=== Java Enum AST Structure ===\n");
+        print_tree(root, source, 0);
+        
+        panic!("Debug output - check stderr");
+    }
+    #[test]
+    #[ignore]
+    fn debug_varargs_ast() {
+        let source = r#"public class Util {
+    public static int sum(int... numbers) {
+        int total = 0;
+        for (int n : numbers) {
+            total += n;
+        }
+        return total;
+    }
+}"#;
+        
+        let processor = JavaProcessor::new().unwrap();
+        let mut parser = processor.parser.lock();
+        let tree = parser.parse(source, None).unwrap();
+        let root = tree.root_node();
+        
+        eprintln!("\n=== Java Varargs AST Structure ===\n");
+        print_tree(root, source, 0);
+        
+        panic!("Debug output - check stderr");
+    }
+
+    #[test]
+    #[ignore]
+    fn debug_annotations_ast() {
+        let source = r#"@Deprecated
+@SuppressWarnings("unchecked")
+public class LegacyService {
+    @Override
+    @Deprecated
+    public String toString() {
+        return "LegacyService";
+    }
+}"#;
+        
+        let processor = JavaProcessor::new().unwrap();
+        let mut parser = processor.parser.lock();
+        let tree = parser.parse(source, None).unwrap();
+        let root = tree.root_node();
+        
+        eprintln!("\n=== Java Annotations AST Structure ===\n");
+        print_tree(root, source, 0);
+        
+        panic!("Debug output - check stderr");
     }
 }
