@@ -36,6 +36,7 @@ fn create_configured_processor() -> Processor {
         base_path: Some(PathBuf::from(".")), // Set base path to current directory
         include_patterns: Vec::new(),
         exclude_patterns: Vec::new(),
+        continue_on_error: false,
     };
 
     let mut processor = Processor::new(options);

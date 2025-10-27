@@ -14,7 +14,7 @@ use distiller_core::{
 };
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
-use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
+use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
 
 // Language processors
 use lang_c::CProcessor;
@@ -59,6 +59,11 @@ struct JsonRpcResponse {
     error: Option<JsonRpcError>,
 }
 
+/// JSON-RPC error codes
+const ERROR_METHOD_NOT_FOUND: i32 = -32601;
+const ERROR_FILE_NOT_FOUND: i32 = -32011;
+const ERROR_PROCESSING_FAILED: i32 = -32013;
+
 /// JSON-RPC error
 #[derive(Debug, Serialize)]
 struct JsonRpcError {
@@ -68,8 +73,42 @@ struct JsonRpcError {
     data: Option<serde_json::Value>,
 }
 
+impl JsonRpcError {
+    fn method_not_found(method: String) -> Self {
+        Self {
+            code: ERROR_METHOD_NOT_FOUND,
+            message: format!("Method not found: {}", method),
+            data: None,
+        }
+    }
+
+    fn file_not_found(path: String) -> Self {
+        Self {
+            code: ERROR_FILE_NOT_FOUND,
+            message: "File or directory not found".to_string(),
+            data: Some(serde_json::json!({ "path": path })),
+        }
+    }
+
+    fn processing_failed(message: String, path: Option<String>) -> Self {
+        let mut data = serde_json::Map::new();
+        if let Some(p) = path {
+            data.insert("path".to_string(), serde_json::Value::String(p));
+        }
+        Self {
+            code: ERROR_PROCESSING_FAILED,
+            message,
+            data: if data.is_empty() {
+                None
+            } else {
+                Some(serde_json::Value::Object(data))
+            },
+        }
+    }
+}
+
 /// Parameters for `distil_directory` operation
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 struct DistilDirectoryParams {
     path: PathBuf,
     #[serde(default)]
@@ -77,7 +116,7 @@ struct DistilDirectoryParams {
 }
 
 /// Parameters for `distil_file` operation
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 struct DistilFileParams {
     path: PathBuf,
     #[serde(default)]
@@ -85,7 +124,7 @@ struct DistilFileParams {
 }
 
 /// Parameters for `list_dir` operation
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 struct ListDirParams {
     path: PathBuf,
     #[serde(default)]
@@ -149,6 +188,7 @@ impl From<DistilOptions> for ProcessOptions {
             base_path: None,
             include_patterns: Vec::new(),
             exclude_patterns: Vec::new(),
+            continue_on_error: false,
         }
     }
 }
@@ -452,19 +492,26 @@ fn register_all_languages(processor: &mut Processor) {
     ));
 }
 
-/// Helper function to send a JSON-RPC response
+/// Helper function to send a JSON-RPC response with Content-Length framing
 async fn send_response(stdout: &mut tokio::io::Stdout, response: &JsonRpcResponse) -> Result<()> {
     let response_json = serde_json::to_string(response)?;
+    let content_length = response_json.len();
+
+    // Write Content-Length header
+    stdout
+        .write_all(format!("Content-Length: {}\r\n\r\n", content_length).as_bytes())
+        .await?;
+
+    // Write JSON body
     stdout.write_all(response_json.as_bytes()).await?;
-    stdout.write_all(b"\n").await?;
     stdout.flush().await?;
     Ok(())
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    // Setup logging
-    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
+    // Setup logging with unified helper
+    distiller_core::logging::init_logging_from_env("info");
 
     log::info!("🚀 MCP Server v{} starting...", env!("CARGO_PKG_VERSION"));
 
@@ -472,30 +519,67 @@ async fn main() -> Result<()> {
     log::info!("✅ Server initialized with 13 language processors");
     log::info!("📡 Listening for JSON-RPC requests on stdin...");
 
-    // Read JSON-RPC requests from stdin
+    // Read JSON-RPC requests from stdin with Content-Length framing
     let stdin = tokio::io::stdin();
     let mut reader = BufReader::new(stdin);
     let mut stdout = tokio::io::stdout();
 
-    let mut line = String::new();
-
     loop {
-        line.clear();
-
-        match reader.read_line(&mut line).await {
+        // Read Content-Length header
+        let mut header_line = String::new();
+        match reader.read_line(&mut header_line).await {
             Ok(0) => {
                 // EOF
                 log::info!("📪 Received EOF, shutting down...");
                 break;
             }
             Ok(_) => {
-                let line = line.trim();
-                if line.is_empty() {
+                let header_line = header_line.trim();
+
+                // Skip empty lines
+                if header_line.is_empty() {
                     continue;
                 }
 
+                // Parse Content-Length header
+                let content_length =
+                    if let Some(len_str) = header_line.strip_prefix("Content-Length:") {
+                        match len_str.trim().parse::<usize>() {
+                            Ok(len) => len,
+                            Err(e) => {
+                                log::error!("❌ Failed to parse Content-Length: {e}");
+                                continue;
+                            }
+                        }
+                    } else {
+                        log::error!("❌ Expected Content-Length header, got: {}", header_line);
+                        continue;
+                    };
+
+                // Read blank line after header
+                let mut blank_line = String::new();
+                if let Err(e) = reader.read_line(&mut blank_line).await {
+                    log::error!("❌ Failed to read blank line: {e}");
+                    break;
+                }
+
+                // Read exactly content_length bytes for the JSON body
+                let mut body_buf = vec![0u8; content_length];
+                if let Err(e) = reader.read_exact(&mut body_buf).await {
+                    log::error!("❌ Failed to read message body: {e}");
+                    break;
+                }
+
+                let body = match String::from_utf8(body_buf) {
+                    Ok(s) => s,
+                    Err(e) => {
+                        log::error!("❌ Invalid UTF-8 in message body: {e}");
+                        continue;
+                    }
+                };
+
                 // Parse JSON-RPC request
-                let request: JsonRpcRequest = match serde_json::from_str(line) {
+                let request: JsonRpcRequest = match serde_json::from_str(&body) {
                     Ok(req) => req,
                     Err(e) => {
                         log::error!("❌ Failed to parse JSON-RPC request: {e}");
@@ -536,23 +620,32 @@ async fn main() -> Result<()> {
                         };
 
                         // Handle operation
-                        match server.handle_distil_directory(params).await {
+                        match server.handle_distil_directory(params.clone()).await {
                             Ok(result) => JsonRpcResponse {
                                 jsonrpc: "2.0".to_string(),
                                 id: request.id,
                                 result: Some(serde_json::Value::String(result)),
                                 error: None,
                             },
-                            Err(e) => JsonRpcResponse {
-                                jsonrpc: "2.0".to_string(),
-                                id: request.id,
-                                result: None,
-                                error: Some(JsonRpcError {
-                                    code: -32000,
-                                    message: e.to_string(),
-                                    data: None,
-                                }),
-                            },
+                            Err(e) => {
+                                let error_msg = e.to_string();
+                                let error = if error_msg.contains("does not exist")
+                                    || error_msg.contains("not a directory")
+                                {
+                                    JsonRpcError::file_not_found(params.path.display().to_string())
+                                } else {
+                                    JsonRpcError::processing_failed(
+                                        error_msg,
+                                        Some(params.path.display().to_string()),
+                                    )
+                                };
+                                JsonRpcResponse {
+                                    jsonrpc: "2.0".to_string(),
+                                    id: request.id,
+                                    result: None,
+                                    error: Some(error),
+                                }
+                            }
                         }
                     }
                     "distil_file" => {
@@ -580,23 +673,32 @@ async fn main() -> Result<()> {
                         };
 
                         // Handle operation
-                        match server.handle_distil_file(params).await {
+                        match server.handle_distil_file(params.clone()).await {
                             Ok(result) => JsonRpcResponse {
                                 jsonrpc: "2.0".to_string(),
                                 id: request.id,
                                 result: Some(serde_json::Value::String(result)),
                                 error: None,
                             },
-                            Err(e) => JsonRpcResponse {
-                                jsonrpc: "2.0".to_string(),
-                                id: request.id,
-                                result: None,
-                                error: Some(JsonRpcError {
-                                    code: -32000,
-                                    message: e.to_string(),
-                                    data: None,
-                                }),
-                            },
+                            Err(e) => {
+                                let error_msg = e.to_string();
+                                let error = if error_msg.contains("does not exist")
+                                    || error_msg.contains("not a file")
+                                {
+                                    JsonRpcError::file_not_found(params.path.display().to_string())
+                                } else {
+                                    JsonRpcError::processing_failed(
+                                        error_msg,
+                                        Some(params.path.display().to_string()),
+                                    )
+                                };
+                                JsonRpcResponse {
+                                    jsonrpc: "2.0".to_string(),
+                                    id: request.id,
+                                    result: None,
+                                    error: Some(error),
+                                }
+                            }
                         }
                     }
                     "list_dir" => {
@@ -624,23 +726,30 @@ async fn main() -> Result<()> {
                         };
 
                         // Handle operation
-                        match server.handle_list_dir(params).await {
+                        match server.handle_list_dir(params.clone()).await {
                             Ok(result) => JsonRpcResponse {
                                 jsonrpc: "2.0".to_string(),
                                 id: request.id,
                                 result: Some(serde_json::to_value(result).unwrap()),
                                 error: None,
                             },
-                            Err(e) => JsonRpcResponse {
-                                jsonrpc: "2.0".to_string(),
-                                id: request.id,
-                                result: None,
-                                error: Some(JsonRpcError {
-                                    code: -32000,
-                                    message: e.to_string(),
-                                    data: None,
-                                }),
-                            },
+                            Err(e) => {
+                                let error_msg = e.to_string();
+                                let error = if error_msg.contains("does not exist") {
+                                    JsonRpcError::file_not_found(params.path.display().to_string())
+                                } else {
+                                    JsonRpcError::processing_failed(
+                                        error_msg,
+                                        Some(params.path.display().to_string()),
+                                    )
+                                };
+                                JsonRpcResponse {
+                                    jsonrpc: "2.0".to_string(),
+                                    id: request.id,
+                                    result: None,
+                                    error: Some(error),
+                                }
+                            }
                         }
                     }
                     "get_capa" => {
@@ -656,11 +765,7 @@ async fn main() -> Result<()> {
                                 jsonrpc: "2.0".to_string(),
                                 id: request.id,
                                 result: None,
-                                error: Some(JsonRpcError {
-                                    code: -32000,
-                                    message: e.to_string(),
-                                    data: None,
-                                }),
+                                error: Some(JsonRpcError::processing_failed(e.to_string(), None)),
                             },
                         }
                     }
@@ -668,11 +773,7 @@ async fn main() -> Result<()> {
                         jsonrpc: "2.0".to_string(),
                         id: request.id,
                         result: None,
-                        error: Some(JsonRpcError {
-                            code: -32601,
-                            message: format!("Method not found: {}", request.method),
-                            data: None,
-                        }),
+                        error: Some(JsonRpcError::method_not_found(request.method.clone())),
                     },
                 };
 

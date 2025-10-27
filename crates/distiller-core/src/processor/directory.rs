@@ -166,14 +166,24 @@ impl DirectoryProcessor {
         // Sort by original discovery order
         results.sort_by_key(|r| r.index);
 
-        // Extract results, propagating errors
-        results
-            .into_iter()
-            .map(|r| match r.result {
-                Ok(file) => Ok(file),
-                Err(e) => Err(e),
-            })
-            .collect()
+        // Extract results
+        if opts.continue_on_error {
+            // Collect successes, log errors
+            let files: Vec<File> = results
+                .into_iter()
+                .filter_map(|r| match r.result {
+                    Ok(file) => Some(file),
+                    Err(e) => {
+                        log::warn!("Failed to process file: {}", e);
+                        None
+                    }
+                })
+                .collect();
+            Ok(files)
+        } else {
+            // Propagate first error
+            results.into_iter().map(|r| r.result).collect()
+        }
     }
 
     /// Process a single file

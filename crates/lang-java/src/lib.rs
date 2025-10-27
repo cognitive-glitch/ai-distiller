@@ -693,7 +693,7 @@ impl JavaProcessor {
 
 impl LanguageProcessor for JavaProcessor {
     fn language(&self) -> &'static str {
-        "Java"
+        "java"
     }
 
     fn supported_extensions(&self) -> &'static [&'static str] {

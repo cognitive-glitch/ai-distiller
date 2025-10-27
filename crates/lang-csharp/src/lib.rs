@@ -673,7 +673,7 @@ impl CSharpProcessor {
 
 impl LanguageProcessor for CSharpProcessor {
     fn language(&self) -> &'static str {
-        "C#"
+        "csharp"
     }
 
     fn supported_extensions(&self) -> &'static [&'static str] {

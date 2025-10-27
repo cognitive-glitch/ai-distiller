@@ -69,6 +69,7 @@ impl Visitor for Stripper {
     fn visit_node(&mut self, node: &mut Node) {
         match node {
             Node::File(f) => self.visit_file(f),
+            Node::Directory(d) => self.visit_directory(d),
             Node::Class(c) => self.visit_class(c),
             Node::Interface(i) => self.visit_interface(i),
             Node::Struct(s) => self.visit_struct(s),
@@ -88,6 +89,16 @@ impl Visitor for Stripper {
 
         // Recurse into remaining children
         for child in &mut file.children {
+            self.visit_node(child);
+        }
+    }
+
+    fn visit_directory(&mut self, dir: &mut crate::ir::Directory) {
+        // Filter children based on options
+        dir.children.retain(|child| self.should_include_node(child));
+
+        // Recurse into remaining children
+        for child in &mut dir.children {
             self.visit_node(child);
         }
     }

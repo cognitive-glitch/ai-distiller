@@ -18,6 +18,7 @@
 
 pub mod error;
 pub mod ir;
+pub mod logging;
 pub mod options;
 pub mod parser;
 pub mod processor;

@@ -353,6 +353,7 @@ name = "distiller-core"
 version = "2.0.0"
 dependencies = [
  "anyhow",
+ "env_logger",
  "glob",
  "ignore",
  "insta",
@@ -360,6 +361,7 @@ dependencies = [
  "lang-go",
  "lang-python",
  "lang-typescript",
+ "log",
  "num_cpus",
  "once_cell",
  "parking_lot",

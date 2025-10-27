@@ -89,7 +89,6 @@ Stripper (filtering) → Formatter → Output
 ### MCP Server
 
 **Transport**: stdio (standard input/output)
-**Protocol**: JSON-RPC 2.0
 **Status**: ✅ Production-ready (custom implementation) | 🔄 rmcp SDK migration planned
 
 The MCP server provides 4 core operations:

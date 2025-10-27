@@ -73,6 +73,10 @@ pub struct ProcessOptions {
     pub include_patterns: Vec<String>,
     /// Exclude files matching these patterns
     pub exclude_patterns: Vec<String>,
+
+    // Error handling
+    /// Continue processing on file errors (collect partial results)
+    pub continue_on_error: bool,
 }
 
 impl Default for ProcessOptions {
@@ -106,6 +110,9 @@ impl Default for ProcessOptions {
             // Default: no pattern filtering
             include_patterns: Vec::new(),
             exclude_patterns: Vec::new(),
+
+            // Default: fail on first error
+            continue_on_error: false,
         }
     }
 }

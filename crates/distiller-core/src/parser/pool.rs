@@ -8,7 +8,21 @@ use crate::error::{DistilError, Result};
 use parking_lot::Mutex;
 use std::collections::HashMap;
 use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use tree_sitter::{Language, Parser};
+
+/// Parser pool statistics
+#[derive(Debug, Clone, Default)]
+pub struct PoolStats {
+    /// Number of times a parser was acquired from pool
+    pub hits: usize,
+    /// Number of times a new parser was created
+    pub misses: usize,
+    /// Total parsers created
+    pub created: usize,
+    /// Total parsers reused
+    pub reused: usize,
+}
 
 /// A thread-safe pool of tree-sitter parsers
 ///
@@ -17,6 +31,25 @@ use tree_sitter::{Language, Parser};
 #[derive(Clone)]
 pub struct ParserPool {
     inner: Arc<Mutex<PoolInner>>,
+    stats: Arc<PoolStatsInner>,
+}
+
+struct PoolStatsInner {
+    hits: AtomicUsize,
+    misses: AtomicUsize,
+    created: AtomicUsize,
+    reused: AtomicUsize,
+}
+
+impl Default for PoolStatsInner {
+    fn default() -> Self {
+        Self {
+            hits: AtomicUsize::new(0),
+            misses: AtomicUsize::new(0),
+            created: AtomicUsize::new(0),
+            reused: AtomicUsize::new(0),
+        }
+    }
 }
 
 struct PoolInner {
@@ -38,6 +71,18 @@ impl ParserPool {
                 pools: HashMap::new(),
                 max_per_language: max_per_language.max(1),
             })),
+            stats: Arc::new(PoolStatsInner::default()),
+        }
+    }
+
+    /// Get current pool statistics
+    #[must_use]
+    pub fn stats(&self) -> PoolStats {
+        PoolStats {
+            hits: self.stats.hits.load(Ordering::Relaxed),
+            misses: self.stats.misses.load(Ordering::Relaxed),
+            created: self.stats.created.load(Ordering::Relaxed),
+            reused: self.stats.reused.load(Ordering::Relaxed),
         }
     }
 
@@ -65,6 +110,9 @@ impl ParserPool {
             // Reset parser state for reuse
             parser.reset();
 
+            self.stats.hits.fetch_add(1, Ordering::Relaxed);
+            self.stats.reused.fetch_add(1, Ordering::Relaxed);
+
             return Ok(ParserGuard {
                 parser: Some(parser),
                 language_name: language_name.to_string(),
@@ -73,6 +121,9 @@ impl ParserPool {
         }
 
         // No available parser, create new one
+        self.stats.misses.fetch_add(1, Ordering::Relaxed);
+        self.stats.created.fetch_add(1, Ordering::Relaxed);
+
         drop(inner); // Release lock during expensive operation
 
         let language = language_fn()?;
@@ -105,28 +156,6 @@ impl ParserPool {
             pool.push(parser);
         }
         // Otherwise drop the parser (happens automatically)
-    }
-
-    /// Get current pool statistics (for debugging/monitoring)
-    #[must_use]
-    pub fn stats(&self) -> PoolStats {
-        let inner = self.inner.lock();
-
-        let mut stats = PoolStats {
-            languages: Vec::new(),
-            total_parsers: 0,
-        };
-
-        for (lang, pool) in &inner.pools {
-            stats.languages.push(LanguageStats {
-                name: lang.clone(),
-                available: pool.len(),
-            });
-            stats.total_parsers += pool.len();
-        }
-
-        stats.languages.sort_by(|a, b| a.name.cmp(&b.name));
-        stats
     }
 }
 
@@ -179,19 +208,6 @@ impl Drop for ParserGuard {
     }
 }
 
-/// Statistics about parser pool usage
-#[derive(Debug, Clone)]
-pub struct PoolStats {
-    pub languages: Vec<LanguageStats>,
-    pub total_parsers: usize,
-}
-
-#[derive(Debug, Clone)]
-pub struct LanguageStats {
-    pub name: String,
-    pub available: usize,
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -201,8 +217,10 @@ mod tests {
         let pool = ParserPool::new(10);
         let stats = pool.stats();
 
-        assert_eq!(stats.total_parsers, 0);
-        assert_eq!(stats.languages.len(), 0);
+        assert_eq!(stats.hits, 0);
+        assert_eq!(stats.misses, 0);
+        assert_eq!(stats.created, 0);
+        assert_eq!(stats.reused, 0);
     }
 
     #[test]
@@ -210,7 +228,8 @@ mod tests {
         let pool = ParserPool::default();
         let stats = pool.stats();
 
-        assert_eq!(stats.total_parsers, 0);
+        assert_eq!(stats.hits, 0);
+        assert_eq!(stats.misses, 0);
     }
 
     #[test]
@@ -218,8 +237,10 @@ mod tests {
         let pool = ParserPool::new(5);
         let stats = pool.stats();
 
-        assert_eq!(stats.total_parsers, 0);
-        assert_eq!(stats.languages.len(), 0);
+        assert_eq!(stats.hits, 0);
+        assert_eq!(stats.misses, 0);
+        assert_eq!(stats.created, 0);
+        assert_eq!(stats.reused, 0);
     }
 
     // Note: Full integration tests require actual tree-sitter language libraries

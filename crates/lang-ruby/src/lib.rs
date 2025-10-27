@@ -258,7 +258,7 @@ impl RubyProcessor {
 
 impl LanguageProcessor for RubyProcessor {
     fn language(&self) -> &'static str {
-        "Ruby"
+        "ruby"
     }
 
     fn supported_extensions(&self) -> &'static [&'static str] {

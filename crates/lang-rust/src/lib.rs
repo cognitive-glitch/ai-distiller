@@ -249,12 +249,26 @@ impl RustProcessor {
         let visibility = Self::parse_visibility(node, source);
         let line_start = node.start_position().row + 1;
         let line_end = node.end_position().row + 1;
+        let mut children = Vec::new();
 
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
-            if child.kind() == "type_identifier" {
-                name = Self::node_text(child, source);
-                break;
+            match child.kind() {
+                "type_identifier" => {
+                    name = Self::node_text(child, source);
+                }
+                "declaration_list" => {
+                    // Parse trait method signatures
+                    let mut decl_cursor = child.walk();
+                    for decl_child in child.children(&mut decl_cursor) {
+                        if decl_child.kind() == "function_item"
+                            && let Some(method) = self.parse_function(decl_child, source)?
+                        {
+                            children.push(Node::Function(method));
+                        }
+                    }
+                }
+                _ => {}
             }
         }
 
@@ -267,7 +281,7 @@ impl RustProcessor {
             visibility,
             extends: vec![],
             type_params: vec![],
-            children: vec![],
+            children,
             line_start,
             line_end,
         }))

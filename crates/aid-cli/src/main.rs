@@ -207,15 +207,8 @@ fn extract_files(node: &Node) -> Vec<File> {
 fn main() -> Result<()> {
     let args = Args::parse();
 
-    // Setup logging
-    let log_level = match args.verbose {
-        0 => "error",
-        1 => "warn",
-        2 => "info",
-        3 => "debug",
-        _ => "trace",
-    };
-    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or(log_level)).init();
+    // Setup logging with unified helper
+    distiller_core::logging::init_logging(args.verbose);
 
     log::info!("🦀 AI Distiller v{} (Rust)", env!("CARGO_PKG_VERSION"));
 

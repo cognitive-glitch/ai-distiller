@@ -456,7 +456,7 @@ impl SwiftProcessor {
 
 impl LanguageProcessor for SwiftProcessor {
     fn language(&self) -> &'static str {
-        "Swift"
+        "swift"
     }
 
     fn supported_extensions(&self) -> &'static [&'static str] {
