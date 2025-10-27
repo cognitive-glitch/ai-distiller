@@ -89,7 +89,6 @@ Stripper (filtering) → Formatter → Output
 ### MCP Server
 
 **Transport**: stdio (standard input/output)
-**Status**: ✅ Production-ready (custom implementation) | 🔄 rmcp SDK migration planned
 
 The MCP server provides 4 core operations:
 - `distil_directory` - Process entire directory
@@ -97,8 +96,7 @@ The MCP server provides 4 core operations:
 - `list_dir` - List directory contents with metadata
 - `get_capa` - Get server capabilities
 
-**Integration**: Claude Desktop, Cursor, VS Code via stdio transport
-**Future**: Migration to official `rmcp` SDK planned for better standards compliance
+**Integration**: Claude Desktop, Cursor, VS Code, Codex via stdio transport
 
 ### Core Abstractions
 
