@@ -979,3 +979,63 @@ class ComplexService(BaseService, Mixin):
             panic!("Expected class node");
         }
     }
+
+    #[test]
+    fn test_django_style_models() {
+        let source = std::fs::read_to_string("../../testdata/real-world/django-app/models.py")
+            .expect("Failed to read Django models file");
+        
+        let processor = PythonProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        
+        let result = processor.process(&source, Path::new("models.py"), &opts);
+        
+        assert!(result.is_ok(), "Django models should parse successfully");
+        
+        let file = result.unwrap();
+        
+        // Should find User, Post, Comment classes
+        let classes: Vec<_> = file.children.iter()
+            .filter_map(|n| if let Node::Class(c) = n { Some(c) } else { None })
+            .collect();
+        
+        assert!(classes.len() >= 3, "Should find at least 3 classes (User, Post, Comment)");
+        
+        // Verify User class
+        let user_class = classes.iter().find(|c| c.name == "User");
+        assert!(user_class.is_some(), "Should find User class");
+        
+        println!("✅ Django models parse: {} classes found", classes.len());
+    }
+    
+    #[test]
+    fn test_django_style_views() {
+        let source = std::fs::read_to_string("../../testdata/real-world/django-app/views.py")
+            .expect("Failed to read Django views file");
+        
+        let processor = PythonProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        
+        let result = processor.process(&source, Path::new("views.py"), &opts);
+        
+        assert!(result.is_ok(), "Django views should parse successfully");
+        
+        let file = result.unwrap();
+        
+        // Should find decorator functions and views
+        let functions: Vec<_> = file.children.iter()
+            .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+            .collect();
+        
+        assert!(functions.len() >= 3, "Should find multiple functions");
+        
+        // Check for decorated functions
+        let decorated = functions.iter()
+            .filter(|f| !f.decorators.is_empty())
+            .count();
+        
+        assert!(decorated > 0, "Should find decorated functions");
+        
+        println!("✅ Django views parse: {} functions, {} decorated", 
+                 functions.len(), decorated);
+    }

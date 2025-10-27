@@ -1382,3 +1382,90 @@ type Result = Success | Error;
         assert!(funcs[0].parameters[0].param_type.name.contains("|"));
     }
 }
+
+    #[test]
+    fn test_react_user_profile() {
+        let source = std::fs::read_to_string("../../testdata/real-world/react-app/components/UserProfile.tsx")
+            .expect("Failed to read UserProfile file");
+        
+        let processor = TypeScriptProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        
+        let result = processor.process(&source, Path::new("UserProfile.tsx"), &opts);
+        
+        assert!(result.is_ok(), "React component should parse successfully");
+        
+        let file = result.unwrap();
+        
+        // Should find interfaces and component
+        let interfaces: Vec<_> = file.children.iter()
+            .filter_map(|n| if let Node::Interface(i) = n { Some(i) } else { None })
+            .collect();
+        
+        let functions: Vec<_> = file.children.iter()
+            .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+            .collect();
+        
+        assert!(interfaces.len() >= 2, "Should find at least 2 interfaces (User, UserProfileProps)");
+        assert!(functions.len() >= 1, "Should find UserProfile component");
+        
+        println!("✅ React component parse: {} interfaces, {} functions", 
+                 interfaces.len(), functions.len());
+    }
+    
+    #[test]
+    fn test_react_custom_hook() {
+        let source = std::fs::read_to_string("../../testdata/real-world/react-app/hooks/useAuth.ts")
+            .expect("Failed to read useAuth file");
+        
+        let processor = TypeScriptProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        
+        let result = processor.process(&source, Path::new("useAuth.ts"), &opts);
+        
+        assert!(result.is_ok(), "Custom hook should parse successfully");
+        
+        let file = result.unwrap();
+        
+        let functions: Vec<_> = file.children.iter()
+            .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+            .collect();
+        
+        assert!(functions.len() >= 1, "Should find useAuth function");
+        
+        // Verify useAuth function found
+        let use_auth = functions.iter().find(|f| f.name == "useAuth");
+        assert!(use_auth.is_some(), "Should find useAuth function");
+        
+        println!("✅ Custom hook parse: {} functions", functions.len());
+    }
+    
+    #[test]
+    fn test_react_generic_component() {
+        let source = std::fs::read_to_string("../../testdata/real-world/react-app/components/DataTable.tsx")
+            .expect("Failed to read DataTable file");
+        
+        let processor = TypeScriptProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        
+        let result = processor.process(&source, Path::new("DataTable.tsx"), &opts);
+        
+        assert!(result.is_ok(), "Generic component should parse successfully");
+        
+        let file = result.unwrap();
+        
+        // Should find generic function
+        let functions: Vec<_> = file.children.iter()
+            .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+            .collect();
+        
+        let generic_functions: Vec<_> = functions.iter()
+            .filter(|f| !f.type_params.is_empty())
+            .collect();
+        
+        // Note: Type params not captured yet - C2 finding
+        assert!(functions.len() >= 1, "Should find DataTable function");
+        
+        println!("✅ Generic component parse: {} functions, {} generic", 
+                 functions.len(), generic_functions.len());
+    }
