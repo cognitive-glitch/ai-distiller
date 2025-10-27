@@ -75,6 +75,7 @@ impl CProcessor {
         }))
     }
 
+    #[allow(clippy::unused_self)]
     fn parse_struct_body(
         &self,
         node: TSNode,

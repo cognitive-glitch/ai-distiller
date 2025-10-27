@@ -84,6 +84,7 @@ impl TextFormatter {
     }
 
     /// Format an import statement
+    #[allow(clippy::unused_self)]
     fn format_import(
         &self,
         output: &mut String,
@@ -405,6 +406,7 @@ impl TextFormatter {
     }
 
     /// Format a comment
+    #[allow(clippy::unused_self)]
     fn format_comment(
         &self,
         output: &mut String,

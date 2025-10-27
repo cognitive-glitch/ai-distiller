@@ -519,6 +519,7 @@ impl CSharpProcessor {
         }))
     }
 
+    #[allow(clippy::unused_self)]
     fn parse_constructor(&self, node: TSNode, source: &str) -> Result<Option<Function>> {
         let (visibility, modifiers) = Self::parse_modifiers(node, source);
         let mut name = String::new();
@@ -559,6 +560,7 @@ impl CSharpProcessor {
         }))
     }
 
+    #[allow(clippy::unused_self)]
     fn parse_operator(&self, node: TSNode, source: &str) -> Result<Option<Function>> {
         let (visibility, mut modifiers) = Self::parse_modifiers(node, source);
         modifiers.push(Modifier::Static); // Operators are always static

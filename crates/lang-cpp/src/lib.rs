@@ -234,6 +234,7 @@ impl CppProcessor {
         }))
     }
 
+    #[allow(clippy::unused_self)]
     fn parse_function_declarator(
         &self,
         node: TSNode,

@@ -84,6 +84,7 @@ impl GoProcessor {
         Ok(imports)
     }
 
+    #[allow(clippy::unused_self)]
     fn parse_import_spec(&self, node: tree_sitter::Node, source: &str) -> Result<Option<Import>> {
         let mut module = String::new();
         let mut import_type = "import".to_string();
@@ -186,6 +187,7 @@ impl GoProcessor {
         Ok(fields)
     }
 
+    #[allow(clippy::unused_self)]
     fn parse_field_declaration(
         &self,
         node: tree_sitter::Node,
@@ -435,6 +437,7 @@ impl GoProcessor {
         Ok(parameters)
     }
 
+    #[allow(clippy::unused_self)]
     fn parse_parameter_declaration(
         &self,
         node: tree_sitter::Node,
@@ -486,6 +489,7 @@ impl GoProcessor {
             .collect())
     }
 
+    #[allow(clippy::unused_self)]
     fn parse_variadic_parameter(
         &self,
         node: tree_sitter::Node,
@@ -548,6 +552,7 @@ impl GoProcessor {
         Ok(None)
     }
 
+    #[allow(clippy::unused_self)]
     fn try_extract_type(&self, node: tree_sitter::Node, source: &str) -> Option<TypeRef> {
         match node.kind() {
             "type_identifier" | "qualified_type" | "pointer_type" | "array_type" | "slice_type"
@@ -577,6 +582,7 @@ impl GoProcessor {
         Ok(type_params)
     }
 
+    #[allow(clippy::unused_self)]
     fn parse_type_parameter(
         &self,
         node: tree_sitter::Node,

@@ -312,6 +312,7 @@ impl SwiftProcessor {
         }
     }
 
+    #[allow(clippy::unused_self)]
     fn parse_parameters(
         &self,
         node: TSNode,

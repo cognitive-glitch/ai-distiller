@@ -228,6 +228,7 @@ impl KotlinProcessor {
         }))
     }
 
+    #[allow(clippy::unused_self)]
     fn parse_property(&self, node: TSNode, source: &str) -> Result<Option<Field>> {
         let mut name = String::new();
         let field_type = None;
@@ -260,6 +261,7 @@ impl KotlinProcessor {
         }))
     }
 
+    #[allow(clippy::unused_self)]
     fn parse_parameters(&self, node: TSNode, source: &str) -> Vec<Parameter> {
         let mut parameters = Vec::new();
         let mut cursor = node.walk();
@@ -298,6 +300,7 @@ impl KotlinProcessor {
         parameters
     }
 
+    #[allow(clippy::unused_self)]
     fn parse_import(&self, node: TSNode, source: &str) -> Option<Import> {
         let import_text = Self::node_text(node, source);
         let text = import_text.strip_prefix("import ")?.trim();

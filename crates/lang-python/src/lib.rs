@@ -213,6 +213,7 @@ impl PythonProcessor {
     }
 
     /// Parse base classes from argument list
+    #[allow(clippy::unused_self)]
     fn parse_base_classes(
         &self,
         node: tree_sitter::Node,
@@ -341,6 +342,7 @@ impl PythonProcessor {
     }
 
     /// Parse a single parameter
+    #[allow(clippy::unused_self)]
     fn parse_parameter(&self, node: tree_sitter::Node, source: &str) -> Result<Option<Parameter>> {
         match node.kind() {
             "identifier" => {
@@ -473,6 +475,7 @@ impl PythonProcessor {
     }
 
     /// Detect visibility from name conventions
+    #[allow(clippy::unused_self)]
     fn detect_visibility(&self, name: &str) -> Visibility {
         if name.starts_with("__") && name.ends_with("__") {
             // __dunder__ methods are public API

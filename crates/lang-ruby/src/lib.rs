@@ -145,6 +145,7 @@ impl RubyProcessor {
         }))
     }
 
+    #[allow(clippy::unused_self)]
     fn parse_method(&self, node: TSNode, source: &str) -> Result<Option<Function>> {
         let mut name = String::new();
         let mut parameters = Vec::new();

@@ -114,6 +114,7 @@ impl TypeScriptProcessor {
         Ok(())
     }
 
+    #[allow(clippy::unused_self)]
     fn parse_import(&self, node: tree_sitter::Node, source: &str) -> Result<Option<Import>> {
         let mut module = String::new();
         let mut symbols = Vec::new();

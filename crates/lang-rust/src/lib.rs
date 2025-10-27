@@ -51,6 +51,7 @@ impl RustProcessor {
         Visibility::Private // Default in Rust
     }
 
+    #[allow(clippy::unused_self)]
     fn parse_field(&self, node: tree_sitter::Node, source: &str) -> Result<Option<Field>> {
         let mut name = String::new();
         let mut field_type = TypeRef::new("".to_string());
@@ -99,6 +100,7 @@ impl RustProcessor {
         Ok(parameters)
     }
 
+    #[allow(clippy::unused_self)]
     fn parse_parameter(&self, node: tree_sitter::Node, source: &str) -> Result<Option<Parameter>> {
         let mut name = String::new();
         let mut param_type = TypeRef::new("".to_string());
@@ -168,6 +170,7 @@ impl RustProcessor {
         Ok((type_name, methods))
     }
 
+    #[allow(clippy::unused_self)]
     fn parse_use(&self, node: tree_sitter::Node, source: &str) -> Result<Option<Import>> {
         let line = node.start_position().row + 1;
 
@@ -239,6 +242,7 @@ impl RustProcessor {
         }))
     }
 
+    #[allow(clippy::unused_self)]
     fn parse_trait(&self, node: tree_sitter::Node, source: &str) -> Result<Option<Interface>> {
         let mut name = String::new();
         let visibility = Self::parse_visibility(node, source);

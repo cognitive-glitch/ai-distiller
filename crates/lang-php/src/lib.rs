@@ -162,6 +162,7 @@ impl PhpProcessor {
         Ok(())
     }
 
+    #[allow(clippy::unused_self)]
     fn parse_method(&self, node: TSNode, source: &str) -> Result<Option<Function>> {
         let mut name = String::new();
         let mut return_type = None;
@@ -363,6 +364,7 @@ impl PhpProcessor {
         Ok(())
     }
 
+    #[allow(clippy::unused_self)]
     fn parse_top_level_function(&self, node: TSNode, source: &str) -> Result<Option<Function>> {
         let mut name = String::new();
         let mut return_type = None;

@@ -414,6 +414,7 @@ impl JavaProcessor {
         Ok(())
     }
 
+    #[allow(clippy::unused_self)]
     fn parse_annotation_body(
         &self,
         node: TSNode,
@@ -512,6 +513,7 @@ impl JavaProcessor {
         Ok(fields)
     }
 
+    #[allow(clippy::unused_self)]
     fn parse_method(&self, node: TSNode, source: &str) -> Result<Option<Function>> {
         let mut name = String::new();
         let (visibility, modifiers, method_decorators) = Self::parse_modifiers(node, source);
@@ -573,6 +575,7 @@ impl JavaProcessor {
         }
     }
 
+    #[allow(clippy::unused_self)]
     fn parse_constructor(&self, node: TSNode, source: &str) -> Result<Option<Function>> {
         let mut name = String::new();
         let (visibility, modifiers, _) = Self::parse_modifiers(node, source);
