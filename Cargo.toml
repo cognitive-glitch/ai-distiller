@@ -16,6 +16,7 @@ members = [
     "crates/lang-php",
     "crates/lang-csharp",
     "crates/lang-c", "crates/formatter-text", "crates/formatter-markdown", "crates/formatter-json", "crates/formatter-jsonl", "crates/formatter-xml",
+    "crates/mcp-server",
     # Language processors will be added here as they're created
     # Formatters will be added here as they're created
 ]
@@ -35,6 +36,9 @@ thiserror = "2.0"
 
 # Parallelism - rayon ONLY (no tokio in core!)
 rayon = "1.10"
+
+# Async runtime (MCP server only - NOT in core!)
+tokio = { version = "1.42", default-features = false }
 
 # Parsing - native Rust bindings (no CGO!)
 tree-sitter = "0.25"
