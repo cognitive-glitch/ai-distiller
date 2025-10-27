@@ -140,12 +140,7 @@ impl PhpProcessor {
         bases
     }
 
-    fn parse_class_body(
-        &self,
-        node: TSNode,
-        source: &str,
-        children: &mut Vec<Node>,
-    ) -> Result<()> {
+    fn parse_class_body(&self, node: TSNode, source: &str, children: &mut Vec<Node>) -> Result<()> {
         let mut cursor = node.walk();
 
         for child in node.children(&mut cursor) {
@@ -491,7 +486,7 @@ class User {
             .process(source, &PathBuf::from("User.php"), &opts)
             .unwrap();
 
-        assert!(file.children.len() >= 1);
+        assert!(!file.children.is_empty());
         let has_user = file.children.iter().any(|child| {
             if let Node::Class(class) = child {
                 class.name == "User"
@@ -519,7 +514,7 @@ trait Timestampable {
             .process(source, &PathBuf::from("Timestampable.php"), &opts)
             .unwrap();
 
-        assert!(file.children.len() >= 1);
+        assert!(!file.children.is_empty());
         let has_trait = file.children.iter().any(|child| {
             if let Node::Class(class) = child {
                 class.name == "Timestampable" && class.decorators.contains(&"trait".to_string())
@@ -548,9 +543,11 @@ class User {
             .process(source, &PathBuf::from("User.php"), &opts)
             .unwrap();
 
-        let import_count = file.children.iter().filter(|child| {
-            matches!(child, Node::Import(_))
-        }).count();
+        let import_count = file
+            .children
+            .iter()
+            .filter(|child| matches!(child, Node::Import(_)))
+            .count();
 
         assert!(import_count >= 2, "Expected at least 2 use statements");
     }
@@ -571,16 +568,17 @@ class User {
             .process(source, &PathBuf::from("User.php"), &opts)
             .unwrap();
 
-        assert!(file.children.len() >= 1);
+        assert!(!file.children.is_empty());
         let has_typed_props = file.children.iter().any(|child| {
             if let Node::Class(class) = child {
-                class.name == "User" && class.children.iter().any(|c| {
-                    if let Node::Field(field) = c {
-                        field.name == "$id" && field.field_type.is_some()
-                    } else {
-                        false
-                    }
-                })
+                class.name == "User"
+                    && class.children.iter().any(|c| {
+                        if let Node::Field(field) = c {
+                            field.name == "$id" && field.field_type.is_some()
+                        } else {
+                            false
+                        }
+                    })
             } else {
                 false
             }
@@ -603,16 +601,20 @@ class Test {
             .process(source, &PathBuf::from("Test.php"), &opts)
             .unwrap();
 
-        assert!(file.children.len() >= 1);
+        assert!(!file.children.is_empty());
         let has_visibility = file.children.iter().any(|child| {
             if let Node::Class(class) = child {
-                class.name == "Test" && class.children.iter().any(|c| {
-                    if let Node::Function(func) = c {
-                        matches!(func.visibility, Visibility::Public | Visibility::Protected | Visibility::Private)
-                    } else {
-                        false
-                    }
-                })
+                class.name == "Test"
+                    && class.children.iter().any(|c| {
+                        if let Node::Function(func) = c {
+                            matches!(
+                                func.visibility,
+                                Visibility::Public | Visibility::Protected | Visibility::Private
+                            )
+                        } else {
+                            false
+                        }
+                    })
             } else {
                 false
             }
@@ -636,16 +638,17 @@ class User {
             .process(source, &PathBuf::from("User.php"), &opts)
             .unwrap();
 
-        assert!(file.children.len() >= 1);
+        assert!(!file.children.is_empty());
         let has_return_types = file.children.iter().any(|child| {
             if let Node::Class(class) = child {
-                class.name == "User" && class.children.iter().any(|c| {
-                    if let Node::Function(func) = c {
-                        func.name == "getEmail" && func.return_type.is_some()
-                    } else {
-                        false
-                    }
-                })
+                class.name == "User"
+                    && class.children.iter().any(|c| {
+                        if let Node::Function(func) = c {
+                            func.name == "getEmail" && func.return_type.is_some()
+                        } else {
+                            false
+                        }
+                    })
             } else {
                 false
             }
@@ -668,16 +671,17 @@ class User {
             .process(source, &PathBuf::from("User.php"), &opts)
             .unwrap();
 
-        assert!(file.children.len() >= 1);
+        assert!(!file.children.is_empty());
         let has_constructor = file.children.iter().any(|child| {
             if let Node::Class(class) = child {
-                class.name == "User" && class.children.iter().any(|c| {
-                    if let Node::Function(func) = c {
-                        func.name == "__construct"
-                    } else {
-                        false
-                    }
-                })
+                class.name == "User"
+                    && class.children.iter().any(|c| {
+                        if let Node::Function(func) = c {
+                            func.name == "__construct"
+                        } else {
+                            false
+                        }
+                    })
             } else {
                 false
             }

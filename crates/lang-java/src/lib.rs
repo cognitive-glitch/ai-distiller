@@ -102,7 +102,6 @@ impl JavaProcessor {
         params
     }
 
-
     fn parse_interface_list(&self, node: TSNode, source: &str) -> Vec<TypeRef> {
         let mut interfaces = Vec::new();
         let mut cursor = node.walk();
@@ -112,7 +111,8 @@ impl JavaProcessor {
                 // type_list contains the actual type nodes
                 let mut type_cursor = child.walk();
                 for type_child in child.children(&mut type_cursor) {
-                    if type_child.kind() == "type_identifier" || type_child.kind() == "generic_type" {
+                    if type_child.kind() == "type_identifier" || type_child.kind() == "generic_type"
+                    {
                         interfaces.push(TypeRef::new(self.node_text(type_child, source)));
                     }
                 }
@@ -124,7 +124,6 @@ impl JavaProcessor {
 
         interfaces
     }
-
 
     fn parse_class(&self, node: TSNode, source: &str) -> Result<Option<Class>> {
         let mut name = String::new();
@@ -259,7 +258,12 @@ impl JavaProcessor {
         }))
     }
 
-    fn parse_class_body(&self, node: TSNode, source: &str, children: &mut Vec<ir::Node>) -> Result<()> {
+    fn parse_class_body(
+        &self,
+        node: TSNode,
+        source: &str,
+        children: &mut Vec<ir::Node>,
+    ) -> Result<()> {
         let mut cursor = node.walk();
 
         for child in node.children(&mut cursor) {
@@ -302,7 +306,12 @@ impl JavaProcessor {
         Ok(())
     }
 
-    fn parse_annotation_body(&self, node: TSNode, source: &str, children: &mut Vec<ir::Node>) -> Result<()> {
+    fn parse_annotation_body(
+        &self,
+        node: TSNode,
+        source: &str,
+        children: &mut Vec<ir::Node>,
+    ) -> Result<()> {
         let mut cursor = node.walk();
 
         for child in node.children(&mut cursor) {
@@ -365,8 +374,14 @@ impl JavaProcessor {
                 "modifiers" => {
                     // Already parsed
                 }
-                "type" | "integral_type" | "floating_point_type" | "boolean_type" 
-                | "void_type" | "generic_type" | "type_identifier" | "array_type" => {
+                "type"
+                | "integral_type"
+                | "floating_point_type"
+                | "boolean_type"
+                | "void_type"
+                | "generic_type"
+                | "type_identifier"
+                | "array_type" => {
                     field_type = Some(TypeRef::new(self.node_text(child, source)));
                 }
                 "variable_declarator" => {
@@ -408,8 +423,14 @@ impl JavaProcessor {
                 "type_parameters" => {
                     type_params = self.parse_type_parameters(child, source);
                 }
-                "type" | "void_type" | "integral_type" | "floating_point_type"
-                | "boolean_type" | "generic_type" | "type_identifier" | "array_type" => {
+                "type"
+                | "void_type"
+                | "integral_type"
+                | "floating_point_type"
+                | "boolean_type"
+                | "generic_type"
+                | "type_identifier"
+                | "array_type" => {
                     return_type = Some(TypeRef::new(self.node_text(child, source)));
                 }
                 "identifier" => {
@@ -497,8 +518,13 @@ impl JavaProcessor {
                 let mut param_cursor = child.walk();
                 for param_child in child.children(&mut param_cursor) {
                     match param_child.kind() {
-                        "type" | "integral_type" | "floating_point_type" | "boolean_type"
-                        | "generic_type" | "type_identifier" | "array_type" => {
+                        "type"
+                        | "integral_type"
+                        | "floating_point_type"
+                        | "boolean_type"
+                        | "generic_type"
+                        | "type_identifier"
+                        | "array_type" => {
                             param_type = TypeRef::new(self.node_text(param_child, source));
                         }
                         "identifier" => {
@@ -628,14 +654,30 @@ public class Basic {
 "#;
         let processor = JavaProcessor::new().unwrap();
         let opts = ProcessOptions::default();
-        let file = processor.process(source, &PathBuf::from("Basic.java"), &opts).unwrap();
+        let file = processor
+            .process(source, &PathBuf::from("Basic.java"), &opts)
+            .unwrap();
 
         assert_eq!(file.children.len(), 1);
         if let ir::Node::Class(class) = &file.children[0] {
             assert_eq!(class.name, "Basic");
             assert_eq!(class.visibility, Visibility::Public);
-            assert_eq!(class.children.iter().filter(|n| matches!(n, ir::Node::Field(_))).count(), 1);
-            assert_eq!(class.children.iter().filter(|n| matches!(n, ir::Node::Function(_))).count(), 1);
+            assert_eq!(
+                class
+                    .children
+                    .iter()
+                    .filter(|n| matches!(n, ir::Node::Field(_)))
+                    .count(),
+                1
+            );
+            assert_eq!(
+                class
+                    .children
+                    .iter()
+                    .filter(|n| matches!(n, ir::Node::Function(_)))
+                    .count(),
+                1
+            );
         } else {
             panic!("Expected a class");
         }
@@ -651,7 +693,9 @@ interface DataStore<T> {
 "#;
         let processor = JavaProcessor::new().unwrap();
         let opts = ProcessOptions::default();
-        let file = processor.process(source, &PathBuf::from("DataStore.java"), &opts).unwrap();
+        let file = processor
+            .process(source, &PathBuf::from("DataStore.java"), &opts)
+            .unwrap();
 
         assert_eq!(file.children.len(), 1);
         if let ir::Node::Class(interface) = &file.children[0] {
@@ -659,7 +703,14 @@ interface DataStore<T> {
             assert!(interface.decorators.contains(&"interface".to_string()));
             assert_eq!(interface.type_params.len(), 1);
             assert_eq!(interface.type_params[0].name, "T");
-            assert_eq!(interface.children.iter().filter(|n| matches!(n, ir::Node::Function(_))).count(), 2);
+            assert_eq!(
+                interface
+                    .children
+                    .iter()
+                    .filter(|n| matches!(n, ir::Node::Function(_)))
+                    .count(),
+                2
+            );
         } else {
             panic!("Expected an interface");
         }
@@ -675,7 +726,9 @@ abstract class BaseStore<T> implements DataStore<T> {
 "#;
         let processor = JavaProcessor::new().unwrap();
         let opts = ProcessOptions::default();
-        let file = processor.process(source, &PathBuf::from("BaseStore.java"), &opts).unwrap();
+        let file = processor
+            .process(source, &PathBuf::from("BaseStore.java"), &opts)
+            .unwrap();
 
         assert_eq!(file.children.len(), 1);
         if let ir::Node::Class(class) = &file.children[0] {
@@ -683,7 +736,14 @@ abstract class BaseStore<T> implements DataStore<T> {
             assert!(class.modifiers.contains(&Modifier::Abstract));
             assert_eq!(class.implements.len(), 1);
             assert_eq!(class.implements[0].name, "DataStore<T>");
-            assert_eq!(class.children.iter().filter(|n| matches!(n, ir::Node::Function(_))).count(), 2);
+            assert_eq!(
+                class
+                    .children
+                    .iter()
+                    .filter(|n| matches!(n, ir::Node::Function(_)))
+                    .count(),
+                2
+            );
         } else {
             panic!("Expected a class");
         }
@@ -698,13 +758,22 @@ abstract class BaseStore<T> implements DataStore<T> {
 "#;
         let processor = JavaProcessor::new().unwrap();
         let opts = ProcessOptions::default();
-        let file = processor.process(source, &PathBuf::from("Auditable.java"), &opts).unwrap();
+        let file = processor
+            .process(source, &PathBuf::from("Auditable.java"), &opts)
+            .unwrap();
 
         assert_eq!(file.children.len(), 1);
         if let ir::Node::Class(annotation) = &file.children[0] {
             assert_eq!(annotation.name, "Auditable");
             assert!(annotation.decorators.contains(&"annotation".to_string()));
-            assert_eq!(annotation.children.iter().filter(|n| matches!(n, ir::Node::Function(_))).count(), 1);
+            assert_eq!(
+                annotation
+                    .children
+                    .iter()
+                    .filter(|n| matches!(n, ir::Node::Function(_)))
+                    .count(),
+                1
+            );
         } else {
             panic!("Expected an annotation");
         }
@@ -722,13 +791,23 @@ public class Visibility {
 "#;
         let processor = JavaProcessor::new().unwrap();
         let opts = ProcessOptions::default();
-        let file = processor.process(source, &PathBuf::from("Visibility.java"), &opts).unwrap();
+        let file = processor
+            .process(source, &PathBuf::from("Visibility.java"), &opts)
+            .unwrap();
 
         if let ir::Node::Class(class) = &file.children[0] {
-            let fields: Vec<_> = class.children.iter()
-                .filter_map(|n| if let ir::Node::Field(f) = n { Some(f) } else { None })
+            let fields: Vec<_> = class
+                .children
+                .iter()
+                .filter_map(|n| {
+                    if let ir::Node::Field(f) = n {
+                        Some(f)
+                    } else {
+                        None
+                    }
+                })
                 .collect();
-            
+
             assert_eq!(fields.len(), 4);
             assert_eq!(fields[0].visibility, Visibility::Public);
             assert_eq!(fields[1].visibility, Visibility::Protected);
@@ -749,14 +828,24 @@ public class SimpleOOP {
 "#;
         let processor = JavaProcessor::new().unwrap();
         let opts = ProcessOptions::default();
-        let file = processor.process(source, &PathBuf::from("SimpleOOP.java"), &opts).unwrap();
+        let file = processor
+            .process(source, &PathBuf::from("SimpleOOP.java"), &opts)
+            .unwrap();
 
         if let ir::Node::Class(class) = &file.children[0] {
-            let constructors: Vec<_> = class.children.iter()
-                .filter_map(|n| if let ir::Node::Function(f) = n { Some(f) } else { None })
+            let constructors: Vec<_> = class
+                .children
+                .iter()
+                .filter_map(|n| {
+                    if let ir::Node::Function(f) = n {
+                        Some(f)
+                    } else {
+                        None
+                    }
+                })
                 .filter(|f| f.decorators.contains(&"constructor".to_string()))
                 .collect();
-            
+
             assert_eq!(constructors.len(), 2);
             assert_eq!(constructors[0].parameters.len(), 2);
             assert_eq!(constructors[1].parameters.len(), 1);
@@ -765,4 +854,3 @@ public class SimpleOOP {
         }
     }
 }
-

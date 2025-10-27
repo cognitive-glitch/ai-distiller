@@ -35,7 +35,7 @@ impl SwiftProcessor {
     fn parse_modifiers(&self, node: TSNode, source: &str) -> (Visibility, Vec<String>) {
         let mut visibility = Visibility::Internal; // Swift default
         let mut modifiers = Vec::new();
-        
+
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
             if child.kind() == "modifiers" {
@@ -47,20 +47,20 @@ impl SwiftProcessor {
                 } else if text.contains("internal") {
                     visibility = Visibility::Internal;
                 }
-                
+
                 if text.contains("open") {
                     modifiers.push("open".to_string());
                 }
             }
         }
-        
+
         (visibility, modifiers)
     }
 
     fn parse_type_parameters(&self, node: TSNode, source: &str) -> Vec<TypeParam> {
         let mut type_params = Vec::new();
         let mut cursor = node.walk();
-        
+
         for child in node.children(&mut cursor) {
             if child.kind() == "type_parameters" {
                 let mut tp_cursor = child.walk();
@@ -80,7 +80,9 @@ impl SwiftProcessor {
                                 "type_constraint" | "inheritance_constraint" => {
                                     let constraint_text = self.node_text(param_child, source);
                                     if !constraint_text.is_empty() {
-                                        constraints.push(TypeRef::new(constraint_text.trim_start_matches(": ")));
+                                        constraints.push(TypeRef::new(
+                                            constraint_text.trim_start_matches(": "),
+                                        ));
                                     }
                                 }
                                 _ => {}
@@ -219,7 +221,12 @@ impl SwiftProcessor {
         }))
     }
 
-    fn parse_type_inheritance(&self, node: TSNode, source: &str, extends: &mut Vec<TypeRef>) -> Result<()> {
+    fn parse_type_inheritance(
+        &self,
+        node: TSNode,
+        source: &str,
+        extends: &mut Vec<TypeRef>,
+    ) -> Result<()> {
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
             if child.kind() == "type_identifier" || child.kind() == "user_type" {
@@ -283,7 +290,12 @@ impl SwiftProcessor {
         }
     }
 
-    fn parse_parameters(&self, node: TSNode, source: &str, params: &mut Vec<Parameter>) -> Result<()> {
+    fn parse_parameters(
+        &self,
+        node: TSNode,
+        source: &str,
+        params: &mut Vec<Parameter>,
+    ) -> Result<()> {
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
             if child.kind() == "parameter" || child.kind() == "function_value_parameter" {
@@ -293,7 +305,12 @@ impl SwiftProcessor {
         Ok(())
     }
 
-    fn parse_single_parameter(&self, node: TSNode, source: &str, params: &mut Vec<Parameter>) -> Result<()> {
+    fn parse_single_parameter(
+        &self,
+        node: TSNode,
+        source: &str,
+        params: &mut Vec<Parameter>,
+    ) -> Result<()> {
         let mut name = String::new();
         let mut param_type = TypeRef::new("");
         let mut is_variadic = false;
@@ -351,7 +368,8 @@ impl SwiftProcessor {
                             let mut ta_cursor = pattern_child.walk();
                             for ta_child in pattern_child.children(&mut ta_cursor) {
                                 if ta_child.kind() == "type_identifier" {
-                                    field_type = Some(TypeRef::new(self.node_text(ta_child, source)));
+                                    field_type =
+                                        Some(TypeRef::new(self.node_text(ta_child, source)));
                                 }
                             }
                         }

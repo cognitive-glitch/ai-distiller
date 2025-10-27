@@ -85,7 +85,8 @@ impl CSharpProcessor {
 
     fn collect_type_refs(&self, node: TSNode, source: &str, results: &mut Vec<TypeRef>) {
         match node.kind() {
-            "identifier" | "type_identifier" | "generic_name" | "predefined_type" | "qualified_name" => {
+            "identifier" | "type_identifier" | "generic_name" | "predefined_type"
+            | "qualified_name" => {
                 results.push(TypeRef::new(self.node_text(node, source)));
             }
             _ => {
@@ -149,9 +150,8 @@ impl CSharpProcessor {
                             if param_name.is_empty() {
                                 param_name = self.node_text(constraint_child, source);
                             } else {
-                                constraints.push(TypeRef::new(
-                                    self.node_text(constraint_child, source),
-                                ));
+                                constraints
+                                    .push(TypeRef::new(self.node_text(constraint_child, source)));
                             }
                         }
                         "generic_name" | "predefined_type" => {
@@ -172,9 +172,9 @@ impl CSharpProcessor {
     fn parse_base_list(&self, node: TSNode, source: &str) -> (Vec<TypeRef>, Vec<TypeRef>) {
         let extends = Vec::new();
         let mut implements = Vec::new();
-        
+
         self.collect_type_refs(node, source, &mut implements);
-        
+
         (extends, implements)
     }
 
@@ -301,12 +301,7 @@ impl CSharpProcessor {
         }))
     }
 
-    fn parse_class_body(
-        &self,
-        node: TSNode,
-        source: &str,
-        children: &mut Vec<Node>,
-    ) -> Result<()> {
+    fn parse_class_body(&self, node: TSNode, source: &str, children: &mut Vec<Node>) -> Result<()> {
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
             match child.kind() {
@@ -358,8 +353,8 @@ impl CSharpProcessor {
                 let mut var_cursor = child.walk();
                 for var_child in child.children(&mut var_cursor) {
                     match var_child.kind() {
-                        "type_identifier" | "predefined_type" | "generic_name"
-                        | "array_type" | "nullable_type" => {
+                        "type_identifier" | "predefined_type" | "generic_name" | "array_type"
+                        | "nullable_type" => {
                             field_type = Some(TypeRef::new(self.node_text(var_child, source)));
                         }
                         "variable_declarator" => {
@@ -739,7 +734,9 @@ impl LanguageProcessor for CSharpProcessor {
                                         }
                                     }
                                     "record_declaration" => {
-                                        if let Some(record) = self.parse_record(decl_child, source)? {
+                                        if let Some(record) =
+                                            self.parse_record(decl_child, source)?
+                                        {
                                             children.push(Node::Class(record));
                                         }
                                     }
@@ -884,7 +881,7 @@ public class SavingsAccount : BankAccount, IAccount
         assert_eq!(file.children.len(), 1);
         if let Node::Class(class) = &file.children[0] {
             assert_eq!(class.name, "SavingsAccount");
-            assert!(class.implements.len() >= 1);
+            assert!(!class.implements.is_empty());
             assert_eq!(
                 class
                     .children
@@ -943,7 +940,7 @@ public record User(Guid Id, string Name) : EntityBase<Guid>(Id)
         if let Node::Class(record) = &file.children[0] {
             assert_eq!(record.name, "User");
             assert!(record.decorators.contains(&"record".to_string()));
-            assert!(record.implements.len() >= 1);
+            assert!(!record.implements.is_empty());
         } else {
             panic!("Expected a record");
         }

@@ -155,12 +155,7 @@ impl KotlinProcessor {
         }))
     }
 
-    fn parse_class_body(
-        &self,
-        node: TSNode,
-        source: &str,
-        children: &mut Vec<Node>,
-    ) -> Result<()> {
+    fn parse_class_body(&self, node: TSNode, source: &str, children: &mut Vec<Node>) -> Result<()> {
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
             match child.kind() {
@@ -422,7 +417,7 @@ data class User(
             .process(source, &PathBuf::from("User.kt"), &opts)
             .unwrap();
 
-        assert!(file.children.len() >= 1);
+        assert!(!file.children.is_empty());
         let has_user_class = file.children.iter().any(|child| {
             if let Node::Class(class) = child {
                 class.name == "User" && class.modifiers.contains(&Modifier::Data)
@@ -447,7 +442,7 @@ sealed class UserState {
             .process(source, &PathBuf::from("UserState.kt"), &opts)
             .unwrap();
 
-        assert!(file.children.len() >= 1);
+        assert!(!file.children.is_empty());
         let has_sealed = file.children.iter().any(|child| {
             if let Node::Class(class) = child {
                 class.name == "UserState" && class.modifiers.contains(&Modifier::Sealed)
@@ -471,7 +466,7 @@ fun String.isValidEmail(): Boolean {
             .process(source, &PathBuf::from("Extensions.kt"), &opts)
             .unwrap();
 
-        assert!(file.children.len() >= 1);
+        assert!(!file.children.is_empty());
         let has_func = file.children.iter().any(|child| {
             if let Node::Function(func) = child {
                 func.name == "isValidEmail"
@@ -499,7 +494,7 @@ class User {
             .process(source, &PathBuf::from("User.kt"), &opts)
             .unwrap();
 
-        assert!(file.children.len() >= 1);
+        assert!(!file.children.is_empty());
         let has_user = file.children.iter().any(|child| {
             if let Node::Class(class) = child {
                 class.name == "User"
@@ -525,7 +520,7 @@ class Repository<T> {
             .process(source, &PathBuf::from("Repository.kt"), &opts)
             .unwrap();
 
-        assert!(file.children.len() >= 1);
+        assert!(!file.children.is_empty());
         let has_repo = file.children.iter().any(|child| {
             if let Node::Class(class) = child {
                 class.name == "Repository"
@@ -552,7 +547,7 @@ class Test {
             .process(source, &PathBuf::from("Test.kt"), &opts)
             .unwrap();
 
-        assert!(file.children.len() >= 1);
+        assert!(!file.children.is_empty());
         let has_test = file.children.iter().any(|child| {
             if let Node::Class(class) = child {
                 class.name == "Test"
@@ -576,7 +571,7 @@ suspend fun fetchUser(id: Long): User? {
             .process(source, &PathBuf::from("Api.kt"), &opts)
             .unwrap();
 
-        assert!(file.children.len() >= 1);
+        assert!(!file.children.is_empty());
         let has_suspend = file.children.iter().any(|child| {
             if let Node::Function(func) = child {
                 func.name == "fetchUser" && func.modifiers.contains(&Modifier::Async)

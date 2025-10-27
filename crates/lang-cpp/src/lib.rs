@@ -134,12 +134,7 @@ impl CppProcessor {
         bases
     }
 
-    fn parse_class_body(
-        &self,
-        node: TSNode,
-        source: &str,
-        children: &mut Vec<Node>,
-    ) -> Result<()> {
+    fn parse_class_body(&self, node: TSNode, source: &str, children: &mut Vec<Node>) -> Result<()> {
         let mut current_visibility = Visibility::Private; // C++ default is private
         let mut cursor = node.walk();
 
@@ -150,13 +145,13 @@ impl CppProcessor {
                 }
                 "function_definition" => {
                     if let Some(mut func) = self.parse_function(child, source)? {
-                        func.visibility = current_visibility.clone();
+                        func.visibility = current_visibility;
                         children.push(Node::Function(func));
                     }
                 }
                 "field_declaration" => {
                     if let Some(mut field) = self.parse_field(child, source)? {
-                        field.visibility = current_visibility.clone();
+                        field.visibility = current_visibility;
                         children.push(Node::Field(field));
                     }
                 }
@@ -205,7 +200,12 @@ impl CppProcessor {
                 }
                 "function_declarator" => {
                     first = false;
-                    name = self.parse_function_declarator(child, source, &mut parameters, &mut modifiers);
+                    name = self.parse_function_declarator(
+                        child,
+                        source,
+                        &mut parameters,
+                        &mut modifiers,
+                    );
                 }
                 "type_qualifier" if self.node_text(child, source) == "virtual" => {
                     modifiers.push(Modifier::Virtual);
@@ -283,7 +283,9 @@ impl CppProcessor {
         let mut cursor = node.walk();
 
         for child in node.children(&mut cursor) {
-            if child.kind() == "parameter_declaration" || child.kind() == "optional_parameter_declaration" {
+            if child.kind() == "parameter_declaration"
+                || child.kind() == "optional_parameter_declaration"
+            {
                 let mut param_type = TypeRef::new("unknown".to_string());
                 let mut name = String::new();
 
@@ -521,7 +523,7 @@ private:
             .process(source, &PathBuf::from("Point.cpp"), &opts)
             .unwrap();
 
-        assert!(file.children.len() >= 1);
+        assert!(!file.children.is_empty());
         let has_point = file.children.iter().any(|child| {
             if let Node::Class(class) = child {
                 class.name == "Point"
@@ -550,7 +552,7 @@ private:
             .process(source, &PathBuf::from("Container.cpp"), &opts)
             .unwrap();
 
-        assert!(file.children.len() >= 1);
+        assert!(!file.children.is_empty());
         let has_template = file.children.iter().any(|child| {
             if let Node::Class(class) = child {
                 class.name == "Container" && !class.type_params.is_empty()
@@ -578,7 +580,7 @@ private:
             .process(source, &PathBuf::from("Point3D.cpp"), &opts)
             .unwrap();
 
-        assert!(file.children.len() >= 1);
+        assert!(!file.children.is_empty());
         let has_inheritance = file.children.iter().any(|child| {
             if let Node::Class(class) = child {
                 class.name == "Point3D" && !class.extends.is_empty()
@@ -605,7 +607,7 @@ namespace MathUtils {
             .process(source, &PathBuf::from("MathUtils.cpp"), &opts)
             .unwrap();
 
-        assert!(file.children.len() >= 1);
+        assert!(!file.children.is_empty());
         let has_function = file.children.iter().any(|child| {
             if let Node::Function(func) = child {
                 func.name == "max"
@@ -629,9 +631,11 @@ namespace MathUtils {
             .process(source, &PathBuf::from("test.cpp"), &opts)
             .unwrap();
 
-        let import_count = file.children.iter().filter(|child| {
-            matches!(child, Node::Import(_))
-        }).count();
+        let import_count = file
+            .children
+            .iter()
+            .filter(|child| matches!(child, Node::Import(_)))
+            .count();
 
         assert!(import_count >= 2, "Expected at least 2 includes");
     }
@@ -651,7 +655,7 @@ public:
             .process(source, &PathBuf::from("Base.cpp"), &opts)
             .unwrap();
 
-        assert!(file.children.len() >= 1);
+        assert!(!file.children.is_empty());
         let has_base = file.children.iter().any(|child| {
             if let Node::Class(class) = child {
                 class.name == "Base"
@@ -679,16 +683,17 @@ private:
             .process(source, &PathBuf::from("Point.cpp"), &opts)
             .unwrap();
 
-        assert!(file.children.len() >= 1);
+        assert!(!file.children.is_empty());
         let has_const_method = file.children.iter().any(|child| {
             if let Node::Class(class) = child {
-                class.name == "Point" && class.children.iter().any(|c| {
-                    if let Node::Function(func) = c {
-                        func.name == "getX" && func.modifiers.contains(&Modifier::Const)
-                    } else {
-                        false
-                    }
-                })
+                class.name == "Point"
+                    && class.children.iter().any(|c| {
+                        if let Node::Function(func) = c {
+                            func.name == "getX" && func.modifiers.contains(&Modifier::Const)
+                        } else {
+                            false
+                        }
+                    })
             } else {
                 false
             }
@@ -711,16 +716,17 @@ public:
             .process(source, &PathBuf::from("Derived.cpp"), &opts)
             .unwrap();
 
-        assert!(file.children.len() >= 1);
+        assert!(!file.children.is_empty());
         let has_override = file.children.iter().any(|child| {
             if let Node::Class(class) = child {
-                class.name == "Derived" && class.children.iter().any(|c| {
-                    if let Node::Function(func) = c {
-                        func.name == "process" && func.modifiers.contains(&Modifier::Override)
-                    } else {
-                        false
-                    }
-                })
+                class.name == "Derived"
+                    && class.children.iter().any(|c| {
+                        if let Node::Function(func) = c {
+                            func.name == "process" && func.modifiers.contains(&Modifier::Override)
+                        } else {
+                            false
+                        }
+                    })
             } else {
                 false
             }
