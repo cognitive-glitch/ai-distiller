@@ -130,7 +130,7 @@ async function install() {
   try {
     const { platform, arch, ext } = getPlatformInfo();
     const archiveName = `aid-${platform}-${arch}-v${AID_VERSION}.${ext}`;
-    const url = `https://github.com/janreges/ai-distiller/releases/download/v${AID_VERSION}/${archiveName}`;
+    const url = `https://github.com/cognitive-glitch/ai-distiller-reboot/releases/download/v${AID_VERSION}/${archiveName}`;
 
     console.log(`Installing AI Distiller MCP for ${platform}/${arch}...`);
     console.log(`MCP Version: ${MCP_VERSION}`);
@@ -236,7 +236,7 @@ async function install() {
     const totalTime = Date.now() - startTime;
     console.error(`Installation failed after ${totalTime}ms:`, error.message);
     console.error('\nYou can manually download the binary from:');
-    console.error(`https://github.com/janreges/ai-distiller/releases/tag/v${AID_VERSION}`);
+    console.error(`https://github.com/cognitive-glitch/ai-distiller-reboot/releases/tag/v${AID_VERSION}`);
     console.error('\nAnd place it in:', path.join(__dirname, '..', 'bin'));
 
     // Exit with error code to fail npm install

@@ -253,4 +253,4 @@ distill_file({
 ---
 
 *AI Distiller (aid) - Generates AI prompts with distilled code for large-scale analysis*
-*Learn more at [github.com/janreges/ai-distiller](https://github.com/janreges/ai-distiller)*
+*Learn more at [github.com/janreges/ai-distiller](https://github.com/cognitive-glitch/ai-distiller-reboot)*

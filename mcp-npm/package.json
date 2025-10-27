@@ -16,12 +16,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/janreges/ai-distiller.git"
+    "url": "git+https://github.com/cognitive-glitch/ai-distiller-reboot.git"
   },
   "bugs": {
-    "url": "https://github.com/janreges/ai-distiller/issues"
+    "url": "https://github.com/cognitive-glitch/ai-distiller-reboot/issues"
   },
-  "homepage": "https://github.com/janreges/ai-distiller#readme",
+  "homepage": "https://github.com/cognitive-glitch/ai-distiller-reboot#readme",
   "main": "mcp-server-wrapper.js",
   "types": "dist/mcp-server-sdk.d.ts",
   "bin": {

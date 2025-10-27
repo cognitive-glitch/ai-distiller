@@ -1,6 +1,6 @@
 # AI Distiller (`aid`)
 
-> **Note:** This is the very first version of this tool. We would be very grateful for any feedback in the form of a discussion or by creating an issue on [GitHub](https://github.com/janreges/ai-distiller/issues). Thank you!
+> **Note:** This is the very first version of this tool. We would be very grateful for any feedback in the form of a discussion or by creating an issue on [GitHub](https://github.com/cognitive-glitch/ai-distiller-reboot/issues). Thank you!
 
 🚀 **MCP Server Available**: Install the Model Context Protocol server for AI Distiller from NPM: [`@janreges/ai-distiller-mcp`](https://www.npmjs.com/package/@janreges/ai-distiller-mcp) - seamlessly integrate with Claude, Cursor, and other MCP-compatible AI tools!
 
@@ -1107,7 +1107,7 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ```bash
 # Clone the repository
-git clone https://github.com/janreges/ai-distiller
+git clone https://github.com/cognitive-glitch/ai-distiller-reboot
 cd ai-distiller
 
 # Build debug version

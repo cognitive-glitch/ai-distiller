@@ -27,7 +27,7 @@ git tag mcp-v$(node -p "require('./package.json').version") && git push && git p
    ```
 
 2. **AI Distiller Binary Release**: The `aid` binary must be released on GitHub first:
-   - Release URL format: `https://github.com/janreges/ai-distiller/releases/tag/vX.Y.Z`
+   - Release URL format: `https://github.com/cognitive-glitch/ai-distiller-reboot/releases/tag/vX.Y.Z`
    - Required files for each platform:
      - `aid-darwin-amd64-vX.Y.Z.tar.gz`
      - `aid-darwin-arm64-vX.Y.Z.tar.gz`

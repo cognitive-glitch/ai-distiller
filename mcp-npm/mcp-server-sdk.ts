@@ -37,7 +37,7 @@ if (!fs.existsSync(binaryPath)) {
   console.error('3. Run the postinstall script manually:');
   console.error(`   cd ${path.join(__dirname, '..')} && npm run postinstall`);
   console.error('4. Download the binary manually from:');
-  console.error('   https://github.com/janreges/ai-distiller/releases/latest');
+  console.error('   https://github.com/cognitive-glitch/ai-distiller-reboot/releases/latest');
   console.error(`   and place it at: ${binaryPath}`);
   console.error('');
   console.error('Platform info:', process.platform, process.arch);
