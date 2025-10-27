@@ -206,9 +206,9 @@ def extract_ast(filename):
     try:
         with open(filename, 'r', encoding='utf-8') as f:
             source = f.read()
-        
+
         tree = ast.parse(source, filename)
-        
+
         result = {
             "type": "module",
             "functions": [],
@@ -216,7 +216,7 @@ def extract_ast(filename):
             "imports": [],
             "errors": []
         }
-        
+
         for node in tree.body:
             if isinstance(node, ast.FunctionDef) or isinstance(node, ast.AsyncFunctionDef):
                 func_info = {
@@ -227,7 +227,7 @@ def extract_ast(filename):
                     "decorators": [d.id if isinstance(d, ast.Name) else str(d) for d in node.decorator_list]
                 }
                 result["functions"].append(func_info)
-            
+
             elif isinstance(node, ast.ClassDef):
                 class_info = {
                     "name": node.name,
@@ -235,14 +235,14 @@ def extract_ast(filename):
                     "methods": [],
                     "lineno": node.lineno
                 }
-                
+
                 # Extract base class names
                 for base in node.bases:
                     if isinstance(base, ast.Name):
                         class_info["bases"].append(base.id)
                     elif isinstance(base, ast.Attribute):
                         class_info["bases"].append(f"{base.value.id if isinstance(base.value, ast.Name) else '?'}.{base.attr}")
-                
+
                 # Extract methods
                 for item in node.body:
                     if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
@@ -254,9 +254,9 @@ def extract_ast(filename):
                             "decorators": [d.id if isinstance(d, ast.Name) else str(d) for d in item.decorator_list]
                         }
                         class_info["methods"].append(method_info)
-                
+
                 result["classes"].append(class_info)
-            
+
             elif isinstance(node, ast.Import):
                 for alias in node.names:
                     result["imports"].append({
@@ -265,7 +265,7 @@ def extract_ast(filename):
                         "is_from": False,
                         "level": 0
                     })
-            
+
             elif isinstance(node, ast.ImportFrom):
                 names = [alias.name for alias in node.names] if node.names else []
                 result["imports"].append({
@@ -274,9 +274,9 @@ def extract_ast(filename):
                     "is_from": True,
                     "level": node.level or 0
                 })
-        
+
         print(json.dumps(result, indent=2))
-        
+
     except SyntaxError as e:
         result = {
             "type": "module",

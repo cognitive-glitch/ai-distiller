@@ -110,13 +110,13 @@ type GenericType struct {
 type DistilledNode interface {
     // Accept implements the visitor pattern
     Accept(visitor IRVisitor) DistilledNode
-    
+
     // GetLocation returns the source location of this node
     GetLocation() Location
-    
+
     // GetSymbolID returns the symbol ID if this node declares a symbol
     GetSymbolID() *SymbolID
-    
+
     // GetNodeKind returns the kind of node for generic handling
     GetNodeKind() NodeKind
 }
@@ -451,10 +451,10 @@ type GoExtensions struct {
     // For types
     IsChannel        bool   `json:"is_channel,omitempty"`
     ChannelDirection string `json:"channel_direction,omitempty"` // "send", "receive", "both"
-    
+
     // For interfaces
     IsEmptyInterface bool `json:"is_empty_interface,omitempty"`
-    
+
     // For functions
     ReceiverType string `json:"receiver_type,omitempty"`
     IsMethod     bool   `json:"is_method,omitempty"`
@@ -469,7 +469,7 @@ type PythonExtensions struct {
     IsCoroutine     bool   `json:"is_coroutine,omitempty"`
     IsStaticMethod  bool   `json:"is_static_method,omitempty"`
     IsClassMethod   bool   `json:"is_class_method,omitempty"`
-    
+
     // For classes
     Metaclass       string `json:"metaclass,omitempty"`
     IsDataclass     bool   `json:"is_dataclass,omitempty"`
@@ -482,14 +482,14 @@ type JavaScriptExtensions struct {
     // For functions
     IsArrowFunction     bool `json:"is_arrow_function,omitempty"`
     IsGeneratorFunction bool `json:"is_generator_function,omitempty"`
-    
+
     // For classes
     IsAbstractClass bool `json:"is_abstract_class,omitempty"`
 }
 
 type TypeScriptExtensions struct {
     JavaScriptExtensions
-    
+
     // TypeScript specific
     IsNamespace bool `json:"is_namespace,omitempty"`
     IsModule    bool `json:"is_module,omitempty"`

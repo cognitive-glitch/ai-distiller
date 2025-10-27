@@ -618,11 +618,11 @@ class Calculator {
     fun add(a: Int, b: Int): Int {
         return a + b
     }
-    
+
     fun multiply(x: Int, y: Int): Int {
         return x * y
     }
-    
+
     private fun helper() {
         // private helper
     }
@@ -667,7 +667,7 @@ class Calculator {
         let source = r#"
 abstract class Shape {
     abstract fun area(): Double
-    
+
     open fun describe() {
         println("I am a shape")
     }
@@ -770,7 +770,7 @@ class Outer {
         let source = r#"
 object Singleton {
     val name = "Singleton"
-    
+
     fun getInstance() = this
 }
 "#;

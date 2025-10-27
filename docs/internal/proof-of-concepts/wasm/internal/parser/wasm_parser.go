@@ -20,7 +20,7 @@ type WASMPythonParser struct {
 	runtime  wazero.Runtime
 	compiled wazero.CompiledModule
 	module   api.Module
-	
+
 	// Function references
 	parseFunc api.Function
 	initFunc  api.Function
@@ -32,7 +32,7 @@ func NewWASMPythonParser() (*WASMPythonParser, error) {
 
 	// Create runtime with WASI support
 	r := wazero.NewRuntime(ctx)
-	
+
 	// Instantiate WASI (needed by emscripten-compiled modules)
 	wasi_snapshot_preview1.MustInstantiate(ctx, r)
 
@@ -83,10 +83,10 @@ func (p *WASMPythonParser) Parse(source []byte) (*ParseTree, error) {
 	// 2. Copy source to WASM memory
 	// 3. Call the parse function
 	// 4. Read the resulting tree from WASM memory
-	
+
 	// Simulate some processing time
 	nodeCount := len(source) / 10 // Rough estimate
-	
+
 	// Check for basic syntax errors (very simplified)
 	hasErrors := false
 	openParens := 0
@@ -115,14 +115,14 @@ func (p *WASMPythonParser) Parse(source []byte) (*ParseTree, error) {
 // Close cleans up the WASM runtime
 func (p *WASMPythonParser) Close() error {
 	ctx := context.Background()
-	
+
 	if p.module != nil {
 		p.module.Close(ctx)
 	}
-	
+
 	if p.runtime != nil {
 		return p.runtime.Close(ctx)
 	}
-	
+
 	return nil
 }

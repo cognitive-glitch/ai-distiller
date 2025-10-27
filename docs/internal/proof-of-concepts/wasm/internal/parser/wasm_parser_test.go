@@ -75,11 +75,11 @@ def hello():
 
 class Config:
     """Configuration class."""
-    
+
     def __init__(self, port=8080, host="localhost"):
         self.port = port
         self.host = host
-    
+
     def get_url(self):
         return f"http://{self.host}:{self.port}"
 

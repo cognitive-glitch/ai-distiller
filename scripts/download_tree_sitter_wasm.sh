@@ -17,7 +17,7 @@ URLS=(
 for url in "${URLS[@]}"; do
     echo "Trying: $url"
     curl -L -f -o "$WASM_DIR/tree-sitter-python.wasm" "$url" 2>/dev/null
-    
+
     if [ $? -eq 0 ]; then
         # Check if it's actually a WASM file
         if file "$WASM_DIR/tree-sitter-python.wasm" | grep -q "WebAssembly"; then
@@ -41,22 +41,22 @@ fi
 
 if ! command -v emcc &> /dev/null; then
     echo "Emscripten (emcc) is required to build WASM. Trying with tree-sitter CLI instead..."
-    
+
     # Install tree-sitter CLI via npm
     echo "Installing tree-sitter CLI..."
     npm install -g tree-sitter-cli
-    
+
     # Clone and build
     TEMP_DIR=$(mktemp -d)
     cd "$TEMP_DIR"
-    
+
     echo "Cloning tree-sitter-python..."
     git clone --depth 1 https://github.com/tree-sitter/tree-sitter-python.git
     cd tree-sitter-python
-    
+
     echo "Building WASM module..."
     tree-sitter build-wasm
-    
+
     if [ -f "tree-sitter-python.wasm" ]; then
         cp tree-sitter-python.wasm "$OLDPWD/$WASM_DIR/"
         cd "$OLDPWD"

@@ -123,7 +123,7 @@ Implemented full enum parsing with:
 1. `crates/lang-java/src/lib.rs`:
    - Fixed `parse_modifiers` (lines 35-80)
    - Fixed `parse_parameters` (lines 608-669)
-   - Fixed `parse_method` (lines 511-569)  
+   - Fixed `parse_method` (lines 511-569)
    - Added `parse_enum` (lines 271-359)
    - Updated `parse_class_body` for nested enums (lines 397-402)
    - Updated `process` for top-level enums (lines 684-689)

@@ -1122,7 +1122,7 @@ class User {
                 })
                 .collect();
 
-            let funcs: Vec<_> = class
+            let _funcs: Vec<_> = class
                 .children
                 .iter()
                 .filter_map(|n| {

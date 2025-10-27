@@ -50,7 +50,7 @@ while preserving important semantic information.`,
 	}
 
 	// Add flags
-	rootCmd.Flags().StringVarP(&outputFormat, "format", "f", "markdown", 
+	rootCmd.Flags().StringVarP(&outputFormat, "format", "f", "markdown",
 		"Output format: markdown, json, jsonl, xml")
 	rootCmd.Flags().StringVarP(&outputFile, "output", "o", "",
 		"Output file (default: stdout)")
@@ -103,7 +103,7 @@ func runDistill(cmd *cobra.Command, args []string) error {
 
 	// Process files
 	var distilledFiles []*ir.DistilledFile
-	
+
 	for _, file := range inputFiles {
 		if verbose {
 			fmt.Fprintf(os.Stderr, "Processing %s...\n", file)
@@ -133,7 +133,7 @@ func runDistill(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("failed to open %s: %w", file, err)
 		}
 		defer f.Close()
-		
+
 		distilled, err := proc.ProcessWithOptions(cmd.Context(), f, file, processOpts)
 		if err != nil {
 			return fmt.Errorf("failed to process %s: %w", file, err)

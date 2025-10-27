@@ -53,7 +53,7 @@ Adding `--raw` flag to AI actions includes full source code bodies in the genera
 
 **Context Size Considerations:**
 - **Large codebases**: Analyze specific parts/folders that fit in AI context, or use default filtering (public APIs only, no implementation/comments) which may be insufficient for some analysis types but fits in smaller contexts
-- **Small codebases**: Use `--raw` for full source code analysis  
+- **Small codebases**: Use `--raw` for full source code analysis
 - **Recommended**: Gemini 2.5 Pro with 1M context window for largest codebase capacity
 
 **Examples:**
@@ -104,7 +104,7 @@ aid ./src --ai-action prompt-for-refactoring-suggestion --raw
 
 **Pattern Examples:**
 - `*.ext` - Files with specific extension
-- `**/pattern` - Recursive directory matching  
+- `**/pattern` - Recursive directory matching
 - `dir/*` - Files in specific directory
 - `*test*` - Files containing "test"
 
@@ -183,7 +183,7 @@ AI Distiller uses intelligent file naming strategies to avoid conflicts and enab
 
 ### Why Automatic File Naming?
 
-**Problem:** Large codebases can generate megabytes of text output that exceed AI tool context limits.  
+**Problem:** Large codebases can generate megabytes of text output that exceed AI tool context limits.
 **Solution:** Automatic file generation with recognizable patterns instead of requiring manual file specification.
 
 **Benefits:**

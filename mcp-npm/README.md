@@ -448,7 +448,7 @@ distill_file({
 
 // Extract only methods (no fields/properties) - great for API surface analysis
 distill_file({
-  file_path: "src/services/UserService.java", 
+  file_path: "src/services/UserService.java",
   include_fields: false,     // Exclude all fields
   include_methods: true,     // Keep methods (default)
   output_format: "text"
@@ -564,6 +564,6 @@ MIT License - see [LICENSE](LICENSE) file
 
 ---
 
-*AI Distiller (aid) - https://github.com/janreges/ai-distiller*  
-*Authored by [Claude Code](https://claude.ai/code) & [Ján Regeš](https://github.com/janreges) from [SiteOne](https://www.siteone.io/) (Czech Republic)*  
+*AI Distiller (aid) - https://github.com/janreges/ai-distiller*
+*Authored by [Claude Code](https://claude.ai/code) & [Ján Regeš](https://github.com/janreges) from [SiteOne](https://www.siteone.io/) (Czech Republic)*
 *Explore the project on [GitHub](https://github.com/janreges/ai-distiller)*

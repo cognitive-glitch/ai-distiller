@@ -8,7 +8,7 @@ import xml.etree.ElementTree as ET
 if TYPE_CHECKING:
     from .models import User, Product  # Only for type checking
     from datetime import datetime  # Only for type checking
-    
+
 # Import used in docstring
 import requests
 
@@ -20,13 +20,13 @@ __all__ = ["process_items", "analyze_data", "XMLProcessor"]
 
 def process_items(items: List[int]) -> Dict[str, Optional[str]]:
     """Process a list of items and return statistics.
-    
+
     Args:
         items: List of integers to process
-        
+
     Returns:
         Dictionary with total count and item frequency
-        
+
     Note:
         Uses :class:`requests.Session` for API calls if needed.
     """
@@ -35,7 +35,7 @@ def process_items(items: List[int]) -> Dict[str, Optional[str]]:
 
 def analyze_data(data: Union[List, "pandas.DataFrame"]) -> str:
     """Analyze data which can be a list or pandas DataFrame.
-    
+
     Args:
         data: Either a list or a :class:`pandas.DataFrame`
     """
@@ -45,10 +45,10 @@ def analyze_data(data: Union[List, "pandas.DataFrame"]) -> str:
 
 class XMLProcessor:
     """Process XML data.
-    
+
     This class uses :mod:`xml.etree.ElementTree` for parsing.
     """
-    
+
     def parse(self, content: str) -> Optional["ET.Element"]:
         """Parse XML content."""
         # ET is not actually used in implementation

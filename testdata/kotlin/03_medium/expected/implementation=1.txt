@@ -143,7 +143,7 @@ class UserService {
                     email = dto.email,
                     role = dto.role
                 )
-                
+
                 when (val validation = validateEntity(user)) {
                     is ValidationResult.Valid -> {
                         repository.save(user)
@@ -188,22 +188,22 @@ fun main() {
     val userRepository = UserRepository()
     val userService = UserService(userRepository)
     val cache = Cache<String, User>()
-    
+
     // Create users asynchronously
     val userDtos = listOf(
         UserDto("Alice", "alice@example.com", UserRole.ADMIN),
         UserDto("Bob", "bob@example.com", UserRole.USER),
         UserDto("Charlie", "charlie@example.com", UserRole.MODERATOR)
     )
-    
+
     val createdUsers = userService.createUsersAsync(userDtos)
     println("Created ${createdUsers.size} users")
-    
+
     // Use cache
     createdUsers.forEach { user ->
         cache.put(user.id, user)
     }
-    
+
     // Process users in batches
     userService.processUsersInBatches(2) { batch ->
         println("Processing batch of ${batch.size} users")
@@ -211,12 +211,12 @@ fun main() {
             println("- ${user.name} (${user.role})")
         }
     }
-    
+
     // Use generic method with reified type
     userService.findByType<User>().collect { user ->
         println("Found user: ${user.name}")
     }
-    
+
     // Use extension function
     val users = listOf("Alice", "Bob", "Charlie")
     users.forEachAsync {

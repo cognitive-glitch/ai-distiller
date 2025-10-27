@@ -58,7 +58,7 @@ interface ServiceLocator {
     suspend fun <T> resolveAll(type: KClass): List<T>
 }
 class ManagedProperty {
-    private val factory: 
+    private val factory:
     private val lifecycle: PropertyLifecycle
     fun constructor(factory, lifecycle: PropertyLifecycle)
     override fun provideDelegate(thisRef: Any?, property: KProperty): ReadOnlyProperty<Any?, T>
@@ -75,7 +75,7 @@ class DefaultPropertyLifecycle {
 }
 private class ManagedPropertyDelegate {
     private val name: String
-    private val factory: 
+    private val factory:
     private val lifecycle: PropertyLifecycle
     fun constructor(name: String, factory, lifecycle: PropertyLifecycle)
     private var initialized
@@ -133,17 +133,17 @@ sealed class ProcessingStage {
     abstract suspend fun process(input: I): O
 }
 class TransformationStage {
-    private val transformer: 
+    private val transformer:
     fun constructor(transformer)
     override suspend fun process(input: I): O
 }
 class FilterStage {
-    private val predicate: 
+    private val predicate:
     fun constructor(predicate)
     override suspend fun process(input: T): T?
 }
 class ValidationStage {
-    private val validator: 
+    private val validator:
     fun constructor(validator)
     override suspend fun process(input: T): T
 }

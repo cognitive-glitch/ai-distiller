@@ -23,7 +23,7 @@ namespace Analytics {
         name: string;
         data: Record<string, any>;
     }
-    
+
     export function trackEvent(event: Event): void {
         console.log('Tracking:', event.name);
     }
@@ -43,11 +43,11 @@ namespace Analytics {
 func printAST(node *sitter.Node, source []byte, depth int) {
 	indent := strings.Repeat("  ", depth)
 	nodeType := node.Type()
-	
+
 	if !node.IsNamed() {
 		return
 	}
-	
+
 	text := ""
 	if int(node.EndByte()) <= len(source) {
 		text = string(source[node.StartByte():node.EndByte()])
@@ -56,9 +56,9 @@ func printAST(node *sitter.Node, source []byte, depth int) {
 		}
 		text = strings.ReplaceAll(text, "\n", "\\n")
 	}
-	
+
 	fmt.Printf("%s%s: %s\n", indent, nodeType, text)
-	
+
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		printAST(child, source, depth+1)

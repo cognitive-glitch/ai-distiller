@@ -17,7 +17,7 @@ linters:
     - ineffassign
     - staticcheck
     - unused
-    
+
     # Additional useful linters
     - gocyclo
     - gofmt
@@ -65,39 +65,39 @@ linters:
 linters-settings:
   gocyclo:
     min-complexity: 15
-    
+
   lll:
     line-length: 140
-    
+
   goconst:
     min-len: 3
     min-occurrences: 3
-    
+
   misspell:
     locale: US
-    
+
   nakedret:
     max-func-lines: 30
-    
+
   prealloc:
     simple: true
     range-loops: true
     for-loops: false
-    
+
   unparam:
     check-exported: false
-    
+
   unused:
     check-exported: false
-    
+
   gosec:
     excludes:
       - G404  # Random number generation
       - G304  # File path injection (we handle files)
-      
+
   nestif:
     min-complexity: 4
-    
+
   mnd:
     checks:
       - argument
@@ -127,29 +127,29 @@ issues:
         - dupl
         - gosec
         - goconst
-        
+
     # Allow unused in test utilities
     - path: _test\.go
       linters:
         - unused
-        
+
     # Exclude known issues in generated files
     - path: \.pb\.go$
       linters:
         - gofmt
         - goimports
         - gocritic
-        
+
     # Allow init functions in main packages
     - path: ^cmd/
       linters:
         - gochecknoinits
-        
+
     # Allow globals in version package
     - path: internal/version/version\.go
       linters:
         - gochecknoglobals
-        
+
     # Allow line length in test data files
     - path: test-data/
       linters:

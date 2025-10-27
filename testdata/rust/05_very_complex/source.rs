@@ -15,12 +15,12 @@ pub trait Configurable {
 pub trait DataSource {
     type Reader<'a>: std::io::Read where Self: 'a;
     type Config<T: Clone>: Clone;
-    
+
     fn get_reader<'a>(&'a self) -> Self::Reader<'a>;
     fn get_config<T: Clone>(&self) -> Self::Config<T>;
-    
+
     /// Method with complex generic bounds
-    fn process_with_bounds<'a, T, U>(&'a self, input: T) -> U 
+    fn process_with_bounds<'a, T, U>(&'a self, input: T) -> U
     where
         T: AsRef<str> + 'a,
         U: From<&'a str> + Default,
@@ -38,7 +38,7 @@ pub struct ServerConfig {
 
     // #[config(validate_with = "validate_port")]
     pub port: u16,
-    
+
     /// Private configuration field
     #[allow(dead_code)]
     internal_key: Option<String>,
@@ -76,7 +76,7 @@ where
 pub trait AdvancedContainer<const N: usize> {
     type Item<'a>: Clone where Self: 'a;
     type Iterator<'a>: Iterator<Item = Self::Item<'a>> where Self: 'a;
-    
+
     fn get_items<'a>(&'a self) -> Self::Iterator<'a>;
     fn process_batch<'a, F>(&'a self, f: F) -> [Option<Self::Item<'a>>; N]
     where
@@ -95,12 +95,12 @@ impl<T: Clone, const N: usize> FixedArray<T, N> {
             data: [None; N],
         }
     }
-    
+
     /// Private validation method
     fn is_valid_index(&self, index: usize) -> bool {
         index < N
     }
-    
+
     /// Internal method for unsafe operations
     pub(crate) unsafe fn get_unchecked(&self, index: usize) -> Option<&T> {
         self.data.get_unchecked(index).as_ref()
@@ -110,14 +110,14 @@ impl<T: Clone, const N: usize> FixedArray<T, N> {
 impl<T: Clone, const N: usize> AdvancedContainer<N> for FixedArray<T, N> {
     type Item<'a> = &'a T where T: 'a;
     type Iterator<'a> = std::iter::FilterMap<
-        std::slice::Iter<'a, Option<T>>, 
+        std::slice::Iter<'a, Option<T>>,
         fn(&'a Option<T>) -> Option<&'a T>
     > where T: 'a;
-    
+
     fn get_items<'a>(&'a self) -> Self::Iterator<'a> {
         self.data.iter().filter_map(|x| x.as_ref())
     }
-    
+
     fn process_batch<'a, F>(&'a self, f: F) -> [Option<Self::Item<'a>>; N]
     where
         F: Fn(usize) -> Option<Self::Item<'a>>
@@ -134,9 +134,9 @@ impl<T: Clone, const N: usize> AdvancedContainer<N> for FixedArray<T, N> {
 pub trait AsyncDataProcessor {
     type Output<'a>: Send where Self: 'a;
     type Error: std::error::Error + Send + Sync;
-    
+
     async fn process_async<'a>(&'a self, data: &'a [u8]) -> Result<Self::Output<'a>, Self::Error>;
-    
+
     /// Default implementation with complex bounds
     async fn batch_process<'a, I>(&'a self, inputs: I) -> Vec<Result<Self::Output<'a>, Self::Error>>
     where
@@ -156,17 +156,17 @@ fn main() {
     impl DataSource for FileSource {
         type Reader<'a> = std::io::Cursor<&'a [u8]>;
         type Config<T: Clone> = T;
-        
+
         fn get_reader<'a>(&'a self) -> Self::Reader<'a> {
             // Dummy implementation
             std::io::Cursor::new(self.path.as_bytes())
         }
-        
+
         fn get_config<T: Clone>(&self) -> Self::Config<T> {
             T::default()
         }
-        
-        fn process_with_bounds<'a, T, U>(&'a self, input: T) -> U 
+
+        fn process_with_bounds<'a, T, U>(&'a self, input: T) -> U
         where
             T: AsRef<str> + 'a,
             U: From<&'a str> + Default,
@@ -177,7 +177,7 @@ fn main() {
     }
 
     let file_source = FileSource { path: "config.toml".to_string() };
-    
+
     println!("Processing sources with a complex generic function.");
     process_all_sources(vec![&file_source], |mut reader| {
         let mut content = String::new();
@@ -185,7 +185,7 @@ fn main() {
         let _ = reader.read_to_string(&mut content);
         println!("Read from source: {}", content);
     });
-    
+
     // Test const generics
     let array: FixedArray<String, 5> = FixedArray::new();
     let _ = array.get_items();

@@ -117,7 +117,7 @@ test-standard:
 		gotestsum --format standard-verbose -- -race -coverprofile=coverage.txt -covermode=atomic $$(go list ./... | grep -v '/tools/' | grep -v '/test_project/'); \
 	fi
 
-# Run tests with GitHub Actions format  
+# Run tests with GitHub Actions format
 test-github:
 	@echo "==> Running tests with GitHub Actions format"
 	@export PATH="$$PATH:$$(go env GOPATH)/bin"; \

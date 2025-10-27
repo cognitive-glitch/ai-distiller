@@ -19,7 +19,7 @@
 - Parses enum constants (ACTIVE, INACTIVE, etc.)
 - Handles enum body declarations:
   - Fields
-  - Constructors  
+  - Constructors
   - Methods
 - Adds enum constants as public static final fields
 - Marks with "enum" decorator
@@ -36,7 +36,7 @@
 
 ⚠️ **4 Existing Tests Failing**:
 - test_annotations
-- test_abstract_class  
+- test_abstract_class
 - test_final_class
 - test_varargs_method
 

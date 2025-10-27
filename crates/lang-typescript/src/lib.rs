@@ -1117,16 +1117,13 @@ type UserCallback = (user: User) => void;
 "#;
         let opts = ProcessOptions::default();
 
-        let file = processor
+        let _file = processor
             .process(source, &PathBuf::from("test.ts"), &opts)
             .unwrap();
 
         // Type aliases might not be captured in current implementation
         // This test verifies no errors occur during parsing
-        assert!(
-            file.children.len() >= 0,
-            "Type alias parsing should not error"
-        );
+        // Parsing should not error (no assertion needed for non-negative length)
     }
 
     #[test]
@@ -1141,13 +1138,13 @@ enum Status {
 "#;
         let opts = ProcessOptions::default();
 
-        let file = processor
+        let _file = processor
             .process(source, &PathBuf::from("test.ts"), &opts)
             .unwrap();
 
         // Enums might not be fully captured in current implementation
         // This test verifies no errors occur during parsing
-        assert!(file.children.len() >= 0, "Enum parsing should not error");
+        // Parsing should not error (no assertion needed for non-negative length)
     }
 
     #[test]
@@ -1309,16 +1306,13 @@ namespace Utils {
 "#;
         let opts = ProcessOptions::default();
 
-        let file = processor
+        let _file = processor
             .process(source, &PathBuf::from("test.ts"), &opts)
             .unwrap();
 
         // Namespaces might be processed as nested structures
         // This test verifies parsing doesn't error
-        assert!(
-            file.children.len() >= 0,
-            "Namespace parsing should not error"
-        );
+        // Parsing should not error (no assertion needed for non-negative length)
     }
 
     #[test]

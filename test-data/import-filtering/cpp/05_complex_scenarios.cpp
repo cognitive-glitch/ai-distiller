@@ -28,7 +28,7 @@ namespace Company::Project::Utils {
 namespace ThirdParty {
     #include <algorithm>  // Scoped to this namespace
     #include <numeric>
-    
+
     template<typename T>
     T sum(const vector<T>& vec) {
         // Using numeric from this namespace's include
@@ -41,16 +41,16 @@ namespace ThirdParty {
 // Function with local include (very unusual but technically valid)
 void processWithLocalInclude() {
     #include <functional>  // Local scope include
-    
+
     vector<int> numbers = {1, 2, 3, 4, 5};
-    
+
     // Using functional from local include
     std::function<int(int)> doubler = [](int x) { return x * 2; };
-    
+
     for (auto& n : numbers) {
         n = doubler(n);
     }
-    
+
     cout << "Doubled numbers: ";
     for (const auto& n : numbers) {
         cout << n << " ";
@@ -63,26 +63,26 @@ class DataManager {
 private:
     #include <queue>
     #include <stack>
-    
+
     std::queue<string> messageQueue;
     std::stack<int> undoStack;
-    
+
 public:
     void addMessage(const string& msg) {
         messageQueue.push(msg);
     }
-    
+
     string getNextMessage() {
         if (messageQueue.empty()) return "";
         string msg = messageQueue.front();
         messageQueue.pop();
         return msg;
     }
-    
+
     void pushUndo(int value) {
         undoStack.push(value);
     }
-    
+
     int popUndo() {
         if (undoStack.empty()) return -1;
         int value = undoStack.top();
@@ -114,7 +114,7 @@ public:
 // Anonymous namespace with includes
 namespace {
     #include <regex>
-    
+
     bool isValidEmail(const string& email) {
         // Using regex from anonymous namespace include
         std::regex pattern(R"([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})");
@@ -125,24 +125,24 @@ namespace {
 int main() {
     // Using namespace alias
     Company::Project::Utils::helperFunction();
-    
+
     // Using ThirdParty namespace functions
     vector<double> values = {1.1, 2.2, 3.3, 4.4};
     cout << "Sum using ThirdParty: " << ThirdParty::sum(values) << endl;
-    
+
     // Call function with local include
     processWithLocalInclude();
-    
+
     // Use class with private includes
     DataManager manager;
     manager.addMessage("First");
     manager.addMessage("Second");
     cout << "Message: " << manager.getNextMessage() << endl;
-    
+
     manager.pushUndo(100);
     manager.pushUndo(200);
     cout << "Undo value: " << manager.popUndo() << endl;
-    
+
     // Using set from conditional include
     #ifndef MYHEADER_H
         std::set<int> uniqueNumbers = {3, 1, 4, 1, 5, 9};
@@ -152,7 +152,7 @@ int main() {
         }
         cout << endl;
     #endif
-    
+
     // Using list
     std::list<string> names = {"Alice", "Bob", "Charlie"};
     cout << "Names in list: ";
@@ -160,14 +160,14 @@ int main() {
         cout << name << " ";
     }
     cout << endl;
-    
+
     // Using anonymous namespace function
     string email = "user@example.com";
     cout << "Is '" << email << "' valid? " << (isValidEmail(email) ? "Yes" : "No") << endl;
-    
+
     // Using smart pointers from top-level include
     auto ptr = std::make_shared<string>("Shared string");
     cout << "Shared pointer content: " << *ptr << endl;
-    
+
     return 0;
 }

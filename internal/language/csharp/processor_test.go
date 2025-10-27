@@ -23,9 +23,9 @@ using System;
 
 public class MyClass {
     private int value;
-    
-    public int GetValue() { 
-        return value; 
+
+    public int GetValue() {
+        return value;
     }
 }`,
 			expected: []string{
@@ -96,7 +96,7 @@ public enum Status {
 public struct Point {
     public int X { get; set; }
     public int Y { get; set; }
-    
+
     public double Distance() {
         return Math.Sqrt(X * X + Y * Y);
     }
@@ -113,11 +113,11 @@ public struct Point {
 			code: `
 public class Container<T> {
     private T item;
-    
+
     public void Set(T value) {
         item = value;
     }
-    
+
     public T Get() {
         return item;
     }
@@ -276,52 +276,52 @@ namespace MyApp {
         void Log(string message);
         void LogError(string message) => Log($"ERROR: {message}");
     }
-    
+
     // Abstract base class
     public abstract class ServiceBase : ILogger {
         public abstract string Name { get; }
         public abstract Task ExecuteAsync();
-        
+
         public virtual void Log(string message) {
             Console.WriteLine($"[{Name}]: {message}");
         }
     }
-    
+
     // Sealed class with events
     public sealed class UserService : ServiceBase {
         private readonly List<User> users = new();
-        
+
         public event EventHandler<UserEventArgs>? UserAdded;
-        
+
         public override string Name => "UserService";
-        
+
         public override async Task ExecuteAsync() {
             await Task.Delay(100);
             Log("Service executed");
         }
-        
+
         public void AddUser(User user) {
             users.Add(user);
             UserAdded?.Invoke(this, new UserEventArgs(user));
         }
     }
-    
+
     // Generic class with constraints
     public class Repository<T> where T : class, IEntity, new() {
         private readonly Dictionary<int, T> items = new();
-        
+
         public void Add(T item) {
             items[item.Id] = item;
         }
-        
+
         public T? Get(int id) {
             return items.TryGetValue(id, out var item) ? item : null;
         }
     }
-    
+
     // Delegate
     public delegate void NotificationHandler(string message);
-    
+
     // Enum with flags
     [Flags]
     public enum Permissions {
@@ -331,7 +331,7 @@ namespace MyApp {
         Delete = 4,
         All = Read | Write | Delete
     }
-    
+
     // Extension methods
     public static class StringExtensions {
         public static bool IsNullOrEmpty(this string? value) {
@@ -406,7 +406,7 @@ public class VisibilityTest {
     private int privateField;
     protected int protectedField;
     internal int internalField;
-    
+
     public void PublicMethod() {}
     private void PrivateMethod() {}
     protected void ProtectedMethod() {}

@@ -21,14 +21,14 @@ data class User(
      * Public method to get display name
      */
     fun getDisplayName(): String = name.takeIf { it.isNotBlank() } ?: "Anonymous"
-    
+
     /**
      * Private validation method
      */
     private fun isValidEmail(): Boolean {
         return email?.contains("@") == true
     }
-    
+
     companion object {
         /**
          * Factory method for creating users
@@ -47,17 +47,17 @@ sealed class UserState {
      * Active user state
      */
     data class Active(val lastLoginAt: LocalDateTime) : UserState()
-    
+
     /**
      * Suspended user with reason
      */
     data class Suspended(val reason: String, val until: LocalDateTime?) : UserState()
-    
+
     /**
-     * Permanently banned user  
+     * Permanently banned user
      */
     object Banned : UserState()
-    
+
     /**
      * Pending verification
      */
@@ -84,7 +84,7 @@ class UserService {
     private val users: MutableList<User> = mutableListOf()
     internal var isInitialized: Boolean = false
         private set
-    
+
     /**
      * Public method to add a user
      */
@@ -98,20 +98,20 @@ class UserService {
             else -> false
         }
     }
-    
+
     /**
      * Find user by ID with null safety
      */
     fun findUserById(id: Long): User? {
         return users.find { it.id == id }
     }
-    
+
     /**
      * Get user state using when expression with sealed classes
      */
     fun getUserState(userId: Long): String {
         val user = findUserById(userId) ?: return "User not found"
-        
+
         return when (determineUserState(user)) {
             is UserState.Active -> "User is active"
             is UserState.Suspended -> "User is suspended"
@@ -119,7 +119,7 @@ class UserService {
             is UserState.PendingVerification -> "Verification pending"
         }
     }
-    
+
     /**
      * Private method to determine user state
      */
@@ -127,7 +127,7 @@ class UserService {
         // Simplified logic for demo
         return UserState.Active(LocalDateTime.now())
     }
-    
+
     /**
      * Protected method for subclasses
      */
@@ -143,12 +143,12 @@ enum class UserRole(val displayName: String, val permissions: Set<String>) {
     ADMIN("Administrator", setOf("read", "write", "delete", "manage")),
     MODERATOR("Moderator", setOf("read", "write", "moderate")),
     USER("User", setOf("read", "write_own"));
-    
+
     /**
      * Check if role has specific permission
      */
     fun hasPermission(permission: String): Boolean = permission in permissions
-    
+
     companion object {
         /**
          * Get role by display name
@@ -166,7 +166,7 @@ object UserConstants {
     const val MAX_USERNAME_LENGTH = 50
     const val MIN_PASSWORD_LENGTH = 8
     val ALLOWED_EMAIL_DOMAINS = setOf("gmail.com", "yahoo.com", "outlook.com")
-    
+
     /**
      * Utility function to check if email domain is allowed
      */
@@ -189,16 +189,16 @@ inline fun <T> T.applyIf(condition: Boolean, block: T.() -> T): T {
 fun main() {
     val service = UserService()
     val user = User.createUser("John Doe", "john@example.com")
-    
+
     service.addUser(user)
-    
+
     val foundUser = service.findUserById(user.id)
     println("Found user: ${foundUser?.getDisplayName()}")
-    
+
     // Extension function usage
     val emails = listOf("test@gmail.com", "invalid-email", "user@yahoo.com")
     val validEmails = emails.filter { it.isValidEmail() }
-    
+
     // Extension property usage
     val secondEmail = validEmails.secondOrNull
     println("Second valid email: $secondEmail")

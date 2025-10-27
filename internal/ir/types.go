@@ -227,7 +227,7 @@ type FieldAccessMode string
 
 const (
 	FieldAccessReadWrite FieldAccessMode = "read-write"
-	FieldAccessReadOnly  FieldAccessMode = "read-only"  
+	FieldAccessReadOnly  FieldAccessMode = "read-only"
 	FieldAccessWriteOnly FieldAccessMode = "write-only"
 )
 

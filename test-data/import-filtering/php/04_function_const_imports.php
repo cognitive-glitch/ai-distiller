@@ -40,22 +40,22 @@ class PriceCalculator
                 "Too many items. Maximum allowed: " . MAX_ITEMS
             );
         }
-        
+
         // Using imported array functions
         $prices = array_map(function ($item) {
             return $item['price'] * $item['quantity'];
         }, $items);
-        
+
         $validPrices = array_filter($prices, function ($price) {
             return $price > 0;
         });
-        
+
         $subtotal = array_sum($validPrices);  // Note: array_sum not imported
-        
+
         // Using imported function for tax calculation
         $tax = calculate_tax($subtotal, TAX_RATE);
         $total = $subtotal + $tax;
-        
+
         // Format the output using imported function and const
         return [
             'subtotal' => format_currency($subtotal, CURRENCY_SYMBOL),
@@ -65,7 +65,7 @@ class PriceCalculator
             'line_break' => PHP_EOL  // Using imported constant
         ];
     }
-    
+
     /**
      * Generate invoice number
      */
@@ -73,13 +73,13 @@ class PriceCalculator
     {
         // Using str_replace (imported function)
         $cleanPrefix = str_replace(' ', '-', $prefix);
-        
+
         // Generate unique suffix
         $suffix = date('YmdHis') . mt_rand(1000, 9999);
-        
+
         return $cleanPrefix . '-' . $suffix;
     }
-    
+
     /**
      * Display calculation results
      */

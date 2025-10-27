@@ -195,10 +195,10 @@ sealed class SnapshotResult {
 fun main() {
 = runBlocking {
     println("=== Very Complex Kotlin Features Demo ===")
-    
+
     // Advanced coroutine scope usage
     val advancedScope = AdvancedCoroutineScope()
-    
+
     // Complex processing pipeline
     val pipeline = ProcessingPipelineBuilder<String>()
         .filter { it.isNotBlank() }
@@ -206,36 +206,36 @@ fun main() {
         .filter { it > 3 }
         .validate { if (it < 100) ValidationResult.Valid else ValidationResult.Invalid(listOf("Too long")) }
         .build()
-    
+
     val testInput = "Hello, World!"
     val result = pipeline.execute(testInput)
-    
+
     when (result) {
         is ProcessingState.Success -> println("Pipeline success: ${result.result}")
         is ProcessingState.Failure -> println("Pipeline failed: ${result.error.message}")
         else -> println("Unexpected pipeline state: $result")
     }
-    
+
     // Meta entity processing
     val processor = MetaEntityProcessor()
     val sampleEntity = SampleEntity("test", 42)
     val processedEntity = processor.processEntity(sampleEntity)
-    
+
     println("Processed entity with ${processedEntity.properties.size} properties")
     println("Generated methods: ${processedEntity.generatedMethods.keys}")
-    
+
     // Advanced property delegation
     val managedConfig = ConfigurationWithManagedProperties()
     println("Database URL: ${managedConfig.databaseUrl}")
     println("Service endpoint: ${managedConfig.serviceEndpoint}")
-    
+
     // Demonstration of complex async operations
     advancedScope.launch {
         val asyncResult = advancedScope.asyncWithTimeout(5.seconds) {
             delay(1000)
             "Async operation completed successfully"
         }
-        
+
         when (val outcome = asyncResult.await()) {
             is kotlin.Result -> {
                 outcome.fold(
@@ -245,7 +245,7 @@ fun main() {
             }
         }
     }.join()
-    
+
     println("=== Demo completed ===")
 }
 }

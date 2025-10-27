@@ -98,7 +98,7 @@ func (p *ConcurrentProcessor) ProcessDirectory(
 	opts processor.ProcessOptions,
 ) (*BatchResult, error) {
 	startTime := time.Now()
-	
+
 	// Find all processable files
 	files, err := p.findProcessableFiles(dirPath)
 	if err != nil {
@@ -279,7 +279,7 @@ func (p *ConcurrentProcessor) worker(
 
 			// Process single file
 			result := p.processFile(ctx, proc, filePath, opts)
-			
+
 			select {
 			case results <- result:
 			case <-ctx.Done():

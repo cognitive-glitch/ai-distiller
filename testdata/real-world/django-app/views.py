@@ -63,23 +63,23 @@ async def async_user_view(request: Request) -> Dict[str, Any]:
 
 class UserViewSet:
     """Class-based view for user operations."""
-    
+
     def list(self, request: Request) -> Dict[str, Any]:
         """List all users."""
         return {"users": []}
-    
+
     def retrieve(self, request: Request, pk: int) -> Dict[str, Any]:
         """Get single user."""
         return {"user": {"id": pk}}
-    
+
     def create(self, request: Request, data: Dict[str, Any]) -> Dict[str, Any]:
         """Create new user."""
         return {"created": True, "data": data}
-    
+
     def update(self, request: Request, pk: int, data: Dict[str, Any]) -> Dict[str, Any]:
         """Update user."""
         return {"updated": True, "id": pk}
-    
+
     def destroy(self, request: Request, pk: int) -> Dict[str, Any]:
         """Delete user."""
         return {"deleted": True, "id": pk}

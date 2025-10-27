@@ -10,7 +10,7 @@ use Iterator;
  */
 /**
  * Class demonstrating magic properties and complex array shapes
- * 
+ *
  * @property-read int $id Auto-generated ID
  * @property string $name Mutable name property
  * @property-write array<string, mixed> $metadata Write-only metadata

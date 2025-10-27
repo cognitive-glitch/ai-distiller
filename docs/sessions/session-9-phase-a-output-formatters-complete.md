@@ -26,7 +26,7 @@ Session 9 completed **Phase A: Output Formatters** with all 5 formatters fully i
 - 6 unit tests passing (100%)
 - Commit: `174e302`
 
-### ✅ Phase A.5: XML Formatter  
+### ✅ Phase A.5: XML Formatter
 - Created `formatter-xml` crate
 - Complete IR coverage: all 13 node types supported
 - Proper XML escaping for special characters
@@ -159,7 +159,7 @@ impl XmlFormatter {
   ```rust
   // Before (Rust 2021)
   if let Node::Class(ref mut class) = child {
-  
+
   // After (Rust 2024)
   if let Node::Class(class) = child {
   ```

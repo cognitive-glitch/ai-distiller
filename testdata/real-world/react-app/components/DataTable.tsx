@@ -35,49 +35,49 @@ export function DataTable<T extends Record<string, any>>({
         key: null,
         direction: null
     });
-    
+
     const [filter, setFilter] = useState<string>('');
-    
+
     const sortedData = useMemo(() => {
         if (!sortState.key || !sortState.direction) {
             return data;
         }
-        
+
         return [...data].sort((a, b) => {
             const aVal = a[sortState.key!];
             const bVal = b[sortState.key!];
-            
+
             if (aVal < bVal) return sortState.direction === 'asc' ? -1 : 1;
             if (aVal > bVal) return sortState.direction === 'asc' ? 1 : -1;
             return 0;
         });
     }, [data, sortState]);
-    
+
     const filteredData = useMemo(() => {
         if (!filter) return sortedData;
-        
+
         return sortedData.filter(item =>
             Object.values(item).some(value =>
                 String(value).toLowerCase().includes(filter.toLowerCase())
             )
         );
     }, [sortedData, filter]);
-    
+
     const handleSort = (key: keyof T) => {
         setSortState(prev => {
             if (prev.key === key) {
-                const direction: SortDirection = 
-                    prev.direction === 'asc' ? 'desc' : 
+                const direction: SortDirection =
+                    prev.direction === 'asc' ? 'desc' :
                     prev.direction === 'desc' ? null : 'asc';
                 return { key: direction ? key : null, direction };
             }
             return { key, direction: 'asc' };
         });
     };
-    
+
     return (
         <div className={className}>
-            <input 
+            <input
                 type="text"
                 placeholder="Filter..."
                 value={filter}
@@ -98,7 +98,7 @@ export function DataTable<T extends Record<string, any>>({
                         <tr key={idx} onClick={() => onRowClick?.(item)}>
                             {columns.map(col => (
                                 <td key={String(col.key)}>
-                                    {col.render 
+                                    {col.render
                                         ? col.render(item[col.key], item)
                                         : String(item[col.key])
                                     }

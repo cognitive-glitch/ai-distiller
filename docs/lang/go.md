@@ -57,7 +57,7 @@ func (l *Logger) Log(message string)
 ## Known Issues
 
 ### 1. Parameter and Field Grouping
-**Status**: Expanded in AST  
+**Status**: Expanded in AST
 **Impact**: Low - Cosmetic difference
 
 Grouped parameters and fields are expanded:
@@ -74,7 +74,7 @@ type Point struct
 ```
 
 ### 2. Single Import Formatting
-**Status**: Always uses parentheses  
+**Status**: Always uses parentheses
 **Impact**: Low - Cosmetic issue
 
 Single imports are formatted with parentheses like multi-imports:
@@ -89,19 +89,19 @@ import (
 ```
 
 ### 3. Implementation Details
-**Status**: Some simplification  
+**Status**: Some simplification
 **Impact**: Medium - Implementation may differ
 
 Complex implementations may be simplified. For example, compound assignments like `+=` might appear as simple assignments.
 
 ### 4. Generic Type Parameters
-**Status**: Basic support  
+**Status**: Basic support
 **Impact**: Medium - Complex constraints may not be fully preserved
 
 Basic generic syntax is supported, but complex type constraints might be simplified.
 
 ### 5. CGO Support
-**Status**: Minimal  
+**Status**: Minimal
 **Impact**: Low - C code blocks not properly preserved
 
 CGO import "C" and associated C code blocks are not handled correctly.
@@ -404,7 +404,7 @@ func ProcessNumericChan[T Number](ch <-chan *Node[T]) T
 
 3. **Generic Support**: Full support for Go 1.18+ generics including type parameters, constraints, and type inference.
 
-4. **Best Practices**: 
+4. **Best Practices**:
    - Use appropriate visibility flags to focus on public API
    - The text format provides the most compact representation for AI consumption
    - Being aware that methods may appear as standalone functions

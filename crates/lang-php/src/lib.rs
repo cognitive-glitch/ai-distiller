@@ -783,16 +783,13 @@ interface Drawable {
 "#;
         let processor = PhpProcessor::new().unwrap();
         let opts = ProcessOptions::default();
-        let file = processor
+        let _file = processor
             .process(source, Path::new("test.php"), &opts)
             .unwrap();
 
         // Interfaces may be parsed as classes by tree-sitter
         // PHP parser may not support interface declarations yet - just ensure no crash
-        assert!(
-            file.children.len() >= 0,
-            "Interface parsing should not crash"
-        );
+        // Parsing should not crash (no assertion needed for non-negative length)
     }
 
     #[test]

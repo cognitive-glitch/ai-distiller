@@ -32,7 +32,7 @@ try {
     # Detect architecture
     $Arch = switch ((Get-CimInstance Win32_OperatingSystem).OSArchitecture) {
         "64-bit" { "amd64" }
-        "32-bit" { 
+        "32-bit" {
             Write-Host-Colored "Error: 32-bit Windows is not supported" "Red"
             exit 1
         }
@@ -62,14 +62,14 @@ try {
         $ChecksumPath = Join-Path $TempDir "checksums.txt"
         try {
             Invoke-WebRequest -Uri $ChecksumUrl -OutFile $ChecksumPath -UseBasicParsing
-            
+
             # Calculate hash of downloaded file
             $ActualHash = (Get-FileHash -Path $ArchivePath -Algorithm SHA256).Hash.ToLower()
-            
+
             # Find expected hash in checksums file
             $ChecksumContent = Get-Content $ChecksumPath
             $ExpectedLine = $ChecksumContent | Where-Object { $_ -match [regex]::Escape($ArchiveName) }
-            
+
             if ($ExpectedLine) {
                 $ExpectedHash = ($ExpectedLine -split '\s+')[0].ToLower()
                 if ($ActualHash -ne $ExpectedHash) {
@@ -99,17 +99,17 @@ try {
         Write-Host-Colored "Installing 'aid.exe' to $BinDir..."
         $SourceExe = Join-Path $TempDir "aid.exe"
         $DestExe = Join-Path $BinDir "aid.exe"
-        
+
         # Stop any running aid.exe processes
         Get-Process -Name "aid" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
-        
+
         Copy-Item -Path $SourceExe -Destination $DestExe -Force
 
         # Update PATH if needed
         $UserPath = [Environment]::GetEnvironmentVariable("Path", "User")
         if ($UserPath -notlike "*$BinDir*") {
             Write-Host-Colored "Adding $BinDir to PATH..."
-            
+
             # Check PATH length (Windows limit is ~2048 chars)
             $NewPath = "$UserPath;$BinDir"
             if ($NewPath.Length -gt 2000) {
@@ -123,7 +123,7 @@ try {
         # Success message
         Write-Host-Colored "`nInstallation successful!" "Green"
         Write-Host-Colored "The 'aid' command was installed to: $DestExe" "Green"
-        
+
         # Check if we need to restart shell
         if ($env:Path -notlike "*$BinDir*") {
             Write-Host-Colored "`n⚠ IMPORTANT: You need to restart your terminal for PATH changes to take effect." "Yellow"

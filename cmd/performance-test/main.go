@@ -104,7 +104,7 @@ func addTestFiles(suite *performance.BenchmarkSuite, testDir string, verbose boo
 			"../test-data/functional-tests",
 			"../../test-data/functional-tests",
 		}
-		
+
 		found := false
 		for _, alt := range alternatives {
 			if _, err := os.Stat(alt); err == nil {
@@ -113,7 +113,7 @@ func addTestFiles(suite *performance.BenchmarkSuite, testDir string, verbose boo
 				break
 			}
 		}
-		
+
 		if !found {
 			return fmt.Errorf("test directory not found: %s", testDir)
 		}
@@ -132,7 +132,7 @@ func addTestFiles(suite *performance.BenchmarkSuite, testDir string, verbose boo
 	// Also add specific test files if they exist
 	specificFiles := []string{
 		"test_java_complex.java",
-		"test_typescript_complex.ts", 
+		"test_typescript_complex.ts",
 		"test_python_complex.py",
 		"test_javascript_complex.js",
 		"test_csharp_complex.cs",
@@ -218,7 +218,7 @@ func runConfigOptimization(ctx context.Context, suite *performance.BenchmarkSuit
 func saveReport(report, filename string) error {
 	// Add timestamp to report
 	timestampedReport := fmt.Sprintf("Generated: %s\n\n%s", time.Now().Format(time.RFC3339), report)
-	
+
 	return os.WriteFile(filename, []byte(timestampedReport), 0644)
 }
 

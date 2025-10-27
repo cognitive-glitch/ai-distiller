@@ -86,20 +86,20 @@ func TestSparklineFormatter(t *testing.T) {
 			}
 
 			output := buf.String()
-			
+
 			// Check that all expected strings are present
 			for _, expected := range tt.contains {
 				if !strings.Contains(output, expected) {
 					t.Errorf("Expected output to contain %q, got: %s", expected, output)
 				}
 			}
-			
-			
+
+
 			// Should be single line ending with newline
 			if !strings.HasSuffix(output, "\n") {
 				t.Errorf("Expected output to end with newline")
 			}
-			
+
 			lines := strings.Split(strings.TrimSpace(output), "\n")
 			if len(lines) != 1 {
 				t.Errorf("Expected single line output, got %d lines", len(lines))

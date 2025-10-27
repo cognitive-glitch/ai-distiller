@@ -38,14 +38,14 @@ mod debug_tests {
         let kind = node.kind();
         let text = /* extract with bounds checking */;
         eprintln!("{}[{}] \"{}\"", indent, kind, text_preview);
-        
+
         // Recursively walk children
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
             print_tree(child, source, depth + 1);
         }
     }
-    
+
     #[test]
     #[ignore]
     fn debug_function_parameters_ast() {
@@ -140,7 +140,7 @@ func findUser(id: Int?) -> String? {
 
 1. **Parameters are direct children** of `function_declaration` with kind `"parameter"`
    - NOT wrapped in `"function_value_parameters"` or `"parameter_clause"`
-   
+
 2. **Return types appear after `"->"` token** as direct children
    - Types are `"user_type"`, `"optional_type"`, or `"type_identifier"`
    - NOT wrapped in `"function_type"` node
@@ -241,8 +241,8 @@ let mut saw_arrow = false;  // Line 252: Track "->" token appearance
 "type_annotation" => {
     let mut ta_cursor = child.walk();
     for ta_child in child.children(&mut ta_cursor) {
-        if ta_child.kind() == "type_identifier" 
-            || ta_child.kind() == "user_type" 
+        if ta_child.kind() == "type_identifier"
+            || ta_child.kind() == "user_type"
             || ta_child.kind() == "optional_type" {  // ← Added
             param_type = TypeRef::new(self.node_text(ta_child, source));
         }

@@ -32,12 +32,12 @@ public class Repository<T> : IRepository<T> where T : class
 {
     private readonly ILogger<Repository<T>> logger;
     private readonly ConcurrentDictionary<int, T> cache = new();
-    
+
     public Repository(ILogger<Repository<T>> logger)
     {
         this.logger = logger;
     }
-    
+
     public async Task<T> GetByIdAsync(int id)
     {
         // Using ConcurrentDictionary
@@ -46,25 +46,25 @@ public class Repository<T> : IRepository<T> where T : class
             logger.LogInformation("Cache hit for id {Id}", id);
             return cached;
         }
-        
+
         // Simulate async operation
         await Task.Delay(100);
-        
+
         // Using Reflection to create instance
         var instance = Activator.CreateInstance<T>();
         var idProperty = typeof(T).GetProperty("Id");
         idProperty?.SetValue(instance, id);
-        
+
         cache.TryAdd(id, instance);
         return instance;
     }
-    
+
     public async Task<IEnumerable<T>> GetAllAsync()
     {
         // Using LINQ
         return await Task.FromResult(cache.Values.ToList());
     }
-    
+
     // Using Expression trees
     public IQueryable<T> Query(Expression<Func<T, bool>> predicate)
     {
@@ -76,13 +76,13 @@ public class Repository<T> : IRepository<T> where T : class
 public class EventAggregator
 {
     private readonly Subject<object> subject = new();
-    
+
     public IObservable<T> GetEvent<T>()
     {
         // Using Reactive LINQ
         return subject.OfType<T>();
     }
-    
+
     public void Publish<T>(T eventData)
     {
         subject.OnNext(eventData);
@@ -99,32 +99,32 @@ public class DataProcessor
         public Dictionary<string, object> Data { get; set; } = new();
         public List<string> Errors { get; set; } = new();
     }
-    
+
     // Nested interface
     public interface IProcessingStrategy
     {
         Task<ProcessingResult> ProcessAsync(byte[] data);
     }
-    
+
     // Using DI container
     private readonly IServiceProvider serviceProvider;
     private readonly ILogger<DataProcessor> logger;
-    
+
     public DataProcessor(IServiceProvider serviceProvider, ILogger<DataProcessor> logger)
     {
         this.serviceProvider = serviceProvider;
         this.logger = logger;
     }
-    
-    public async Task<ProcessingResult> ProcessWithStrategyAsync<TStrategy>(byte[] data) 
+
+    public async Task<ProcessingResult> ProcessWithStrategyAsync<TStrategy>(byte[] data)
         where TStrategy : IProcessingStrategy
     {
         // Using DI to resolve strategy
         var strategy = serviceProvider.GetRequiredService<TStrategy>();
-        
-        logger.LogInformation("Processing {Bytes} bytes with {Strategy}", 
+
+        logger.LogInformation("Processing {Bytes} bytes with {Strategy}",
             data.Length, typeof(TStrategy).Name);
-        
+
         try
         {
             return await strategy.ProcessAsync(data);
@@ -132,9 +132,9 @@ public class DataProcessor
         catch (Exception ex)
         {
             logger.LogError(ex, "Processing failed");
-            return new ProcessingResult 
-            { 
-                Errors = new List<string> { ex.Message } 
+            return new ProcessingResult
+            {
+                Errors = new List<string> { ex.Message }
             };
         }
     }
@@ -149,14 +149,14 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<EventAggregator>();
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
         services.AddTransient<DataProcessor>();
-        
+
         // Using Microsoft.Extensions.Logging
         services.AddLogging(builder =>
         {
             builder.AddConsole();
             builder.AddDebug();
         });
-        
+
         return services;
     }
 }
@@ -172,7 +172,7 @@ public class DataStream
             yield return i;
         }
     }
-    
+
     public async Task ConsumeAsync()
     {
         // Using async LINQ

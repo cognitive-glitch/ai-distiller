@@ -129,19 +129,19 @@ PLATFORMS=(
 
 for platform in "${PLATFORMS[@]}"; do
     IFS='/' read -r os arch <<< "$platform"
-    
+
     binary_name="aid"
     if [ "$os" = "windows" ]; then
         binary_name="aid.exe"
     fi
-    
+
     output_name="aid-$NEW_VERSION-$os-$arch"
     if [ "$os" = "windows" ]; then
         output_name="$output_name.exe"
     fi
-    
+
     log_info "Building for $os/$arch..."
-    
+
     GOOS=$os GOARCH=$arch CGO_ENABLED=0 go build \
         -ldflags="-s -w -X 'main.version=$NEW_VERSION' -X 'main.buildTime=$(date -u +%Y-%m-%dT%H:%M:%SZ)' -X 'main.commit=$(git rev-parse HEAD)'" \
         -o "$BUILD_DIR/$output_name" \
@@ -177,7 +177,7 @@ cat >> "$CHANGELOG_FILE" << 'EOF'
 
 ### 🚀 Core Functionality
 - **Multi-language support**: Python, JavaScript, TypeScript, Go, Java, C#, Rust
-- **Fast processing**: 10MB codebase in <2 seconds  
+- **Fast processing**: 10MB codebase in <2 seconds
 - **Multiple output formats**: Markdown, Text, JSON, JSONL, XML
 - **Flexible stripping**: Remove comments, implementations, private members
 
@@ -190,7 +190,7 @@ cat >> "$CHANGELOG_FILE" << 'EOF'
 ### 📊 Usage Examples
 ```bash
 aid                                    # Process current directory
-aid src/                              # Process src directory  
+aid src/                              # Process src directory
 aid --strip comments,implementation   # Remove comments and implementations
 aid --format json-structured --output api.json   # JSON output to file
 aid --strip non-public --stdout       # Print only public members

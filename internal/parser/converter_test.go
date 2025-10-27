@@ -9,7 +9,7 @@ import (
 func TestNewConverter(t *testing.T) {
 	source := []byte("def hello():\n    print('world')")
 	conv := NewConverter("python", source)
-	
+
 	assert.Equal(t, "python", conv.language)
 	assert.Equal(t, source, conv.source)
 	assert.Empty(t, conv.errors)
@@ -19,7 +19,7 @@ func TestConverterHelpers(t *testing.T) {
 	t.Run("ByteToLineCol", func(t *testing.T) {
 		source := []byte("line1\nline2\nline3")
 		conv := NewConverter("test", source)
-		
+
 		tests := []struct {
 			offset uint32
 			line   int
@@ -33,14 +33,14 @@ func TestConverterHelpers(t *testing.T) {
 			{12, 3, 1},    // Start of third line
 			{16, 3, 5},    // End of file
 		}
-		
+
 		for _, tt := range tests {
 			line, col := conv.byteToLineCol(tt.offset)
 			assert.Equal(t, tt.line, line, "offset %d", tt.offset)
 			assert.Equal(t, tt.col, col, "offset %d", tt.offset)
 		}
 	})
-	
+
 	t.Run("CountLines", func(t *testing.T) {
 		tests := []struct {
 			source string
@@ -53,14 +53,14 @@ func TestConverterHelpers(t *testing.T) {
 			{"line1\nline2\nline3", 3},
 			{"\n\n\n", 4},
 		}
-		
+
 		conv := NewConverter("test", nil)
 		for _, tt := range tests {
 			lines := conv.countLines([]byte(tt.source))
 			assert.Equal(t, tt.lines, lines, "source: %q", tt.source)
 		}
 	})
-	
+
 	t.Run("LastLineLength", func(t *testing.T) {
 		tests := []struct {
 			source string
@@ -72,7 +72,7 @@ func TestConverterHelpers(t *testing.T) {
 			{"line1\n", 0},
 			{"line1\nab", 2},
 		}
-		
+
 		conv := NewConverter("test", nil)
 		for _, tt := range tests {
 			length := conv.lastLineLength([]byte(tt.source))
@@ -126,18 +126,18 @@ func (m *MockNode) EndByte() (uint32, error) {
 func TestGetNodeLocation(t *testing.T) {
 	source := []byte("line1\nline2\nline3")
 	conv := NewConverter("test", source)
-	
+
 	// Create a mock node wrapper for testing
 	mockNode := &MockNode{
 		startByte: 6,  // Start of "line2"
 		endByte:   11, // End of "line2"
 	}
-	
+
 	// We need to wrap this in a real Node for the test
 	// For now, we'll test the byteToLineCol directly
 	startLine, startCol := conv.byteToLineCol(mockNode.startByte)
 	endLine, endCol := conv.byteToLineCol(mockNode.endByte)
-	
+
 	assert.Equal(t, 2, startLine)
 	assert.Equal(t, 1, startCol)
 	assert.Equal(t, 2, endLine)

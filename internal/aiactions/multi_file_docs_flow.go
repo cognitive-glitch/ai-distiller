@@ -733,7 +733,7 @@ Brief description of what this project does and why it exists. Include the main 
 
 ### Key Features
 - Feature 1: Description
-- Feature 2: Description  
+- Feature 2: Description
 - Feature 3: Description
 
 ### Use Cases
@@ -934,8 +934,8 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 ---
 
-> **Note:** This README is generated from the AI Distiller multi-file documentation workflow. 
-> Please update the placeholders with actual project information and maintain this document 
+> **Note:** This README is generated from the AI Distiller multi-file documentation workflow.
+> Please update the placeholders with actual project information and maintain this document
 > as the project evolves.
 `, basename, date, basename, basename, basename, basename, basename, basename, basename, basename, basename, date)
 }
@@ -987,7 +987,7 @@ const instance = new ClassName(parameters);
 
 #### functionName
 **Purpose:** What this function does
-**Parameters:** 
+**Parameters:**
 - param1 (Type): Description
 - param2 (Type): Description
 

@@ -90,7 +90,7 @@ Create `testdata/python/10_new_feature/source.py`:
 class Example:
     def public_method(self):
         return "public"
-    
+
     def _private_method(self):
         return "private"
 ```

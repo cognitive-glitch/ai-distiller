@@ -1514,17 +1514,17 @@ mod debug_tests {
     fn debug_enum_ast() {
         let source = r#"public enum Status {
     ACTIVE, INACTIVE, PENDING;
-    
+
     private final String label;
-    
+
     Status(String label) {
         this.label = label;
     }
-    
+
     public String getLabel() {
         return label;
     }
-    
+
     public boolean isActive() {
         return this == ACTIVE;
     }

@@ -797,7 +797,7 @@ public:
         if let Node::Class(class) = &file.children[0] {
             assert_eq!(class.name, "Complex");
 
-            let operators: Vec<_> = class
+            let _operators: Vec<_> = class
                 .children
                 .iter()
                 .filter_map(|n| {
@@ -1006,7 +1006,7 @@ public:
             assert_eq!(outer.name, "Outer");
 
             // Find nested class
-            let nested_classes: Vec<_> = outer
+            let _nested_classes: Vec<_> = outer
                 .children
                 .iter()
                 .filter_map(|n| {

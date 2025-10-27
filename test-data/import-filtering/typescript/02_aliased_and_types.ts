@@ -32,19 +32,19 @@ class App extends React.Component<Props> {
     // Using React namespace import
     return React.createElement('div', null, 'Hello');
   }
-  
+
   processData() {
     // Using myFunc alias
     const result = myFunc([1, 2, 3]);
-    
+
     // Using lodash default import and named import map
     const numbers = [1, 2, 3, 4, 5];
     const doubled = map(numbers, n => n * 2);
     const sum = lodash.sum(doubled);
-    
+
     // Using ConfigManager (value import from mixed import)
     const manager = new ConfigManager();
-    
+
     return { result, sum, manager };
   }
 }

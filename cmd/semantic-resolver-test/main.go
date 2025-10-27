@@ -20,10 +20,10 @@ func main() {
 		// Try alternative paths
 		alternatives := []string{
 			"test-data/semantic-test",
-			"../test-data/semantic-test", 
+			"../test-data/semantic-test",
 			"../../test-data/semantic-test",
 		}
-		
+
 		found := false
 		for _, alt := range alternatives {
 			if _, err := os.Stat(alt); err == nil {
@@ -32,7 +32,7 @@ func main() {
 				break
 			}
 		}
-		
+
 		if !found {
 			fmt.Printf("Test directory not found: %s\n", testDir)
 			os.Exit(1)
@@ -128,7 +128,7 @@ func displayPass1Results(filename string, analysis *semantic.FileAnalysis) {
 	// Show some key symbols
 	functions := analysis.SymbolTable.GetSymbolsOfKind(semantic.SymbolKindFunction)
 	classes := analysis.SymbolTable.GetSymbolsOfKind(semantic.SymbolKindClass)
-	
+
 	if len(classes) > 0 {
 		fmt.Printf("Classes: ")
 		for i, class := range classes {
@@ -205,7 +205,7 @@ func displayPass2Results(semanticGraph *semantic.SemanticGraph) {
 			unresolvedCount++
 			if unresolvedCount <= 10 { // Limit output
 				callerName := extractSymbolName(string(callSite.CallerID))
-				fmt.Printf("%s -> %s (line %d)\n", 
+				fmt.Printf("%s -> %s (line %d)\n",
 					callerName, callSite.CalleeName, callSite.Location.StartLine)
 			}
 		}

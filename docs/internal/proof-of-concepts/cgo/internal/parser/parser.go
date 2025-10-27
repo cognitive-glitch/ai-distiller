@@ -4,7 +4,7 @@ package parser
 // #cgo LDFLAGS: -L../../grammars/tree-sitter-python/src -ltree-sitter-python
 // #include "tree_sitter/api.h"
 // #include <stdlib.h>
-// 
+//
 // // Tree-sitter Python grammar functions
 // extern TSLanguage *tree_sitter_python();
 import "C"

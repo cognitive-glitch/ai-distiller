@@ -51,7 +51,7 @@ class AppConfig(metaclass=SingletonMeta):
         print(f"Fetching config from {url}...")
         await asyncio.sleep(0.1) # Simulate network call
         # In a real scenario, this would update settings
-        self.timeout = 45 
+        self.timeout = 45
 
     def __enter__(self):
         """Enter a transactional context for settings changes."""

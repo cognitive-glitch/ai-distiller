@@ -12,7 +12,7 @@ class BaseNotifier(ABC):
 
 class EmailNotifier(BaseNotifier):
     """Sends notifications via email."""
-    
+
     def __init__(self, smtp_host: str, port: int, from_address: str):
         self._smtp_host = smtp_host
         self._port = port
@@ -28,7 +28,7 @@ class EmailNotifier(BaseNotifier):
         """Internal method to establish a connection."""
         print(f"Connecting to {self.connection_info}...")
         self._connection = "CONNECTED" # Simulate connection
-    
+
     def send(self, message: str) -> None:
         """Connects and sends an email."""
         if not self._connection:

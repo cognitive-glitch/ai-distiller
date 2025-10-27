@@ -9,7 +9,7 @@ This document summarizes the comprehensive import filtering tests created for AI
 For each language, we created 5 test patterns:
 
 1. **Basic Imports** - Simple direct imports with clear usage
-2. **Wildcard/Aliased Imports** - Tests `import *`, aliases, and namespace imports  
+2. **Wildcard/Aliased Imports** - Tests `import *`, aliases, and namespace imports
 3. **Nested/Conditional Imports** - Sub-module imports, conditional/dynamic imports
 4. **Type-Only/Annotation Imports** - Imports used only for types, decorators, or metadata
 5. **Complex Patterns** - Edge cases, metaprogramming, and language-specific challenges
@@ -26,7 +26,7 @@ For each language, we created 5 test patterns:
 
 ### JavaScript/TypeScript
 - Side-effect imports (CSS, polyfills) that must be kept
-- Re-exports and barrel exports  
+- Re-exports and barrel exports
 - Dynamic imports with `import()`
 - Type-only imports with `import type`
 - Mixed CommonJS/ES6 imports

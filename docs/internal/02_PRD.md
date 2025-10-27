@@ -425,7 +425,7 @@ type DistilledError struct {
 type LanguageProcessor interface {
     // Parse produces a rich IR from the AST
     Parse(tree *sitter.Tree, source []byte) (*DistilledFile, error)
-    
+
     // GetLanguage returns the tree-sitter language
     GetLanguage() *sitter.Language
 }
@@ -511,7 +511,7 @@ type Pipeline struct {
 func (d *Distiller) Process() error {
     // 1. File discovery (single goroutine)
     go d.discoverFiles()
-    
+
     // 2. Parser workers (N goroutines)
     g, ctx := errgroup.WithContext(context.Background())
     for i := 0; i < d.Workers; i++ {
@@ -519,17 +519,17 @@ func (d *Distiller) Process() error {
             return d.parseWorker(ctx)
         })
     }
-    
+
     // 3. Stripping (single goroutine for order preservation)
     g.Go(func() error {
         return d.stripWorker(ctx)
     })
-    
+
     // 4. Output formatting (single goroutine)
     g.Go(func() error {
         return d.outputWorker(ctx)
     })
-    
+
     return g.Wait()
 }
 ```

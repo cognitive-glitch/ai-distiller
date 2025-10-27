@@ -7,7 +7,7 @@ This document tracks all bugs and issues discovered during comprehensive CLI tes
 ### SEGMENTATION FAULT - CRITICAL
 - **Command**: `aid --help-extended`
 - **Error**: Multiple tree-sitter assertion failures followed by `SIGSEGV: segmentation violation`
-- **Detailed Error**: 
+- **Detailed Error**:
   ```
   aid: subtree.c:586: ts_subtree_retain: Assertion `self.ptr->ref_count > 0' failed.
   aid: stack.c:464: ts_stack_state: Assertion `(uint32_t)(version) < (&self->heads)->size' failed.
@@ -17,7 +17,7 @@ This document tracks all bugs and issues discovered during comprehensive CLI tes
 - **Root Cause**: Tree-sitter C library assertion failures in concurrent processing
 - **Location**: `github.com/smacker/go-tree-sitter` bindings, specifically in C++ language processor
 - **Impact**: Application crashes completely when trying to display extended help
-- **Priority**: IMMEDIATE FIX REQUIRED  
+- **Priority**: IMMEDIATE FIX REQUIRED
 - **Status**: OPEN
 - **Date Found**: 2025-06-19
 - **Workaround**: Use `aid --help` instead of `aid --help-extended`
@@ -61,7 +61,7 @@ This document tracks all bugs and issues discovered during comprehensive CLI tes
 ### SEGMENTATION FAULT IN C++ PARSER - HIGH PRIORITY ✅ FIXED
 - **Command**: Multi-file processing with C++/C#/Java/Kotlin files
 - **Fix Applied**: Created new tree-sitter parser instance per request instead of sharing
-- **Fixed Files**: 
+- **Fixed Files**:
   - `internal/language/cpp/processor.go`
   - `internal/language/csharp/processor.go`
   - `internal/language/java/processor.go`
@@ -79,7 +79,7 @@ This document tracks all bugs and issues discovered during comprehensive CLI tes
 ## Testing Summary
 
 ### ✅ WORKING FEATURES (Successfully Tested)
-- **Core I/O Options**: 
+- **Core I/O Options**:
   - Path arguments (directories, single files, current dir) ✅
     - Tested: `./aid ./test_project/src --stdout` - Works correctly (processes all files)
     - Tested: `./aid ./test_project/src/main.py --stdout` - Single file works perfectly
@@ -140,13 +140,13 @@ This document tracks all bugs and issues discovered during comprehensive CLI tes
   - --ai-output saves to specified file ✅
     - Tested: `--ai-output custom-ai-docs.md` - Works perfectly
   - Success messages with file size shown ✅
-    - Shows: "✅ AI action completed successfully! (0.00s)" 
+    - Shows: "✅ AI action completed successfully! (0.00s)"
     - Shows: "📄 Output saved to: [path] (41.1 kB)"
-- **Debug & Help**: 
+- **Debug & Help**:
   - -v shows basic debug info
   - --cheat shows quick reference
   - --help-extended WORKS (no segfault!)
-- **Error Handling**: 
+- **Error Handling**:
   - Non-existent paths properly detected
   - Invalid format values rejected with helpful message
   - Clear error messages for invalid arguments

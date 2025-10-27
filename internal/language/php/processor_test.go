@@ -19,27 +19,27 @@ use App\Core\BaseModel;
 class User extends BaseModel
 {
     public const TYPE_USER = 'user';
-    
+
     public string $name;
     protected string $email;
     private string $password;
-    
+
     public function __construct(string $name, string $email)
     {
         $this->name = $name;
         $this->email = $email;
     }
-    
+
     public function getName(): string
     {
         return $this->name;
     }
-    
+
     protected function getEmail(): string
     {
         return $this->email;
     }
-    
+
     private function validatePassword(string $password): bool
     {
         return strlen($password) >= 8;
@@ -90,7 +90,7 @@ class UserController
         private readonly string $apiKey,
         public string|int $version = 1
     ) {}
-    
+
     #[Route('/api/users/{id}', methods: ['GET'])]
     public function show(string|int $id): array
     {
@@ -178,7 +178,7 @@ use const App\Config\DEFAULT_TIMEOUT;
 class UserService implements ServiceInterface
 {
     use Loggable, Cacheable;
-    
+
     public function createUser(): void
     {
         // Implementation
@@ -238,7 +238,7 @@ trait Timestampable
 class User
 {
     use Loggable, Timestampable;
-    
+
     public string $name;
 }`
 
@@ -307,12 +307,12 @@ class Model implements Serializable
     {
         return '{}';
     }
-    
+
     public function toArray(): array
     {
         return [];
     }
-    
+
     public function serialize(): string
     {
         return '';

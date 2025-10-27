@@ -228,7 +228,7 @@ public sealed class UserService : IUserService
     public async Task<User?> GetUserAsync(int id)
     {
         var cacheKey = $"user:{id}";
-        
+
         if (_cache.TryGet<User>(cacheKey, out var cached))
         {
             _logger.LogDebug("User {UserId} found in cache", id);
@@ -247,7 +247,7 @@ public sealed class UserService : IUserService
     public async Task<bool> UpdateUserAsync(User user)
     {
         ArgumentNullException.ThrowIfNull(user);
-        
+
         try
         {
             await _repository.UpdateAsync(user);
@@ -318,14 +318,14 @@ namespace AdvancedMath;
 
 public interface IVectorOperations<T> where T : INumber<T>
 {
-    T DotProduct<TVector>(TVector a, TVector b) 
+    T DotProduct<TVector>(TVector a, TVector b)
         where TVector : IVector<T>;
-    
-    TVector Add<TVector>(TVector a, TVector b) 
+
+    TVector Add<TVector>(TVector a, TVector b)
         where TVector : IVector<T>, new();
 }
 
-public class VectorProcessor<T> : IVectorOperations<T> 
+public class VectorProcessor<T> : IVectorOperations<T>
     where T : INumber<T>, IMinMaxValue<T>
 {
     private readonly ILogger? _logger;
@@ -335,7 +335,7 @@ public class VectorProcessor<T> : IVectorOperations<T>
         _logger = logger;
     }
 
-    public T DotProduct<TVector>(TVector a, TVector b) 
+    public T DotProduct<TVector>(TVector a, TVector b)
         where TVector : IVector<T>
     {
         if (a.Dimension != b.Dimension)
@@ -346,12 +346,12 @@ public class VectorProcessor<T> : IVectorOperations<T>
         {
             result += a[i] * b[i];
         }
-        
+
         _logger?.Log($"Dot product calculated: {result}");
         return result;
     }
 
-    public TVector Add<TVector>(TVector a, TVector b) 
+    public TVector Add<TVector>(TVector a, TVector b)
         where TVector : IVector<T>, new()
     {
         var result = new TVector { Dimension = a.Dimension };
@@ -434,7 +434,7 @@ public sealed record CreateUserCommand(
     [property: EmailAddress] string Email,
     [property: StringLength(100)] string? FullName = null) : Command
 {
-    public bool IsValid => !string.IsNullOrWhiteSpace(Username) && 
+    public bool IsValid => !string.IsNullOrWhiteSpace(Username) &&
                           !string.IsNullOrWhiteSpace(Email);
 }
 
@@ -474,7 +474,7 @@ public static class CommandHandler
 
     private static async Task<CommandResult> DeleteUserAsync(DeleteUserCommand cmd)
     {
-        // Implementation  
+        // Implementation
         return await Task.FromResult(CommandResult.Success(cmd.Id));
     }
 }
@@ -544,13 +544,13 @@ AI Distiller preserves all type information:
 ```csharp
 // Good - Complete type information
 public async Task<Result<User>> GetUserAsync(
-    int id, 
+    int id,
     CancellationToken cancellationToken = default)
 {
     // ...
 }
 
-// Less optimal - Generic type info may be incomplete  
+// Less optimal - Generic type info may be incomplete
 public async Task GetUserAsync(int id)
 {
     // ...
@@ -604,10 +604,10 @@ public class UserService : IUserService
 {
     private readonly IDbContext _context;
     private readonly ICache _cache;
-    
+
     // Public methods define the API
     public async Task<User?> GetUserAsync(int id) { }
-    
+
     // Private methods are stripped by default
     private async Task<bool> ValidateUserAsync(User user) { }
 }
@@ -667,18 +667,18 @@ listFiles("Services/Payment/", pattern="*.cs")
 *Claude receives the distilled structure and responds:*
 
 > Based on the analysis, your payment processing system has:
-> 
+>
 > **Core Components:**
 > - `IPaymentProcessor` interface with methods: `ProcessPaymentAsync()`, `RefundAsync()`, `GetTransactionStatusAsync()`
 > - `StripePaymentProcessor : IPaymentProcessor` - Stripe implementation
 > - `PayPalPaymentProcessor : IPaymentProcessor` - PayPal implementation
 > - `PaymentService` - Orchestrator using strategy pattern
-> 
+>
 > **Identified Improvements:**
 > 1. **Missing Circuit Breaker**: Add resilience for external API calls
 > 2. **No Idempotency**: Payment operations should be idempotent
 > 3. **Logging Enhancement**: Current logging lacks structured data
-> 
+>
 > Here's how to implement these improvements...
 
 ### With Source Generators
@@ -696,7 +696,7 @@ aid ./Models --format json-structured --private=0 --protected=0 --internal=0 | \
 - name: Check Public API Surface
   run: |
     aid ./src --format text --private=0 --protected=0 --internal=0 --implementation=0 > api-current.txt
-    
+
     # Compare with baseline
     if ! diff api-baseline.txt api-current.txt > api-changes.diff; then
       echo "::warning::Public API surface has changed"
@@ -712,7 +712,7 @@ aid ./Models --format json-structured --private=0 --protected=0 --internal=0 | \
    ```csharp
    // Good - Clear intent
    where T : class, IEntity, new()
-   
+
    // Better - Even more specific
    where T : BaseEntity, IValidatable, new()
    ```
@@ -721,7 +721,7 @@ aid ./Models --format json-structured --private=0 --protected=0 --internal=0 | \
    ```csharp
    // DTO - use record
    public record UserDto(string Name, string Email);
-   
+
    // Service - use class
    public class UserService : IUserService { }
    ```
@@ -730,7 +730,7 @@ aid ./Models --format json-structured --private=0 --protected=0 --internal=0 | \
    ```csharp
    public static class StringExtensions
    {
-       public static bool IsNullOrEmpty(this string? value) => 
+       public static bool IsNullOrEmpty(this string? value) =>
            string.IsNullOrEmpty(value);
    }
    ```
@@ -761,8 +761,8 @@ Check that constraints are on the same line (for single constraints) or properly
 // Good
 public class Service<T> where T : class, new()
 
-// Also good  
-public class ComplexService<T, U> 
+// Also good
+public class ComplexService<T, U>
     where T : class, IEntity
     where U : struct, IComparable<U>
 ```

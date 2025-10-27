@@ -55,7 +55,7 @@ public readonly record struct VectorN<T>(T[] Components)
         var normalized = new T[Dim];
         for (int i = 0; i < Dim; i++)
             normalized[i] = Components[i] / magnitude;
-        
+
         return new(normalized);
     }
 
@@ -188,7 +188,7 @@ public class MathProcessor<T> where T : INumber<T>, IMinMaxValue<T>
             return T.MaxValue;
         if (input < T.MinValue / (T.One + T.One))
             return T.MinValue;
-        
+
         return input * (T.One + T.One);
     }
 

@@ -188,22 +188,22 @@ Claude: Let me find all SQL queries...
 4. `distillDirectory("src/models/", include_implementation=false)` - Data layer structure
 
 > **Claude**: Here's the architecture overview based on the complete namespace analysis:
-> 
+>
 > **Service Layer** (from `src/services/`):
 > - `UserService`: 8 public methods for user management
 > - `AuthService`: JWT-based authentication with 5 endpoints
 > - `EmailService`: Async email handling with template support
-> 
+>
 > **Data Models** (from `src/models/`):
 > - 12 SQLAlchemy models with relationships
 > - Base classes: `TimestampedModel`, `SoftDeleteModel`
 > - Key entities: `User`, `Organization`, `Project`, `Permission`
-> 
+>
 > **API Structure** (from `src/routes/`):
 > - RESTful endpoints grouped by resource
 > - Consistent middleware chain: auth → validation → rate-limit
 > - OpenAPI schema generation built-in
-> 
+>
 > The project follows Domain-Driven Design with clear bounded contexts...
 
 ### 2. Implementing a New Feature

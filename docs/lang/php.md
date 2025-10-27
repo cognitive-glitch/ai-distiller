@@ -146,7 +146,7 @@ PHP traits are fully supported with proper syntax:
 // Input
 trait Timestampable {
     private ?DateTime $createdAt = null;
-    
+
     public function touch(): void {
         $this->createdAt = new DateTime();
     }
@@ -154,7 +154,7 @@ trait Timestampable {
 
 class User {
     use Timestampable, Loggable;
-    
+
     public string $name;
 }
 ```
@@ -204,33 +204,33 @@ namespace App\Models;
 
 /**
  * Active Record model with magic properties
- * 
+ *
  * @property-read int $id Primary key
  * @property-read \DateTime $createdAt Creation timestamp
  * @property string $name Full name
  * @property string $email Email address
  * @property-write string $password Hashed password (write-only)
  * @property-read array<string, mixed> $attributes All attributes
- * 
+ *
  * @method static self|null find(int $id)
  * @method static self[] findAll()
  * @method bool save()
  */
 abstract class ActiveRecord {
     protected array $data = [];
-    
+
     public function __construct(array $attributes = []) {
         $this->fill($attributes);
     }
-    
+
     public function __get(string $name): mixed {
         return $this->data[$name] ?? null;
     }
-    
+
     public function __set(string $name, mixed $value): void {
         $this->data[$name] = $value;
     }
-    
+
     protected function fill(array $attributes): void {
         $this->data = $attributes;
     }
@@ -238,11 +238,11 @@ abstract class ActiveRecord {
 
 class User extends ActiveRecord {
     protected string $table = 'users';
-    
+
     public function getFullName(): string {
         return $this->name;
     }
-    
+
     public function isAdmin(): bool {
         return $this->role === 'admin';
     }
@@ -262,14 +262,14 @@ namespace App\Models;
 
 /**
  * Active Record model with magic properties
- * 
+ *
  * @property-read int $id Primary key
  * @property-read \DateTime $createdAt Creation timestamp
  * @property string $name Full name
  * @property string $email Email address
  * @property-write string $password Hashed password (write-only)
  * @property-read array<string, mixed> $attributes All attributes
- * 
+ *
  * @method static self|null find(int $id)
  * @method static self[] findAll()
  * @method bool save()
@@ -327,7 +327,7 @@ class Service {
 trait TimestampableTrait {
     private ?DateTime $createdAt = null;
     private ?DateTime $updatedAt = null;
-    
+
     public function touch(): void {
         $this->updatedAt = new DateTime();
         if ($this->createdAt === null) {
@@ -345,7 +345,7 @@ class NotificationService implements Cacheable, Loggable {
         private LoggerInterface $logger,
         private bool $debug = false
     ) {}
-    
+
     public function send(
         string|Email $message,
         User|string $recipient,
@@ -354,7 +354,7 @@ class NotificationService implements Cacheable, Loggable {
         // Implementation
         return new Result(true);
     }
-    
+
     public function hasPermission(
         User $user,
         Permission $permission
@@ -456,7 +456,7 @@ namespace App\Types;
 class Repository {
     /**
      * Find entities by criteria
-     * 
+     *
      * @param array{
      *   where?: array<string, mixed>,
      *   orderBy?: array<string, 'ASC'|'DESC'>,
@@ -468,7 +468,7 @@ class Repository {
     public function findBy(array $criteria): array {
         // Implementation
     }
-    
+
     /**
      * @param class-string<T> $className
      * @param array<string, mixed> $data
@@ -478,7 +478,7 @@ class Repository {
     public function hydrate(string $className, array $data): object {
         return new $className($data);
     }
-    
+
     /**
      * @param callable(Entity): bool $predicate
      * @return Entity|null
@@ -486,7 +486,7 @@ class Repository {
     public function findOneBy(callable $predicate): ?Entity {
         // Implementation
     }
-    
+
     /**
      * @param non-empty-array<int> $ids
      * @return array<int, Entity>
@@ -494,7 +494,7 @@ class Repository {
     public function findByIds(array $ids): array {
         // Implementation
     }
-    
+
     /**
      * @param key-of<self::ALLOWED_FIELDS> $field
      * @param value-of<self::ALLOWED_VALUES> $value
@@ -502,13 +502,13 @@ class Repository {
     public function validateField(string $field, mixed $value): bool {
         // Implementation
     }
-    
+
     public const ALLOWED_FIELDS = [
         'name' => true,
         'email' => true,
         'status' => true
     ];
-    
+
     public const ALLOWED_VALUES = [
         'active',
         'inactive',
@@ -537,13 +537,13 @@ class Repository {
     public findOneBy(callable(Entity): bool $predicate): ?Entity
     public findByIds(non-empty-array<int> $ids): array<int, Entity>
     public validateField(key-of<self::ALLOWED_FIELDS> $field, value-of<self::ALLOWED_VALUES> $value): bool
-    
+
     public const ALLOWED_FIELDS = [
         'name' => true,
         'email' => true,
         'status' => true
     ];
-    
+
     public const ALLOWED_VALUES = [
         'active',
         'inactive',
@@ -589,7 +589,7 @@ Define public APIs through PHPDoc when using magic methods:
 ```php
 /**
  * @property-read int $id
- * @property string $name  
+ * @property string $name
  * @method static self create(array $data)
  */
 class Model {
@@ -639,9 +639,9 @@ Traits are fully supported and clearly displayed:
 ```php
 trait Timestampable {
     use LoggerAwareTrait; // Traits can use other traits
-    
+
     private ?DateTime $createdAt = null;
-    
+
     public function touch(): void {
         $this->createdAt = new DateTime();
     }
@@ -720,7 +720,7 @@ distillFile("src/Auth/AuthManager.php")
 >   + authenticate(string $username, string $password): ?User
 >   + createSession(User $user): Session
 >   + validateToken(string $token): bool
->   
+>
 > User:
 >   @property-read int $id
 >   @property string $email
@@ -752,7 +752,7 @@ distillFile("src/Auth/AuthManager.php")
 # Extract Laravel models structure
 aid app/Models --format text --implementation=0 > models-api.txt
 
-# Symfony entities with full details  
+# Symfony entities with full details
 aid src/Entity --private=1 --protected=1 > entities-full.txt
 
 # Controllers public API only
@@ -802,7 +802,7 @@ aid src/Controller --implementation=0 > controllers-api.txt
    enum Status: string {
        case ACTIVE = 'active';
    }
-   
+
    // Use match expressions with enums
    return match($status) {
        Status::ACTIVE => 'Running',

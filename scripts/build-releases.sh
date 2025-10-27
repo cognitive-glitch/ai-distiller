@@ -49,12 +49,12 @@ build_platform() {
     local CC=$4
     local BINARY_NAME="aid$EXT"
     local TEMP_OUTPUT="$BUILD_DIR/temp-$GOOS-$GOARCH/aid$EXT"
-    
+
     echo -e "${YELLOW}Building for $GOOS/$GOARCH...${NC}"
-    
+
     # Create temp directory for this platform
     mkdir -p "$BUILD_DIR/temp-$GOOS-$GOARCH"
-    
+
     if [ -z "$CC" ]; then
         # Native build
         CGO_ENABLED=1 GOOS=$GOOS GOARCH=$GOARCH go build -tags "cgo" -ldflags "$LDFLAGS" -o "$TEMP_OUTPUT" ./cmd/aid
@@ -62,10 +62,10 @@ build_platform() {
         # Cross-compile with specific compiler
         CC=$CC CGO_ENABLED=1 GOOS=$GOOS GOARCH=$GOARCH go build -tags "cgo" -ldflags "$LDFLAGS" -o "$TEMP_OUTPUT" ./cmd/aid
     fi
-    
+
     if [ $? -eq 0 ]; then
         echo -e "${GREEN}✓ Built: $BINARY_NAME for $GOOS/$GOARCH${NC}"
-        
+
         # Create archive
         cd "$BUILD_DIR/temp-$GOOS-$GOARCH"
         if [ "$GOOS" = "windows" ]; then
@@ -78,7 +78,7 @@ build_platform() {
             echo -e "${GREEN}✓ Created: aid-$GOOS-$GOARCH-v$VERSION.tar.gz${NC}"
         fi
         cd - > /dev/null
-        
+
         # Clean up temp directory
         rm -rf "$BUILD_DIR/temp-$GOOS-$GOARCH"
     else
@@ -155,7 +155,7 @@ if ls $BUILD_DIR/*.tar.gz $BUILD_DIR/*.zip 2>/dev/null >/dev/null; then
     echo "Created archives:"
     ls -lh $BUILD_DIR/*.tar.gz $BUILD_DIR/*.zip 2>/dev/null | awk '{print "  " $9 " (" $5 ")"}'
     echo ""
-    
+
     # Generate checksums
     echo "Generating checksums..."
     cd $BUILD_DIR

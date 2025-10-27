@@ -16,7 +16,7 @@ type DistilledField struct {
     Type       *TypeRef   `json:"type,omitempty"`
     Value      string     `json:"value,omitempty"`
     Decorators []string   `json:"decorators,omitempty"`
-    
+
     // NEW FIELDS:
     Origin      FieldOrigin      `json:"origin,omitempty"`      // 'code' | 'docblock'
     AccessMode  FieldAccessMode  `json:"access_mode,omitempty"` // 'read-write' | 'read-only' | 'write-only'

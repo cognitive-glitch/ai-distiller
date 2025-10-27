@@ -5,7 +5,7 @@
 (function_definition
   name: (identifier) @function.name) @function.definition
 
-;; Class definitions  
+;; Class definitions
 (class_definition
   name: (identifier) @class.name) @class.definition
 
@@ -30,7 +30,7 @@
     (function_definition
       name: (identifier) @method.name) @method.definition))
 
-;; Decorated methods within classes  
+;; Decorated methods within classes
 (class_definition
   body: (block
     (decorated_definition

@@ -29,7 +29,7 @@ func main() {
 			"../test-data/functional-tests/test_python_complex.py",
 			"../../test-data/functional-tests/test_python_complex.py",
 		}
-		
+
 		found := false
 		for _, alt := range alternatives {
 			if _, err := os.Stat(alt); err == nil {
@@ -38,7 +38,7 @@ func main() {
 				break
 			}
 		}
-		
+
 		if !found {
 			fmt.Printf("Test file not found: %s\n", testFile)
 			fmt.Println("Usage: go run ./cmd/semantic-test [python_file_path]")
@@ -158,7 +158,7 @@ func displayAnalysisResults(analysis *semantic.FileAnalysis) {
 				fmt.Printf("  ... and %d more calls\n", len(analysis.CallSites)-10)
 				break
 			}
-			fmt.Printf("  %s calls %s at line %d\n", 
+			fmt.Printf("  %s calls %s at line %d\n",
 				call.CallerID, call.CalleeName, call.Location.StartLine)
 		}
 		fmt.Println()
@@ -168,39 +168,39 @@ func displayAnalysisResults(analysis *semantic.FileAnalysis) {
 // displaySymbol shows detailed information about a symbol
 func displaySymbol(symbol *semantic.Symbol) {
 	fmt.Printf("  %s", symbol.Name)
-	
+
 	if symbol.Scope != "" {
 		fmt.Printf(" (%s)", symbol.Scope)
 	}
-	
+
 	if symbol.Signature != "" {
 		fmt.Printf(" - %s", symbol.Signature)
 	}
-	
+
 	fmt.Printf(" [%s]", symbol.Visibility)
-	
+
 	if symbol.IsStatic {
 		fmt.Printf(" [static]")
 	}
-	
+
 	if symbol.IsAbstract {
 		fmt.Printf(" [abstract]")
 	}
-	
+
 	if len(symbol.Metadata.Decorators) > 0 {
 		fmt.Printf(" @%s", strings.Join(symbol.Metadata.Decorators, " @"))
 	}
-	
+
 	if len(symbol.Metadata.Extends) > 0 {
 		fmt.Printf(" extends %s", strings.Join(symbol.Metadata.Extends, ", "))
 	}
-	
+
 	fmt.Printf(" at line %d", symbol.Location.StartLine)
-	
+
 	if symbol.Metadata.LineCount > 0 {
 		fmt.Printf(" (%d lines)", symbol.Metadata.LineCount)
 	}
-	
+
 	fmt.Println()
 }
 

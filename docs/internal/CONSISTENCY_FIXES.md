@@ -7,7 +7,7 @@ This document summarizes the fixes applied to resolve inconsistencies and odditi
 Based on detailed analysis by o3 model, the following issues were found:
 
 ### 1. Directory Structure Inconsistencies
-- **Go Language**: Duplicate directories `01_basic` and `01_basic.go` 
+- **Go Language**: Duplicate directories `01_basic` and `01_basic.go`
 - **TypeScript**: Inconsistent numbering `4b_modern_decorators` vs `01_basic`
 - **All Languages**: Chaotic duplicated directories (25+ extra directories in TypeScript)
 
@@ -63,7 +63,7 @@ simpleAliases := map[string][]string{
 ```
 testdata/
 ├── go/                    # 5 scenarios: 01_basic → 05_advanced
-├── java/                  # 5 scenarios: 01_basic → 05_modern_java  
+├── java/                  # 5 scenarios: 01_basic → 05_modern_java
 ├── python/                # 6 scenarios: 01_basic → 05_very_complex + example_new_format
 └── typescript/            # 6 scenarios: 01_basic → 05_very_complex + 04b_modern_decorators
 
@@ -80,7 +80,7 @@ Each scenario:
 ## Commands Available
 
 ```bash
-make test-integration      # Run all 138 tests (~2min)  
+make test-integration      # Run all 138 tests (~2min)
 make test-update          # Regenerate expected files
 make test-audit           # Check structure consistency
 ```

@@ -54,7 +54,7 @@ func NewWithGoRun(testDataDir, projectRoot string) *Runner {
 func parseParametersFromFilename(filename string) []string {
 	// Remove the .txt extension
 	name := strings.TrimSuffix(filename, ".txt")
-	
+
 	// Handle simple aliases first (legacy naming support)
 	simpleAliases := map[string][]string{
 		"default":        {},
@@ -70,22 +70,22 @@ func parseParametersFromFilename(filename string) []string {
 		// PHP special case
 		"ideal_psr19_output": {"--private=0", "--protected=0", "--internal=0", "--implementation=0"},
 	}
-	
+
 	if flags, exists := simpleAliases[name]; exists {
 		// Sort flags for consistency
 		sort.Strings(flags)
 		return flags
 	}
-	
+
 	// Parse parameters from filename
 	// The filename can be in formats like:
 	// - "default.txt" -> no flags
 	// - "implementation=1.txt" -> single parameter
 	// - "private=0,protected=0.txt" -> comma-separated parameters
 	// - "private=1,protected=1,internal=1,implementation=0.txt" -> multiple parameters
-	
+
 	var flags []string
-	
+
 	// Handle comma-separated parameters
 	if strings.Contains(name, ",") {
 		// Split by comma first
@@ -101,7 +101,7 @@ func parseParametersFromFilename(filename string) []string {
 		flags = append(flags, "--"+name)
 	}
 	// else: no parameters (e.g., "default")
-	
+
 	// Sort flags for consistency with flagsToFilename
 	sort.Strings(flags)
 	return flags
@@ -111,41 +111,41 @@ func parseParametersFromFilename(filename string) []string {
 // DiscoverTests walks the testdata directory and finds all test cases
 func (r *Runner) DiscoverTests() ([]TestCase, error) {
 	var tests []TestCase
-	
+
 	// Walk through each language directory
 	entries, err := os.ReadDir(r.testDataDir)
 	if err != nil {
 		return nil, fmt.Errorf("reading testdata dir: %w", err)
 	}
-	
+
 	for _, langEntry := range entries {
 		if !langEntry.IsDir() {
 			continue
 		}
-		
+
 		language := langEntry.Name()
 		langDir := filepath.Join(r.testDataDir, language)
-		
+
 		// Walk through each scenario directory
 		scenarios, err := os.ReadDir(langDir)
 		if err != nil {
 			return nil, fmt.Errorf("reading language dir %s: %w", language, err)
 		}
-		
+
 		for _, scenarioEntry := range scenarios {
 			if !scenarioEntry.IsDir() {
 				continue
 			}
-			
+
 			scenarioName := scenarioEntry.Name()
 			scenarioDir := filepath.Join(langDir, scenarioName)
-			
+
 			// Find source file
 			sourceFile, err := findSourceFile(scenarioDir, language)
 			if err != nil {
 				continue // Skip scenarios without source files
 			}
-			
+
 			// Find expected files - require expected/ directory
 			expectedDir := filepath.Join(scenarioDir, "expected")
 			if _, err := os.Stat(expectedDir); os.IsNotExist(err) {
@@ -165,18 +165,18 @@ func (r *Runner) DiscoverTests() ([]TestCase, error) {
 				}
 				continue // Skip scenarios without expected directory unless in update mode
 			}
-			
+
 			// Read all expected files
 			expectedFiles, err := os.ReadDir(expectedDir)
 			if err != nil {
 				return nil, fmt.Errorf("reading expected dir for %s/%s: %w", language, scenarioName, err)
 			}
-			
+
 			for _, expFile := range expectedFiles {
 				if !strings.HasSuffix(expFile.Name(), ".txt") {
 					continue
 				}
-				
+
 				// Use new parameter-based parsing
 				flags := parseParametersFromFilename(expFile.Name())
 				tests = append(tests, TestCase{
@@ -189,7 +189,7 @@ func (r *Runner) DiscoverTests() ([]TestCase, error) {
 			}
 		}
 	}
-	
+
 	return tests, nil
 }
 
@@ -209,12 +209,12 @@ func findSourceFile(dir, language string) (string, error) {
 		"php":        {".php"},
 		"ruby":       {".rb"},
 	}
-	
+
 	exts, ok := extensions[language]
 	if !ok {
 		return "", fmt.Errorf("unknown language: %s", language)
 	}
-	
+
 	// Look for source.{ext} first
 	for _, ext := range exts {
 		sourcePath := filepath.Join(dir, "source"+ext)
@@ -222,25 +222,25 @@ func findSourceFile(dir, language string) (string, error) {
 			return sourcePath, nil
 		}
 	}
-	
+
 	// If not found, look for any file with the right extension
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		return "", err
 	}
-	
+
 	for _, entry := range entries {
 		if entry.IsDir() {
 			continue
 		}
-		
+
 		for _, ext := range exts {
 			if strings.HasSuffix(entry.Name(), ext) {
 				return filepath.Join(dir, entry.Name()), nil
 			}
 		}
 	}
-	
+
 	return "", fmt.Errorf("no source file found for language %s in %s", language, dir)
 }
 
@@ -248,14 +248,14 @@ func findSourceFile(dir, language string) (string, error) {
 func (r *Runner) RunTest(tc TestCase) error {
 	// Build command
 	var cmd *exec.Cmd
-	
+
 	// Make source file path relative to testdata directory
 	relSourceFile, err := filepath.Rel(r.testDataDir, tc.SourceFile)
 	if err != nil {
 		// If we can't make it relative, just use the basename
 		relSourceFile = filepath.Base(tc.SourceFile)
 	}
-	
+
 	if r.useGoRun {
 		// Use go run mode
 		// Calculate relative path from testdata to project root
@@ -267,36 +267,36 @@ func (r *Runner) RunTest(tc TestCase) error {
 		goArgs = append(goArgs, relSourceFile)
 		goArgs = append(goArgs, tc.Flags...)
 		goArgs = append(goArgs, "--format", "text", "--stdout", "--summary-type=off")
-		
+
 		cmd = exec.Command("go", goArgs...)
 		cmd.Dir = r.testDataDir
 	} else {
 		// Use binary mode
 		args := append([]string{relSourceFile}, tc.Flags...)
 		args = append(args, "--format", "text", "--stdout", "--summary-type=off")
-		
+
 		cmd = exec.Command(r.aidBinary, args...)
 		cmd.Dir = r.testDataDir
 	}
-	
+
 	// Capture output
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
-	
+
 	// Run the command
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("running aid: %w\nstderr: %s", err, stderr.String())
 	}
-	
+
 	// Get actual output
 	actual := stdout.Bytes()
-	
+
 	if r.updateMode {
 		// Update expected file
 		return os.WriteFile(tc.ExpectedFile, actual, 0644)
 	}
-	
+
 	// Read expected output
 	expected, err := os.ReadFile(tc.ExpectedFile)
 	if err != nil {
@@ -306,12 +306,12 @@ func (r *Runner) RunTest(tc TestCase) error {
 		}
 		return fmt.Errorf("reading expected file: %w", err)
 	}
-	
+
 	// Compare outputs
 	if !bytes.Equal(actual, expected) {
 		return fmt.Errorf("output mismatch:\nEXPECTED:\n%s\nACTUAL:\n%s", expected, actual)
 	}
-	
+
 	return nil
 }
 
@@ -321,12 +321,12 @@ func (r *Runner) RunTests(t *testing.T) {
 	if err != nil {
 		t.Fatalf("discovering tests: %v", err)
 	}
-	
+
 	if len(tests) == 0 {
 		t.Log("No tests discovered")
 		return
 	}
-	
+
 	for _, tc := range tests {
 		testName := fmt.Sprintf("%s/%s/%s", tc.Language, tc.ScenarioName, filepath.Base(tc.ExpectedFile))
 		t.Run(testName, func(t *testing.T) {
@@ -334,7 +334,7 @@ func (r *Runner) RunTests(t *testing.T) {
 			// if tc.Language == "swift" && tc.ScenarioName == "01_basic" && filepath.Base(tc.ExpectedFile) == "imports=0.txt" {
 			//	t.Skip("Skipping Swift empty output test - needs fix for empty file handling")
 			// }
-			
+
 			if err := r.RunTest(tc); err != nil {
 				t.Errorf("test failed: %v", err)
 			}
@@ -349,33 +349,33 @@ func (r *Runner) GenerateExpectedFiles(language, scenario string, flagSets [][]s
 	if err != nil {
 		return fmt.Errorf("finding source file: %w", err)
 	}
-	
+
 	expectedDir := filepath.Join(scenarioDir, "expected")
 	if err := os.MkdirAll(expectedDir, 0755); err != nil {
 		return fmt.Errorf("creating expected dir: %w", err)
 	}
-	
+
 	for _, flags := range flagSets {
 		// Determine filename from flags
 		filename := r.flagsToFilename(flags)
-		
+
 		// Run aid with these flags
 		args := append([]string{sourceFile}, flags...)
 		args = append(args, "--format", "text", "--stdout", "--summary-type=off")
-		
+
 		cmd := exec.Command(r.aidBinary, args...)
 		output, err := cmd.Output()
 		if err != nil {
 			return fmt.Errorf("running aid with flags %v: %w", flags, err)
 		}
-		
+
 		// Write expected file
 		expectedFile := filepath.Join(expectedDir, filename)
 		if err := os.WriteFile(expectedFile, output, 0644); err != nil {
 			return fmt.Errorf("writing expected file %s: %w", expectedFile, err)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -384,7 +384,7 @@ func (r *Runner) flagsToFilename(flags []string) string {
 	if len(flags) == 0 {
 		return "default.expected"
 	}
-	
+
 	// Convert flags to parameter format
 	var params []string
 	for _, flag := range flags {
@@ -392,10 +392,10 @@ func (r *Runner) flagsToFilename(flags []string) string {
 		param := strings.TrimPrefix(flag, "--")
 		params = append(params, param)
 	}
-	
+
 	// Sort for consistent naming
 	sort.Strings(params)
-	
+
 	return "test." + strings.Join(params, ".") + ".expected"
 }
 
@@ -405,18 +405,18 @@ func equalFlags(a, b []string) bool {
 	if len(a) != len(b) {
 		return false
 	}
-	
+
 	aMap := make(map[string]bool)
 	for _, flag := range a {
 		aMap[flag] = true
 	}
-	
+
 	for _, flag := range b {
 		if !aMap[flag] {
 			return false
 		}
 	}
-	
+
 	return true
 }
 
@@ -425,12 +425,12 @@ func containsAll(flags, subset []string) bool {
 	for _, flag := range flags {
 		flagMap[flag] = true
 	}
-	
+
 	for _, flag := range subset {
 		if !flagMap[flag] {
 			return false
 		}
 	}
-	
+
 	return true
 }

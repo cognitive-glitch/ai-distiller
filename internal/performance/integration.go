@@ -41,17 +41,17 @@ type PerformanceConfig struct {
 	// Concurrent processing settings
 	MaxWorkers         int
 	BufferSize         int
-	
+
 	// Streaming settings
 	ChunkSize          int
 	StreamBufferSize   int
 	MaxMemoryMB        int64
-	
+
 	// Cache settings
 	CacheEnabled       bool
 	CacheMaxSize       int64
 	CacheMaxAge        time.Duration
-	
+
 	// Thresholds for mode selection
 	LargeFileThresholdMB   int64  // Files larger than this use streaming
 	ManyFilesThreshold     int    // File counts larger than this use concurrent
@@ -78,7 +78,7 @@ func DefaultPerformanceConfig() *PerformanceConfig {
 // NewPerformanceProcessor creates a new performance-optimized processor
 func NewPerformanceProcessor(cacheDir string) *PerformanceProcessor {
 	config := DefaultPerformanceConfig()
-	
+
 	return &PerformanceProcessor{
 		standardProcessor:   processor.New(),
 		concurrentProcessor: NewConcurrentProcessor().WithWorkers(config.MaxWorkers).WithBufferSize(config.BufferSize),
@@ -92,16 +92,16 @@ func NewPerformanceProcessor(cacheDir string) *PerformanceProcessor {
 // WithConfig sets custom performance configuration
 func (p *PerformanceProcessor) WithConfig(config *PerformanceConfig) *PerformanceProcessor {
 	p.config = config
-	
+
 	// Update sub-processors
 	p.concurrentProcessor = p.concurrentProcessor.WithWorkers(config.MaxWorkers).WithBufferSize(config.BufferSize)
 	p.streamingProcessor = p.streamingProcessor.WithChunkSize(config.ChunkSize).WithBufferSize(config.StreamBufferSize).WithMemoryLimit(config.MaxMemoryMB)
-	
+
 	if config.CacheEnabled {
 		p.cachedProcessor = NewCachedProcessor(p.cacheDir)
 		p.cachedProcessor.GetCache().WithMaxSize(config.CacheMaxSize).WithMaxAge(config.CacheMaxAge)
 	}
-	
+
 	return p
 }
 
@@ -125,30 +125,30 @@ func (p *PerformanceProcessor) ProcessFileWithMode(
 	switch mode {
 	case ModeStandard:
 		return p.standardProcessor.ProcessFile(filePath, opts)
-		
+
 	case ModeCached:
 		if p.config.CacheEnabled {
 			return p.cachedProcessor.ProcessFile(filePath, opts)
 		}
 		return p.standardProcessor.ProcessFile(filePath, opts)
-		
+
 	case ModeStreaming:
 		result, err := p.streamingProcessor.ProcessLargeFile(ctx, filePath, opts)
 		if err != nil {
 			return nil, err
 		}
 		return result.File, nil
-		
+
 	case ModeConcurrent:
 		// For single files, concurrent mode falls back to cached/standard
 		if p.config.CacheEnabled {
 			return p.cachedProcessor.ProcessFile(filePath, opts)
 		}
 		return p.standardProcessor.ProcessFile(filePath, opts)
-		
+
 	case ModeOptimal:
 		return p.ProcessFile(ctx, filePath, opts)
-		
+
 	default:
 		return p.standardProcessor.ProcessFile(filePath, opts)
 	}
@@ -174,16 +174,16 @@ func (p *PerformanceProcessor) ProcessFilesWithMode(
 	switch mode {
 	case ModeStandard:
 		return p.processFilesStandard(ctx, filePaths, opts)
-		
+
 	case ModeConcurrent, ModeOptimal:
 		return p.concurrentProcessor.ProcessFiles(ctx, filePaths, opts)
-		
+
 	case ModeCached:
 		return p.processFilesCached(ctx, filePaths, opts)
-		
+
 	case ModeStreaming:
 		return p.processFilesStreaming(ctx, filePaths, opts)
-		
+
 	default:
 		return p.concurrentProcessor.ProcessFiles(ctx, filePaths, opts)
 	}
@@ -320,7 +320,7 @@ func (p *PerformanceProcessor) processFilesStreaming(
 		// Check file size
 		if info, err := os.Stat(filePath); err == nil {
 			fileSizeMB := info.Size() / 1024 / 1024
-			
+
 			if fileSizeMB >= p.config.LargeFileThresholdMB {
 				// Use streaming for large files
 				result, err := p.streamingProcessor.ProcessLargeFile(ctx, filePath, opts)

@@ -31,7 +31,7 @@ class QueryBuilder<T : Any>(private val entityClass: KClass<T>) {
     private val orderByClauses = mutableListOf<OrderBy<T>>()
     private var limitValue: Int? = null
     private var offsetValue: Int? = null
-    
+
     /**
      * Add a WHERE condition using DSL
      */
@@ -40,28 +40,28 @@ class QueryBuilder<T : Any>(private val entityClass: KClass<T>) {
         builder.condition()
         conditions.addAll(builder.getConditions())
     }
-    
+
     /**
      * Add ORDER BY clause
      */
     fun orderBy(column: KProperty<*>, direction: SortDirection = SortDirection.ASC) {
         orderByClauses.add(OrderBy(column.name, direction))
     }
-    
+
     /**
      * Set LIMIT
      */
     fun limit(count: Int) {
         limitValue = count
     }
-    
+
     /**
      * Set OFFSET
      */
     fun offset(count: Int) {
         offsetValue = count
     }
-    
+
     /**
      * Build the final query
      */
@@ -76,42 +76,42 @@ class QueryBuilder<T : Any>(private val entityClass: KClass<T>) {
 @DatabaseDsl
 class ConditionBuilder<T : Any> {
     private val conditions = mutableListOf<Condition<T>>()
-    
+
     /**
      * Equals condition
      */
     infix fun <V> KProperty<V>.eq(value: V) {
         conditions.add(Condition.Equals(this.name, value))
     }
-    
+
     /**
      * Not equals condition
      */
     infix fun <V> KProperty<V>.ne(value: V) {
         conditions.add(Condition.NotEquals(this.name, value))
     }
-    
+
     /**
      * Greater than condition
      */
     infix fun <V : Comparable<V>> KProperty<V>.gt(value: V) {
         conditions.add(Condition.GreaterThan(this.name, value))
     }
-    
+
     /**
      * Less than condition
      */
     infix fun <V : Comparable<V>> KProperty<V>.lt(value: V) {
         conditions.add(Condition.LessThan(this.name, value))
     }
-    
+
     /**
      * IN condition
      */
     infix fun <V> KProperty<V>.isIn(values: Collection<V>) {
         conditions.add(Condition.In(this.name, values))
     }
-    
+
     /**
      * AND operation
      */
@@ -120,7 +120,7 @@ class ConditionBuilder<T : Any> {
         otherBuilder.other()
         conditions.add(Condition.And(this.conditions.toList(), otherBuilder.conditions))
     }
-    
+
     /**
      * OR operation
      */
@@ -129,7 +129,7 @@ class ConditionBuilder<T : Any> {
         otherBuilder.other()
         conditions.add(Condition.Or(this.conditions.toList(), otherBuilder.conditions))
     }
-    
+
     internal fun getConditions(): List<Condition<T>> = conditions
 }
 
@@ -196,19 +196,19 @@ data class Product(
 class ProductRepository : AdvancedRepository<Product> {
     private val products = mutableListOf<Product>()
     private val _productUpdates = MutableSharedFlow<ProductUpdate>()
-    
+
     /**
      * Product updates flow
      */
     val productUpdates: SharedFlow<ProductUpdate> = _productUpdates.asSharedFlow()
-    
+
     init {
         // Initialize with sample data
         runBlocking {
             addSampleProducts()
         }
     }
-    
+
     override suspend fun findByQuery(query: Query<Product>): Flow<Product> = flow {
         products.asSequence()
             .filter { product -> evaluateConditions(product, query.conditions) }
@@ -221,13 +221,13 @@ class ProductRepository : AdvancedRepository<Product> {
             }
             .forEach { emit(it) }
     }
-    
+
     override suspend fun executeQuery(builder: QueryBuilder<Product>.() -> Unit): Flow<Product> {
         val queryBuilder = QueryBuilder(Product::class)
         queryBuilder.builder()
         return findByQuery(queryBuilder.build())
     }
-    
+
     /**
      * Add product with real-time updates
      */
@@ -235,7 +235,7 @@ class ProductRepository : AdvancedRepository<Product> {
         products.add(product)
         _productUpdates.emit(ProductUpdate.Added(product))
     }
-    
+
     /**
      * Update product with optimistic locking simulation
      */
@@ -251,14 +251,14 @@ class ProductRepository : AdvancedRepository<Product> {
             null
         }
     }
-    
+
     /**
      * Private method to evaluate query conditions
      */
     private fun evaluateConditions(product: Product, conditions: List<Condition<Product>>): Boolean {
         return conditions.all { condition -> evaluateCondition(product, condition) }
     }
-    
+
     /**
      * Private method to evaluate single condition
      */
@@ -275,13 +275,13 @@ class ProductRepository : AdvancedRepository<Product> {
                 value?.compareTo(condition.value) ?: 0 < 0
             }
             is Condition.In -> condition.values.contains(getPropertyValue(product, condition.column))
-            is Condition.And -> evaluateConditions(product, condition.left) && 
+            is Condition.And -> evaluateConditions(product, condition.left) &&
                               evaluateConditions(product, condition.right)
-            is Condition.Or -> evaluateConditions(product, condition.left) || 
+            is Condition.Or -> evaluateConditions(product, condition.left) ||
                              evaluateConditions(product, condition.right)
         }
     }
-    
+
     /**
      * Get property value using reflection
      */
@@ -296,7 +296,7 @@ class ProductRepository : AdvancedRepository<Product> {
             else -> null
         }
     }
-    
+
     /**
      * Compare products by order by clauses
      */
@@ -304,7 +304,7 @@ class ProductRepository : AdvancedRepository<Product> {
         for (order in orderBy) {
             val aValue = getPropertyValue(a, order.column) as? Comparable<Any>
             val bValue = getPropertyValue(b, order.column) as? Comparable<Any>
-            
+
             if (aValue != null && bValue != null) {
                 val comparison = aValue.compareTo(bValue)
                 if (comparison != 0) {
@@ -314,7 +314,7 @@ class ProductRepository : AdvancedRepository<Product> {
         }
         return 0
     }
-    
+
     /**
      * Add sample products for testing
      */
@@ -326,7 +326,7 @@ class ProductRepository : AdvancedRepository<Product> {
             Product("4", "Chair", 149.99, "Furniture", false, 4.0),
             Product("5", "Desk", 299.99, "Furniture", true, 4.3)
         )
-        
+
         sampleProducts.forEach { addProduct(it) }
     }
 }
@@ -348,7 +348,7 @@ class ProductNotificationService(
 ) {
     private val notificationChannel = Channel<Notification>(Channel.UNLIMITED)
     private val subscriptions = mutableMapOf<String, Channel<Notification>>()
-    
+
     /**
      * Start the notification service
      */
@@ -368,7 +368,7 @@ class ProductNotificationService(
                 notificationChannel.send(notification)
             }
         }
-        
+
         // Distribute notifications to subscribers
         launch {
             for (notification in notificationChannel) {
@@ -378,7 +378,7 @@ class ProductNotificationService(
             }
         }
     }
-    
+
     /**
      * Subscribe to notifications
      */
@@ -387,14 +387,14 @@ class ProductNotificationService(
         subscriptions[subscriberId] = channel
         return channel
     }
-    
+
     /**
      * Unsubscribe from notifications
      */
     suspend fun unsubscribe(subscriberId: String) {
         subscriptions.remove(subscriberId)?.close()
     }
-    
+
     /**
      * Send custom notification
      */
@@ -421,10 +421,10 @@ class CachedProperty<T>(
     private val validator: (T) -> Boolean = { true },
     private val ttl: Duration = 60.seconds
 ) : ReadWriteProperty<Any?, T> {
-    
+
     private var value: T = initialValue
     private var lastUpdated: Long = System.currentTimeMillis()
-    
+
     override fun getValue(thisRef: Any?, property: KProperty<*>): T {
         val now = System.currentTimeMillis()
         if (now - lastUpdated > ttl.inWholeMilliseconds) {
@@ -434,7 +434,7 @@ class CachedProperty<T>(
         }
         return value
     }
-    
+
     override fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
         if (validator(value)) {
             this.value = value
@@ -451,11 +451,11 @@ class CachedProperty<T>(
 class AsyncLazy<T>(
     private val initializer: suspend () -> T
 ) : ReadOnlyProperty<Any?, Deferred<T>> {
-    
+
     private val deferred: Deferred<T> by lazy {
         GlobalScope.async { initializer() }
     }
-    
+
     override fun getValue(thisRef: Any?, property: KProperty<*>): Deferred<T> = deferred
 }
 
@@ -471,7 +471,7 @@ class ServiceConfiguration {
         validator = { it > 0 && it <= 1000 },
         ttl = 30.seconds
     )
-    
+
     /**
      * Async lazy property
      */
@@ -479,7 +479,7 @@ class ServiceConfiguration {
         delay(1000) // Simulate connection establishment
         "Connected to database"
     }
-    
+
     /**
      * Observable property with custom setter
      */
@@ -497,7 +497,7 @@ class DataProcessingOrchestrator {
     private val inputChannel = Channel<DataItem>(Channel.UNLIMITED)
     private val processingResults = Channel<ProcessingResult>(Channel.UNLIMITED)
     private val errorChannel = Channel<ProcessingError>(Channel.UNLIMITED)
-    
+
     /**
      * Start processing with multiple workers and error handling
      */
@@ -508,7 +508,7 @@ class DataProcessingOrchestrator {
                 processData(workerId)
             }
         }
-        
+
         // Error handling coroutine
         launch {
             for (error in errorChannel) {
@@ -516,7 +516,7 @@ class DataProcessingOrchestrator {
                 // Could implement retry logic here
             }
         }
-        
+
         // Results aggregation
         launch {
             val results = mutableListOf<ProcessingResult>()
@@ -529,7 +529,7 @@ class DataProcessingOrchestrator {
             }
         }
     }
-    
+
     /**
      * Process data with select statement for timeouts
      */
@@ -544,7 +544,7 @@ class DataProcessingOrchestrator {
                         errorChannel.send(ProcessingError(workerId, e.message ?: "Unknown error"))
                     }
                 }
-                
+
                 // Timeout after 5 seconds of inactivity
                 onTimeout(5000) {
                     println("Worker $workerId timed out, taking a break")
@@ -553,14 +553,14 @@ class DataProcessingOrchestrator {
             }
         }
     }
-    
+
     /**
      * Add item for processing
      */
     suspend fun addItem(item: DataItem) {
         inputChannel.send(item)
     }
-    
+
     /**
      * Simulate item processing
      */
@@ -568,7 +568,7 @@ class DataProcessingOrchestrator {
         delay(kotlin.random.Random.nextLong(100, 500)) // Simulate processing time
         return "Processed: ${item.data}"
     }
-    
+
     /**
      * Data classes for processing
      */
@@ -583,7 +583,7 @@ class DataProcessingOrchestrator {
 fun main() = runBlocking {
     // DSL Query example
     val repository = ProductRepository()
-    
+
     println("=== DSL Query Example ===")
     repository.executeQuery {
         where {
@@ -596,14 +596,14 @@ fun main() = runBlocking {
     }.collect { product ->
         println("Found: ${product.name} - $${product.price}")
     }
-    
+
     // Notification service example
     println("\n=== Notification Service Example ===")
     val notificationService = ProductNotificationService(repository)
     val serviceJob = notificationService.start()
-    
+
     val subscription = notificationService.subscribe("user1")
-    
+
     // Listen to notifications in background
     launch {
         for (notification in subscription) {
@@ -615,43 +615,43 @@ fun main() = runBlocking {
             }
         }
     }
-    
+
     // Add a new product to trigger notification
     delay(1000)
     repository.addProduct(Product("6", "Tablet", 399.99, "Electronics", true, 4.1))
-    
+
     // Update a product to trigger notification
     delay(1000)
     repository.updateProduct("1") { it.copy(price = 899.99) }
-    
+
     delay(2000)
     notificationService.unsubscribe("user1")
-    
+
     // Configuration with advanced delegation
     println("\n=== Advanced Property Delegation ===")
     val config = ServiceConfiguration()
     println("Max requests: ${config.maxConcurrentRequests}")
-    
+
     config.maxConcurrentRequests = 200
     println("Updated max requests: ${config.maxConcurrentRequests}")
-    
+
     // Access async property
     val connection = config.databaseConnection.await()
     println("Database: $connection")
-    
+
     // Data processing orchestrator
     println("\n=== Data Processing Orchestrator ===")
     val orchestrator = DataProcessingOrchestrator()
     val processingJob = orchestrator.startProcessing(2)
-    
+
     // Add some items for processing
     repeat(20) { i ->
         orchestrator.addItem(DataProcessingOrchestrator.DataItem("item_$i", "data_$i"))
         delay(50)
     }
-    
+
     delay(3000)
-    
+
     // Cleanup
     serviceJob.cancelAndJoin()
     processingJob.cancelAndJoin()

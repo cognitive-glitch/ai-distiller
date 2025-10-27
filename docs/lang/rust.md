@@ -68,11 +68,11 @@ impl<'a> Parser<'a> {
     pub fn new(input: &'a str) -> Self {
         Self { input, position: 0 }
     }
-    
+
     pub fn parse(&mut self) -> Result<Ast, ParseError> {
         // implementation
     }
-    
+
     fn consume(&mut self, expected: &str) -> Option<&'a str> {
         // implementation
     }
@@ -93,9 +93,9 @@ impl<'a> Parser<'a> {
 // Input
 pub trait Serialize: Sized {
     type Error: std::error::Error;
-    
+
     fn serialize<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error>;
-    
+
     fn to_bytes(&self) -> Result<Vec<u8>, Self::Error> {
         let mut buf = Vec::new();
         self.serialize(&mut buf)?;
@@ -105,7 +105,7 @@ pub trait Serialize: Sized {
 
 impl<T: Display> Serialize for T {
     type Error = std::io::Error;
-    
+
     fn serialize<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
         write!(writer, "{}", self)
     }
@@ -224,8 +224,8 @@ mod internal {  // Private implementation details
 
 Input:
 ```rust
-pub struct Cache<K, V, S = RandomState> 
-where 
+pub struct Cache<K, V, S = RandomState>
+where
     K: Hash + Eq,
     V: Clone,
     S: BuildHasher,
@@ -246,18 +246,18 @@ where
             capacity,
         }
     }
-    
+
     pub fn get(&self, key: &K) -> Option<&V> {
         self.map.get(key)
     }
-    
+
     pub fn insert(&mut self, key: K, value: V) -> Option<V> {
         if self.map.len() >= self.capacity {
             self.evict_oldest();
         }
         self.map.insert(key, value)
     }
-    
+
     fn evict_oldest(&mut self) {
         // implementation
     }
@@ -297,7 +297,7 @@ where
 # Get public API surface
 aid src/ --private=0 --protected=0 --internal=0 --implementation=0
 
-# Include trait implementations  
+# Include trait implementations
 aid src/ --format text --output rust-api.txt
 ```
 

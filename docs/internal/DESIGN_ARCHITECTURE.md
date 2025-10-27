@@ -172,13 +172,13 @@ File/Stdout Output
 type LanguageProcessor interface {
     // Language returns the language identifier
     Language() string
-    
+
     // FileExtensions returns supported extensions
     FileExtensions() []string
-    
+
     // Parse converts source code to IR
     Parse(ctx context.Context, source []byte, filename string) (*ir.DistilledFile, error)
-    
+
     // WASMModule returns the embedded WASM module
     WASMModule() []byte
 }
@@ -190,7 +190,7 @@ type LanguageProcessor interface {
 type Formatter interface {
     // Format converts IR to output format
     Format(files []*ir.DistilledFile, options FormatterOptions) error
-    
+
     // FormatStream formats files as they arrive
     FormatStream(ctx context.Context, files <-chan *ir.DistilledFile, options FormatterOptions) error
 }

@@ -449,6 +449,7 @@ impl TextFormatter {
     }
 
     /// Format a type reference
+    #[allow(clippy::only_used_in_recursion)]
     fn format_type_ref(&self, type_ref: &TypeRef) -> String {
         let mut result = type_ref.name.clone();
 

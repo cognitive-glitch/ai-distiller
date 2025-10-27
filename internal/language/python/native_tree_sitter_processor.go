@@ -353,7 +353,7 @@ func (p *NativeTreeSitterProcessor) processFunction(node *sitter.Node, file *ir.
 			if int(startByte) < len(p.source) && int(endByte) <= len(p.source) {
 				fn.Implementation = string(p.source[startByte:endByte])
 			}
-			
+
 			// Also process the contents of the block recursively
 			// This allows us to extract field assignments like self.field = value
 			// We pass a special context that includes both the function and its parent (class)
@@ -622,7 +622,7 @@ func (p *NativeTreeSitterProcessor) processNodeWithClassContext(node *sitter.Nod
 	switch node.Type() {
 	case "assignment":
 		p.processAssignmentWithClassContext(node, file, function, classParent)
-	
+
 	case "expression_statement":
 		// Check for assignments within expression statements
 		if node.ChildCount() > 0 {
@@ -631,7 +631,7 @@ func (p *NativeTreeSitterProcessor) processNodeWithClassContext(node *sitter.Nod
 				p.processAssignmentWithClassContext(child, file, function, classParent)
 			}
 		}
-	
+
 	default:
 		// For other node types, recurse into children with the same context
 		for i := 0; i < int(node.ChildCount()); i++ {

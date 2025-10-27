@@ -16,7 +16,7 @@ use Iterator;
 
 /**
  * Class demonstrating magic properties and complex array shapes
- * 
+ *
  * @property-read int $id Auto-generated ID
  * @property string $name Mutable name property
  * @property-write array<string, mixed> $metadata Write-only metadata
@@ -30,7 +30,7 @@ class MagicModel
 
     /**
      * Magic getter
-     * 
+     *
      * @param string $key Property name
      * @return mixed
      */
@@ -41,7 +41,7 @@ class MagicModel
 
     /**
      * Magic setter
-     * 
+     *
      * @param string $key Property name
      * @param mixed $value Property value
      */
@@ -58,7 +58,7 @@ class ContainerService
 {
     /**
      * Create instance of a class
-     * 
+     *
      * @template T of object
      * @param class-string<T> $className Fully qualified class name
      * @param array<string, mixed> $parameters Constructor parameters
@@ -71,7 +71,7 @@ class ContainerService
 
     /**
      * Register a factory
-     * 
+     *
      * @param literal-string $id Service identifier (must be literal)
      * @param callable(): object $factory Factory function
      */
@@ -88,7 +88,7 @@ class ComplexDto
 {
     /**
      * Process complex payload
-     * 
+     *
      * @param array{
      *   id: int,
      *   name?: non-empty-string,
@@ -121,7 +121,7 @@ class ComplexDto
 
     /**
      * Get random status
-     * 
+     *
      * @return key-of<self::STATUS_MAP>
      */
     public function getRandomStatus(): string
@@ -132,7 +132,7 @@ class ComplexDto
 
     /**
      * Get status value
-     * 
+     *
      * @param key-of<self::STATUS_MAP> $status
      * @return value-of<self::STATUS_MAP>
      */
@@ -154,7 +154,7 @@ class TypedCollection
 
     /**
      * Get first item matching predicate
-     * 
+     *
      * @template T
      * @param callable(mixed): bool $predicate
      * @param callable(mixed): T $mapper Transform function
@@ -172,7 +172,7 @@ class TypedCollection
 
     /**
      * Map items to new type
-     * 
+     *
      * @template TKey of array-key
      * @template TValue
      * @param callable(mixed): array{0: TKey, 1: TValue} $mapper
@@ -206,7 +206,7 @@ class CallableTypes
 
     /**
      * Set validator
-     * 
+     *
      * @param callable(int, string=): bool $validator Validator function
      */
     public function setValidator(callable $validator): void
@@ -216,7 +216,7 @@ class CallableTypes
 
     /**
      * Execute with callback
-     * 
+     *
      * @param callable-string $callback Callback function name
      * @param array<int, mixed> $args Arguments
      * @return mixed
@@ -228,7 +228,7 @@ class CallableTypes
 
     /**
      * Create processor
-     * 
+     *
      * @return Closure(non-empty-list<int>): array{min: int, max: int, avg: float}
      */
     public function createProcessor(): Closure
@@ -263,7 +263,7 @@ class IntersectionHandler
 {
     /**
      * Process items with intersection types
-     * 
+     *
      * @param array<int, (Timestampable&Identifiable)> $items
      * @return list<array{id: int, timestamp: int}>
      */
@@ -281,7 +281,7 @@ class IntersectionHandler
 
     /**
      * Filter by type
-     * 
+     *
      * @param array<int, (Countable|Iterator)> $items Mixed types
      * @return array{countables: list<Countable>, iterators: list<Iterator>}
      */
@@ -289,7 +289,7 @@ class IntersectionHandler
     {
         $countables = [];
         $iterators = [];
-        
+
         foreach ($items as $item) {
             if ($item instanceof Countable) {
                 $countables[] = $item;
@@ -298,7 +298,7 @@ class IntersectionHandler
                 $iterators[] = $item;
             }
         }
-        
+
         return [
             'countables' => $countables,
             'iterators' => $iterators
@@ -321,7 +321,7 @@ class PermissionChecker
 {
     /**
      * Check permissions
-     * 
+     *
      * @param int-mask-of<Permission::*> $userPermissions
      * @param int-mask<1, 2, 4, 8> $requiredPermissions
      * @return bool
@@ -333,7 +333,7 @@ class PermissionChecker
 
     /**
      * Get all permissions
-     * 
+     *
      * @return list<value-of<Permission>>
      */
     public function getAllPermissionValues(): array
@@ -349,7 +349,7 @@ class ValidationService
 {
     /**
      * Validate non-empty string
-     * 
+     *
      * @psalm-assert-if-true non-empty-string $value
      * @psalm-assert-if-false null|'' $value
      */
@@ -360,7 +360,7 @@ class ValidationService
 
     /**
      * Parse or default
-     * 
+     *
      * @template T
      * @param string $json
      * @param T $default
@@ -375,7 +375,7 @@ class ValidationService
 
     /**
      * Ensure array
-     * 
+     *
      * @template T
      * @param T $value
      * @psalm-return (T is array ? T : array{0: T})
@@ -394,7 +394,7 @@ class GeneratorTypes
 {
     /**
      * Generate pairs
-     * 
+     *
      * @template TKey
      * @template TValue
      * @param array<TKey, TValue> $data
@@ -409,26 +409,26 @@ class GeneratorTypes
 
     /**
      * Bidirectional generator
-     * 
+     *
      * @return Generator<int, string, bool, int>
      */
     public function bidirectionalGenerator(): Generator
     {
         $count = 0;
         $continue = true;
-        
+
         while ($continue) {
             $continue = yield "Item $count";
             $count++;
         }
-        
+
         return $count;
     }
 }
 
 /**
  * Type aliases for reusability
- * 
+ *
  * @psalm-type UserId = positive-int
  * @psalm-type UserData = array{
  *   id: UserId,
@@ -442,7 +442,7 @@ class TypeAliasDemo
 {
     /**
      * Get user
-     * 
+     *
      * @param UserId $id
      * @return UserData|ErrorResponse
      */
@@ -451,7 +451,7 @@ class TypeAliasDemo
         if ($id <= 0) {
             return ['error' => true, 'message' => 'Invalid ID'];
         }
-        
+
         return [
             'id' => $id,
             'email' => 'user@example.com',
@@ -461,7 +461,7 @@ class TypeAliasDemo
 
     /**
      * Batch operation
-     * 
+     *
      * @param list<UserId> $ids
      * @return array<UserId, UserData|ErrorResponse>
      */
@@ -482,7 +482,7 @@ class NumericKeyArrays
 {
     /**
      * Process tuple
-     * 
+     *
      * @param array{0: string, 1: int, 2?: bool} $tuple
      * @return array{name: string, age: int, active: bool}
      */
@@ -497,7 +497,7 @@ class NumericKeyArrays
 
     /**
      * Matrix operations
-     * 
+     *
      * @param non-empty-array<int<0, 10>, non-empty-array<int<0, 10>, float>> $matrix
      * @return array{rows: int<1, 11>, cols: int<1, 11>, sum: float}
      */
@@ -506,11 +506,11 @@ class NumericKeyArrays
         $sum = 0.0;
         $rows = count($matrix);
         $cols = count(reset($matrix));
-        
+
         foreach ($matrix as $row) {
             $sum += array_sum($row);
         }
-        
+
         return [
             'rows' => $rows,
             'cols' => $cols,
@@ -521,7 +521,7 @@ class NumericKeyArrays
 
 /**
  * Global function with type imports
- * 
+ *
  * @param \App\EdgeCases\TypeAliasDemo::UserId $userId
  * @return \App\EdgeCases\TypeAliasDemo::UserData
  */

@@ -23,13 +23,13 @@ Identify ALL security vulnerabilities across these categories:
   - Privilege escalation paths
   - Insecure direct object references (IDOR)
   - CORS misconfigurations
-  
+
 - **A02:2021 – Cryptographic Failures**
   - Weak encryption algorithms
   - Hardcoded keys/secrets
   - Insufficient entropy
   - Missing encryption for sensitive data
-  
+
 - **A03:2021 – Injection**
   - SQL injection
   - NoSQL injection
@@ -37,40 +37,40 @@ Identify ALL security vulnerabilities across these categories:
   - LDAP injection
   - Expression language injection
   - XPath/XML injection
-  
+
 - **A04:2021 – Insecure Design**
   - Missing threat modeling
   - Insecure business logic
   - Race conditions
   - Time-of-check/Time-of-use (TOCTOU)
-  
+
 - **A05:2021 – Security Misconfiguration**
   - Default credentials
   - Unnecessary features enabled
   - Missing security headers
   - Verbose error messages
-  
+
 - **A06:2021 – Vulnerable Components**
   - Outdated dependencies
   - Known CVEs in libraries
   - Unmaintained packages
-  
+
 - **A07:2021 – Authentication Failures**
   - Weak password requirements
   - Missing rate limiting
   - Insecure session management
   - Missing MFA support
-  
+
 - **A08:2021 – Software and Data Integrity**
   - Missing integrity checks
   - Insecure deserialization
   - Unsigned updates
-  
+
 - **A09:2021 – Security Logging Failures**
   - Insufficient logging
   - Log injection vulnerabilities
   - Missing security event monitoring
-  
+
 - **A10:2021 – Server-Side Request Forgery**
   - SSRF vulnerabilities
   - Unsafe URL handling
@@ -184,17 +184,17 @@ For EACH vulnerability found:
   - [ ] Run security linters
   - [ ] Taint analysis
   - [ ] Data flow analysis
-  
+
 - [ ] **Dynamic Analysis (DAST)**
   - [ ] Fuzzing endpoints
   - [ ] Authentication testing
   - [ ] Session management testing
-  
+
 - [ ] **Dependency Scanning**
   - [ ] Known vulnerabilities
   - [ ] License compliance
   - [ ] Outdated packages
-  
+
 - [ ] **Secrets Scanning**
   - [ ] API keys
   - [ ] Passwords

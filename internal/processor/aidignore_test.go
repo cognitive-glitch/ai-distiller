@@ -123,7 +123,7 @@ func TestAidignoreIntegration(t *testing.T) {
 				// Limit to text files only for safety
 				IncludePatterns: []string{"*.go", "*.js", "*.tsx", "*.md", ".aidignore"},
 			}
-			
+
 			result, err := proc.processDirectory(tmpDir, opts)
 			if err != nil {
 				t.Fatalf("Failed to process directory: %v", err)
@@ -196,7 +196,7 @@ func TestAidignoreNestedFiles(t *testing.T) {
 		// Limit to text files only for safety
 		IncludePatterns: []string{"*.go", "*.js", "*.tsx", "*.md", ".aidignore"},
 	}
-	
+
 	result, err := proc.processDirectory(tmpDir, opts)
 	if err != nil {
 		t.Fatalf("Failed to process directory: %v", err)
@@ -235,18 +235,18 @@ func stringSlicesEqual(a, b []string) bool {
 	if len(a) != len(b) {
 		return false
 	}
-	
+
 	// Create maps for comparison
 	aMap := make(map[string]bool)
 	for _, s := range a {
 		aMap[s] = true
 	}
-	
+
 	for _, s := range b {
 		if !aMap[s] {
 			return false
 		}
 	}
-	
+
 	return true
 }

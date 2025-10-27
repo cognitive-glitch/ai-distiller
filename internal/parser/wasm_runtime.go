@@ -24,7 +24,7 @@ type WASMModule struct {
 	Language string
 	Module   api.Module
 	Compiled wazero.CompiledModule
-	
+
 	// Function references
 	TreeSitterLanguage api.Function
 	ParserNew          api.Function
@@ -50,19 +50,19 @@ type WASMModule struct {
 // NewWASMRuntime creates a new WASM runtime for tree-sitter parsers
 func NewWASMRuntime(ctx context.Context) (*WASMRuntime, error) {
 	r := wazero.NewRuntime(ctx)
-	
+
 	// Instantiate WASI (required by emscripten-compiled modules)
 	if _, err := wasi_snapshot_preview1.Instantiate(ctx, r); err != nil {
 		r.Close(ctx)
 		return nil, fmt.Errorf("failed to instantiate WASI: %w", err)
 	}
-	
+
 	// Define host functions that tree-sitter might need
 	if err := defineHostFunctions(ctx, r); err != nil {
 		r.Close(ctx)
 		return nil, fmt.Errorf("failed to define host functions: %w", err)
 	}
-	
+
 	return &WASMRuntime{
 		ctx:     ctx,
 		runtime: r,
@@ -74,38 +74,38 @@ func NewWASMRuntime(ctx context.Context) (*WASMRuntime, error) {
 func (w *WASMRuntime) LoadModule(name string, wasmBytes []byte) error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
-	
+
 	// Check if already loaded
 	if _, exists := w.modules[name]; exists {
 		return fmt.Errorf("module %s already loaded", name)
 	}
-	
+
 	// Compile the module
 	compiled, err := w.runtime.CompileModule(w.ctx, wasmBytes)
 	if err != nil {
 		return fmt.Errorf("failed to compile module %s: %w", name, err)
 	}
-	
+
 	// Instantiate the module
 	module, err := w.runtime.InstantiateModule(w.ctx, compiled, wazero.NewModuleConfig().
 		WithName(name))
 	if err != nil {
 		return fmt.Errorf("failed to instantiate module %s: %w", name, err)
 	}
-	
+
 	// Create module wrapper
 	wasmModule := &WASMModule{
 		Name:     name,
 		Module:   module,
 		Compiled: compiled,
 	}
-	
+
 	// Get function exports
 	if err := wasmModule.loadFunctions(); err != nil {
 		module.Close(w.ctx)
 		return fmt.Errorf("failed to load functions for module %s: %w", name, err)
 	}
-	
+
 	w.modules[name] = wasmModule
 	return nil
 }
@@ -114,12 +114,12 @@ func (w *WASMRuntime) LoadModule(name string, wasmBytes []byte) error {
 func (w *WASMRuntime) GetModule(name string) (*WASMModule, error) {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
-	
+
 	module, exists := w.modules[name]
 	if !exists {
 		return nil, fmt.Errorf("module %s not found", name)
 	}
-	
+
 	return module, nil
 }
 
@@ -127,7 +127,7 @@ func (w *WASMRuntime) GetModule(name string) (*WASMModule, error) {
 func (w *WASMRuntime) Close() error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
-	
+
 	// Close all modules
 	for name, module := range w.modules {
 		if err := module.Module.Close(w.ctx); err != nil {
@@ -135,10 +135,10 @@ func (w *WASMRuntime) Close() error {
 			fmt.Printf("Error closing module %s: %v\n", name, err)
 		}
 	}
-	
+
 	// Clear modules map
 	w.modules = make(map[string]*WASMModule)
-	
+
 	// Close runtime
 	return w.runtime.Close(w.ctx)
 }
@@ -149,7 +149,7 @@ func (m *WASMModule) loadFunctions() error {
 	if fn := m.Module.ExportedFunction("tree_sitter_" + m.Language); fn != nil {
 		m.TreeSitterLanguage = fn
 	}
-	
+
 	// Load parser functions
 	if fn := m.Module.ExportedFunction("ts_parser_new"); fn != nil {
 		m.ParserNew = fn
@@ -163,7 +163,7 @@ func (m *WASMModule) loadFunctions() error {
 	if fn := m.Module.ExportedFunction("ts_parser_set_language"); fn != nil {
 		m.ParserSetLanguage = fn
 	}
-	
+
 	// Load tree functions
 	if fn := m.Module.ExportedFunction("ts_tree_delete"); fn != nil {
 		m.TreeDelete = fn
@@ -171,7 +171,7 @@ func (m *WASMModule) loadFunctions() error {
 	if fn := m.Module.ExportedFunction("ts_tree_root_node"); fn != nil {
 		m.TreeRootNode = fn
 	}
-	
+
 	// Load node functions
 	if fn := m.Module.ExportedFunction("ts_node_string"); fn != nil {
 		m.NodeString = fn
@@ -209,8 +209,8 @@ func (m *WASMModule) loadFunctions() error {
 	if fn := m.Module.ExportedFunction("ts_node_child_by_field_name"); fn != nil {
 		m.NodeChildByFieldName = fn
 	}
-	
-	
+
+
 	// Check that we have at least the language function
 	if m.TreeSitterLanguage == nil {
 		// Try alternative naming
@@ -220,7 +220,7 @@ func (m *WASMModule) loadFunctions() error {
 			return fmt.Errorf("tree-sitter language function not found")
 		}
 	}
-	
+
 	return nil
 }
 
@@ -253,6 +253,6 @@ func defineHostFunctions(ctx context.Context, r wazero.Runtime) error {
 		}).
 		Export("memcpy").
 		Instantiate(ctx)
-		
+
 	return err
 }

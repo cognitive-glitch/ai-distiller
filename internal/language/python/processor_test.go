@@ -52,7 +52,7 @@ from typing import List, Dict, Optional
 
 class ExampleClass:
     """A simple example class."""
-    
+
     def example_method(self, arg1: str, arg2: int) -> str:
         """Process the arguments."""
         return f"{arg1}: {arg2}"
@@ -87,7 +87,7 @@ func TestProcessWithOptions(t *testing.T) {
 class MyClass:
     def public_method(self):
         pass
-    
+
     def _private_method(self):
         pass
 

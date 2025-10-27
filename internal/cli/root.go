@@ -13,7 +13,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	
+
 	"github.com/spf13/cobra"
 	"github.com/janreges/ai-distiller/internal/ai"
 	"github.com/janreges/ai-distiller/internal/aiactions"
@@ -44,7 +44,7 @@ var (
 	relativePathPrefix string
 	verbosity        int
 	langOverride     string
-	
+
 	// New filtering flags
 	includePublic         *bool
 	includeProtected      *bool
@@ -55,42 +55,42 @@ var (
 	includeImplementation *bool
 	includeImports        *bool
 	includeAnnotations    *bool
-	
+
 	// Group flags
 	includeList           string
 	excludeList           string
-	
+
 	// Concurrency flags
 	workers               int
-	
+
 	// Raw mode flag
 	rawMode               bool
-	
+
 	// Git mode flags
 	gitCommitLimit        int
 	withAnalysisPrompt    bool
-	
+
 	// AI analysis task list flag (deprecated)
 	aiAnalysisTaskList    bool
-	
+
 	// New AI action system
 	aiAction             string
 	aiOutput             string
-	
+
 	// Summary output flags
 	summaryFormat        string
 	noEmoji              bool
-	
+
 	// AI agent instructions flag
 	showAiAgentInstructions bool
-	
+
 	// Import filtering flag
 	filterImports        *bool
-	
+
 	// Fields and methods filtering flags
 	fieldsFlag           string
 	methodsFlag          string
-	
+
 	// Dependency-aware distillation flags
 	dependencyAware      bool
 	maxDepth            int
@@ -100,8 +100,8 @@ var (
 var rootCmd = &cobra.Command{
 	Use:   "aid [path]",
 	Short: "AI Distiller - Extract essential code structure for LLMs",
-	Long: `AI Distiller (aid) intelligently "distills" source code from any project 
-into a compact, structured format, optimized for the context window of 
+	Long: `AI Distiller (aid) intelligently "distills" source code from any project
+into a compact, structured format, optimized for the context window of
 Large Language Models (LLMs).
 
 Special Git Mode: When you pass a .git directory path, aid switches to git log
@@ -126,7 +126,7 @@ PATH & OUTPUT CONTROL:
 
 VISIBILITY FILTERING:
   Control which visibility levels are included in output
-  
+
   --public                     Include public members
                               0/1 (default: 1)
   --protected                  Include protected members
@@ -138,7 +138,7 @@ VISIBILITY FILTERING:
 
 CONTENT FILTERING:
   Control what code elements are included
-  
+
   --comments                   Include comments
                               0/1 (default: 0)
   --docstrings                 Include documentation
@@ -163,7 +163,7 @@ FILE SELECTION:
                               Examples: "*.go", "*.go,*.py", "src/**/*.js"
   --exclude <pattern>          Exclude file patterns (comma-separated)
                               Examples: "*_test.go", "vendor/**", "*/tmp/*"
-                              
+
                               Pattern types:
                               - Simple: "*.go" (matches Go files)
                               - Multiple: "*.go,*.py,*.js" (multiple extensions)
@@ -211,7 +211,7 @@ EXAMPLES:
   aid --relative-path-prefix="module/" docs/  # Add custom prefix to paths
   aid .git                     # Show git commit history (special mode)
   aid .git --git-limit=50      # Show latest 50 commits
-  
+
   # File filtering examples:
   aid --exclude "*_test.go"    # Exclude test files
   aid --include "*.go,*.py"    # Only Go and Python files
@@ -226,13 +226,13 @@ func Execute() error {
 	// Set custom error function for better error display
 	rootCmd.SilenceErrors = true
 	rootCmd.SilenceUsage = true
-	
+
 	if err := rootCmd.Execute(); err != nil {
 		// Print error in red color
 		red := "\033[31m"
 		bold := "\033[1m"
 		reset := "\033[0m"
-		
+
 		// Check if we should use colors
 		useColor := os.Getenv("NO_COLOR") == ""
 		if !useColor {
@@ -240,9 +240,9 @@ func Execute() error {
 			bold = ""
 			reset = ""
 		}
-		
+
 		fmt.Fprintf(os.Stderr, "%s%sError: %s%s\n", red, bold, err.Error(), reset)
-		
+
 		// Show helpful usage for common errors
 		fmt.Fprintln(os.Stderr)
 		fmt.Fprintln(os.Stderr, "Usage:")
@@ -260,7 +260,7 @@ func Execute() error {
 		fmt.Fprintln(os.Stderr, "  --format md            # Output in Markdown format")
 		fmt.Fprintln(os.Stderr, "  --private=1            # Include private members")
 		fmt.Fprintln(os.Stderr, "  --implementation=1     # Include function bodies")
-		
+
 		return err
 	}
 	return nil
@@ -268,10 +268,10 @@ func Execute() error {
 
 func init() {
 	initFlags()
-	
+
 	// Initialize help system with custom templates and commands
 	initializeHelpSystem()
-	
+
 	// Register all built-in AI actions
 	// This is done here to avoid import cycles
 	registerAIActions()
@@ -286,7 +286,7 @@ func initFlags() {
 	// Legacy processing flags (deprecated)
 	rootCmd.Flags().StringSliceVar(&stripOptions, "strip", nil, "DEPRECATED: Use individual filtering flags instead")
 	rootCmd.Flags().MarkDeprecated("strip", "use individual filtering flags like --public=1, --private=0, etc.")
-	
+
 	// File pattern flags
 	rootCmd.Flags().StringSliceVar(&includeGlob, "include", nil, "Include file patterns (comma-separated: *.go,*.py or use flag multiple times)")
 	rootCmd.Flags().StringSliceVar(&excludeGlob, "exclude", nil, "Exclude file patterns (comma-separated: *.json,*test* or use flag multiple times)")
@@ -298,17 +298,17 @@ func initFlags() {
 	rootCmd.Flags().CountVarP(&verbosity, "verbose", "v", "Verbose output (use -vv or -vvv for more detail)")
 	rootCmd.Flags().Bool("version", false, "Show version information")
 	rootCmd.Flags().Bool("help", false, "Show help message")
-	
+
 
 	// Language override flag
 	rootCmd.Flags().StringVar(&langOverride, "lang", "auto", "Override language detection: auto|python|typescript|javascript|go|ruby|swift|rust|java|csharp|kotlin|cpp|php")
-	
+
 	// New filtering flags - visibility
 	rootCmd.Flags().String("public", "1", "Include public members (0/1, default: 1)")
 	rootCmd.Flags().String("protected", "0", "Include protected members (0/1, default: 0)")
 	rootCmd.Flags().String("internal", "0", "Include internal/package-private members (0/1, default: 0)")
 	rootCmd.Flags().String("private", "0", "Include private members (0/1, default: 0)")
-	
+
 	// New filtering flags - content
 	rootCmd.Flags().String("comments", "0", "Include comments (0/1, default: 0)")
 	rootCmd.Flags().String("docstrings", "1", "Include documentation comments (0/1, default: 1)")
@@ -317,41 +317,41 @@ func initFlags() {
 	rootCmd.Flags().String("annotations", "1", "Include decorators/annotations (0/1, default: 1)")
 	rootCmd.Flags().String("fields", "1", "Include fields/properties (0/1, default: 1)")
 	rootCmd.Flags().String("methods", "1", "Include methods/functions (0/1, default: 1)")
-	
+
 	// Group filtering flags
 	rootCmd.Flags().StringVar(&includeList, "include-only", "", "Include only these categories (comma-separated)")
 	rootCmd.Flags().StringVar(&excludeList, "exclude-items", "", "Exclude these categories (comma-separated)")
-	
+
 	// Concurrency flags
 	rootCmd.Flags().IntVarP(&workers, "workers", "w", 0, "Number of parallel workers (0=auto/80% CPU cores, 1=serial, default: 0)")
-	
+
 	// Raw mode flag
 	rootCmd.Flags().BoolVar(&rawMode, "raw", false, "Raw mode: process all text files without parsing (txt, md, json, yaml, etc.")
-	
+
 	// Git mode flags
 	rootCmd.Flags().IntVar(&gitCommitLimit, "git-limit", 200, "Limit number of commits in git mode (default: 200, 0=all)")
 	rootCmd.Flags().BoolVar(&withAnalysisPrompt, "with-analysis-prompt", false, "Prepend AI analysis prompt to git output")
-	
+
 	// AI analysis task list flag (deprecated)
 	rootCmd.Flags().BoolVar(&aiAnalysisTaskList, "ai-analysis-task-list", false, "DEPRECATED: Use --ai-action=flow-for-deep-file-to-file-analysis instead")
 	rootCmd.Flags().MarkDeprecated("ai-analysis-task-list", "use --ai-action=flow-for-deep-file-to-file-analysis instead")
-	
+
 	// New AI action system
 	rootCmd.Flags().StringVar(&aiAction, "ai-action", "", "AI action to perform on distilled output")
 	rootCmd.Flags().StringVar(&aiOutput, "ai-output", "", "Output path for AI action (default: action-specific)")
-	
+
 	// Summary output flags
 	rootCmd.Flags().StringVar(&summaryFormat, "summary-type", "visual-progress-bar", "Summary output format: visual-progress-bar|stock-ticker|speedometer-dashboard|minimalist-sparkline|ci-friendly|json|off (default: visual-progress-bar)")
 	rootCmd.Flags().BoolVar(&noEmoji, "no-emoji", false, "Disable emojis in summary output")
-	
+
 	// AI agent instructions flag
 	rootCmd.Flags().BoolVar(&showAiAgentInstructions, "show-ai-agent-instructions", false, "Show AI agent instructions at the beginning of text output")
-	
+
 	// Import filtering flag
 	filterImports = new(bool)
 	*filterImports = true // Default is true for text output
 	rootCmd.Flags().BoolVar(filterImports, "filter-imports", true, "Filter unused imports in text output")
-	
+
 	// Dependency-aware distillation flags
 	rootCmd.Flags().BoolVar(&dependencyAware, "dependency-aware", false, "Enable cross-file dependency analysis and call graph traversal")
 	rootCmd.Flags().IntVar(&maxDepth, "max-depth", 2, "Maximum depth for dependency traversal (default: 2)")
@@ -369,7 +369,7 @@ func initFlags() {
 			fmt.Printf("%s\n", version.WebsiteURL)
 			os.Exit(0)
 		}
-		
+
 		// Parse boolean flags
 		parseBoolFlag(cmd, "public", &includePublic)
 		parseBoolFlag(cmd, "protected", &includeProtected)
@@ -380,11 +380,11 @@ func initFlags() {
 		parseBoolFlag(cmd, "implementation", &includeImplementation)
 		parseBoolFlag(cmd, "imports", &includeImports)
 		parseBoolFlag(cmd, "annotations", &includeAnnotations)
-		
+
 		// Parse fields and methods flags
 		fieldsFlag, _ = cmd.Flags().GetString("fields")
 		methodsFlag, _ = cmd.Flags().GetString("methods")
-		
+
 		// Validate mutually exclusive flags
 		if includeList != "" && excludeList != "" {
 			fmt.Fprintf(os.Stderr, "Error: --include-only and --exclude-items are mutually exclusive\n")
@@ -397,10 +397,10 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 	// Create debugger based on verbosity level
 	dbg := debug.New(os.Stderr, verbosity)
 	ctx := debug.NewContext(context.Background(), dbg)
-	
+
 	// Log startup info
 	dbg.Logf(debug.LevelBasic, "AI Distiller %s starting", Version)
-	
+
 	// Check if stdin is available (not a TTY) or explicitly requested with "-"
 	stdinAvailable := false
 	if len(args) > 0 && args[0] == "-" {
@@ -412,17 +412,17 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 			stdinAvailable = true
 		}
 	}
-	
+
 	// Handle stdin input
 	if stdinAvailable {
 		return processStdinWithContext(ctx)
 	}
-	
+
 	// If no arguments provided, show help
 	if len(args) == 0 {
 		return cmd.Help()
 	}
-	
+
 	// Handle file/directory input
 	inputPath := args[0]
 
@@ -443,14 +443,14 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 		// This is different from regular mode where we auto-generate filenames
 		return handleGitMode(ctx, absPath)
 	}
-	
+
 	// Check if AI analysis task list flag is set (deprecated)
 	if aiAnalysisTaskList {
 		// Convert to new AI action system
 		aiAction = "flow-for-deep-file-to-file-analysis"
 		dbg.Logf(debug.LevelBasic, "Using deprecated --ai-analysis-task-list, converting to --ai-action=%s", aiAction)
 	}
-	
+
 	// Check if AI action is specified
 	if aiAction != "" {
 		return handleAIAction(ctx, absPath)
@@ -471,11 +471,11 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 	dbg.Logf(debug.LevelBasic, "Input: %s", absPath)
 	dbg.Logf(debug.LevelBasic, "Output: %s", outputFile)
 	dbg.Logf(debug.LevelBasic, "Format: %s", outputFormat)
-	
+
 	if len(stripOptions) > 0 {
 		dbg.Logf(debug.LevelBasic, "Strip (deprecated): %s", strings.Join(stripOptions, ", "))
 	}
-	
+
 	// Log detailed configuration at level 2
 	dbg.Logf(debug.LevelDetailed, "Visibility: public=%v, protected=%v, internal=%v, private=%v",
 		getBoolFlag(includePublic, true),
@@ -496,7 +496,7 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 
 	// Create the processor with context
 	proc := processor.NewWithContext(ctx)
-	
+
 
 	// Log workers configuration
 	actualWorkers := workers
@@ -514,15 +514,15 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 	procOpts.BasePath = inputPath
 	procOpts.FilePathType = filePathType
 	procOpts.RelativePathPrefix = relativePathPrefix
-	
+
 	// If user provided absolute path and didn't specify file-path-type, default to absolute
 	if filepath.IsAbs(inputPath) && !cmd.Flags().Changed("file-path-type") {
 		procOpts.FilePathType = "absolute"
 	}
-	
+
 	// Track processing time
 	startTime := time.Now()
-	
+
 	// Process the input
 	result, err := proc.ProcessPath(absPath, procOpts)
 	if err != nil {
@@ -555,22 +555,22 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 
 	// Write output
 	var output strings.Builder
-	
+
 	// Log formatting phase
 	dbg.Logf(debug.LevelDetailed, "Starting formatting phase with %s formatter", outputFormat)
 	defer dbg.Timing(debug.LevelDetailed, fmt.Sprintf("formatting to %s", outputFormat))()
-	
+
 	// Handle different result types and count files
 	var fileCount int
 	switch r := result.(type) {
 	case *ir.DistilledFile:
 		dbg.Logf(debug.LevelDetailed, "Formatting single file: %s", r.Path)
-		
+
 		// Dump IR being formatted at trace level
 		debug.Lazy(ctx, debug.LevelTrace, func(d debug.Debugger) {
 			d.Dump(debug.LevelTrace, "IR being formatted", r)
 		})
-		
+
 		if err := outputFormatter.Format(&output, r); err != nil {
 			return fmt.Errorf("failed to format output: %w", err)
 		}
@@ -583,34 +583,34 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 				files = append(files, file)
 			}
 		}
-		
+
 		fileCount = len(files)
 		dbg.Logf(debug.LevelDetailed, "Formatting %d files from directory", fileCount)
-		
+
 		if err := outputFormatter.FormatMultiple(&output, files); err != nil {
 			return fmt.Errorf("failed to format output: %w", err)
 		}
 	default:
 		return fmt.Errorf("unexpected result type: %T", result)
 	}
-	
+
 	dbg.Logf(debug.LevelDetailed, "Formatted output size: %d bytes", output.Len())
 
 	// Clean up empty file tags for text format
 	outputStr := output.String()
 	dbg.Logf(debug.LevelDetailed, "Output format: %s", outputFormat)
-	
+
 	// Add distillation instructions at the beginning of text output if enabled
 	if outputFormat == "text" && fileCount > 0 && showAiAgentInstructions {
 		instructions := generateDistillationInstructions(procOpts)
 		outputStr = instructions + "\n\n" + outputStr
 	}
-	
+
 	if outputFormat == "text" {
 		// Remove empty file tags with only whitespace between them
 		emptyFilePattern := regexp.MustCompile(`(?s)<file path="[^"]+">\s*</file>\s*`)
 		cleanedStr := emptyFilePattern.ReplaceAllString(outputStr, "")
-		dbg.Logf(debug.LevelDetailed, "Regex cleanup: before=%d bytes, after=%d bytes, pattern matches=%d", 
+		dbg.Logf(debug.LevelDetailed, "Regex cleanup: before=%d bytes, after=%d bytes, pattern matches=%d",
 			len(outputStr), len(cleanedStr), len(emptyFilePattern.FindAllString(outputStr, -1)))
 		outputStr = cleanedStr
 	}
@@ -632,7 +632,7 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 	if len(args) > 0 && args[0] != "-" && summaryFormat != "off" {
 		// Calculate processing duration
 		duration := time.Since(startTime)
-		
+
 		// Get original size
 		var originalSize int64
 		if rawMode {
@@ -642,7 +642,7 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 			originalSize = getOriginalSize(result)
 		}
 		distilledSize := int64(output.Len())
-		
+
 		// Create summary stats
 		stats := summary.Stats{
 			OriginalBytes:   originalSize,
@@ -654,14 +654,14 @@ func runDistiller(cmd *cobra.Command, args []string) error {
 			OutputPath:      outputFile,
 			IsStdout:        outputToStdout || outputFile == "",
 		}
-		
+
 		// Print summary
 		summaryOpts := summary.Options{
 			Format:  summaryFormat,
 			NoColor: os.Getenv("NO_COLOR") != "",
 			NoEmoji: noEmoji,
 		}
-		
+
 		summary.Print(os.Stderr, stats, summaryOpts)
 	}
 
@@ -676,7 +676,7 @@ func generateOutputFilename(path string, stripOptions []string, format string) s
 		aidDir = ".aid"
 		os.MkdirAll(aidDir, 0755)
 	}
-	
+
 	// Get directory name
 	dirName := filepath.Base(path)
 	if dirName == "." || dirName == "/" {
@@ -685,7 +685,7 @@ func generateOutputFilename(path string, stripOptions []string, format string) s
 
 	// Build options suffix based on what's excluded from defaults
 	var abbrev []string
-	
+
 	// Check if using new flag system
 	if len(stripOptions) == 0 {
 		// New flag system - check what differs from defaults
@@ -741,7 +741,7 @@ func generateOutputFilename(path string, stripOptions []string, format string) s
 			}
 		}
 	}
-	
+
 	optionsSuffix := ""
 	if len(abbrev) > 0 {
 		optionsSuffix = "." + strings.Join(abbrev, ".")
@@ -759,7 +759,7 @@ func generateOutputFilename(path string, stripOptions []string, format string) s
 	case "xml":
 		ext = ".xml"
 	}
-	
+
 	// Generate filename within .aid directory
 	filename := fmt.Sprintf("aid.%s%s%s", dirName, optionsSuffix, ext)
 	return filepath.Join(aidDir, filename)
@@ -777,23 +777,23 @@ func contains(slice []string, item string) bool {
 // processStdinWithContext handles input from stdin with debugging context
 func processStdinWithContext(ctx context.Context) error {
 	dbg := debug.FromContext(ctx).WithSubsystem("stdin")
-	
+
 	// Force stdout output when reading from stdin
 	outputToStdout = true
-	
+
 	dbg.Logf(debug.LevelBasic, "Processing input from stdin")
-	
+
 	// Read stdin into buffer for language detection
 	var buffer bytes.Buffer
 	tee := io.TeeReader(os.Stdin, &buffer)
-	
+
 	// Read up to 64kB for detection
 	detectBuf := make([]byte, 64*1024)
 	n, _ := tee.Read(detectBuf)
 	detectBuf = detectBuf[:n]
-	
+
 	dbg.Logf(debug.LevelDetailed, "Read %d bytes for language detection", n)
-	
+
 	// Determine language
 	lang := langOverride
 	if lang == "auto" {
@@ -807,26 +807,26 @@ func processStdinWithContext(ctx context.Context) error {
 	} else {
 		dbg.Logf(debug.LevelBasic, "Using specified language: %s", lang)
 	}
-	
+
 	// Read the rest of stdin
 	remainingBytes, _ := io.ReadAll(tee)
 	fullContent := append(detectBuf, remainingBytes...)
-	
+
 	// Get language processor
 	langProc, ok := language.GetProcessor(lang)
 	if !ok {
 		return fmt.Errorf("no processor found for language: %s", lang)
 	}
-	
+
 	// Create processor options from flags
 	procOpts := createProcessOptionsFromFlags()
-	
+
 	// Process the input with our debug-enabled context
 	result, err := langProc.ProcessWithOptions(ctx, bytes.NewReader(fullContent), "stdin", procOpts)
 	if err != nil {
 		return fmt.Errorf("failed to process stdin: %w", err)
 	}
-	
+
 	// Create formatter based on format
 	formatterOpts := formatter.Options{
 		ProcessingOptions: formatter.ProcessingInfo{
@@ -847,16 +847,16 @@ func processStdinWithContext(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to get formatter: %w", err)
 	}
-	
+
 	// Format and output
 	var output strings.Builder
 	if err := outputFormatter.Format(&output, result); err != nil {
 		return fmt.Errorf("failed to format output: %w", err)
 	}
-	
+
 	// Always write to stdout for stdin input
 	fmt.Print(output.String())
-	
+
 	return nil
 }
 
@@ -884,24 +884,24 @@ func parseBoolStringFlag(value string, defaultValue bool) bool {
 	if value == "" {
 		return defaultValue
 	}
-	
+
 	if value == "0" {
 		return false
 	} else if value == "1" {
 		return true
 	}
-	
+
 	if b, err := strconv.ParseBool(value); err == nil {
 		return b
 	}
-	
+
 	return defaultValue
 }
 
 // createProcessOptionsFromFlags creates ProcessOptions from the new flag system
 func createProcessOptionsFromFlags() processor.ProcessOptions {
 	opts := processor.ProcessOptions{}
-	
+
 	// Handle legacy --strip flag if present
 	if len(stripOptions) > 0 {
 		if verbosity > 0 {
@@ -920,7 +920,7 @@ func createProcessOptionsFromFlags() processor.ProcessOptions {
 		opts.SymbolResolution = dependencyAware
 		return opts
 	}
-	
+
 	// Process include/exclude lists if provided
 	if includeList != "" {
 		opts = processIncludeList(includeList)
@@ -944,24 +944,24 @@ func createProcessOptionsFromFlags() processor.ProcessOptions {
 		opts.SymbolResolution = dependencyAware
 		return opts
 	}
-	
+
 	// Use individual flags with defaults
 	// fmt.Printf("DEBUG: includeComments=%v\n", includeComments)
 	opts.IncludeComments = getBoolFlag(includeComments, false)
 	opts.IncludeImports = getBoolFlag(includeImports, true)
 	opts.IncludeImplementation = getBoolFlag(includeImplementation, false)
-	
+
 	// Handle visibility flags
 	includePublicVal := getBoolFlag(includePublic, true)
 	includeProtectedVal := getBoolFlag(includeProtected, false)
 	includeInternalVal := getBoolFlag(includeInternal, false)
 	includePrivateVal := getBoolFlag(includePrivate, false)
-	
+
 	// Store visibility levels for formatter instructions
 	opts.IncludePublic = includePublicVal
 	opts.IncludeProtected = includeProtectedVal
 	opts.IncludeInternal = includeInternalVal
-	
+
 	// Convert to stripper options
 	// If only public is included, remove all non-public
 	if includePublicVal && !includeProtectedVal && !includeInternalVal && !includePrivateVal {
@@ -973,32 +973,32 @@ func createProcessOptionsFromFlags() processor.ProcessOptions {
 		opts.RemoveProtectedOnly = !includeProtectedVal
 		opts.RemoveInternalOnly = !includeInternalVal
 	}
-	
+
 	// Handle docstrings and annotations
 	opts.IncludeDocstrings = getBoolFlag(includeDocstrings, true)
 	opts.IncludeAnnotations = getBoolFlag(includeAnnotations, true)
-	
+
 	// Handle fields and methods flags
 	opts.IncludeFields = parseBoolStringFlag(fieldsFlag, true)
 	opts.IncludeMethods = parseBoolStringFlag(methodsFlag, true)
-	
+
 	// Set workers value
 	opts.Workers = workers
-	
+
 	// Set raw mode
 	opts.RawMode = rawMode
-	
+
 	// Set recursive - parse from global recursiveStr
 	opts.Recursive = recursiveStr != "0"
-	
+
 	// Set include/exclude patterns
 	opts.IncludePatterns = includeGlob
 	opts.ExcludePatterns = excludeGlob
-	
+
 	// Dependency-aware distillation options
 	opts.MaxDepth = maxDepth
 	opts.SymbolResolution = dependencyAware
-	
+
 	return opts
 }
 
@@ -1023,13 +1023,13 @@ func processIncludeList(list string) processor.ProcessOptions {
 		IncludeFields: false,
 		IncludeMethods: false,
 	}
-	
+
 	// Track which visibility levels are included
 	includePublic := false
 	includeProtected := false
 	includeInternal := false
 	includePrivate := false
-	
+
 	items := strings.Split(list, ",")
 	for _, item := range items {
 		switch strings.TrimSpace(item) {
@@ -1057,7 +1057,7 @@ func processIncludeList(list string) processor.ProcessOptions {
 			opts.IncludeMethods = true
 		}
 	}
-	
+
 	// Apply visibility logic similar to normal flag processing
 	if includePublic && !includeProtected && !includeInternal && !includePrivate {
 		// Only public members
@@ -1073,7 +1073,7 @@ func processIncludeList(list string) processor.ProcessOptions {
 			opts.IncludePrivate = false
 		}
 	}
-	
+
 	return opts
 }
 
@@ -1090,7 +1090,7 @@ func processExcludeList(list string) processor.ProcessOptions {
 		IncludeFields: true,
 		IncludeMethods: true,
 	}
-	
+
 	items := strings.Split(list, ",")
 	for _, item := range items {
 		switch strings.TrimSpace(item) {
@@ -1118,7 +1118,7 @@ func processExcludeList(list string) processor.ProcessOptions {
 			opts.IncludeMethods = false
 		}
 	}
-	
+
 	return opts
 }
 
@@ -1126,26 +1126,26 @@ func processExcludeList(list string) processor.ProcessOptions {
 func handleGitMode(ctx context.Context, gitPath string) error {
 	dbg := debug.FromContext(ctx).WithSubsystem("git")
 	dbg.Logf(debug.LevelBasic, "Git mode activated for: %s", gitPath)
-	
+
 	// Get the repository directory (parent of .git)
 	repoPath := filepath.Dir(gitPath)
-	
+
 	// Build git log command with custom format
 	// Using a rare delimiter to avoid conflicts with commit messages
 	delimiter := "|||DELIMITER|||"
 	// Format: hash | date | author name <email> | subject + body
 	formatStr := fmt.Sprintf("--pretty=format:%%h%s%%ai%s%%an <%%ae>%s%%s%%n%%b", delimiter, delimiter, delimiter)
-	
+
 	// Build command args
 	args := []string{"-C", repoPath, "log", formatStr}
 	if gitCommitLimit > 0 {
 		args = append(args, fmt.Sprintf("-n%d", gitCommitLimit))
 	}
-	
+
 	cmd := exec.Command("git", args...)
-	
+
 	dbg.Logf(debug.LevelDetailed, "Running git command: %s", strings.Join(cmd.Args, " "))
-	
+
 	// Execute the command
 	cmdOutput, err := cmd.Output()
 	if err != nil {
@@ -1154,24 +1154,24 @@ func handleGitMode(ctx context.Context, gitPath string) error {
 		}
 		return fmt.Errorf("failed to run git log: %w", err)
 	}
-	
+
 	// Process the output to format it nicely
 	lines := strings.Split(string(cmdOutput), "\n")
 	var commits []GitCommit
 	var currentCommit *GitCommit
-	
+
 	for _, line := range lines {
 		if line == "" {
 			continue
 		}
-		
+
 		// Check if this is a new commit (contains the delimiter)
 		if strings.Contains(line, delimiter) {
 			// Save previous commit if exists
 			if currentCommit != nil {
 				commits = append(commits, *currentCommit)
 			}
-			
+
 			// Parse new commit
 			parts := strings.SplitN(line, delimiter, 4)
 			if len(parts) >= 4 {
@@ -1187,35 +1187,35 @@ func handleGitMode(ctx context.Context, gitPath string) error {
 			currentCommit.Message += "\n" + line
 		}
 	}
-	
+
 	// Don't forget the last commit
 	if currentCommit != nil {
 		commits = append(commits, *currentCommit)
 	}
-	
+
 	dbg.Logf(debug.LevelBasic, "Found %d commits", len(commits))
-	
+
 	// Format and output the commits
 	var output strings.Builder
-	
+
 	// Add analysis prompt if requested
 	if withAnalysisPrompt {
 		output.WriteString(getGitAnalysisPrompt())
 		output.WriteString("\n\n=== BEGIN GIT LOG ===\n")
 	}
-	
+
 	for i, commit := range commits {
 		if i > 0 {
 			output.WriteString("\n")
 		}
-		
+
 		// Extract just the date part (without timezone) for cleaner display
 		dateParts := strings.Fields(commit.Date)
 		cleanDate := commit.Date
 		if len(dateParts) >= 2 {
 			cleanDate = dateParts[0] + " " + dateParts[1]
 		}
-		
+
 		// Format the commit header in a clean, single-line format
 		// Format: [hash] YYYY-MM-DD HH:MM:SS | author | subject
 		message := strings.TrimSpace(commit.Message)
@@ -1224,7 +1224,7 @@ func handleGitMode(ctx context.Context, gitPath string) error {
 		if len(subject) > 80 {
 			subject = subject[:77] + "..."
 		}
-		
+
 		// Extract author name without email for cleaner display
 		author := commit.Author
 		if idx := strings.Index(author, " <"); idx > 0 {
@@ -1234,9 +1234,9 @@ func handleGitMode(ctx context.Context, gitPath string) error {
 		if len(author) > 20 {
 			author = author[:17] + "..."
 		}
-		
+
 		fmt.Fprintf(&output, "[%s] %s | %-20s | %s\n", commit.Hash, cleanDate, author, subject)
-		
+
 		// Format the rest of the message (body) with proper indentation
 		if len(lines) > 1 {
 			for i := 1; i < len(lines); i++ {
@@ -1247,12 +1247,12 @@ func handleGitMode(ctx context.Context, gitPath string) error {
 			}
 		}
 	}
-	
+
 	// Add closing tag if analysis prompt was used
 	if withAnalysisPrompt {
 		output.WriteString("\n=== END GIT LOG ===\n")
 	}
-	
+
 	// Write to file if specified
 	if outputFile != "" {
 		if err := os.WriteFile(outputFile, []byte(output.String()), 0644); err != nil {
@@ -1264,12 +1264,12 @@ func handleGitMode(ctx context.Context, gitPath string) error {
 			fmt.Fprintf(os.Stderr, "Git log written to: %s\n", absOutputFile)
 		}
 	}
-	
+
 	// Write to stdout only if explicitly requested or no output file specified
 	if outputToStdout || outputFile == "" {
 		fmt.Print(output.String())
 	}
-	
+
 	return nil
 }
 
@@ -1297,7 +1297,7 @@ The git log follows a specific format:
         body line 2
 (The body is indented with 8 spaces.)
 
-Please provide a comprehensive analysis including contributor statistics, commit quality scores, 
+Please provide a comprehensive analysis including contributor statistics, commit quality scores,
 development timeline visualization, complexity analysis, and actionable recommendations.`
 	}
 	return prompt
@@ -1307,30 +1307,30 @@ development timeline visualization, complexity analysis, and actionable recommen
 func handleAIAnalysisTaskList(ctx context.Context, projectPath string) error {
 	dbg := debug.FromContext(ctx).WithSubsystem("ai-analysis")
 	dbg.Logf(debug.LevelBasic, "AI Analysis Task List mode activated for: %s", projectPath)
-	
+
 	// Get project basename and current date
 	basename := filepath.Base(projectPath)
-	currentDate := fmt.Sprintf("%04d-%02d-%02d", 
+	currentDate := fmt.Sprintf("%04d-%02d-%02d",
 		time.Now().Year(), time.Now().Month(), time.Now().Day())
-	
+
 	// Create .aid directory structure
 	aidDir := filepath.Join(projectPath, ".aid")
 	analysisDir := filepath.Join(aidDir, fmt.Sprintf("analysis.%s", basename), currentDate)
-	
+
 	if err := os.MkdirAll(analysisDir, 0755); err != nil {
 		return fmt.Errorf("failed to create .aid directory structure: %w", err)
 	}
-	
+
 	dbg.Logf(debug.LevelBasic, "Created directory structure: %s", analysisDir)
-	
+
 	// Collect all source files
 	sourceFiles, err := collectSourceFiles(projectPath)
 	if err != nil {
 		return fmt.Errorf("failed to collect source files: %w", err)
 	}
-	
+
 	dbg.Logf(debug.LevelBasic, "Found %d source files to analyze", len(sourceFiles))
-	
+
 	// Pre-create all individual report directories to avoid mkdir operations during analysis
 	for _, file := range sourceFiles {
 		reportDir := filepath.Join(analysisDir, filepath.Dir(file))
@@ -1338,24 +1338,24 @@ func handleAIAnalysisTaskList(ctx context.Context, projectPath string) error {
 			return fmt.Errorf("failed to create report directory %s: %w", reportDir, err)
 		}
 	}
-	
+
 	dbg.Logf(debug.LevelBasic, "Pre-created all report directories for %d files", len(sourceFiles))
-	
+
 	// Generate task list file
 	taskListFile := filepath.Join(aidDir, fmt.Sprintf("ANALYSIS-TASK-LIST.%s.%s.md", basename, currentDate))
 	if err := generateTaskList(taskListFile, basename, currentDate, sourceFiles); err != nil {
 		return fmt.Errorf("failed to generate task list: %w", err)
 	}
-	
+
 	// Generate summary file with headers
 	summaryFile := filepath.Join(aidDir, fmt.Sprintf("ANALYSIS-SUMMARY.%s.%s.md", basename, currentDate))
 	if err := generateSummaryFile(summaryFile, basename, currentDate); err != nil {
 		return fmt.Errorf("failed to generate summary file: %w", err)
 	}
-	
+
 	dbg.Logf(debug.LevelBasic, "Generated task list: %s", taskListFile)
 	dbg.Logf(debug.LevelBasic, "Generated summary file: %s", summaryFile)
-	
+
 	// Output information to user
 	fmt.Printf("✅ AI Analysis Task List generated successfully!\n\n")
 	fmt.Printf("📋 Task List: %s\n", taskListFile)
@@ -1364,21 +1364,21 @@ func handleAIAnalysisTaskList(ctx context.Context, projectPath string) error {
 	fmt.Printf("🤖 Ready for AI-driven analysis workflow!\n")
 	fmt.Printf("   Files to analyze: %d\n", len(sourceFiles))
 	fmt.Printf("   Analysis structure created in: %s\n", aidDir)
-	
+
 	return nil
 }
 
 // collectSourceFiles recursively collects all source files from the project directory
 func collectSourceFiles(projectPath string) ([]string, error) {
 	var sourceFiles []string
-	
+
 	// Load git submodules to skip them
 	gitSubmodules, err := loadGitSubmodules(projectPath)
 	if err != nil {
 		// Not a git repo or no submodules - continue without error
 		gitSubmodules = make(map[string]bool)
 	}
-	
+
 	// Define source file extensions (focus on core programming languages)
 	sourceExtensions := map[string]bool{
 		// Core programming languages
@@ -1388,37 +1388,37 @@ func collectSourceFiles(projectPath string) ([]string, error) {
 		".cpp": true, ".cc": true, ".cxx": true, ".c": true, ".h": true, ".hpp": true,
 		".cs": true, ".fs": true, ".vb": true,
 		".scala": true, ".clj": true, ".cljs": true,
-		
+
 		// Frontend frameworks and templates
 		".vue": true, ".svelte": true, ".astro": true,
 		".twig": true, ".tpl": true, ".latte": true, ".j2": true, ".jinja": true, ".jinja2": true,
 		".hbs": true, ".handlebars": true, ".mustache": true, ".ejs": true, ".pug": true, ".jade": true,
 		".blade": true, ".razor": true, ".cshtml": true, ".vbhtml": true,
-		
+
 		// Web technologies
 		".html": true, ".htm": true, ".xhtml": true,
 		".css": true, ".scss": true, ".sass": true, ".less": true, ".styl": true, ".stylus": true,
 		".xml": true, ".xsl": true, ".xslt": true, ".svg": true,
-		
+
 		// Configuration and data files
 		".json": true, ".json5": true, ".jsonc": true,
 		".yaml": true, ".yml": true, ".neon": true,
 		".toml": true, ".ini": true, ".cfg": true, ".conf": true,
 		".env": true, ".properties": true,
-		
+
 		// Documentation and markup
 		".md": true, ".mdx": true, ".rst": true, ".txt": true, ".asciidoc": true, ".adoc": true,
-		
+
 		// Scripts and shell
 		".sh": true, ".bash": true, ".zsh": true, ".fish": true, ".bat": true, ".cmd": true, ".ps1": true,
 		".awk": true, ".sed": true,
-		
+
 		// Database and query languages
 		".sql": true, ".psql": true, ".mysql": true, ".sqlite": true, ".graphql": true, ".gql": true,
-		
+
 		// Keep all languages - users can control scope via directory selection or --exclude
 	}
-	
+
 	// Skip these directories
 	skipDirs := map[string]bool{
 		"node_modules": true, ".git": true, ".svn": true, ".hg": true,
@@ -1435,29 +1435,29 @@ func collectSourceFiles(projectPath string) ([]string, error) {
 		"assets": true, // Skip assets
 		"static": true, // Skip static files
 	}
-	
+
 	err = filepath.Walk(projectPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-		
+
 		// Skip directories that we don't want to analyze
 		if info.IsDir() {
 			dirName := filepath.Base(path)
-			
+
 			// Check if this is a git submodule directory
 			relPath, err := filepath.Rel(projectPath, path)
 			if err == nil && gitSubmodules[relPath] {
 				return filepath.SkipDir
 			}
-			
+
 			// Skip directories by name or if they contain "grammars" in their path
 			if skipDirs[dirName] || strings.HasPrefix(dirName, ".") && dirName != "." {
 				return filepath.SkipDir
 			}
-			
+
 			// Skip any directory path containing tree-sitter related content
-			if err == nil && (strings.Contains(relPath, "/grammars") || 
+			if err == nil && (strings.Contains(relPath, "/grammars") ||
 							  strings.Contains(relPath, "grammars/") ||
 							  strings.Contains(relPath, "tree-sitter") ||
 							  strings.Contains(relPath, "parser/grammars") ||
@@ -1465,10 +1465,10 @@ func collectSourceFiles(projectPath string) ([]string, error) {
 							  relPath == "grammars") {
 				return filepath.SkipDir
 			}
-			
+
 			return nil
 		}
-		
+
 		// Check if it's a source file
 		ext := strings.ToLower(filepath.Ext(path))
 		if sourceExtensions[ext] {
@@ -1477,7 +1477,7 @@ func collectSourceFiles(projectPath string) ([]string, error) {
 			if err == nil {
 				// Skip specific unwanted files
 				fileName := filepath.Base(relPath)
-				
+
 				// Skip generated files and AI Distiller output files
 				if strings.HasPrefix(fileName, ".aid.") ||
 				   strings.HasPrefix(fileName, ".") ||
@@ -1492,42 +1492,42 @@ func collectSourceFiles(projectPath string) ([]string, error) {
 				   strings.Contains(fileName, "grammar.js") {
 					return nil
 				}
-				
+
 				// Apply include/exclude filters if specified
 				if shouldIncludeFile(relPath, includeGlob, excludeGlob) {
 					sourceFiles = append(sourceFiles, relPath)
 				}
 			}
 		}
-		
+
 		return nil
 	})
-	
+
 	return sourceFiles, err
 }
 
 // generateTaskList creates the main task list file with checkboxes for each source file
 func generateTaskList(taskListFile, basename, currentDate string, sourceFiles []string) error {
 	var content strings.Builder
-	
+
 	// Write header
 	content.WriteString(fmt.Sprintf("# AI Distiller – Comprehensive Code Analysis Task List\n\n"))
 	content.WriteString(fmt.Sprintf("**Project:** `%s`  \n", basename))
 	content.WriteString(fmt.Sprintf("**Analysis Date:** %s  \n", currentDate))
 	content.WriteString(fmt.Sprintf("**Total Files:** %d  \n\n", len(sourceFiles)))
-	
+
 	// Write comprehensive prompt
 	content.WriteString(getAIAnalysisPrompt(basename, currentDate))
 	content.WriteString("\n\n")
-	
+
 	// Write the task list
 	content.WriteString("## 📋 Analysis Task List\n\n")
 	content.WriteString("Complete each task in order, checking off items as you finish:\n\n")
-	
+
 	// Task 1: Create summary file
 	content.WriteString(fmt.Sprintf("- [ ] **1. Initialize Analysis Summary**  \n"))
 	content.WriteString(fmt.Sprintf("      Create `./aid/ANALYSIS-SUMMARY.%s.%s.md` with project overview\n\n", basename, currentDate))
-	
+
 	// Tasks for each file
 	for i, file := range sourceFiles {
 		taskNum := i + 2
@@ -1535,12 +1535,12 @@ func generateTaskList(taskListFile, basename, currentDate string, sourceFiles []
 		content.WriteString(fmt.Sprintf("      → Create report: `./aid/analysis.%s/%s/%s.md`  \n", basename, currentDate, file))
 		content.WriteString(fmt.Sprintf("      → Add summary row to ANALYSIS-SUMMARY file\n\n"))
 	}
-	
+
 	// Final task: Generate conclusion
 	finalTaskNum := len(sourceFiles) + 2
 	content.WriteString(fmt.Sprintf("- [ ] **%d. Generate Project Conclusion**  \n", finalTaskNum))
 	content.WriteString(fmt.Sprintf("      Read completed ANALYSIS-SUMMARY file and write comprehensive conclusion\n\n"))
-	
+
 	// Write workflow notes
 	content.WriteString("## 🔄 Workflow Notes\n\n")
 	content.WriteString("- Check off each task **[x]** only after completing BOTH the individual report AND the summary row\n")
@@ -1558,31 +1558,31 @@ func generateTaskList(taskListFile, basename, currentDate string, sourceFiles []
 	content.WriteString("- **Template files**: `aid --include \"*.twig,*.latte,*.j2\" --ai-analysis-task-list`\n")
 	content.WriteString("- **Skip config files**: `aid --exclude \"*.json,*.yaml,*.yml,*.env,*.ini\" --ai-analysis-task-list`\n")
 	content.WriteString("- **Skip large directories**: Use directory selection instead of --exclude for dirs\n\n")
-	
+
 	content.WriteString("---\n")
 	content.WriteString("*Generated by AI Distiller – Comprehensive Code Analysis System*\n")
-	
+
 	return os.WriteFile(taskListFile, []byte(content.String()), 0644)
 }
 
 // generateSummaryFile creates the summary file with headers and initial content
 func generateSummaryFile(summaryFile, basename, currentDate string) error {
 	var content strings.Builder
-	
+
 	content.WriteString(fmt.Sprintf("# Project Analysis Summary – %s (%s)\n\n", basename, currentDate))
-	
+
 	content.WriteString("## 📊 Overview\n\n")
 	content.WriteString("This document provides a comprehensive analysis summary of the entire codebase. ")
 	content.WriteString("Each file has been individually analyzed for security, maintainability, performance, ")
 	content.WriteString("and readability. The results are compiled in the table below.\n\n")
-	
+
 	content.WriteString("## 📈 Analysis Results\n\n")
 	content.WriteString("| File | Security % | Maintainability % | Performance % | Readability % | Critical | High | Medium | Low |\n")
 	content.WriteString("|------|:----------:|:-----------------:|:-------------:|:-------------:|:--------:|:----:|:------:|:---:|\n")
-	
+
 	// Note: Individual file rows will be appended here during analysis
 	// The final conclusion section will be added by the last task
-	
+
 	return os.WriteFile(summaryFile, []byte(content.String()), 0644)
 }
 
@@ -1602,7 +1602,7 @@ This is a FORMAL PROTOCOL implementing Chain-of-Thought (CoT) analysis with ZERO
 ## ABSOLUTE PROHIBITIONS ⛔
 
 1. **PROHIBITED**: Batch processing multiple files simultaneously
-2. **PROHIBITED**: Using any "time-saving" shortcuts or optimizations  
+2. **PROHIBITED**: Using any "time-saving" shortcuts or optimizations
 3. **PROHIBITED**: Skipping individual file analysis for "efficiency"
 4. **PROHIBITED**: Marking tasks complete before ALL outputs are verified
 5. **PROHIBITED**: Referencing or planning for files not yet in scope
@@ -1625,7 +1625,7 @@ You are an **Expert Senior Staff Engineer and Security Auditor** conducting a co
 
 **Deduction Guide**:
 - **Critical Issue**: -30 points (exposed secrets, clear RCE, unreadable god functions)
-- **High Issue**: -15 points (SQL injection risk, complex unmaintainable code)  
+- **High Issue**: -15 points (SQL injection risk, complex unmaintainable code)
 - **Medium Issue**: -5 points (inefficient patterns, poor naming, missing docs)
 - **Low Issue**: -2 points (minor style issues, trivial improvements)
 - **Info**: 0 points (observations, TODO comments)
@@ -1642,7 +1642,7 @@ For each file, create the corresponding report file:
 
 ` + "```markdown" + `
 # File Analysis: [FILEPATH]
-*Analysis Date: 2025-06-17*  
+*Analysis Date: 2025-06-17*
 *Analyst: AI Distiller*
 
 | Metric | Score |
@@ -1658,7 +1658,7 @@ One paragraph overview of file purpose and critical findings.
 ## 🛡️ Security Analysis
 List vulnerabilities with severity, line numbers, and mitigations.
 
-## ⚡ Performance Analysis  
+## ⚡ Performance Analysis
 Identify bottlenecks, complexity issues, optimization opportunities.
 
 ## 🔧 Maintainability Analysis
@@ -1716,41 +1716,41 @@ current_file_only = True  # INVARIANT: Only process the current file
 for task in task_list:
     if task.status in ["completed", "failed"]:
         continue
-    
+
     try:
         # CHECKPOINT 1: Acknowledge current file
         print(f"[CHECKPOINT] Starting analysis for: {task.file_path}")
         update_task_status(task.file_path, "in_progress")
-        
+
         # STEP 1: Read ONLY current file
         file_content = read_file(task.file_path)
         file_hash = compute_sha256(file_content)
-        
+
         # STEP 2: Analyze THIS file comprehensively
         detailed_report = analyze_file_comprehensively(file_content)
         assert detailed_report is not None
-        
+
         # STEP 3: Save detailed report
         save_report(detailed_report, task.report_path)
         print(f"[CHECKPOINT] Saved report: {task.report_path}")
-        
+
         # STEP 4: Extract and append summary
         summary_row = extract_summary_metrics(detailed_report)
         append_to_summary_table(summary_row)
         print(f"[CHECKPOINT] Added summary row for: {task.file_path}")
-        
+
         # STEP 5: Verify outputs exist
         assert file_exists(task.report_path)
         assert summary_row_in_table(task.file_name)
-        
+
         # STEP 6: Mark complete ONLY after verification
         update_task_status(task.file_path, "completed")
         print(f"[CHECKPOINT] Completed: {task.file_path}")
-        
+
         # MANDATORY: Acknowledge completion before next file
         print(f"[CONFIRMATION] File {task.file_path} fully processed.")
         print(f"[CONFIRMATION] Moving to next file in sequence.")
-        
+
     except Exception as e:
         # FAILURE PATH - Log and continue
         log_error(task.file_path, str(e))
@@ -1790,7 +1790,7 @@ This is BY DESIGN to enforce sequential processing.
 
 After analyzing all files, read the complete ANALYSIS-SUMMARY table and write a comprehensive "Project-Level Conclusion" section covering:
 - Overall project health scores (averages)
-- Top 3-5 highest-risk files requiring immediate attention  
+- Top 3-5 highest-risk files requiring immediate attention
 - Recurring patterns and systemic issues
 - Strategic recommendations for the development team
 
@@ -1802,25 +1802,25 @@ After analyzing all files, read the complete ANALYSIS-SUMMARY table and write a 
 // loadGitSubmodules loads git submodules from .gitmodules file to exclude them from analysis
 func loadGitSubmodules(projectPath string) (map[string]bool, error) {
 	submodules := make(map[string]bool)
-	
+
 	gitmodulesPath := filepath.Join(projectPath, ".gitmodules")
-	
+
 	// Check if .gitmodules file exists
 	if _, err := os.Stat(gitmodulesPath); os.IsNotExist(err) {
 		return submodules, nil // No submodules
 	}
-	
+
 	// Read .gitmodules file
 	content, err := os.ReadFile(gitmodulesPath)
 	if err != nil {
 		return submodules, err
 	}
-	
+
 	// Parse .gitmodules file to extract submodule paths
 	lines := strings.Split(string(content), "\n")
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
-		
+
 		// Look for path = ... lines
 		if strings.HasPrefix(line, "path = ") {
 			path := strings.TrimSpace(strings.TrimPrefix(line, "path = "))
@@ -1829,7 +1829,7 @@ func loadGitSubmodules(projectPath string) (map[string]bool, error) {
 			}
 		}
 	}
-	
+
 	return submodules, nil
 }
 
@@ -1849,7 +1849,7 @@ func shouldIncludeFile(filePath string, includePatterns, excludePatterns []strin
 			}
 		}
 	}
-	
+
 	// If include patterns are specified, only include files that match any pattern
 	if len(includePatterns) > 0 {
 		for _, includePattern := range includePatterns {
@@ -1868,7 +1868,7 @@ func shouldIncludeFile(filePath string, includePatterns, excludePatterns []strin
 		// If include patterns are specified but none match, exclude
 		return false
 	}
-	
+
 	// No patterns specified or exclude patterns don't match, include the file
 	return true
 }
@@ -1877,25 +1877,25 @@ func shouldIncludeFile(filePath string, includePatterns, excludePatterns []strin
 func handleAIAction(ctx context.Context, projectPath string) error {
 	dbg := debug.FromContext(ctx).WithSubsystem("ai-action")
 	dbg.Logf(debug.LevelBasic, "AI Action mode: %s", aiAction)
-	
+
 	// Get the AI action from registry
 	registry := ai.GetRegistry()
 	action, err := registry.Get(aiAction)
 	if err != nil {
 		return fmt.Errorf("failed to get AI action: %w", err)
 	}
-	
+
 	// Validate the action
 	if err := action.Validate(); err != nil {
 		return fmt.Errorf("action validation failed: %w", err)
 	}
-	
+
 	// Create action context
 	baseName := filepath.Base(projectPath)
 	if baseName == "." || baseName == "/" {
 		baseName = "project"
 	}
-	
+
 	actionCtx := &ai.ActionContext{
 		ProjectPath:     projectPath,
 		BaseName:        baseName,
@@ -1906,7 +1906,7 @@ func handleAIAction(ctx context.Context, projectPath string) error {
 			OutputPath: aiOutput,
 		},
 	}
-	
+
 	// Handle different action types
 	switch action.Type() {
 	case ai.ActionTypeFlow:
@@ -1915,25 +1915,25 @@ func handleAIAction(ctx context.Context, projectPath string) error {
 		if !ok {
 			return fmt.Errorf("action %s claims to be flow type but doesn't implement FlowAction interface", aiAction)
 		}
-		
+
 		return executeFlowAction(ctx, flowAction, actionCtx)
-		
+
 	case ai.ActionTypePrompt:
 		// Prompt actions need distilled content
 		contentAction, ok := action.(ai.ContentAction)
 		if !ok {
 			return fmt.Errorf("action %s claims to be prompt type but doesn't implement ContentAction interface", aiAction)
 		}
-		
+
 		// First, distill the content
 		distilledContent, err := distillForAction(ctx, projectPath)
 		if err != nil {
 			return fmt.Errorf("failed to distill content: %w", err)
 		}
-		
+
 		actionCtx.DistilledContent = distilledContent
 		return executeContentAction(ctx, contentAction, actionCtx)
-		
+
 	default:
 		return fmt.Errorf("unknown action type: %s", action.Type())
 	}
@@ -1942,21 +1942,21 @@ func handleAIAction(ctx context.Context, projectPath string) error {
 // distillForAction runs the distiller to get content for AI actions
 func distillForAction(ctx context.Context, projectPath string) (string, error) {
 	dbg := debug.FromContext(ctx).WithSubsystem("distill-for-action")
-	
+
 	// Create processor options from flags
 	procOpts := createProcessOptionsFromFlags()
 	procOpts.BasePath = projectPath
 	procOpts.FilePathType = "relative"
-	
+
 	// Create the processor
 	proc := processor.NewWithContext(ctx)
-	
+
 	// Process the input
 	result, err := proc.ProcessPath(projectPath, procOpts)
 	if err != nil {
 		return "", fmt.Errorf("failed to process: %w", err)
 	}
-	
+
 	// Always use text format for AI actions
 	formatterOpts := formatter.Options{
 		ProcessingOptions: formatter.ProcessingInfo{
@@ -1977,10 +1977,10 @@ func distillForAction(ctx context.Context, projectPath string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to get formatter: %w", err)
 	}
-	
+
 	// Format the output
 	var output strings.Builder
-	
+
 	switch r := result.(type) {
 	case *ir.DistilledFile:
 		if err := outputFormatter.Format(&output, r); err != nil {
@@ -1999,7 +1999,7 @@ func distillForAction(ctx context.Context, projectPath string) (string, error) {
 	default:
 		return "", fmt.Errorf("unexpected result type: %T", result)
 	}
-	
+
 	dbg.Logf(debug.LevelBasic, "Distilled %d bytes of content", output.Len())
 	return output.String(), nil
 }
@@ -2008,67 +2008,67 @@ func distillForAction(ctx context.Context, projectPath string) (string, error) {
 func executeFlowAction(ctx context.Context, action ai.FlowAction, actionCtx *ai.ActionContext) error {
 	startTime := time.Now()
 	dbg := debug.FromContext(ctx).WithSubsystem("flow-action")
-	
+
 	// Determine output path
 	outputPath := actionCtx.Config.OutputPath
 	if outputPath == "" {
 		outputPath = action.DefaultOutput()
 	}
 	outputPath = ai.ExpandTemplate(outputPath, actionCtx)
-	
+
 	// Ensure output path is within project
 	if err := ai.ValidateOutputPath(outputPath, actionCtx.ProjectPath); err != nil {
 		return fmt.Errorf("invalid output path: %w", err)
 	}
-	
+
 	// Execute the flow
 	result, err := action.ExecuteFlow(actionCtx)
 	if err != nil {
 		return fmt.Errorf("flow execution failed: %w", err)
 	}
-	
+
 	// Create output directory
 	if err := os.MkdirAll(outputPath, 0755); err != nil {
 		return fmt.Errorf("failed to create output directory: %w", err)
 	}
-	
+
 	// Write all files and track total size
 	var totalSize int64
 	fileCount := 0
 	for relPath, content := range result.Files {
 		fullPath := filepath.Join(outputPath, relPath)
-		
+
 		// Create parent directory
 		parentDir := filepath.Dir(fullPath)
 		if err := os.MkdirAll(parentDir, 0755); err != nil {
 			return fmt.Errorf("failed to create directory %s: %w", parentDir, err)
 		}
-		
+
 		// Write file
 		contentBytes := []byte(content)
 		if err := os.WriteFile(fullPath, contentBytes, 0644); err != nil {
 			return fmt.Errorf("failed to write file %s: %w", fullPath, err)
 		}
-		
+
 		totalSize += int64(len(contentBytes))
 		fileCount++
 		sizeKB := float64(len(contentBytes)) / 1024.0
 		dbg.Logf(debug.LevelDetailed, "Wrote file: %s (%.1f kB)", fullPath, sizeKB)
 	}
-	
+
 	// Calculate duration and total size
 	duration := time.Since(startTime)
 	totalSizeKB := float64(totalSize) / 1024.0
-	
+
 	// Print messages
 	for _, msg := range result.Messages {
 		fmt.Println(msg)
 	}
-	
+
 	// Print summary
 	fmt.Printf("✅ AI flow action '%s' completed successfully! (%.2fs)\n", action.Name(), duration.Seconds())
 	fmt.Printf("📄 Output saved to: %s (%d files, %.1f kB total)\n", outputPath, fileCount, totalSizeKB)
-	
+
 	return nil
 }
 
@@ -2076,37 +2076,37 @@ func executeFlowAction(ctx context.Context, action ai.FlowAction, actionCtx *ai.
 func executeContentAction(ctx context.Context, action ai.ContentAction, actionCtx *ai.ActionContext) error {
 	startTime := time.Now()
 	dbg := debug.FromContext(ctx).WithSubsystem("content-action")
-	
+
 	// Generate content
 	result, err := action.GenerateContent(actionCtx)
 	if err != nil {
 		return fmt.Errorf("content generation failed: %w", err)
 	}
-	
+
 	// Determine output path
 	outputPath := actionCtx.Config.OutputPath
 	if outputPath == "" {
 		outputPath = action.DefaultOutput()
 	}
 	outputPath = ai.ExpandTemplate(outputPath, actionCtx)
-	
+
 	// Ensure output path is within project
 	if err := ai.ValidateOutputPath(outputPath, actionCtx.ProjectPath); err != nil {
 		return fmt.Errorf("invalid output path: %w", err)
 	}
-	
+
 	// Build final content
 	var finalContent strings.Builder
 	finalContent.WriteString(result.ContentBefore)
 	finalContent.WriteString(actionCtx.DistilledContent)
 	finalContent.WriteString(result.ContentAfter)
-	
+
 	content := []byte(finalContent.String())
-	
+
 	// If outputToStdout is set, print to stdout
 	if outputToStdout {
 		fmt.Print(string(content))
-		
+
 		// Also save to file unless explicitly disabled
 		if outputPath != "" && outputPath != "-" {
 			// Create parent directory
@@ -2114,12 +2114,12 @@ func executeContentAction(ctx context.Context, action ai.ContentAction, actionCt
 			if err := os.MkdirAll(parentDir, 0755); err != nil {
 				return fmt.Errorf("failed to create directory %s: %w", parentDir, err)
 			}
-			
+
 			// Write output file
 			if err := os.WriteFile(outputPath, content, 0644); err != nil {
 				return fmt.Errorf("failed to write output file: %w", err)
 			}
-			
+
 			// Print info message to stderr so it doesn't mix with stdout content
 			fmt.Fprintf(os.Stderr, "\n\n")
 			fmt.Fprintf(os.Stderr, "════════════════════════════════════════════════════════════════════════\n")
@@ -2144,25 +2144,25 @@ func executeContentAction(ctx context.Context, action ai.ContentAction, actionCt
 		if err := os.MkdirAll(parentDir, 0755); err != nil {
 			return fmt.Errorf("failed to create directory %s: %w", parentDir, err)
 		}
-		
+
 		// Write output file
 		if err := os.WriteFile(outputPath, content, 0644); err != nil {
 			return fmt.Errorf("failed to write output file: %w", err)
 		}
-		
+
 		// Get file info for size
 		fileInfo, err := os.Stat(outputPath)
 		if err != nil {
 			return fmt.Errorf("failed to stat output file: %w", err)
 		}
-		
+
 		// Calculate size in kB
 		sizeKB := float64(fileInfo.Size()) / 1024.0
 		sizeMB := sizeKB / 1024.0
 		duration := time.Since(startTime)
-		
+
 		dbg.Logf(debug.LevelBasic, "Wrote AI action output to %s (%d bytes, %.1f kB) in %v", outputPath, fileInfo.Size(), sizeKB, duration)
-		
+
 		fmt.Printf("\n")
 		fmt.Printf("════════════════════════════════════════════════════════════════════════\n")
 		fmt.Printf("✅ AI action '%s' completed successfully! (%.2fs)\n", action.Name(), duration.Seconds())
@@ -2173,7 +2173,7 @@ func executeContentAction(ctx context.Context, action ai.ContentAction, actionCt
 		fmt.Printf("1. Let your AI agent read and execute this file\n")
 		fmt.Printf("2. Copy the file content to Gemini 2.5 Pro/Flash (supports 1M+ context)\n")
 		fmt.Printf("3. Use with any AI tool that supports large context windows\n")
-		
+
 		if sizeMB > 0.5 { // If larger than 500KB
 			fmt.Printf("\n")
 			fmt.Printf("⚠️  The generated file is quite large (%.1f MB).\n", sizeMB)
@@ -2182,7 +2182,7 @@ func executeContentAction(ctx context.Context, action ai.ContentAction, actionCt
 		}
 		fmt.Printf("════════════════════════════════════════════════════════════════════════\n")
 	}
-	
+
 	return nil
 }
 
@@ -2197,7 +2197,7 @@ func pluralS(count int) string {
 // getOriginalSize calculates the total size of source files in the result
 func getOriginalSize(result interface{}) int64 {
 	var totalSize int64
-	
+
 	switch r := result.(type) {
 	case *ir.DistilledFile:
 		// For single file, estimate based on content
@@ -2211,7 +2211,7 @@ func getOriginalSize(result interface{}) int64 {
 			}
 		}
 	}
-	
+
 	return totalSize
 }
 
@@ -2219,15 +2219,15 @@ func getOriginalSize(result interface{}) int64 {
 func estimateOriginalSize(file *ir.DistilledFile) int64 {
 	// This is a rough estimate based on typical compression ratios
 	// In reality, we should track actual file sizes during processing
-	
+
 	// Count base structure size
 	size := int64(len(file.Path)) + 100 // File overhead
-	
+
 	// Process all children recursively
 	for _, child := range file.Children {
 		size += estimateNodeSize(child)
 	}
-	
+
 	// Apply a multiplier for typical source file overhead (comments, whitespace, etc.)
 	// This is a conservative estimate
 	return size * 3
@@ -2237,9 +2237,9 @@ func estimateNodeSize(node ir.DistilledNode) int64 {
 	if node == nil {
 		return 0
 	}
-	
+
 	var size int64
-	
+
 	switch n := node.(type) {
 	case *ir.DistilledImport:
 		size += int64(len(n.Module)) + 20
@@ -2277,7 +2277,7 @@ func estimateNodeSize(node ir.DistilledNode) int64 {
 			size += estimateNodeSize(child)
 		}
 	}
-	
+
 	return size
 }
 
@@ -2286,16 +2286,16 @@ func generateDistillationInstructions(opts processor.ProcessOptions) string {
 	// Build list of what's included
 	var included []string
 	var excluded []string
-	
+
 	// Visibility levels - handle case when not all flags are explicitly set
 	visibilityIncluded := []string{}
-	
+
 	// Default values if not explicitly set (only public is true by default)
 	includePublic := true
 	includeProtected := false
 	includeInternal := false
 	includePrivate := false
-	
+
 	// Use actual values if they were set
 	if opts.IncludePublic || opts.IncludeProtected || opts.IncludeInternal || opts.IncludePrivate {
 		includePublic = opts.IncludePublic
@@ -2303,7 +2303,7 @@ func generateDistillationInstructions(opts processor.ProcessOptions) string {
 		includeInternal = opts.IncludeInternal
 		includePrivate = opts.IncludePrivate
 	}
-	
+
 	if includePublic {
 		visibilityIncluded = append(visibilityIncluded, "public")
 	}
@@ -2316,7 +2316,7 @@ func generateDistillationInstructions(opts processor.ProcessOptions) string {
 	if includePrivate {
 		visibilityIncluded = append(visibilityIncluded, "private")
 	}
-	
+
 	if len(visibilityIncluded) > 0 {
 		if len(visibilityIncluded) == 4 {
 			included = append(included, "All visibility levels (public, protected, internal, private)")
@@ -2324,50 +2324,50 @@ func generateDistillationInstructions(opts processor.ProcessOptions) string {
 			included = append(included, strings.Join(visibilityIncluded, ", ")+" members")
 		}
 	}
-	
+
 	// Content types
 	if opts.IncludeImports {
 		included = append(included, "import statements")
 	} else {
 		excluded = append(excluded, "import statements")
 	}
-	
+
 	if opts.IncludeDocstrings {
 		included = append(included, "documentation/docstrings")
 	}
-	
+
 	if opts.IncludeAnnotations {
 		included = append(included, "decorators/annotations")
 	}
-	
+
 	if opts.IncludeImplementation {
 		included = append(included, "function/method implementations")
 	} else {
 		excluded = append(excluded, "function/method bodies")
 	}
-	
+
 	if opts.IncludeComments {
 		included = append(included, "code comments")
 	} else {
 		excluded = append(excluded, "code comments")
 	}
-	
+
 	// Build the instructions
 	instructions := "⚡ PROJECT ARCHITECTURE OVERVIEW: This distilled code shows "
-	
+
 	if len(included) > 0 {
 		instructions += strings.Join(included, ", ")
 		instructions += " providing a complete map of available classes, methods, functions, data types, interfaces, and their relationships."
 	} else {
 		instructions += "all public APIs, classes, methods, functions, data types, and interfaces available in this project."
 	}
-	
+
 	if len(excluded) > 0 {
 		instructions += " (Excludes: " + strings.Join(excluded, ", ") + ")"
 	}
-	
+
 	instructions += " 📋 USE THIS DISTILLATION TO: 1) Understand the project's architecture and available components, 2) See what classes/methods/types exist and how to use them correctly, 3) Find the right APIs and their exact signatures, 4) Understand relationships between components. ✅ TRUST THIS OVERVIEW: When implementing features or fixing bugs, reference the distilled signatures above to use the correct classes, methods, parameters, and types - no need to read source files for information already captured here."
-	
+
 	return instructions
 }
 

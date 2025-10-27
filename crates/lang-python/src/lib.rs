@@ -774,13 +774,13 @@ fn test_class_with_mixed_visibility_methods() {
     let source = r#"class Service:
     def public_method(self):
         pass
-    
+
     def _protected_method(self):
         pass
-    
+
     def __private_method(self):
         pass
-    
+
     def __init__(self):
         pass
 "#;
@@ -973,15 +973,15 @@ class ComplexService(BaseService, Mixin):
         self.public_field = 0
         self._protected_field = 1
         self.__private_field = 2
-    
+
     @property
     def value(self) -> int:
         return self.public_field
-    
+
     @staticmethod
     def helper() -> str:
         return "help"
-    
+
     async def fetch(self, url: str) -> str:
         pass
 "#;

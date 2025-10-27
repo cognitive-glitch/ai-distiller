@@ -13,7 +13,7 @@ import Logger from './logger';
 function MyComponent() {
   const [count, setCount] = useState(0);
   const [data, setData] = useState(null);
-  
+
   // Using axios
   const fetchData = async () => {
     try {
@@ -23,10 +23,10 @@ function MyComponent() {
       console.error('Error fetching data:', error);
     }
   };
-  
+
   // Using SomeUtil
   const processedData = SomeUtil.process(data);
-  
+
   return {
     count,
     setCount,

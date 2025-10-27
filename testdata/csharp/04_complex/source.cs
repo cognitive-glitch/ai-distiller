@@ -183,7 +183,7 @@ public class ServiceLocator
     {
         var type = typeof(T);
         var constructors = type.GetConstructors();
-        
+
         // Find parameterless constructor
         var defaultConstructor = constructors.FirstOrDefault(c => c.GetParameters().Length == 0);
         if (defaultConstructor != null)

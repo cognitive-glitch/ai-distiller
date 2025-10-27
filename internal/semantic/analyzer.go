@@ -727,7 +727,7 @@ func (a *Analyzer) processImportStatement(node *sitter.Node, content []byte, ana
 	return nil
 }
 
-// processFromImportStatement processes from-import statements  
+// processFromImportStatement processes from-import statements
 func (a *Analyzer) processFromImportStatement(node *sitter.Node, content []byte, analysis *FileAnalysis) error {
 
 	location := FileLocation{
@@ -1033,7 +1033,7 @@ func (a *Analyzer) findCallerContext(node *sitter.Node, content []byte, filePath
 		if current.Type() == "function_definition" {
 			if nameNode := current.ChildByFieldName("name"); nameNode != nil {
 				funcName := nodeText(nameNode, content)
-				
+
 				// Check if this function is inside a class
 				className := a.findContainingClass(current, content)
 				return GenerateSymbolID(filePath, funcName, className)
@@ -1041,7 +1041,7 @@ func (a *Analyzer) findCallerContext(node *sitter.Node, content []byte, filePath
 		}
 		current = current.Parent()
 	}
-	
+
 	// If not in a function, it's module-level
 	return GenerateSymbolID(filePath, "<module>", "")
 }

@@ -148,7 +148,7 @@ Kotlin objects (singletons) are correctly identified:
 object AppConfig {
     const val API_KEY = "xyz"
     val baseUrl = "https://api.example.com"
-    
+
     fun initialize() { }
 }
 
@@ -179,17 +179,17 @@ interface Repository<T> {
 
 class UserRepository : Repository<User> {
     private val cache = mutableMapOf<Long, User>()
-    
+
     override suspend fun get(id: Long): User? {
         return cache[id] ?: fetchFromDatabase(id)
     }
-    
+
     override suspend fun save(item: User) {
         cache[item.id] = item
         saveToDatabase(item)
     }
-    
-    private suspend fun fetchFromDatabase(id: Long): User? = 
+
+    private suspend fun fetchFromDatabase(id: Long): User? =
         withContext(Dispatchers.IO) {
             // Database logic
         }
@@ -241,7 +241,7 @@ sealed class ViewState {
 }
 
 // Extension functions for utilities
-fun String.isValidEmail(): Boolean = 
+fun String.isValidEmail(): Boolean =
     contains("@") && contains(".")
 ```
 
@@ -273,7 +273,7 @@ aid ./src --format text --internal=1 --output full-api.txt
 - name: Extract Public API
   run: |
     aid ./src --format text --private=0 --protected=0 --internal=0 > api.txt
-    
+
     # Check for breaking changes
     if ! diff api-baseline.txt api.txt; then
       echo "::error::Public API has changed"

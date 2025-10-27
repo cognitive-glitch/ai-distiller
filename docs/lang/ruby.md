@@ -59,15 +59,15 @@ class User
   def public_method
     "public"
   end
-  
+
   private
-  
+
   def private_method
     "private"
   end
-  
+
   protected
-  
+
   def protected_method
     "protected"
   end
@@ -96,7 +96,7 @@ end
 class Order
   include Trackable
   extend ActiveModel::Naming
-  
+
   def process
     track(:order_processed)
   end
@@ -112,7 +112,7 @@ end
 class Order
   include Trackable
   extend ActiveModel::Naming
-  
+
   def process
 end
 ```
@@ -127,7 +127,7 @@ class Calculator
   def self.add(a, b)
     a + b
   end
-  
+
   class << self
     def multiply(a, b)
       a * b
@@ -154,7 +154,7 @@ class Product
   attr_reader :id, :name
   attr_writer :price
   attr_accessor :quantity
-  
+
   def initialize(id, name)
     @id = id
     @name = name
@@ -168,7 +168,7 @@ class Product
   attr_reader :id, :name
   attr_writer :price
   attr_accessor :quantity
-  
+
   def initialize(id, name)
 end
 ```
@@ -183,21 +183,21 @@ The text format preserves idiomatic Ruby syntax:
 // Input file
 module Authentication
   extend ActiveSupport::Concern
-  
+
   included do
     before_action :authenticate_user!
   end
-  
+
   def authenticate_user!
     redirect_to login_path unless current_user
   end
-  
+
   def current_user
     @current_user ||= User.find_by(id: session[:user_id])
   end
-  
+
   private
-  
+
   def set_current_user(user)
     @current_user = user
     session[:user_id] = user.id
@@ -206,15 +206,15 @@ end
 
 class ApplicationController < ActionController::Base
   include Authentication
-  
+
   protect_from_forgery with: :exception
-  
+
   rescue_from ActiveRecord::RecordNotFound do |e|
     render_404
   end
-  
+
   private
-  
+
   def render_404
     render file: 'public/404.html', status: :not_found
   end
@@ -224,7 +224,7 @@ end
 <file path="auth.rb">
 module Authentication
   extend ActiveSupport::Concern
-  
+
   def authenticate_user!
   def current_user
 end
@@ -256,14 +256,14 @@ class Service
     validate(params)
     process(params)
   end
-  
+
   private
-  
+
   # Implementation details
   def validate(params)
     # ...
   end
-  
+
   def process(params)
     # ...
   end
@@ -278,11 +278,11 @@ Use modules for shared behavior:
 module Concerns
   module Searchable
     extend ActiveSupport::Concern
-    
+
     included do
       scope :search, ->(query) { where("name LIKE ?", "%#{query}%") }
     end
-    
+
     class_methods do
       def searchable_fields
         %w[name description]

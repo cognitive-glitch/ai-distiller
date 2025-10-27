@@ -52,19 +52,19 @@ Very simply, it can be said that `aid`, within the distillation process, will le
 
 ## **✨ Key Features**
 
-| Feature | Description | 
+| Feature | Description |
 | ------- | ----------- |
-| 🚀 Extreme Speed | Processes tens of megabytes of code in hundreds of milliseconds. By default, it uses 80% of available CPU cores, but can be configured, e.g., with `--workers=1` to use only a single CPU core. |  
-| 🧠 Intelligent Distillation | Understands 12+ programming languages and extracts only public APIs (methods, properties, types). |  
-| ⚙️ High Configurability | Allows including private, protected, and internal members, implementation, or comments. |  
-| 🤖 AI Prompt Generation | Generates ready-to-use prompts with distilled code for AI analysis. The tool creates files with prompts that AI agents can then execute for security audits, refactoring, etc. See `--ai-action` switch. |  
-| 📋 Analysis Automation | Creates a complete checklist and directory structure for AI agents, who can then systematically analyze the entire project. See the flow-for-\* actions for the `--ai-action` switch. |  
-| 📜 Git Analysis | Processes commit history and prepares data for in-depth analysis of development quality and team dynamics. |  
-| 💻 Multi-platform | A single binary file with no dependencies for Windows, Linux, and macOS (x64 & ARM). |  
+| 🚀 Extreme Speed | Processes tens of megabytes of code in hundreds of milliseconds. By default, it uses 80% of available CPU cores, but can be configured, e.g., with `--workers=1` to use only a single CPU core. |
+| 🧠 Intelligent Distillation | Understands 12+ programming languages and extracts only public APIs (methods, properties, types). |
+| ⚙️ High Configurability | Allows including private, protected, and internal members, implementation, or comments. |
+| 🤖 AI Prompt Generation | Generates ready-to-use prompts with distilled code for AI analysis. The tool creates files with prompts that AI agents can then execute for security audits, refactoring, etc. See `--ai-action` switch. |
+| 📋 Analysis Automation | Creates a complete checklist and directory structure for AI agents, who can then systematically analyze the entire project. See the flow-for-\* actions for the `--ai-action` switch. |
+| 📜 Git Analysis | Processes commit history and prepares data for in-depth analysis of development quality and team dynamics. |
+| 💻 Multi-platform | A single binary file with no dependencies for Windows, Linux, and macOS (x64 & ARM). |
 | 🔌 Integration via MCP | Can be integrated into tools like Claude Code, VS Code, Cursor, Windsurf and others thanks to the included MCP server. |
 
 ### 🎯 Intelligent Filtering
- 
+
 Control exactly what to include with our new granular flag system:
 
 **Visibility Control**:
@@ -262,7 +262,7 @@ We've worked extensively to make dependency-aware distillation as reliable as po
 
 **Areas for Enhancement**:
 - **Large Projects**: Performance may be limited with 50+ files
-- **Language Processors**: C#, C++, TypeScript have fundamental limitations  
+- **Language Processors**: C#, C++, TypeScript have fundamental limitations
 - **Complex Call Patterns**: Advanced metaprogramming patterns may be limited
 
 ### 💡 When to Use Dependency-Aware Analysis
@@ -397,7 +397,7 @@ aid src/ --dependency-aware --include="*.py,*.js,*.go"
 
 **Most AI agents and IDEs are "context misers"** - they try to save tokens at the expense of actual codebase knowledge. They rely on:
 - 🔍 **Grep/search** to find relevant code snippets
-- 📄 **Limited context** showing only 10-50 lines around matches  
+- 📄 **Limited context** showing only 10-50 lines around matches
 - 🎲 **Guessing interfaces** based on partial information
 
 **This is why AI-generated code often fails on first attempts** - the AI is literally guessing method signatures, parameter types, and return values because it can't see the full picture.
@@ -492,12 +492,12 @@ aid main.py                             # Specific file
 ```python
 class Car:
     """A car with basic attributes and methods."""
-    
+
     def __init__(self, make: str, model: str):
         self.make = make
         self.model = model
         self._mileage = 0  # Private
-    
+
     def drive(self, distance: int) -> None:
         """Drive the car."""
         if distance > 0:
@@ -528,7 +528,7 @@ export interface User {
 
 export class UserService {
   private cache = new Map<number, User>();
-  
+
   async getUser(id: number): Promise<User | null> {
     return this.cache.get(id) || null;
   }
@@ -890,7 +890,7 @@ aid ./api --comments=0 --implementation=0 --format md > api-ref.md
 # Extract only method signatures (no fields/properties) - great for large codebases
 aid ./src --fields=0 --implementation=0 > methods-only.txt
 
-# Extract only data structures (no method noise)  
+# Extract only data structures (no method noise)
 aid ./models --methods=0 > data-structures.txt
 
 # Focus on public API methods only

@@ -150,26 +150,22 @@ struct Args {
 impl Args {
     /// Convert CLI args to ProcessOptions
     fn to_process_options(&self) -> ProcessOptions {
-        let mut options = ProcessOptions::default();
-
-        // Visibility
-        options.include_public = self.public;
-        options.include_protected = self.protected;
-        options.include_internal = self.internal;
-        options.include_private = self.private;
-
-        // Content
-        options.include_comments = self.comments;
-        options.include_docstrings = self.docstrings;
-        options.include_implementation = self.implementation;
-        options.include_imports = self.imports;
-        options.include_annotations = self.annotations;
-        options.include_fields = self.fields;
-        options.include_methods = self.methods;
-
-        // Processing
-        options.workers = self.workers;
-        options.recursive = self.recursive;
+        let mut options = ProcessOptions {
+            include_public: self.public,
+            include_protected: self.protected,
+            include_internal: self.internal,
+            include_private: self.private,
+            include_comments: self.comments,
+            include_docstrings: self.docstrings,
+            include_implementation: self.implementation,
+            include_imports: self.imports,
+            include_annotations: self.annotations,
+            include_fields: self.fields,
+            include_methods: self.methods,
+            workers: self.workers,
+            recursive: self.recursive,
+            ..Default::default()
+        };
 
         // Pattern filtering
         if let Some(ref include) = self.include {

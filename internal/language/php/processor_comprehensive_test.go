@@ -293,7 +293,7 @@ abstract class AbstractStorage
     }
 
     abstract protected function save(string $key, string $data): bool;
-    
+
     final public function getStoragePath(): string
     {
         return $this->storagePath;

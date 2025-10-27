@@ -22,9 +22,9 @@ interface UseAuthReturn {
 export function useAuth(): UseAuthReturn {
     const [user, setUser] = useState<AuthUser | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(true);
-    
+
     const isAuthenticated = user !== null;
-    
+
     useEffect(() => {
         const checkAuth = async () => {
             try {
@@ -39,10 +39,10 @@ export function useAuth(): UseAuthReturn {
                 setIsLoading(false);
             }
         };
-        
+
         checkAuth();
     }, []);
-    
+
     const login = useCallback(async (username: string, password: string) => {
         setIsLoading(true);
         try {
@@ -51,18 +51,18 @@ export function useAuth(): UseAuthReturn {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password }),
             });
-            
+
             if (!response.ok) {
                 throw new Error('Login failed');
             }
-            
+
             const data = await response.json();
             setUser(data);
         } finally {
             setIsLoading(false);
         }
     }, []);
-    
+
     const logout = useCallback(async () => {
         setIsLoading(true);
         try {
@@ -72,7 +72,7 @@ export function useAuth(): UseAuthReturn {
             setIsLoading(false);
         }
     }, []);
-    
+
     const refresh = useCallback(async () => {
         setIsLoading(true);
         try {
@@ -85,6 +85,6 @@ export function useAuth(): UseAuthReturn {
             setIsLoading(false);
         }
     }, []);
-    
+
     return { user, isAuthenticated, isLoading, login, logout, refresh };
 }

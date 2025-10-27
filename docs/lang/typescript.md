@@ -43,7 +43,7 @@ AI Distiller captures complex generic constraints and relationships:
 // Input
 class EventEmitter<TEventMap extends object> {
   emit<K extends keyof TEventMap>(
-    event: K, 
+    event: K,
     payload: TEventMap[K]
   ): void { /* ... */ }
 }

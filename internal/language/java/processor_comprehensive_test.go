@@ -151,7 +151,7 @@ public class Test {
     public String toString() {
         return "test";
     }
-    
+
     @Deprecated
     @SuppressWarnings("unchecked")
     public void oldMethod() { }

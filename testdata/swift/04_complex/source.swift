@@ -69,15 +69,15 @@ public struct ConfigurationBuilder {
     public static func buildBlock(_ components: ValidationResult...) -> [ValidationResult] {
         components
     }
-    
+
     public static func buildExpression(_ expression: String) -> ValidationResult {
         .success(expression)
     }
-    
+
     public static func buildEither(first component: [ValidationResult]) -> [ValidationResult] {
         component
     }
-    
+
     public static func buildEither(second component: [ValidationResult]) -> [ValidationResult] {
         component
     }
@@ -94,7 +94,7 @@ public struct ConfigurationBuilder {
 public protocol Describable {
     /// A textual description of the instance.
     var description: String { get }
-    
+
     /// Resets to a default state.
     func reset()
 }
@@ -114,10 +114,10 @@ extension Describable {
 fileprivate struct AudioSettings: Describable, Equatable {
     @Clamped(0...100) var volume: Int = 50
     var isMuted: Bool = false
-    
+
     // Conforming to Describable
     var description: String { "Audio: Volume \(volume), Muted: \(isMuted)" }
-    func reset() { 
+    func reset() {
         volume = 50
         isMuted = false
     }
@@ -134,11 +134,11 @@ fileprivate struct AudioSettings: Describable, Equatable {
 @dynamicMemberLookup
 public struct SettingsProxy {
     private let settings: UserSettings
-    
+
     fileprivate init(_ settings: UserSettings) {
         self.settings = settings
     }
-    
+
     public subscript<T>(dynamicMember keyPath: KeyPath<UserSettings, T>) -> T {
         settings[keyPath: keyPath]
     }
@@ -156,11 +156,11 @@ public struct UserSettings {
     var username: String
     @Clamped(18...120) var userAge: Int = 30
     fileprivate var audio = AudioSettings()
-    
+
     public init(username: String) {
         self.username = username
     }
-    
+
     /// Creates a read-only proxy for these settings.
     public func asProxy() -> SettingsProxy {
         SettingsProxy(self)
@@ -180,38 +180,38 @@ public struct UserSettings {
 internal class SettingsViewModel {
     private var settings: UserSettings
     private var cancellables = Set<AnyCancellable>()
-    
+
     @Published private(set) var ageDescription: String
-    
+
     init(settings: UserSettings) {
         self.settings = settings
         self.ageDescription = "Current age: \(settings.userAge)"
-        
+
         // Combine: Subscribing to the property wrapper's projected value
         self.settings.$userAge
             .map { "Updated age: \($0)" }
             .assign(to: \.ageDescription, on: self)
             .store(in: &cancellables)
     }
-    
+
     // Opaque Return Type
     internal func getAudioConfiguration() -> some Equatable {
         // The caller knows it's Equatable, but not that it's an `AudioSettings`.
         return self.settings.audio
     }
-    
+
     // Using the Result Builder
     @ConfigurationBuilder
     internal func validate(isPremiumUser: Bool) -> [ValidationResult] {
         "Username check passed"
-        
+
         if isPremiumUser {
             "Premium user features enabled"
         } else {
             ValidationResult.failure("Premium features disabled")
         }
     }
-    
+
     // Advanced Generics with `where` clause
     /// Serializes items that are both Identifiable and Codable.
     public func serialize<T: Collection>(_ items: T) -> Data? where T.Element: Identifiable & Codable {
@@ -230,18 +230,18 @@ internal class SettingsViewModel {
 fileprivate func complexDemo() {
     var settings = UserSettings(username: "TestUser")
     let viewModel = SettingsViewModel(settings: settings)
-    
+
     // Test property wrapper
     settings.userAge = 150 // Will be clamped to 120
-    
+
     // Test opaque return type
     let audioConfig = viewModel.getAudioConfiguration()
     print("Audio config: \(audioConfig)")
-    
+
     // Test result builder
     let validationResults = viewModel.validate(isPremiumUser: true)
     print("Validation results: \(validationResults)")
-    
+
     // Test dynamic member lookup
     let proxy = settings.asProxy()
     print("Username from proxy: \(proxy.username)")

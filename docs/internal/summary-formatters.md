@@ -122,7 +122,7 @@ Disables summary output entirely.
 When `--summary-type` is not specified, AI Distiller automatically selects the most appropriate formatter:
 
 1. **CI Environment** (`CI` env var set) → CI-Friendly formatter
-2. **Non-TTY output** (piped/redirected) → CI-Friendly formatter  
+2. **Non-TTY output** (piped/redirected) → CI-Friendly formatter
 3. **Interactive Terminal** → Visual Progress Bar formatter
 
 ## Additional Options

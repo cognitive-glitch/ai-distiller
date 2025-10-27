@@ -32,15 +32,15 @@ impl AnalysisService {
         pub async fn validate_code(&self, code: &str) -> Result<bool, &'static str> {
                 println!("Starting async validation...");
                 tokio::time::sleep(std::time::Duration::from_millis(10)).await;
-        
+
                 let c_str = std::ffi::CString::new(code).map_err(|_| "Invalid CString")?;
                 let result_code: i32;
-        
+
                 // The `unsafe` block is a critical syntactic construct to parse.
                 unsafe {
                     result_code = validate_syntax_natively(c_str.as_ptr());
                 }
-        
+
                 let is_valid = result_code == 0;
                 if is_valid {
                     // Accessing shared state requires locking the mutex.

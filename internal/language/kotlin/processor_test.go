@@ -23,7 +23,7 @@ package com.example
 
 class MyClass {
     private val value: Int = 0
-    
+
     fun getValue(): Int {
         return value
     }
@@ -71,7 +71,7 @@ object Singleton {
     fun doSomething() {
         println("Doing something")
     }
-    
+
     val instance = "single"
 }`,
 			expected: []string{
@@ -175,7 +175,7 @@ class CoroutineExample {
         delay(1000)
         return "data"
     }
-    
+
     fun processAsync() = GlobalScope.launch {
         val data = fetchData()
         println(data)
@@ -216,7 +216,7 @@ class Temperature {
         set(value) {
             field = value
         }
-    
+
     val fahrenheit: Double
         get() = celsius * 9/5 + 32
 }`,
@@ -261,7 +261,7 @@ class Calculator {
     fun calculate(a: Int, b: Int, operation: (Int, Int) -> Int): Int {
         return operation(a, b)
     }
-    
+
     val add: (Int, Int) -> Int = { x, y -> x + y }
 }`,
 			expected: []string{
@@ -314,7 +314,7 @@ sealed class Response<out T> {
 interface Logger {
     val tag: String
         get() = javaClass.simpleName
-    
+
     fun log(message: String) {
         println("[$tag] $message")
     }
@@ -323,9 +323,9 @@ interface Logger {
 // Abstract class
 abstract class BaseViewModel : Logger {
     abstract val state: State
-    
+
     protected abstract suspend fun loadData()
-    
+
     open fun refresh() {
         GlobalScope.launch {
             loadData()
@@ -345,11 +345,11 @@ data class User(
 // Object with nested class
 object UserRepository {
     private val users = mutableListOf<User>()
-    
+
     fun add(user: User) {
         users.add(user)
     }
-    
+
     class UserNotFoundException(id: Long) : Exception("User $id not found")
 }
 
@@ -357,7 +357,7 @@ object UserRepository {
 class ServiceFactory {
     companion object {
         const val DEFAULT_TIMEOUT = 5000L
-        
+
         @JvmStatic
         fun create(): Service {
             return ServiceImpl()
@@ -434,7 +434,7 @@ class VisibilityTest {
     private val privateField: Int = 2
     protected val protectedField: Int = 3
     internal val internalField: Int = 4
-    
+
     public fun publicMethod() {}
     private fun privateMethod() {}
     protected fun protectedMethod() {}

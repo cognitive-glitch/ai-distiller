@@ -31,7 +31,7 @@ class UserService:
     -_cache: dict           # private field
     *_logger: Logger        # protected field
     ~_config: Config        # internal field
-    
+
     def get_user(id: int)   # public method (no prefix)
     -_validate()            # private method
     *log_access()           # protected method

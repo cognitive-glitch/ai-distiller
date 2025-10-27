@@ -144,12 +144,12 @@ esac
 # Build for each platform
 for platform in "${PLATFORM_LIST[@]}"; do
     IFS='/' read -r os arch <<< "$platform"
-    
+
     output_name="$BINARY_NAME"
     if [ "$os" = "windows" ]; then
         output_name="$output_name.exe"
     fi
-    
+
     # Add platform suffix for multi-platform builds
     if [ ${#PLATFORM_LIST[@]} -gt 1 ]; then
         if [ "$os" = "windows" ]; then
@@ -158,25 +158,25 @@ for platform in "${PLATFORM_LIST[@]}"; do
             output_name="$BINARY_NAME-$os-$arch"
         fi
     fi
-    
+
     output_path="$OUTPUT_DIR/$output_name"
-    
+
     log_info "Building for $os/$arch -> $output_path"
-    
+
     build_cmd="GOOS=$os GOARCH=$arch CGO_ENABLED=$CGO_ENABLED go build"
-    
+
     if [ "$VERBOSE" = true ]; then
         build_cmd="$build_cmd -v"
     fi
-    
+
     build_cmd="$build_cmd -ldflags=\"$LDFLAGS\" -o \"$output_path\" ./cmd/aid/"
-    
+
     if [ "$VERBOSE" = true ]; then
         echo "Executing: $build_cmd"
     fi
-    
+
     eval $build_cmd
-    
+
     # Test the binary if it's for the local platform
     if [ "$platform" = "$(go env GOOS)/$(go env GOARCH)" ]; then
         log_info "Testing binary..."
@@ -220,7 +220,7 @@ if [ "$PLATFORMS" = "local" ]; then
     if [ -f "$binary_path.exe" ]; then
         binary_path="$binary_path.exe"
     fi
-    
+
     if [ -f "$binary_path" ]; then
         log_info "Binary size: $(du -h "$binary_path" | cut -f1)"
         echo ""

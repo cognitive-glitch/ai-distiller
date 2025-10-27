@@ -85,14 +85,14 @@ async function main() {
     if (testInstall.toLowerCase() !== 'n') {
       const testDir = path.join('/tmp', `test-aid-mcp-${Date.now()}`);
       fs.mkdirSync(testDir, { recursive: true });
-      
+
       console.log(`\nTesting in ${testDir}...`);
       process.chdir(testDir);
-      
+
       try {
         exec(`npm install ${path.join(path.dirname(packageJsonPath), tarballName)}`);
         console.log('\nInstallation test passed!');
-        
+
         // Try to run the binary
         const testRun = await question('\nTest running the MCP server? (Y/n): ');
         if (testRun.toLowerCase() !== 'n') {
@@ -106,7 +106,7 @@ async function main() {
           process.exit(1);
         }
       }
-      
+
       process.chdir(path.dirname(packageJsonPath));
     }
 
@@ -133,7 +133,7 @@ async function main() {
       exec('git add .');
       exec(`git commit -m "chore: release AI Distiller MCP v${version}"`);
       exec(`git tag mcp-v${version}`);
-      
+
       const push = await question('\nPush to git? (Y/n): ');
       if (push.toLowerCase() !== 'n') {
         exec('git push');

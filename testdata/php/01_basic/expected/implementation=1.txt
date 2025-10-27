@@ -30,7 +30,7 @@ $this->preferences[$key] = $value;
 if ($this->createdAt === null) {
             return false;
         }
-        
+
         $thirtyDaysAgo = new DateTime('-30 days');
         return $this->createdAt > $thirtyDaysAgo;
     }
@@ -73,7 +73,7 @@ createUserFromArray(array{id: int, name: string, email: string} $data): User {
 if (!isset($data['id'], $data['name'], $data['email'])) {
         throw new InvalidArgumentException("Missing required user data");
     }
-    
+
     return new User($data['id'], $data['name'], $data['email']);
 }
 const USER_STATUS_ACTIVE = 'active'

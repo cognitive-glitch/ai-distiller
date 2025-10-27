@@ -292,7 +292,7 @@ This is a FORMAL PROTOCOL implementing Chain-of-Thought (CoT) analysis with ZERO
 ## ABSOLUTE PROHIBITIONS ⛔
 
 1. **PROHIBITED**: Batch processing multiple files simultaneously
-2. **PROHIBITED**: Using any "time-saving" shortcuts or optimizations  
+2. **PROHIBITED**: Using any "time-saving" shortcuts or optimizations
 3. **PROHIBITED**: Skipping individual file analysis for "efficiency"
 4. **PROHIBITED**: Marking tasks complete before ALL outputs are verified
 5. **PROHIBITED**: Referencing or planning for files not yet in scope

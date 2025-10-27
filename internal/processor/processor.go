@@ -52,9 +52,9 @@ func (p *Processor) ProcessPath(path string, opts ProcessOptions) (ir.DistilledN
 func (p *Processor) ProcessFile(filename string, opts ProcessOptions) (*ir.DistilledFile, error) {
 	dbg := debug.FromContext(p.ctx).WithSubsystem("processor")
 	defer dbg.Timing(debug.LevelDetailed, fmt.Sprintf("ProcessFile %s", filepath.Base(filename)))()
-	
+
 	dbg.Logf(debug.LevelDetailed, "Processing file: %s", filename)
-	
+
 	// Calculate display path based on options
 	displayPath := filename
 	if opts.FilePathType == "relative" && opts.BasePath != "" {
@@ -68,14 +68,14 @@ func (p *Processor) ProcessFile(filename string, opts ProcessOptions) (*ir.Disti
 			// Otherwise use basePath as is
 			baseDir = opts.BasePath
 		}
-		
+
 		// Try to make path relative to base directory
 		absBase, err := filepath.Abs(baseDir)
 		if err == nil {
 			relPath, err := filepath.Rel(absBase, filename)
 			if err == nil && !strings.HasPrefix(relPath, "..") {
 				displayPath = relPath
-				
+
 				// Apply prefix if specified
 				if opts.RelativePathPrefix != "" {
 					prefix := opts.RelativePathPrefix
@@ -90,7 +90,7 @@ func (p *Processor) ProcessFile(filename string, opts ProcessOptions) (*ir.Disti
 	}
 	var proc LanguageProcessor
 	var ok bool
-	
+
 	// In raw mode, use RawProcessor for all text files
 	if opts.RawMode {
 		rawProc := NewRawProcessor()
@@ -100,7 +100,7 @@ func (p *Processor) ProcessFile(filename string, opts ProcessOptions) (*ir.Disti
 	} else {
 		// Normal mode - get processor for file
 		proc, ok = GetByFilename(filename)
-		
+
 		// If no processor found, check if file is explicitly included
 		if !ok && opts.ExplicitInclude {
 			// Use RawProcessor for explicitly included files
@@ -109,11 +109,11 @@ func (p *Processor) ProcessFile(filename string, opts ProcessOptions) (*ir.Disti
 			ok = true
 		}
 	}
-	
+
 	if !ok && !opts.RawMode {
 		return nil, fmt.Errorf("no processor found for file: %s", filename)
 	}
-	
+
 	dbg.Logf(debug.LevelDetailed, "Using %s processor for %s", proc.Language(), filename)
 
 	// Open file
@@ -132,12 +132,12 @@ func (p *Processor) ProcessFile(filename string, opts ProcessOptions) (*ir.Disti
 		if err != nil {
 			return nil, fmt.Errorf("failed to process file: %w", err)
 		}
-		
+
 		// Dump the IR structure at trace level
 		debug.Lazy(p.ctx, debug.LevelTrace, func(d debug.Debugger) {
 			d.Dump(debug.LevelTrace, fmt.Sprintf("IR for %s", filepath.Base(filename)), result)
 		})
-		
+
 		// Apply dependency-aware analysis if enabled
 		if opts.SymbolResolution && opts.MaxDepth >= 0 {
 			dependencyResult, err := ProcessWithDependencyAnalysis(p.ctx, p, filename, opts)
@@ -147,16 +147,16 @@ func (p *Processor) ProcessFile(filename string, opts ProcessOptions) (*ir.Disti
 			}
 			return dependencyResult, nil
 		}
-		
+
 		return result, nil
 	}
-	
+
 	// Fallback to regular Process method
 	result, err := proc.Process(p.ctx, file, displayPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to process file: %w", err)
 	}
-	
+
 	// Dump the IR structure at trace level
 	debug.Lazy(p.ctx, debug.LevelTrace, func(d debug.Debugger) {
 		d.Dump(debug.LevelTrace, fmt.Sprintf("IR for %s", filepath.Base(filename)), result)
@@ -173,10 +173,10 @@ func (p *Processor) ProcessFile(filename string, opts ProcessOptions) (*ir.Disti
 			RemoveImports:         !opts.IncludeImports,
 		}
 
-		if stripOpts.RemovePrivate || stripOpts.RemovePrivateOnly || stripOpts.RemoveProtectedOnly || 
+		if stripOpts.RemovePrivate || stripOpts.RemovePrivateOnly || stripOpts.RemoveProtectedOnly ||
 		   stripOpts.RemoveImplementations || stripOpts.RemoveComments || stripOpts.RemoveImports {
 			dbg.Logf(debug.LevelDetailed, "Applying stripper with options: %+v", stripOpts)
-			
+
 			s := stripper.New(stripOpts)
 			strippedNode := result.Accept(s)
 			if file, ok := strippedNode.(*ir.DistilledFile); ok {
@@ -184,7 +184,7 @@ func (p *Processor) ProcessFile(filename string, opts ProcessOptions) (*ir.Disti
 				debug.Lazy(p.ctx, debug.LevelTrace, func(d debug.Debugger) {
 					d.Dump(debug.LevelTrace, fmt.Sprintf("Stripped IR for %s", filepath.Base(filename)), file)
 				})
-				
+
 				// Apply dependency-aware analysis if enabled
 				if opts.SymbolResolution && opts.MaxDepth >= 0 {
 					dependencyResult, err := ProcessWithDependencyAnalysis(p.ctx, p, filename, opts)
@@ -194,7 +194,7 @@ func (p *Processor) ProcessFile(filename string, opts ProcessOptions) (*ir.Disti
 					}
 					return dependencyResult, nil
 				}
-				
+
 				return file, nil
 			}
 			return nil, fmt.Errorf("unexpected node type after stripping")
@@ -221,7 +221,7 @@ func (p *Processor) Process(ctx context.Context, reader io.Reader, filename stri
 	if !ok {
 		return nil, fmt.Errorf("no processor found for file: %s", filename)
 	}
-	
+
 
 	return proc.Process(ctx, reader, filename)
 }
@@ -249,7 +249,7 @@ func (p *Processor) processDirectory(dir string, opts ProcessOptions) (*ir.Disti
 			relPath, err := filepath.Rel(absBase, dir)
 			if err == nil && !strings.HasPrefix(relPath, "..") {
 				displayPath = relPath
-				
+
 				// Apply prefix if specified
 				if opts.RelativePathPrefix != "" {
 					prefix := opts.RelativePathPrefix
@@ -287,12 +287,12 @@ func (p *Processor) processDirectory(dir string, opts ProcessOptions) (*ir.Disti
 		// Skip directories
 		if info.IsDir() {
 			basename := filepath.Base(path)
-			
+
 			// Skip .aid directories completely
 			if basename == ".aid" {
 				return filepath.SkipDir
 			}
-			
+
 			// Skip default ignored directories unless explicitly included in .aidignore
 			// or unless they contain explicitly included files
 			if isDefaultIgnoredDir(basename) && ignoreMatcher != nil {
@@ -308,7 +308,7 @@ func (p *Processor) processDirectory(dir string, opts ProcessOptions) (*ir.Disti
 				// No .aidignore, skip default ignored dirs
 				return filepath.SkipDir
 			}
-			
+
 			// If not recursive and not the root directory, skip subdirectories
 			if !opts.Recursive && path != dir {
 				return filepath.SkipDir
@@ -334,10 +334,10 @@ func (p *Processor) processDirectory(dir string, opts ProcessOptions) (*ir.Disti
 		} else {
 			// Normal mode - check if we have a processor
 			_, hasProcessor := GetByFilename(path)
-			
+
 			// Check if file is explicitly included via !pattern in .aidignore
 			explicitlyIncluded := ignoreMatcher != nil && ignoreMatcher.IsExplicitlyIncluded(path)
-			
+
 			if !hasProcessor && !explicitlyIncluded {
 				return nil
 			}
@@ -400,16 +400,16 @@ func (p *Processor) GetLanguage(filename string) string {
 func shouldIncludeFile(filePath string, includePatterns, excludePatterns []string) bool {
 	// Normalize path separators for consistent matching
 	normalizedPath := filepath.ToSlash(filePath)
-	
+
 	// Check exclude patterns first
 	for _, pattern := range excludePatterns {
 		if pattern == "" {
 			continue
 		}
-		
+
 		// Normalize pattern for cross-platform compatibility
 		normalizedPattern := filepath.ToSlash(pattern)
-		
+
 		// Check for directory exclusion patterns (e.g., "vendor/**", "*/test/*")
 		if strings.Contains(normalizedPattern, "/") {
 			// For relative patterns, check if the path ends with the pattern
@@ -434,17 +434,17 @@ func shouldIncludeFile(filePath string, includePatterns, excludePatterns []strin
 			}
 		}
 	}
-	
+
 	// If include patterns specified, file must match at least one
 	if len(includePatterns) > 0 {
 		for _, pattern := range includePatterns {
 			if pattern == "" {
 				continue
 			}
-			
+
 			// Normalize pattern
 			normalizedPattern := filepath.ToSlash(pattern)
-			
+
 			// Check for path patterns
 			if strings.Contains(normalizedPattern, "/") {
 				// For relative patterns, check if the path ends with the pattern
@@ -469,7 +469,7 @@ func shouldIncludeFile(filePath string, includePatterns, excludePatterns []strin
 		}
 		return false
 	}
-	
+
 	return true
 }
 
@@ -480,7 +480,7 @@ func matchesPathPattern(path, pattern string) bool {
 		// Convert ** to a regex pattern
 		regexPattern := strings.ReplaceAll(pattern, "**", ".*")
 		regexPattern = strings.ReplaceAll(regexPattern, "*", "[^/]*")
-		
+
 		// If pattern doesn't start with **, check if it's a relative path pattern
 		if !strings.HasPrefix(pattern, "**") && !strings.HasPrefix(pattern, "/") {
 			// For patterns like "internal/**/*.go", we need to match the path suffix
@@ -498,25 +498,25 @@ func matchesPathPattern(path, pattern string) bool {
 			}
 			return false
 		}
-		
+
 		// For patterns starting with ** or /, do full path match
 		regexPattern = "^" + regexPattern + "$"
 		matched, _ := regexp.MatchString(regexPattern, path)
 		return matched
 	}
-	
+
 	// Handle patterns with specific directory paths
 	if strings.HasSuffix(pattern, "/*") {
 		// Pattern like "vendor/*" - check if path is directly under this directory
 		dir := strings.TrimSuffix(pattern, "/*")
 		return strings.HasPrefix(path, dir+"/") && !strings.Contains(strings.TrimPrefix(path, dir+"/"), "/")
 	}
-	
+
 	// Handle exact directory prefix patterns
 	if strings.HasSuffix(pattern, "/") {
 		return strings.HasPrefix(path, pattern)
 	}
-	
+
 	// Try standard glob matching on full path
 	matched, _ := filepath.Match(pattern, path)
 	return matched
@@ -553,7 +553,7 @@ func isDefaultIgnoredDir(dirname string) bool {
 		".svn",             // SVN
 		".hg",              // Mercurial
 	}
-	
+
 	for _, ignored := range defaultIgnored {
 		if dirname == ignored {
 			return true

@@ -21,34 +21,34 @@ using namespace std;
 class DataProcessor {
 private:
     vector<string> data;
-    
+
 public:
     DataProcessor() {
         // Using cout from iostream
         cout << "DataProcessor initialized" << endl;
     }
-    
+
     void addData(const string& item) {
         // Using vector and string
         data.push_back(item);
     }
-    
+
     void processData() {
         // Using algorithm for sorting
         sort(data.begin(), data.end());
-        
+
         // Using iostream for output
         cout << "Sorted data:" << endl;
         for (const auto& item : data) {
             cout << "  " << item << endl;
         }
-        
+
         // Using cmath
         double value = 16.0;
         double result = sqrt(value);
         cout << "Square root of " << value << " is " << result << endl;
     }
-    
+
     void useMyHeader() {
         // Using something from myheader.h
         MyClass obj;
@@ -58,14 +58,14 @@ public:
 
 int main() {
     DataProcessor processor;
-    
+
     // Using string
     processor.addData("banana");
     processor.addData("apple");
     processor.addData("cherry");
-    
+
     processor.processData();
     processor.useMyHeader();
-    
+
     return 0;
 }

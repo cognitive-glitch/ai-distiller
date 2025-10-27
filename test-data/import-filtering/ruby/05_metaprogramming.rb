@@ -16,7 +16,7 @@ module ClassMethods
     define_method(name) do
       instance_variable_get("@#{name}")
     end
-    
+
     define_method("#{name}=") do |value|
       instance_variable_set("@#{name}", value)
     end
@@ -46,7 +46,7 @@ end
 module Observable
   # Including the standard Observable module
   include ::Observable
-  
+
   def notify_change(attribute, value)
     changed
     notify_observers(attribute, value)
@@ -58,7 +58,7 @@ end
 class BaseModel
   extend ClassMethods
   include InstanceMethods
-  
+
   class_attribute :table_name
   class_attribute :primary_key
 end
@@ -66,31 +66,31 @@ end
 class User < BaseModel
   prepend Overrides
   include Observable
-  
+
   self.table_name = 'users'
   self.primary_key = 'id'
-  
+
   attr_accessor :name, :email
-  
+
   def initialize(name, email)
     @name = name
     @email = email
   end
-  
+
   def save
     # This will trigger the prepended module's save method
     puts "Saving user: #{@name}"
-    
+
     # Notify observers of the change
     notify_change(:saved, self)
-    
+
     true
   end
-  
+
   def expensive_operation
     # This would trigger autoload of ExpensiveModule if we used it
     # ExpensiveModule.process(self)
-    
+
     # Instead, just do something simple
     sleep(0.1)
     "Done"

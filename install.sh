@@ -154,7 +154,7 @@ main() {
 
     # 9. Install binary
     say "Installing 'aid' to $INSTALL_DIR..."
-    
+
     # Handle sudo installation if needed
     if [ "$USE_SUDO" = true ]; then
         if ! [ -w "$INSTALL_DIR" ]; then

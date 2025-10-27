@@ -1,6 +1,6 @@
 # 📊 Generate 10 Beneficial Mermaid Diagrams from Content
 
-**Project:** {{.ProjectName}}  
+**Project:** {{.ProjectName}}
 **Analysis Date:** {{.AnalysisDate}}
 **Powered by:** [AI Distiller (aid) v{{VERSION}}]({{WEBSITE_URL}}) ([GitHub](https://github.com/janreges/ai-distiller))
 
@@ -65,7 +65,7 @@ Generate exactly this structure for each of the 10 diagrams:
 ```markdown
 ## Diagram 1: [Descriptive Title]
 
-**Type:** [Mermaid diagram type]  
+**Type:** [Mermaid diagram type]
 **Purpose:** [One sentence explaining why this diagram is beneficial and what key aspect it illustrates]
 
 ```mermaid
@@ -76,7 +76,7 @@ Generate exactly this structure for each of the 10 diagrams:
 
 ## Diagram 2: [Descriptive Title]
 
-**Type:** [Mermaid diagram type]  
+**Type:** [Mermaid diagram type]
 **Purpose:** [One sentence rationale]
 
 ```mermaid
@@ -94,7 +94,7 @@ Generate exactly this structure for each of the 10 diagrams:
 
 **1. No Cycles in Parent Mapping**
 - Never set a node as parent of itself or create circular chains
-- ✅ `Worker --> Queue`  
+- ✅ `Worker --> Queue`
 - ❌ `Worker --> Worker`
 
 **2. One Arrow per Line**
@@ -108,7 +108,7 @@ Generate exactly this structure for each of the 10 diagrams:
 - ❌ `data-processor-service` and `queue.main` (unquoted)
 
 **4. Use Correct Arrow Syntax for Each Diagram Type**
-- Flowcharts: `-->`, `--o`, `-.->` 
+- Flowcharts: `-->`, `--o`, `-.->`
 - Sequence: `->>`, `-->>`, `-)`
 - ❌ Never mix: `graph LR` with `->>` (sequence arrow)
 
@@ -148,7 +148,7 @@ Generate exactly this structure for each of the 10 diagrams:
 - ✅ `interface EventStoreInterface` (clean, no parsing issues)
 - ❌ `class EventStoreInterface <<interface>>` (causes ANNOTATION_START parsing errors)
 
-**12. Class Diagram Interface Annotations Need Proper Body or Spacing** 
+**12. Class Diagram Interface Annotations Need Proper Body or Spacing**
 - If you must use `<<interface>>` annotation, add empty body `{}` or blank line before next class
 - ✅ `class EventStore <<interface>> {}` or blank line after annotation
 - ❌ `class EventStore <<interface>>` immediately followed by another class declaration
@@ -157,7 +157,7 @@ Generate exactly this structure for each of the 10 diagrams:
 
 - **Direction First**: Start with diagram type & direction (`flowchart TD`, `sequenceDiagram`)
 - **No Trailing Whitespace**: Clean lines without trailing spaces or tabs
-- **ASCII Only**: Use only ASCII characters in labels (avoid emojis, special characters)  
+- **ASCII Only**: Use only ASCII characters in labels (avoid emojis, special characters)
 - **Label Length**: Keep node labels ≤ 75 characters to prevent overflow
 - **Test Incrementally**: Build diagrams piece by piece to isolate errors
 - **ER Labels**: Relationship labels in `erDiagram` cannot be wrapped in quotes

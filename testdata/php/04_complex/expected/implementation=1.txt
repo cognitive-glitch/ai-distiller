@@ -25,7 +25,7 @@ class AttributeProcessor {
     public processAttributes(object $instance): array{class: list<array{name: string, arguments: array<mixed>, instance: object}>, methods: array<string, list<array{name: string, arguments: array<mixed>, instance: object}>>, properties: array<string, list<array{name: string, arguments: array<mixed>, instance: object}>>} Processed attributes {
 $class = $instance::class;
         $reflection = new ReflectionClass($class);
-        
+
         if (isset($this->classCache[$instance])) {
             return $this->classCache[$instance];
         }
@@ -92,33 +92,33 @@ class UserCreateDto {
     public array<string, mixed> User preferences $preferences;
     public static fromArray(array{name?: string, email?: string, age?: int, preferences?: array<string, mixed>} $data): self {
 $dto = new self();
-        
+
         foreach ($data as $key => $value) {
             if (property_exists($dto, $key)) {
                 $dto->$key = $value;
             }
         }
-        
+
         return $dto;
     }
     public validate(): array Validation errors {
 $errors = [];
         $reflection = new ReflectionClass($this);
-        
+
         foreach ($reflection->getProperties() as $property) {
             $propertyName = $property->getName();
             $value = $property->getValue($this);
-            
+
             foreach ($property->getAttributes(Validate::class) as $attribute) {
                 $validator = $attribute->newInstance();
                 $error = $this->validateRule($value, $validator->rule, $validator->message);
-                
+
                 if ($error) {
                     $errors[$propertyName][] = $error;
                 }
             }
         }
-        
+
         return $errors;
     }
 }
@@ -133,7 +133,7 @@ if (!isset($this->factories[$id])) {
         }
 
         $metadata = $this->metadata[$id];
-        
+
         if ($metadata['singleton']) {
             // Check if singleton already exists
             foreach ($this->singletons as $service) {
@@ -141,7 +141,7 @@ if (!isset($this->factories[$id])) {
                     return $service;
                 }
             }
-            
+
             // Create new singleton
             $instance = $this->factories[$id]($this);
             $this->singletons[$instance] = $id;
@@ -153,20 +153,20 @@ if (!isset($this->factories[$id])) {
     public createWithDependencies(string $className): object {
 $reflection = new ReflectionClass($className);
         $constructor = $reflection->getConstructor();
-        
+
         if (!$constructor) {
             return new $className();
         }
 
         $dependencies = [];
-        
+
         foreach ($constructor->getParameters() as $parameter) {
             $injectAttributes = $parameter->getAttributes(Inject::class);
-            
+
             if (!empty($injectAttributes)) {
                 $inject = $injectAttributes[0]->newInstance();
                 $serviceId = $inject->service ?? $parameter->getType()?->getName();
-                
+
                 if ($serviceId && $this->has($serviceId)) {
                     $dependencies[] = $this->resolve($serviceId);
                 } else {
@@ -198,7 +198,7 @@ class ComplexUserService {
     public __construct(UserRepository $repository, EventDispatcher $dispatcher, AttributeProcessor $processor)
     public createUser(UserCreateDto $dto): array {
 $errors = $dto->validate();
-        
+
         if (!empty($errors)) {
             return ['success' => false, 'errors' => $errors];
         }
@@ -210,7 +210,7 @@ $errors = $dto->validate();
 foreach ($users as $userData) {
             $dto = UserCreateDto::fromArray($userData);
             $result = $this->createUser($dto);
-            
+
             yield [
                 'original' => $userData,
                 'processed' => $result,

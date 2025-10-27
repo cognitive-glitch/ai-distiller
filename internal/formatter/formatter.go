@@ -37,7 +37,7 @@ type Options struct {
 
 	// ProcessingOptions contains information about what was included/excluded during processing
 	ProcessingOptions ProcessingInfo
-	
+
 	// DebugLevel for verbose output (0=none, 1=basic, 2=detailed, 3=trace)
 	DebugLevel int
 }

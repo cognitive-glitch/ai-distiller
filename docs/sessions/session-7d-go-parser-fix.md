@@ -57,7 +57,7 @@ Added `has_seen_parameters` flag to track state:
 fn parse_function(&self, node: tree_sitter::Node, source: &str) -> Result<Option<Function>> {
     let mut has_seen_name = false;
     let mut has_seen_parameters = false;  // NEW
-    
+
     for child in node.children(&mut cursor) {
         match child.kind() {
             "parameter_list" => {

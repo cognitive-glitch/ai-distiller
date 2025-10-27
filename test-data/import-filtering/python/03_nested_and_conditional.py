@@ -33,10 +33,10 @@ def make_request(url: str):
             raise requests.exceptions.InvalidURL("No scheme in URL")
     except requests.exceptions.RequestException as e:
         print(f"Request error: {e}")
-    
+
     # Using Literal from conditional import
     mode: Literal["read", "write"] = "read"
-    
+
     # Platform-specific code
     if platform.system() == "Windows":
         # Using winreg on Windows

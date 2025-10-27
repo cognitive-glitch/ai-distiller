@@ -13,7 +13,7 @@ func TestNewStripper(t *testing.T) {
 		RemovePrivate: true,
 	}
 	stripper := New(opts)
-	
+
 	assert.NotNil(t, stripper)
 	assert.Equal(t, opts, stripper.options)
 }
@@ -34,29 +34,29 @@ func TestShouldRemoveByVisibility(t *testing.T) {
 		{"LegacyFilePrivate", Options{RemovePrivate: true}, "MyClass", ir.VisibilityFilePrivate, true},
 		{"LegacyPublic", Options{RemovePrivate: true}, "MyClass", ir.VisibilityPublic, false},
 		{"LegacyOpen", Options{RemovePrivate: true}, "MyClass", ir.VisibilityOpen, false},
-		
+
 		// RemovePrivateOnly behavior
 		{"PrivateOnlyPrivate", Options{RemovePrivateOnly: true}, "MyClass", ir.VisibilityPrivate, true},
 		{"PrivateOnlyProtected", Options{RemovePrivateOnly: true}, "MyClass", ir.VisibilityProtected, false},
 		{"PrivateOnlyPublic", Options{RemovePrivateOnly: true}, "MyClass", ir.VisibilityPublic, false},
-		
+
 		// RemoveProtectedOnly behavior
 		{"ProtectedOnlyPrivate", Options{RemoveProtectedOnly: true}, "MyClass", ir.VisibilityPrivate, false},
 		{"ProtectedOnlyProtected", Options{RemoveProtectedOnly: true}, "MyClass", ir.VisibilityProtected, true},
 		{"ProtectedOnlyPublic", Options{RemoveProtectedOnly: true}, "MyClass", ir.VisibilityPublic, false},
-		
+
 		// Python convention with RemovePrivate
 		{"PythonPrivate", Options{RemovePrivate: true}, "_private_func", "", true},
 		{"PythonDunder", Options{RemovePrivate: true}, "__init__", "", true},
 		{"PythonPublic", Options{RemovePrivate: true}, "public_func", "", false},
-		
+
 		// Python convention with RemovePrivateOnly
 		{"PythonPrivateOnly", Options{RemovePrivateOnly: true}, "_private_func", "", true},
 		{"PythonPublicOnly", Options{RemovePrivateOnly: true}, "public_func", "", false},
-		
+
 		// No removal options
 		{"NoRemoval", Options{}, "MyClass", ir.VisibilityPrivate, false},
-		
+
 		// Edge cases
 		{"EmptyName", Options{RemovePrivate: true}, "", "", false},
 		{"Underscore", Options{RemovePrivate: true}, "_", "", true},
@@ -190,7 +190,7 @@ func TestVisit(t *testing.T) {
 				// Should not have private members but should keep protected
 				hasProtected := false
 				hasPrivate := false
-				
+
 				for _, child := range result.Children {
 					if class, ok := child.(*ir.DistilledClass); ok {
 						for _, member := range class.Children {
@@ -205,7 +205,7 @@ func TestVisit(t *testing.T) {
 						}
 					}
 				}
-				
+
 				assert.True(t, hasProtected, "Should keep protected members")
 				assert.False(t, hasPrivate, "Should remove private members")
 			},
@@ -219,7 +219,7 @@ func TestVisit(t *testing.T) {
 				// Should not have protected members but should keep private
 				hasProtected := false
 				hasPrivate := false
-				
+
 				for _, child := range result.Children {
 					if class, ok := child.(*ir.DistilledClass); ok {
 						for _, member := range class.Children {
@@ -234,7 +234,7 @@ func TestVisit(t *testing.T) {
 						}
 					}
 				}
-				
+
 				assert.False(t, hasProtected, "Should remove protected members")
 				assert.True(t, hasPrivate, "Should keep private members")
 			},
@@ -246,11 +246,11 @@ func TestVisit(t *testing.T) {
 			stripper := New(tt.options)
 			walker := ir.NewWalker(stripper)
 			result := walker.Walk(file)
-			
+
 			assert.NotNil(t, result)
 			resultFile := result.(*ir.DistilledFile)
 			assert.Equal(t, file.Path, resultFile.Path)
-			
+
 			if tt.checkFunc != nil {
 				tt.checkFunc(t, resultFile)
 			}

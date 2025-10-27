@@ -42,11 +42,11 @@ func (p *ASTParser) ProcessSource(ctx context.Context, source []byte, filename s
 	} else {
 		lang = typescript.Language()
 	}
-	
+
 	if lang == nil {
 		return nil, fmt.Errorf("tree-sitter-typescript is not available (CGO disabled)")
 	}
-	
+
 	p.parser.SetLanguage(sitter.NewLanguage(lang))
 
 	// Parse the source code

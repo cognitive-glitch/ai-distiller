@@ -52,7 +52,7 @@ func (p *Processor) processDirectoryConcurrent(dir string, opts ProcessOptions) 
 	// First, collect all files to process
 	var files []FileTask
 	fileIndex := 0
-	
+
 	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -69,12 +69,12 @@ func (p *Processor) processDirectoryConcurrent(dir string, opts ProcessOptions) 
 		// Skip directories
 		if info.IsDir() {
 			basename := filepath.Base(path)
-			
+
 			// Skip .aid directories completely
 			if basename == ".aid" {
 				return filepath.SkipDir
 			}
-			
+
 			// Skip default ignored directories unless explicitly included in .aidignore
 			// or unless they contain explicitly included files
 			if isDefaultIgnoredDir(basename) && ignoreMatcher != nil {
@@ -90,7 +90,7 @@ func (p *Processor) processDirectoryConcurrent(dir string, opts ProcessOptions) 
 				// No .aidignore, skip default ignored dirs
 				return filepath.SkipDir
 			}
-			
+
 			// If not recursive and not the root directory, skip subdirectories
 			if !opts.Recursive && path != dir {
 				return filepath.SkipDir
@@ -111,7 +111,7 @@ func (p *Processor) processDirectoryConcurrent(dir string, opts ProcessOptions) 
 
 		// Check if file is explicitly included via !pattern in .aidignore
 		explicitlyIncluded := ignoreMatcher != nil && ignoreMatcher.IsExplicitlyIncluded(path)
-		
+
 		// Check if we can process this file
 		if opts.RawMode {
 			// In raw mode, process all files
@@ -119,7 +119,7 @@ func (p *Processor) processDirectoryConcurrent(dir string, opts ProcessOptions) 
 		} else {
 			// Normal mode - check if we have a processor
 			_, hasProcessor := GetByFilename(path)
-			
+
 			if !hasProcessor && !explicitlyIncluded {
 				return nil
 			}
@@ -199,7 +199,7 @@ func (p *Processor) processDirectoryConcurrent(dir string, opts ProcessOptions) 
 			relPath, err := filepath.Rel(absBase, dir)
 			if err == nil && !strings.HasPrefix(relPath, "..") {
 				displayPath = relPath
-				
+
 				// Apply prefix if specified
 				if opts.RelativePathPrefix != "" {
 					prefix := opts.RelativePathPrefix
@@ -258,7 +258,7 @@ func calculateWorkers(requested int) int {
 	if requested > 0 {
 		return requested
 	}
-	
+
 	// Default to 80% of CPU cores
 	numCPU := runtime.NumCPU()
 	workers := int(float64(numCPU) * 0.8)

@@ -31,7 +31,7 @@ func (c *Converter) ConvertTree(ctx context.Context, tree *Tree) (*ir.DistilledF
 	if err != nil {
 		return nil, fmt.Errorf("failed to get root node: %w", err)
 	}
-	
+
 	// Create file node
 	file := &ir.DistilledFile{
 		BaseNode: ir.BaseNode{
@@ -45,30 +45,30 @@ func (c *Converter) ConvertTree(ctx context.Context, tree *Tree) (*ir.DistilledF
 		Children: make([]ir.DistilledNode, 0),
 		Errors:   c.errors,
 	}
-	
+
 	// Convert root node's children
 	childCount, err := root.ChildCount()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get child count: %w", err)
 	}
-	
+
 	for i := uint32(0); i < childCount; i++ {
 		child, err := root.Child(i)
 		if err != nil {
 			continue
 		}
-		
+
 		if node := c.convertNode(ctx, child); node != nil {
 			file.Children = append(file.Children, node)
 		}
 	}
-	
+
 	// Update file location based on content
 	if len(file.Children) > 0 {
 		file.Location.EndLine = c.countLines(c.source)
 		file.Location.EndColumn = c.lastLineLength(c.source)
 	}
-	
+
 	return file, nil
 }
 
@@ -79,13 +79,13 @@ func (c *Converter) convertNode(ctx context.Context, node *Node) ir.DistilledNod
 	if err != nil {
 		return nil
 	}
-	
+
 	// Check if it's an error node
 	isError, _ := node.IsError()
 	if isError {
 		return c.createErrorNode(node, nodeType)
 	}
-	
+
 	// Convert based on language and node type
 	switch c.language {
 	case "python":
@@ -105,19 +105,19 @@ func (c *Converter) convertPythonNode(ctx context.Context, node *Node, nodeType 
 	case "module":
 		// Root module - process children
 		return nil // Children are processed at file level
-		
+
 	case "class_definition":
 		return c.createClassNode(node, nodeType)
-		
+
 	case "function_definition":
 		return c.createFunctionNode(node, nodeType)
-		
+
 	case "import_statement", "import_from_statement":
 		return c.createImportNode(node, nodeType)
-		
+
 	case "comment":
 		return c.createCommentNode(node, nodeType)
-		
+
 	default:
 		// For other nodes, check if they're named
 		if named, _ := node.IsNamed(); named {
@@ -133,22 +133,22 @@ func (c *Converter) convertGoNode(ctx context.Context, node *Node, nodeType stri
 	case "source_file":
 		// Root - process children
 		return nil
-		
+
 	case "package_clause":
 		return c.createPackageNode(node, nodeType)
-		
+
 	case "import_declaration":
 		return c.createImportNode(node, nodeType)
-		
+
 	case "type_declaration":
 		return c.createTypeNode(node, nodeType)
-		
+
 	case "function_declaration", "method_declaration":
 		return c.createFunctionNode(node, nodeType)
-		
+
 	case "comment":
 		return c.createCommentNode(node, nodeType)
-		
+
 	default:
 		if named, _ := node.IsNamed(); named {
 			return c.convertGenericNode(ctx, node, nodeType)
@@ -163,19 +163,19 @@ func (c *Converter) convertJSNode(ctx context.Context, node *Node, nodeType stri
 	case "program":
 		// Root - process children
 		return nil
-		
+
 	case "class_declaration":
 		return c.createClassNode(node, nodeType)
-		
+
 	case "function_declaration", "arrow_function", "function_expression":
 		return c.createFunctionNode(node, nodeType)
-		
+
 	case "import_statement":
 		return c.createImportNode(node, nodeType)
-		
+
 	case "comment":
 		return c.createCommentNode(node, nodeType)
-		
+
 	default:
 		if named, _ := node.IsNamed(); named {
 			return c.convertGenericNode(ctx, node, nodeType)
@@ -195,17 +195,17 @@ func (c *Converter) convertGenericNode(ctx context.Context, node *Node, nodeType
 
 func (c *Converter) createErrorNode(node *Node, nodeType string) ir.DistilledNode {
 	loc := c.getNodeLocation(node)
-	
+
 	errorNode := &ir.DistilledError{
 		BaseNode: ir.BaseNode{Location: loc},
 		Message:  fmt.Sprintf("Syntax error: %s", nodeType),
 		Severity: "error",
 		Code:     "PARSE_ERROR",
 	}
-	
+
 	// Also add to file errors
 	c.errors = append(c.errors, *errorNode)
-	
+
 	return errorNode
 }
 
@@ -250,11 +250,11 @@ func (c *Converter) createCommentNode(node *Node, nodeType string) ir.DistilledN
 func (c *Converter) getNodeLocation(node *Node) ir.Location {
 	startByte, _ := node.StartByte()
 	endByte, _ := node.EndByte()
-	
+
 	// Calculate line and column from byte offsets
 	startLine, startCol := c.byteToLineCol(startByte)
 	endLine, endCol := c.byteToLineCol(endByte)
-	
+
 	return ir.Location{
 		StartLine:   startLine,
 		StartColumn: startCol,
@@ -268,7 +268,7 @@ func (c *Converter) getNodeLocation(node *Node) ir.Location {
 func (c *Converter) byteToLineCol(offset uint32) (line, col int) {
 	line = 1
 	col = 1
-	
+
 	for i := uint32(0); i < offset && i < uint32(len(c.source)); i++ {
 		if c.source[i] == '\n' {
 			line++
@@ -277,7 +277,7 @@ func (c *Converter) byteToLineCol(offset uint32) (line, col int) {
 			col++
 		}
 	}
-	
+
 	return line, col
 }
 
@@ -285,14 +285,14 @@ func (c *Converter) countLines(data []byte) int {
 	if len(data) == 0 {
 		return 0
 	}
-	
+
 	lines := 1
 	for _, b := range data {
 		if b == '\n' {
 			lines++
 		}
 	}
-	
+
 	return lines
 }
 
@@ -300,12 +300,12 @@ func (c *Converter) lastLineLength(data []byte) int {
 	if len(data) == 0 {
 		return 0
 	}
-	
+
 	lastNewline := strings.LastIndexByte(string(data), '\n')
 	if lastNewline == -1 {
 		return len(data)
 	}
-	
+
 	return len(data) - lastNewline - 1
 }
 
@@ -314,15 +314,15 @@ func (c *Converter) getNodeText(node *Node) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	
+
 	endByte, err := node.EndByte()
 	if err != nil {
 		return "", err
 	}
-	
+
 	if startByte >= uint32(len(c.source)) || endByte > uint32(len(c.source)) {
 		return "", fmt.Errorf("node bounds out of range")
 	}
-	
+
 	return string(c.source[startByte:endByte]), nil
 }

@@ -63,10 +63,10 @@ type AIAction interface {
     Name() string
     Description() string
     Type() ActionType
-    
+
     // Default output path template
     DefaultOutput() string
-    
+
     // Validation
     Validate() error
 }

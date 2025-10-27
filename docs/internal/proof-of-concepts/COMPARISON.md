@@ -3,12 +3,12 @@
 ## Build Complexity
 
 ### CGo Approach
-- **Setup Requirements**: 
+- **Setup Requirements**:
   - C compiler (gcc/clang)
   - Zig for cross-compilation
   - Tree-sitter grammar sources
   - Complex build flags for each platform
-- **Cross-compilation**: 
+- **Cross-compilation**:
   - Requires specific CC/CXX environment variables
   - Platform-specific flags
   - Potential linking issues

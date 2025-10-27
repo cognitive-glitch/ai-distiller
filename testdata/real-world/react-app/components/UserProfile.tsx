@@ -17,15 +17,15 @@ interface UserProfileProps {
     className?: string;
 }
 
-export const UserProfile: React.FC<UserProfileProps> = ({ 
-    userId, 
-    onUpdate, 
-    className 
+export const UserProfile: React.FC<UserProfileProps> = ({
+    userId,
+    onUpdate,
+    className
 }) => {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
-    
+
     useEffect(() => {
         const fetchUser = async () => {
             try {
@@ -42,18 +42,18 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                 setLoading(false);
             }
         };
-        
+
         fetchUser();
     }, [userId]);
-    
+
     const displayName = useMemo(() => {
         return user ? `${user.name} (${user.email})` : 'Unknown';
     }, [user]);
-    
+
     if (loading) return <div>Loading...</div>;
     if (error) return <div>Error: {error}</div>;
     if (!user) return <div>User not found</div>;
-    
+
     return (
         <div className={className}>
             <h2>{displayName}</h2>

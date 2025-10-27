@@ -57,7 +57,7 @@ def timer(func: Callable) -> Callable:
 
 class AbstractProcessor(metaclass=abc.ABCMeta):
     """Abstract base class using abc module"""
-    
+
     @abc.abstractmethod
     def process(self, data: Any) -> Any:
         pass
@@ -72,16 +72,16 @@ async def async_processor():
             for i in range(10):
                 future = executor.submit(process_data, i)  # From * import
                 futures.append(future)
-            
+
             # Using as_completed
             for future in as_completed(futures):
                 result = future.result()
-                
+
     # Using ProcessPoolExecutor and FIRST_COMPLETED
     with ProcessPoolExecutor() as executor:
         future1 = executor.submit(validate_input, "test")  # From * import
         future2 = executor.submit(lib_helper.help_function, "arg")
-        
+
         done, pending = wait([future1, future2], return_when=FIRST_COMPLETED)
 
 def serialize_data(obj: Any) -> bytes:

@@ -77,15 +77,15 @@ func TestTickerFormatter(t *testing.T) {
 			}
 
 			output := buf.String()
-			
+
 			// Check that all expected strings are present
 			for _, expected := range tt.contains {
 				if !strings.Contains(output, expected) {
 					t.Errorf("Expected output to contain %q, got: %s", expected, output)
 				}
 			}
-			
-			
+
+
 			// Should end with newline
 			if !strings.HasSuffix(output, "\n") {
 				t.Errorf("Expected output to end with newline")
@@ -98,12 +98,12 @@ func TestTickerFormatterEdgeCases(t *testing.T) {
 	// Test with zero values
 	formatter := NewTickerFormatter()
 	var buf bytes.Buffer
-	
+
 	err := formatter.Format(&buf, Stats{})
 	if err != nil {
 		t.Fatalf("Format failed with zero stats: %v", err)
 	}
-	
+
 	output := buf.String()
 	if !strings.Contains(output, "📊 AID 0.0% ▼") {
 		t.Errorf("Expected zero compression to show 0.0%% with down arrow, got: %s", output)

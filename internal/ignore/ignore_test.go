@@ -159,7 +159,7 @@ func TestEmptyAndCommentLines(t *testing.T) {
   # Indented comment
 
 *.tmp
-  
+
 # End comment`
 
 	err := os.WriteFile(filepath.Join(tmpDir, ".aidignore"), []byte(aidignoreContent), 0644)

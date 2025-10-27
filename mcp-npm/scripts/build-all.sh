@@ -26,19 +26,19 @@ PLATFORMS=(
 # Build for each platform
 for PLATFORM in "${PLATFORMS[@]}"; do
     IFS='/' read -r OS ARCH <<< "$PLATFORM"
-    
+
     OUTPUT="bin/aid-mcp-${OS}-${ARCH}"
     if [ "$OS" = "windows" ]; then
         OUTPUT="${OUTPUT}.exe"
     fi
-    
+
     echo "Building for $OS/$ARCH..."
-    
+
     GOOS=$OS GOARCH=$ARCH go build \
         -ldflags "-s -w -X main.serverVersion=$VERSION" \
         -o "$OUTPUT" \
         ./cmd/aid-mcp
-        
+
     # Compress for distribution
     if [ "$OS" = "windows" ]; then
         zip -j "bin/aid-mcp_${VERSION}_${OS}_${ARCH}.zip" "$OUTPUT"

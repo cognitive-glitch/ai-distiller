@@ -52,7 +52,7 @@ private struct AnyEventHandler {
     private let _handle: (any Event) async -> Void
     private let canHandle: (any Event.Type) -> Bool
     let objectId: ObjectIdentifier
-    
+
     init<H: EventHandler>(_ handler: H) {
         self._handle = { event in
             if let concreteEvent = event as? H.HandledEvent {
@@ -64,7 +64,7 @@ private struct AnyEventHandler {
         }
         self.objectId = ObjectIdentifier(handler)
     }
-    
+
     func handle(event: any Event) async {
         await _handle(event)
     }
@@ -87,20 +87,20 @@ public actor EventBus {
         let eventName = H.HandledEvent.name
         let weakHandler = Weak(handler)
         let anyHandler = AnyEventHandler(handler)
-        
+
         handlers[eventName, default: []].append(weakHandler)
         handlerMap[anyHandler.objectId] = anyHandler
-        
+
         // Clean up nil references
         handlers[eventName]?.removeAll { $0.value == nil }
     }
-    
+
     public func post<E: Event>(_ event: E) async {
         let eventName = E.name
         eventHistory.append(eventName)
-        
+
         guard let potentialHandlers = handlers[eventName] else { return }
-        
+
         // Dispatch to all valid, non-nil handlers concurrently
         await withTaskGroup(of: Void.self) { group in
             for weakHandler in potentialHandlers {
@@ -156,7 +156,7 @@ public func <> <T, U>(lhs: T, rhs: U) -> (T, U) {
 public func detailedDebugLog<T>(_ value: T) -> String {
     let mirror = Mirror(reflecting: value)
     var output = "[\(String(describing: T.self))] "
-    
+
     for child in mirror.children {
         if let label = child.label {
             output += "\(label): \(child.value), "
@@ -174,7 +174,7 @@ public struct ReflectionAnalyzer {
             guard let label = child.label else { return nil }
             return PropertyInfo(name: label, type: String(describing: type(of: child.value)))
         }
-        
+
         return StructureInfo(
             typeName: String(describing: T.self),
             properties: properties,
@@ -228,7 +228,7 @@ public final class ThreadSafeQueue<T>: Sequence {
             return elements.removeFirst()
         }
     }
-    
+
     public func makeIterator() -> IndexingIterator<[T]> {
         // Returns an iterator over a snapshot of the current state
         lock.withLock {
@@ -253,19 +253,19 @@ public struct CircularBuffer<Element>: Collection {
     private var head = 0
     private var tail = 0
     private let capacity: Int
-    
+
     public var startIndex: Int { 0 }
     public var endIndex: Int { count }
-    
+
     public init(capacity: Int) {
         self.capacity = capacity
         self.storage = Array(repeating: nil, count: capacity)
     }
-    
+
     public func index(after i: Int) -> Int {
         return i + 1
     }
-    
+
     public subscript(position: Int) -> Element {
         get {
             precondition(position < count, "Index out of range")
@@ -273,7 +273,7 @@ public struct CircularBuffer<Element>: Collection {
             return storage[actualIndex]!
         }
     }
-    
+
     public var count: Int {
         return tail >= head ? tail - head : capacity - head + tail
     }
@@ -299,24 +299,24 @@ public struct CircularBuffer<Element>: Collection {
 public final class ConcurrentEventLogger {
     // Strong reference to monitor
     public let monitor: ActivityMonitor
-    
+
     // Weak reference to prevent cycles
     public weak var delegate: EventLoggerDelegate?
-    
+
     // Unowned reference (careful usage required)
     private unowned let eventBus: EventBus
-    
+
     private let queue = ThreadSafeQueue<String>()
-    
+
     public init(monitor: ActivityMonitor, eventBus: EventBus) {
         self.monitor = monitor
         self.eventBus = eventBus
     }
-    
+
     public func logEvent<E: Event>(_ event: E) async {
         let logEntry = detailedDebugLog(event.payload)
         queue.enqueue(logEntry)
-        
+
         await monitor.record(logEntry)
         delegate?.didLogEvent(logEntry)
     }
@@ -339,17 +339,17 @@ public protocol EventLoggerDelegate: AnyObject {
 public actor ActivityMonitor {
     private(set) var logs = ThreadSafeQueue<String>()
     private var analysisCache: [String: StructureInfo] = [:]
-    
+
     public func record(_ entry: String) {
         logs.enqueue(entry)
     }
-    
+
     public func analyze<T>(_ object: T) -> StructureInfo {
         let key = String(describing: T.self)
         if let cached = analysisCache[key] {
             return cached
         }
-        
+
         let analysis = ReflectionAnalyzer.analyze(object)
         analysisCache[key] = analysis
         return analysis
@@ -369,30 +369,30 @@ public actor ActivityMonitor {
 // MARK: - Example Usage
 
 // Define some concrete events
-struct UserLoggedInEvent: Event { 
-    struct Payload { 
+struct UserLoggedInEvent: Event {
+    struct Payload {
         let userId: UUID
         let name: String
         let timestamp: Date
     }
-    let payload: Payload 
+    let payload: Payload
 }
 
-struct DataDownloadedEvent: Event { 
-    let payload: Data 
+struct DataDownloadedEvent: Event {
+    let payload: Data
 }
 
 // Define some concrete handlers
 class UserActivityLogger: EventHandler {
     typealias HandledEvent = UserLoggedInEvent
-    
+
     // unowned demo: this logger has a monitor reference
     unowned let monitor: ActivityMonitor
-    
-    init(monitor: ActivityMonitor) { 
-        self.monitor = monitor 
+
+    init(monitor: ActivityMonitor) {
+        self.monitor = monitor
     }
-    
+
     func handle(event: UserLoggedInEvent) async {
         let log = detailedDebugLog(event.payload)
         print("UserActivityLogger handled: \(log)")
@@ -411,23 +411,23 @@ fileprivate func veryComplexDemo() async {
     let monitor = ActivityMonitor()
     let eventBus = EventBus()
     let logger = UserActivityLogger(monitor: monitor)
-    
+
     // Use custom operator for subscription
     logger ~> eventBus
-    
+
     // Create and post an event
     let event = UserLoggedInEvent(payload: .init(
         userId: UUID(),
         name: "TestUser",
         timestamp: Date()
     ))
-    
+
     await eventBus.post(event)
-    
+
     // Test reflection
     let analysis = await monitor.analyze(event.payload)
     print("Event analysis: \(analysis)")
-    
+
     // Test custom collection
     let buffer = CircularBuffer<String>(capacity: 5)
     print("Buffer created with capacity: \(buffer.count)")

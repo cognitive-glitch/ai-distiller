@@ -298,16 +298,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
+
       - uses: actions/setup-go@v4
         with:
           go-version: '1.21'
-      
+
       - uses: actions/setup-node@v3
         with:
           node-version: '18'
           registry-url: 'https://registry.npmjs.org'
-      
+
       - name: Build and Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

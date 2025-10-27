@@ -25,7 +25,7 @@ func TestDashboardFormatter(t *testing.T) {
 			},
 			contains: []string{
 				"╔═══ AI Distiller ═══╗",
-				"║ Speed:", 
+				"║ Speed:",
 				"║ Saved:",
 				"97.5%",
 				"5.2 MB→131 kB",
@@ -84,20 +84,20 @@ func TestDashboardFormatter(t *testing.T) {
 			}
 
 			output := buf.String()
-			
+
 			// Check that all expected strings are present
 			for _, expected := range tt.contains {
 				if !strings.Contains(output, expected) {
 					t.Errorf("Expected output to contain %q, got:\n%s", expected, output)
 				}
 			}
-			
+
 			// Check structure
 			lines := strings.Split(strings.TrimSpace(output), "\n")
 			if len(lines) < 4 {
 				t.Errorf("Expected at least 4 lines, got %d", len(lines))
 			}
-			
+
 			// Check box drawing characters
 			if !strings.HasPrefix(lines[0], "╔") {
 				t.Errorf("Expected first line to start with ╔")

@@ -26,35 +26,35 @@ import (
 func main() {
 	// Using fmt
 	fmt.Println("Application with multiple drivers")
-	
+
 	// Using database/sql - the blank imports register the drivers
 	db, err := sql.Open("mysql", "user:password@/dbname")
 	if err != nil {
 		fmt.Printf("MySQL connection error: %v\n", err)
 	}
 	defer db.Close()
-	
+
 	// Try PostgreSQL
 	pgDB, err := sql.Open("postgres", "postgresql://user:password@localhost/dbname")
 	if err != nil {
 		fmt.Printf("PostgreSQL connection error: %v\n", err)
 	}
 	defer pgDB.Close()
-	
+
 	// Using image package - blank imports register decoders
 	var img image.Image
 	fmt.Printf("Image variable type: %T\n", img)
-	
+
 	// The pprof import adds profiling endpoints
 	// The image format imports add decoders
 	// The tzdata import embeds timezone data
 	// All blank imports should be kept!
-	
+
 	// Using http
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Server with side-effect imports"))
 	})
-	
+
 	fmt.Println("Server ready on :8082")
 	http.ListenAndServe(":8082", nil)
 }

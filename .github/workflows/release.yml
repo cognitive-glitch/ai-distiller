@@ -61,7 +61,7 @@ jobs:
           # Windows ARM64 builds often have issues
           - os: windows
             arch: arm64
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -93,13 +93,13 @@ jobs:
           else
             VERSION="${{ github.ref_name }}"
           fi
-          
+
           # Set binary extension for Windows
           BINARY_EXT=""
           if [ "${{ matrix.os }}" = "windows" ]; then
             BINARY_EXT=".exe"
           fi
-          
+
           # Build with version info
           go build \
             -ldflags="-s -w -X 'main.version=${VERSION}' -X 'main.buildTime=$(date -u +%Y-%m-%dT%H:%M:%SZ)' -X 'main.commit=${GITHUB_SHA}'" \
@@ -117,7 +117,7 @@ jobs:
     needs: [test, build]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -146,7 +146,7 @@ jobs:
         run: |
           # Get previous tag for changelog generation
           PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
-          
+
           # Generate changelog
           if [ -n "$PREVIOUS_TAG" ]; then
             echo "## Changes since ${PREVIOUS_TAG}" > CHANGELOG.md
@@ -157,36 +157,36 @@ jobs:
             echo "" >> CHANGELOG.md
             echo "- Initial release of AI Distiller" >> CHANGELOG.md
           fi
-          
+
           # Add feature highlights
           cat >> CHANGELOG.md << 'EOF'
-          
+
           ## Key Features
-          
+
           ### 🚀 Core Functionality
           - **Multi-language support**: Python, JavaScript, TypeScript, Go, Java, C#, Rust
-          - **Fast processing**: 10MB codebase in <2 seconds  
+          - **Fast processing**: 10MB codebase in <2 seconds
           - **Multiple output formats**: Markdown, Text, JSON, JSONL, XML
           - **Flexible stripping**: Remove comments, implementations, private members
-          
+
           ### 🔧 Advanced Features
           - **Semantic analysis**: Symbol extraction and call graph generation
           - **Tree-sitter parsing**: Accurate AST-based code analysis
           - **Performance optimization**: Concurrent processing and intelligent caching
           - **Single binary**: No runtime dependencies
-          
+
           ### 📊 Output Examples
           ```bash
           aid                                    # Process current directory
-          aid src/                              # Process src directory  
+          aid src/                              # Process src directory
           aid --strip comments,implementation   # Remove comments and implementations
           aid --format json-structured --output api.json   # JSON output to file
           aid --strip non-public --stdout       # Print only public members
           ```
-          
+
           ### 🛠 Installation
           Download the appropriate binary for your platform from the release assets below.
-          
+
           EOF
 
       - name: Create checksums
@@ -221,7 +221,7 @@ jobs:
     needs: [test, build]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -270,7 +270,7 @@ jobs:
     needs: [test, build, release]
     runs-on: ubuntu-latest
     if: always()
-    
+
     steps:
       - name: Notify success
         if: needs.release.result == 'success'

@@ -25,10 +25,10 @@ if (isset($this->instances[$id])) {
         }
 
         $service = $this->services[$id];
-        
+
         $instance = is_callable($service) ? $service($this) : $service;
         $this->instances[$id] = $instance;
-        
+
         return $instance;
     }
     public has(string $id): bool {
@@ -36,7 +36,7 @@ return isset($this->services[$id]);
     }
     public autowire(string $className): object {
 $reflection = new ReflectionClass($className);
-        
+
         if (!$reflection->isInstantiable()) {
             throw new InvalidArgumentException("Class '{$className}' is not instantiable");
         }
@@ -79,7 +79,7 @@ return array_values($this->entities);
     }
     public save(object $entity): object {
 $reflection = new ReflectionClass($entity);
-        
+
         if ($reflection->hasMethod('getId') && $reflection->hasMethod('setId')) {
             $id = $entity->getId();
             if ($id === null) {
@@ -88,12 +88,12 @@ $reflection = new ReflectionClass($entity);
             }
             $this->entities[$id] = $entity;
         }
-        
+
         return $entity;
     }
     public delete(object $entity): void {
 $reflection = new ReflectionClass($entity);
-        
+
         if ($reflection->hasMethod('getId')) {
             $id = $entity->getId();
             if ($id !== null) {
@@ -124,7 +124,7 @@ $this->listeners[$eventName][] = $listener;
     }
     public dispatch(EventInterface $event): void {
 $eventName = $event->getName();
-        
+
         if (!isset($this->listeners[$eventName])) {
             return;
         }
@@ -136,7 +136,7 @@ $eventName = $event->getName();
     public listen(string $eventName, Closure $handler): void {
 $this->subscribe($eventName, new class($handler) implements EventListenerInterface {
             public function __construct(private Closure $handler) {}
-            
+
             public function handle(EventInterface $event): void
             {
                 ($this->handler)($event);
@@ -175,12 +175,12 @@ return $this->findBy(fn(User $user) => str_ends_with($user->getEmail(), "@{$doma
     public getStatistics(): array {
 $total = count($this->entities);
         $domains = [];
-        
+
         foreach ($this->entities as $user) {
             $domain = substr($user->getEmail(), strpos($user->getEmail(), '@') + 1);
             $domains[$domain] = ($domains[$domain] ?? 0) + 1;
         }
-        
+
         return [
             'total' => $total,
             'domains' => $domains,
@@ -192,13 +192,13 @@ class UserService {
     public createUser(string $name, string $email): User {
 $user = new User(null, $name, $email);
         $savedUser = $this->repository->save($user);
-        
+
         $this->dispatcher->dispatch(new Event('user.created', [
             'user_id' => $savedUser->getId(),
             'name' => $name,
             'email' => $email,
         ]));
-        
+
         return $savedUser;
     }
     public getUserStatistics(): Generator {

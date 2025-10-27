@@ -45,27 +45,27 @@ interface Repository<T> {
 class UserService implements Repository<User> {
     private logger: Logger;
     protected cache: Map<number, User>;
-    
+
     constructor(logger: Logger) {
         this.logger = logger;
         this.cache = new Map();
     }
-    
+
     public async findById(id: number): Promise<User | null> {
         // Check cache first
         if (this.cache.has(id)) {
             return this.cache.get(id) || null;
         }
-        
+
         // Fetch from API
         const user = await this.fetchUser(id);
         if (user) {
             this.cache.set(id, user);
         }
-        
+
         return user;
     }
-    
+
     private async fetchUser(id: number): Promise<User | null> {
         try {
             const response = await fetch('/api/users/' + id);
@@ -75,7 +75,7 @@ class UserService implements Repository<User> {
             return null;
         }
     }
-    
+
     public save(user: User): Promise<User> {
         return utils.saveToDatabase(user);
     }
@@ -96,12 +96,12 @@ function validateEmail(email: string): boolean {
 
 async function processUsers(users: User[]): Promise<User[]> {
     const validUsers = users.filter(user => validateEmail(user.email || ''));
-    
+
     for (const user of validUsers) {
         await userService.save(user);
         utils.logAction('user_processed', user.id);
     }
-    
+
     return validUsers;
 }
 
@@ -111,7 +111,7 @@ namespace Analytics {
         name: string;
         data: Record<string, any>;
     }
-    
+
     export function trackEvent(event: Event): void {
         console.log('Tracking:', event.name);
     }
@@ -146,7 +146,7 @@ export { UserRole, Analytics };
 
 	reader := strings.NewReader(testCode)
 	analysis, err := analyzer.AnalyzeFile(context.Background(), reader, "test.ts")
-	
+
 	if err != nil {
 		t.Fatalf("Failed to analyze TypeScript file: %v", err)
 	}
@@ -158,12 +158,12 @@ export { UserRole, Analytics };
 
 	// Check symbol extraction
 	symbolTable := analysis.SymbolTable
-	
+
 	// Check for interface symbols
 	if _, exists := symbolTable.GetSymbol("User"); !exists {
 		t.Error("Expected to find User interface symbol")
 	}
-	
+
 	userSymbol, _ := symbolTable.GetSymbol("User")
 	if userSymbol.Kind != SymbolKindInterface {
 		t.Errorf("Expected User to be an interface, got %s", userSymbol.Kind)
@@ -183,7 +183,7 @@ export { UserRole, Analytics };
 	if _, exists := symbolTable.GetSymbol("UserService"); !exists {
 		t.Error("Expected to find UserService class")
 	}
-	
+
 	userServiceSymbol, _ := symbolTable.GetSymbol("UserService")
 	if userServiceSymbol.Kind != SymbolKindClass {
 		t.Errorf("Expected UserService to be a class, got %s", userServiceSymbol.Kind)
@@ -295,7 +295,7 @@ const arrayHelper = <T>(items: T[]): T[] => {
 
 	reader := strings.NewReader(testCode)
 	analysis, err := analyzer.AnalyzeFile(context.Background(), reader, "generics.ts")
-	
+
 	if err != nil {
 		t.Fatalf("Failed to analyze TypeScript file: %v", err)
 	}
@@ -366,7 +366,7 @@ type EventName<T extends string> = ` + "`" + `on${Capitalize<T>}` + "`" + `;
 class UserComponent {
     @Input() user!: User;
     @Output() userClick = new EventEmitter<User>();
-    
+
     @HostListener('click', ['$event'])
     onClick(event: MouseEvent): void {
         this.userClick.emit(this.user);
@@ -396,16 +396,16 @@ async function fetchUserData(id: number): Promise<User | null> {
 class PrivateFieldExample {
     #privateField: string;
     readonly publicField: string;
-    
+
     constructor(value: string) {
         this.#privateField = value;
         this.publicField = value;
     }
-    
+
     #privateMethod(): string {
         return this.#privateField;
     }
-    
+
     public getPrivateValue(): string {
         return this.#privateMethod();
     }
@@ -418,7 +418,7 @@ export type { ComponentType };
 
 	reader := strings.NewReader(testCode)
 	analysis, err := analyzer.AnalyzeFile(context.Background(), reader, "modern.ts")
-	
+
 	if err != nil {
 		t.Fatalf("Failed to analyze modern TypeScript file: %v", err)
 	}
@@ -431,7 +431,7 @@ export type { ComponentType };
 			foundUtilityTypes++
 		}
 	}
-	
+
 	// Utility types are complex, so we don't require all of them to be found
 	t.Logf("Found %d out of %d utility types (complex types may not be fully captured)", foundUtilityTypes, len(expectedTypes))
 
@@ -487,7 +487,7 @@ func TestTypeScriptAnalyzer_ErrorHandling(t *testing.T) {
 			}
 			// Missing implementation below but class name should be extractable
 		}
-		
+
 		// Another valid part
 		function workingFunction() {
 			console.log("this works");
@@ -496,7 +496,7 @@ func TestTypeScriptAnalyzer_ErrorHandling(t *testing.T) {
 
 	reader := strings.NewReader(invalidCode)
 	analysis, err := analyzer.AnalyzeFile(context.Background(), reader, "invalid.ts")
-	
+
 	// Should handle gracefully and still extract what it can
 	if err != nil {
 		t.Fatalf("Analyzer should handle invalid code gracefully: %v", err)
@@ -510,7 +510,7 @@ func TestTypeScriptAnalyzer_ErrorHandling(t *testing.T) {
 	if _, exists := analysis.SymbolTable.GetSymbol("Incomplete"); !exists {
 		t.Error("Expected to extract class name from valid part of code")
 	}
-	
+
 	if _, exists := analysis.SymbolTable.GetSymbol("workingFunction"); !exists {
 		t.Error("Expected to extract function name from valid part of code")
 	}

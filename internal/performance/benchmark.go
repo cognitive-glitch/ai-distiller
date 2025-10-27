@@ -90,16 +90,16 @@ func (b *BenchmarkSuite) RunAllBenchmarks(ctx context.Context) error {
 	// Run benchmarks for each configuration
 	for i, config := range b.configurations {
 		fmt.Printf("Running configuration %d/%d...\n", i+1, len(b.configurations))
-		
+
 		// Update processor configuration
 		b.processor.WithConfig(config)
-		
+
 		// Test each file
 		for _, testFile := range b.testFiles {
 			result := b.runSingleBenchmark(ctx, testFile, config)
 			key := b.generateResultKey(testFile, config, i)
 			b.results[key] = result
-			
+
 			// Print progress
 			if result.Success {
 				fmt.Printf("  ✅ %s: %.2f MB/s\n", filepath.Base(testFile), result.ThroughputMBps)
@@ -132,14 +132,14 @@ func (b *BenchmarkSuite) RunModeComparison(ctx context.Context) error {
 	// Test each mode
 	for i, mode := range modes {
 		fmt.Printf("Testing %s mode...\n", modeNames[i])
-		
+
 		for _, testFile := range b.testFiles {
 			result := b.runModeBenchmark(ctx, testFile, mode, config)
 			key := fmt.Sprintf("mode_%s_%s", modeNames[i], filepath.Base(testFile))
 			b.results[key] = result
-			
+
 			if result.Success {
-				fmt.Printf("  ✅ %s: %.2f MB/s (%.2f MB, %v)\n", 
+				fmt.Printf("  ✅ %s: %.2f MB/s (%.2f MB, %v)\n",
 					filepath.Base(testFile), result.ThroughputMBps, result.FileSizeMB, result.ProcessingTime)
 			} else {
 				fmt.Printf("  ❌ %s: %v\n", filepath.Base(testFile), result.Error)
@@ -188,7 +188,7 @@ func (b *BenchmarkSuite) runSingleBenchmark(
 
 	result.ProcessingTime = endTime.Sub(startTime)
 	result.MemoryUsageMB = int64((memAfter.Alloc - memBefore.Alloc) / 1024 / 1024)
-	
+
 	if err != nil {
 		result.Error = err
 		result.ErrorCount = 1
@@ -250,7 +250,7 @@ func (b *BenchmarkSuite) runModeBenchmark(
 
 	result.ProcessingTime = endTime.Sub(startTime)
 	result.MemoryUsageMB = int64((memAfter.Alloc - memBefore.Alloc) / 1024 / 1024)
-	
+
 	if err != nil {
 		result.Error = err
 		result.ErrorCount = 1
@@ -284,7 +284,7 @@ func (b *BenchmarkSuite) GetBestConfiguration() (*PerformanceConfig, *BenchmarkR
 		// Score based on throughput and memory efficiency
 		// Higher throughput is better, lower memory usage is better
 		score := result.ThroughputMBps / math.Max(float64(result.MemoryUsageMB), 1.0)
-		
+
 		if score > bestScore {
 			bestScore = score
 			bestConfig = result.Configuration
@@ -325,12 +325,12 @@ func (b *BenchmarkSuite) GenerateReport() string {
 	report += fmt.Sprintf("Total benchmarks: %d\n", len(b.results))
 	report += fmt.Sprintf("Successful: %d\n", successful)
 	report += fmt.Sprintf("Failed: %d\n", len(b.results)-successful)
-	
+
 	if successful > 0 {
 		avgThroughput := totalThroughput / float64(successful)
 		medianThroughput := throughputs[len(throughputs)/2]
 		maxThroughput := throughputs[len(throughputs)-1]
-		
+
 		report += fmt.Sprintf("\nThroughput Statistics:\n")
 		report += fmt.Sprintf("  Average: %.2f MB/s\n", avgThroughput)
 		report += fmt.Sprintf("  Median: %.2f MB/s\n", medianThroughput)
@@ -381,11 +381,11 @@ func (b *BenchmarkSuite) generateResultKey(testFile string, config *PerformanceC
 // generateBenchmarkConfigurations creates various configurations to test
 func generateBenchmarkConfigurations() []*PerformanceConfig {
 	base := DefaultPerformanceConfig()
-	
+
 	configs := []*PerformanceConfig{
 		// Default configuration
 		base,
-		
+
 		// High concurrency
 		{
 			MaxWorkers:             16,
@@ -400,7 +400,7 @@ func generateBenchmarkConfigurations() []*PerformanceConfig {
 			ManyFilesThreshold:     base.ManyFilesThreshold,
 			EnableAutoOptimization: true,
 		},
-		
+
 		// Low memory
 		{
 			MaxWorkers:             4,
@@ -415,7 +415,7 @@ func generateBenchmarkConfigurations() []*PerformanceConfig {
 			ManyFilesThreshold:     base.ManyFilesThreshold,
 			EnableAutoOptimization: true,
 		},
-		
+
 		// Large files optimized
 		{
 			MaxWorkers:             base.MaxWorkers,
@@ -430,7 +430,7 @@ func generateBenchmarkConfigurations() []*PerformanceConfig {
 			ManyFilesThreshold:     base.ManyFilesThreshold,
 			EnableAutoOptimization: true,
 		},
-		
+
 		// Cache disabled
 		{
 			MaxWorkers:             base.MaxWorkers,
@@ -446,6 +446,6 @@ func generateBenchmarkConfigurations() []*PerformanceConfig {
 			EnableAutoOptimization: false,
 		},
 	}
-	
+
 	return configs
 }

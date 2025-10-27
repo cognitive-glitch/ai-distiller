@@ -10,7 +10,7 @@ use Iterator;
  */
 /**
  * Class demonstrating magic properties and complex array shapes
- * 
+ *
  * @property-read int $id Auto-generated ID
  * @property string $name Mutable name property
  * @property-write array<string, mixed> $metadata Write-only metadata
@@ -99,7 +99,7 @@ $result = [];
     public categorize(array<int, (Countable|Iterator)> $items): array{countables: list<Countable>, iterators: list<Iterator>} {
 $countables = [];
         $iterators = [];
-        
+
         foreach ($items as $item) {
             if ($item instanceof Countable) {
                 $countables[] = $item;
@@ -108,7 +108,7 @@ $countables = [];
                 $iterators[] = $item;
             }
         }
-        
+
         return [
             'countables' => $countables,
             'iterators' => $iterators
@@ -151,12 +151,12 @@ foreach ($data as $key => $value) {
     public bidirectionalGenerator(): Generator {
 $count = 0;
         $continue = true;
-        
+
         while ($continue) {
             $continue = yield "Item $count";
             $count++;
         }
-        
+
         return $count;
     }
 }
@@ -165,7 +165,7 @@ class TypeAliasDemo {
 if ($id <= 0) {
             return ['error' => true, 'message' => 'Invalid ID'];
         }
-        
+
         return [
             'id' => $id,
             'email' => 'user@example.com',
@@ -192,11 +192,11 @@ return [
 $sum = 0.0;
         $rows = count($matrix);
         $cols = count(reset($matrix));
-        
+
         foreach ($matrix as $row) {
             $sum += array_sum($row);
         }
-        
+
         return [
             'rows' => $rows,
             'cols' => $cols,

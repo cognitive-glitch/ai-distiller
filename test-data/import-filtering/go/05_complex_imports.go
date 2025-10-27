@@ -51,11 +51,11 @@ func main() {
 	// Using C import (CGO)
 	version := C.GoString(C.get_version())
 	fmt.Printf("Version from C: %s\n", version)
-	
+
 	// Using unsafe (often used with CGO)
 	ptr := unsafe.Pointer(&version)
 	fmt.Printf("Pointer address: %v\n", ptr)
-	
+
 	// Using json with struct tags
 	user := User{
 		ID:        1,
@@ -65,19 +65,19 @@ func main() {
 		UpdatedAt: time.Now(),
 		IsActive:  true,
 	}
-	
+
 	// Using bytes.Buffer
 	var buf bytes.Buffer
 	encoder := json.NewEncoder(&buf)
 	encoder.SetIndent("", "  ")
-	
+
 	if err := encoder.Encode(user); err != nil {
 		log.Printf("Encoding error: %v", err)
 	}
-	
+
 	fmt.Println("JSON output:")
 	fmt.Println(buf.String())
-	
+
 	// Using reflect to inspect struct tags
 	t := reflect.TypeOf(user)
 	for i := 0; i < t.NumField(); i++ {
@@ -86,10 +86,10 @@ func main() {
 		dbTag := field.Tag.Get("db")
 		fmt.Printf("Field %s: json=%q db=%q\n", field.Name, jsonTag, dbTag)
 	}
-	
+
 	// Using time in struct and directly
 	fmt.Printf("Created at: %s\n", user.CreatedAt.Format(time.RFC3339))
-	
+
 	// The json import is used because of struct tags
 	// The time import is used in struct fields and directly
 	// The C import must be kept for CGO

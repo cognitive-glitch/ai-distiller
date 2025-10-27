@@ -34,9 +34,9 @@ build_platform() {
     local CC=$4
     local BINARY_NAME="aid-mcp$EXT"
     local OUTPUT="$BUILD_DIR/aid-mcp_${VERSION}_${GOOS}_${GOARCH}$EXT"
-    
+
     echo -e "${YELLOW}Building MCP for $GOOS/$GOARCH...${NC}"
-    
+
     if [ -z "$CC" ]; then
         # Native build
         cd mcp-npm && CGO_ENABLED=1 GOOS=$GOOS GOARCH=$GOARCH go build -tags "cgo" -ldflags "$LDFLAGS" -o "../$OUTPUT" ./cmd/aid-mcp && cd ..
@@ -44,16 +44,16 @@ build_platform() {
         # Cross-compile with specific compiler
         cd mcp-npm && CC=$CC CGO_ENABLED=1 GOOS=$GOOS GOARCH=$GOARCH go build -tags "cgo" -ldflags "$LDFLAGS" -o "../$OUTPUT" ./cmd/aid-mcp && cd ..
     fi
-    
+
     if [ $? -eq 0 ]; then
         echo -e "${GREEN}✓ Built: $BINARY_NAME for $GOOS/$GOARCH${NC}"
-        
+
         # Create tar.gz archive
         cd "$BUILD_DIR"
         tar -czf "aid-mcp_${VERSION}_${GOOS}_${GOARCH}.tar.gz" "aid-mcp_${VERSION}_${GOOS}_${GOARCH}$EXT"
         rm "aid-mcp_${VERSION}_${GOOS}_${GOARCH}$EXT"
         cd - > /dev/null
-        
+
         echo -e "${GREEN}✓ Created: aid-mcp_${VERSION}_${GOOS}_${GOARCH}.tar.gz${NC}"
     else
         echo -e "${RED}✗ Failed to build $GOOS/$GOARCH${NC}"
@@ -112,7 +112,7 @@ if ls $BUILD_DIR/*.tar.gz 2>/dev/null >/dev/null; then
     echo "Created archives:"
     ls -lh $BUILD_DIR/*.tar.gz | awk '{print "  " $9 " (" $5 ")"}'
     echo ""
-    
+
     # Generate checksums
     echo "Generating checksums..."
     cd $BUILD_DIR

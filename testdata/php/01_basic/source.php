@@ -16,22 +16,22 @@ class User
      * @var int User ID
      */
     public int $id;
-    
+
     /**
      * @var string User name
      */
     public string $name;
-    
+
     /**
      * @var string Email address
      */
     private string $email;
-    
+
     /**
      * @var DateTime|null Creation timestamp
      */
     protected ?DateTime $createdAt;
-    
+
     /**
      * @var array<string, mixed> User preferences
      */
@@ -39,7 +39,7 @@ class User
 
     /**
      * Create a new user instance
-     * 
+     *
      * @param int $id User ID
      * @param string $name User name
      * @param string $email Email address
@@ -54,7 +54,7 @@ class User
 
     /**
      * Get user email
-     * 
+     *
      * @return string
      */
     public function getEmail(): string
@@ -64,7 +64,7 @@ class User
 
     /**
      * Set user email with validation
-     * 
+     *
      * @param string $email Email address
      * @throws InvalidArgumentException
      */
@@ -78,7 +78,7 @@ class User
 
     /**
      * Get user preference
-     * 
+     *
      * @param string $key Preference key
      * @param mixed $default Default value
      * @return mixed
@@ -90,7 +90,7 @@ class User
 
     /**
      * Set user preference
-     * 
+     *
      * @param string $key Preference key
      * @param mixed $value Preference value
      */
@@ -101,7 +101,7 @@ class User
 
     /**
      * Check if user is active (created within last 30 days)
-     * 
+     *
      * @return bool
      */
     public function isActive(): bool
@@ -109,14 +109,14 @@ class User
         if ($this->createdAt === null) {
             return false;
         }
-        
+
         $thirtyDaysAgo = new DateTime('-30 days');
         return $this->createdAt > $thirtyDaysAgo;
     }
 
     /**
      * Get formatted user info
-     * 
+     *
      * @return string
      */
     protected function formatUserInfo(): string
@@ -126,7 +126,7 @@ class User
 
     /**
      * Convert to array representation
-     * 
+     *
      * @return array{id: int, name: string, email: string, created_at: string|null, is_active: bool}
      */
     public function toArray(): array
@@ -153,7 +153,7 @@ class UserManager
 
     /**
      * Add user to manager
-     * 
+     *
      * @param User $user User instance
      */
     public function addUser(User $user): void
@@ -163,7 +163,7 @@ class UserManager
 
     /**
      * Find user by ID
-     * 
+     *
      * @param int $id User ID
      * @return User|null
      */
@@ -174,7 +174,7 @@ class UserManager
 
     /**
      * Get all active users
-     * 
+     *
      * @return list<User>
      */
     public function getActiveUsers(): array
@@ -184,7 +184,7 @@ class UserManager
 
     /**
      * Get user count
-     * 
+     *
      * @return int
      */
     public function getUserCount(): int
@@ -203,7 +203,7 @@ function validateEmail(string $email): bool
 
 /**
  * Create user from array data
- * 
+ *
  * @param array{id: int, name: string, email: string} $data User data
  * @return User
  * @throws InvalidArgumentException
@@ -213,7 +213,7 @@ function createUserFromArray(array $data): User
     if (!isset($data['id'], $data['name'], $data['email'])) {
         throw new InvalidArgumentException("Missing required user data");
     }
-    
+
     return new User($data['id'], $data['name'], $data['email']);
 }
 

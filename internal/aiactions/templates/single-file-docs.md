@@ -142,7 +142,7 @@ describe('ExampleClass', () => {
         const result = instance.process(validInput);
         expect(result).toEqual(expectedOutput);
     });
-    
+
     test('should handle edge cases', () => {
         const instance = new ExampleClass();
         expect(() => instance.process(null)).toThrow();

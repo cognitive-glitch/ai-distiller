@@ -43,7 +43,7 @@ func getVersionInfo() string {
 // getHelpTemplate returns the help template with version info
 func getHelpTemplate() string {
 	versionInfo := getVersionInfo()
-	
+
 	// Determine if we should use colors
 	gray := ""
 	reset := ""
@@ -51,7 +51,7 @@ func getHelpTemplate() string {
 		gray = colorGray
 		reset = colorReset
 	}
-	
+
 	return fmt.Sprintf(`%s{{.Short}} (%s)
 
 AI Distiller transforms source code into optimized formats for Large Language Models.
@@ -78,7 +78,7 @@ AI ACTIONS:
   Use --ai-action <ACTION> to format output for specific AI tasks:
 
   prompt-for-refactoring-suggestion     Generate comprehensive refactoring analysis prompt
-  prompt-for-complex-codebase-analysis  Generate enterprise-grade codebase overview prompt  
+  prompt-for-complex-codebase-analysis  Generate enterprise-grade codebase overview prompt
   prompt-for-security-analysis          Generate security audit prompt with OWASP focus
   prompt-for-performance-analysis       Generate performance optimization analysis prompt
   prompt-for-best-practices-analysis    Generate best practices and code quality analysis prompt
@@ -118,7 +118,7 @@ SPECIAL MODES:
 HELP & DOCUMENTATION:
   aid --help-extended         Complete documentation (man page style)
   aid help actions            Detailed AI actions documentation
-  aid help filtering          Complete filtering reference  
+  aid help filtering          Complete filtering reference
   aid help git                Git mode documentation
   aid --cheat                 Quick reference card
 {{if .HasAvailableSubCommands}}
@@ -149,7 +149,7 @@ func getExtendedHelpContent() string {
 		gray = colorGray
 		reset = colorReset
 	}
-	
+
 	return fmt.Sprintf(`%sAI DISTILLER - COMPLETE REFERENCE%s
 
 NAME
@@ -164,7 +164,7 @@ DESCRIPTION
     code representations or complete AI analysis prompts. The output can be directly
     copied to AI tools like Gemini 2.5 Pro (1M context), ChatGPT-o3/4o, or Claude for perfect
     AI-powered code analysis, refactoring, security audits, and architectural reviews.
-    
+
     Key capabilities:
     • Compress codebases by 60-90%% while preserving semantic information
     • Generate complete AI prompts with embedded code for specific analysis tasks
@@ -189,28 +189,28 @@ AI ACTIONS (--ai-action)
         Generates a comprehensive prompt for AI-powered refactoring analysis.
         Includes context awareness, effort sizing, validation steps, and risk
         assessment. Output optimized for models like GPT-4, Claude, or Gemini.
-        
+
         Example: aid --ai-action prompt-for-refactoring-suggestion ./src
 
-    prompt-for-complex-codebase-analysis  
+    prompt-for-complex-codebase-analysis
         Creates enterprise-grade codebase analysis prompt with architecture
         diagrams, compliance sections, and evidence-based findings. Includes
         coverage gaps and limitation acknowledgments.
-        
+
         Example: aid --ai-action prompt-for-complex-codebase-analysis ./
 
     prompt-for-security-analysis
-        Generates security audit prompt with OWASP Top 10 focus, static vs 
+        Generates security audit prompt with OWASP Top 10 focus, static vs
         dynamic analysis boundaries, and evidence checklists. Includes SARIF
         output integration for CI/CD pipelines.
-        
+
         Example: aid --ai-action prompt-for-security-analysis ./src
 
     prompt-for-performance-analysis
         Creates performance optimization analysis prompt with static analysis
         constraints, profiling guidance, and enterprise scalability considerations.
         Focuses on algorithmic complexity and resource utilization patterns.
-        
+
         Example: aid --ai-action prompt-for-performance-analysis ./src
 
 OPTIONS
@@ -224,7 +224,7 @@ Primary Options:
 
 Visibility Filtering:
     --public 0|1               Include public members (default: 1)
-    --protected 0|1            Include protected members (default: 0) 
+    --protected 0|1            Include protected members (default: 0)
     --internal 0|1             Include internal/package-private members (default: 0)
     --private 0|1              Include private members (default: 0)
 
@@ -287,7 +287,7 @@ Diagnostics:
 
 SUPPORTED LANGUAGES
 
-    auto-detected: python, typescript, javascript, go, ruby, swift, rust, 
+    auto-detected: python, typescript, javascript, go, ruby, swift, rust,
     java, csharp, kotlin, cpp, php
 
 EXAMPLES
@@ -357,11 +357,11 @@ Explore the project on GitHub: https://github.com/janreges/ai-distiller%s
 func initializeHelpSystem() {
 	// Set custom help template
 	rootCmd.SetHelpTemplate(getHelpTemplate())
-	
+
 	// Add extended help functionality
 	rootCmd.Flags().Bool("help-extended", false, "Show extended help documentation")
 	rootCmd.Flags().Bool("cheat", false, "Show quick reference card")
-	
+
 	// Add help subcommands
 	helpCmd := &cobra.Command{
 		Use:   "help [topic]",
@@ -370,9 +370,9 @@ func initializeHelpSystem() {
 		Args:  cobra.MaximumNArgs(1),
 		RunE:  runHelpCommand,
 	}
-	
+
 	rootCmd.AddCommand(helpCmd)
-	
+
 	// Handle special help flags in PreRun
 	originalPreRun := rootCmd.PreRun
 	rootCmd.PreRun = func(cmd *cobra.Command, args []string) {
@@ -381,13 +381,13 @@ func initializeHelpSystem() {
 			showExtendedHelp()
 			os.Exit(0)
 		}
-		
+
 		// Check for cheat sheet
 		if cheat, _ := cmd.Flags().GetBool("cheat"); cheat {
 			showCheatSheet()
 			os.Exit(0)
 		}
-		
+
 		// Call original PreRun if it exists
 		if originalPreRun != nil {
 			originalPreRun(cmd, args)
@@ -400,7 +400,7 @@ func runHelpCommand(cmd *cobra.Command, args []string) error {
 	if len(args) == 0 {
 		return cmd.Help()
 	}
-	
+
 	topic := args[0]
 	switch topic {
 	case "actions":
@@ -412,7 +412,7 @@ func runHelpCommand(cmd *cobra.Command, args []string) error {
 	default:
 		return fmt.Errorf("unknown help topic: %s\nAvailable topics: actions, filtering, git", topic)
 	}
-	
+
 	return nil
 }
 
@@ -425,7 +425,7 @@ func showAIActionsHelp() {
 		gray = colorGray
 		reset = colorReset
 	}
-	
+
 	output := fmt.Sprintf(`%sAI ACTIONS - DETAILED REFERENCE%s
 
 AI Actions are pre-configured analysis workflows that format the distilled output
@@ -436,210 +436,210 @@ AVAILABLE ACTIONS:
 
 prompt-for-refactoring-suggestion
     PURPOSE: Generate comprehensive refactoring analysis prompts
-    
+
     WHAT IT INCLUDES:
     • Context awareness with business constraints inference
-    • Effort sizing and validation steps for each recommendation  
+    • Effort sizing and validation steps for each recommendation
     • Risk assessment with rollback plans
     • Evidence-based findings with file:line references
     • ROI-focused prioritization framework
-    
+
     FILTERING: Includes implementation details for analysis
     OUTPUT: Markdown prompt optimized for ChatGPT-o3/4o, Claude, Gemini
-    
+
     EXAMPLE:
         aid ./src --ai-action prompt-for-refactoring-suggestion
         # Creates ./.aid/REFACTORING-SUGGESTION.YYYY-MM-DD.HH-MM-SS.basename.md
-        
+
         aid ./src --ai-action prompt-for-refactoring-suggestion --raw
         # Includes full source code bodies (for smaller codebases or large AI context)
 
 prompt-for-complex-codebase-analysis
     PURPOSE: Generate enterprise-grade codebase overview prompts
-    
+
     WHAT IT INCLUDES:
     • Project context inference and assumption tracking
     • Enterprise concerns (compliance, governance, scalability)
     • Evidence-based findings with confidence levels
     • Coverage gaps and static analysis limitations
     • Architectural recommendations with dependency tracking
-    
+
     FILTERING: Focuses on public APIs and structure
     OUTPUT: Comprehensive markdown analysis prompt
-    
+
     EXAMPLE:
         aid ./ --ai-action prompt-for-complex-codebase-analysis
         # Creates ./.aid/COMPLEX-CODEBASE-ANALYSIS.YYYY-MM-DD.HH-MM-SS.basename.md
-        
+
         aid ./lib --ai-action prompt-for-complex-codebase-analysis --raw
         # Includes full source code bodies (for smaller codebases or large AI context)
 
 prompt-for-security-analysis
     PURPOSE: Generate security audit prompts with OWASP focus
-    
+
     WHAT IT INCLUDES:
     • Static vs dynamic analysis boundaries with clear limitations
     • OWASP Top 10 comprehensive coverage
     • Evidence checklists with confidence tagging
     • False-positive mitigation strategies
     • SARIF output integration for CI/CD
-    
+
     FILTERING: Includes all code for comprehensive security review
     OUTPUT: Security-focused analysis prompt with validation frameworks
-    
+
     EXAMPLE:
         aid ./src --ai-action prompt-for-security-analysis --private=1
         # Creates ./.aid/SECURITY-ANALYSIS.YYYY-MM-DD.HH-MM-SS.basename.md
-        
+
         aid ./src --ai-action prompt-for-security-analysis --private=1 --raw
         # Includes full source code bodies (for comprehensive security analysis)
 
 prompt-for-performance-analysis
     PURPOSE: Generate performance optimization analysis prompts
-    
+
     WHAT IT INCLUDES:
     • Static analysis constraints (no runtime speculation)
     • Algorithmic complexity analysis with evidence requirements
     • Profiling guidance to bridge static→dynamic analysis
     • Enterprise scalability considerations
     • Performance anti-pattern detection
-    
+
     FILTERING: Includes implementation for complexity analysis
     OUTPUT: Performance-focused prompt with testing guidance
-    
+
     EXAMPLE:
         aid ./core --ai-action prompt-for-performance-analysis
         # Creates ./.aid/PERFORMANCE-ANALYSIS.YYYY-MM-DD.HH-MM-SS.basename.md
-        
+
         aid ./core --ai-action prompt-for-performance-analysis --raw
         # Includes full source code bodies (for detailed performance analysis)
 
 prompt-for-best-practices-analysis
     PURPOSE: Generate best practices and code quality analysis prompts
-    
+
     WHAT IT INCLUDES:
     • Code organization and structure assessment
     • Industry best practices compliance evaluation
     • Quality metrics and maintainability analysis
     • Team collaboration and workflow assessment
     • Implementation roadmap with prioritized improvements
-    
+
     FILTERING: Includes implementation details for thorough analysis
     OUTPUT: Best practices analysis prompt with actionable recommendations
-    
+
     EXAMPLE:
         aid ./src --ai-action prompt-for-best-practices-analysis
         # Creates ./.aid/BEST-PRACTICES-ANALYSIS.YYYY-MM-DD.HH-MM-SS.basename.md
-        
+
         aid ./src --ai-action prompt-for-best-practices-analysis --raw
         # Includes full source code bodies (for comprehensive best practices analysis)
 
 prompt-for-bug-hunting
     PURPOSE: Generate systematic bug hunting and quality analysis prompts
-    
+
     WHAT IT INCLUDES:
     • Logic errors and edge case detection
     • Memory and resource management issues
     • Concurrency and threading problems
     • Input validation and error handling gaps
     • Systematic bug categorization and prioritization
-    
+
     FILTERING: Includes all code and implementation details
     OUTPUT: Bug hunting analysis prompt with systematic detection methodology
-    
+
     EXAMPLE:
         aid ./src --ai-action prompt-for-bug-hunting --private=1
         # Creates ./.aid/BUG-HUNTING-ANALYSIS.YYYY-MM-DD.HH-MM-SS.basename.md
-        
+
         aid ./src --ai-action prompt-for-bug-hunting --private=1 --raw
         # Includes full source code bodies (for comprehensive bug detection)
 
 prompt-for-single-file-docs
     PURPOSE: Generate comprehensive single file documentation prompts
-    
+
     WHAT IT INCLUDES:
     • Complete API reference documentation
     • Usage examples and integration patterns
     • Implementation details and design decisions
     • Testing and troubleshooting guidance
     • Developer-friendly documentation structure
-    
+
     FILTERING: Focuses on public APIs with usage examples
     OUTPUT: Single file documentation prompt with complete coverage
-    
+
     EXAMPLE:
         aid ./src/main.py --ai-action prompt-for-single-file-docs
         # Creates ./.aid/SINGLE-FILE-DOCS.YYYY-MM-DD.HH-MM-SS.basename.md
-        
+
         aid ./src/api.ts --ai-action prompt-for-single-file-docs --raw
         # Includes full source code bodies (for detailed file documentation)
 
 prompt-for-diagrams
     PURPOSE: Generate 10 beneficial Mermaid diagrams for architecture and process visualization
-    
+
     WHAT IT INCLUDES:
     • Analysis strategy for both source code and text/documentation content
     • Systematic diagram selection based on coverage, clarity, and uniqueness
     • GitHub-compatible Mermaid syntax for all diagram types
     • Comprehensive prompt for creating flowcharts, sequence diagrams, class diagrams, etc.
     • Support for architectural overviews, data flows, and process workflows
-    
+
     FILTERING: Uses default filtering to focus on key architectural elements
     OUTPUT: Comprehensive Mermaid diagram generation prompt with 10 distinct diagram specifications
-    
+
     EXAMPLE:
         aid ./src --ai-action prompt-for-diagrams
         # Creates ./.aid/DIAGRAMS-ANALYSIS.YYYY-MM-DD.HH-MM-SS.basename.md
-        
+
         aid ./docs --ai-action prompt-for-diagrams --raw
         # Includes full content for comprehensive diagram analysis from documentation
 
 flow-for-deep-file-to-file-analysis
     PURPOSE: Generate structured task list for comprehensive file-by-file analysis
-    
+
     WHAT IT INCLUDES:
     • Creates .aid/ directory with analysis infrastructure
     • Generates ANALYSIS-TASK-LIST.md with sequential file-by-file tasks
     • Template files for comprehensive project analysis workflow
     • Ensures consistent analysis methodology across all files
-    
+
     FILTERING: Uses default public API filtering for overview
     OUTPUT: Directory structure with task lists and analysis templates
-    
+
     EXAMPLE:
         aid ./src --ai-action flow-for-deep-file-to-file-analysis
         # Creates ./.aid/ directory with ANALYSIS-TASK-LIST.md and templates
-        
+
         aid ./src --ai-action flow-for-deep-file-to-file-analysis --raw
         # Full source code in workflow (for comprehensive file-by-file analysis)
 
 flow-for-multi-file-docs
     PURPOSE: Generate structured documentation workflow for multiple files
-    
+
     WHAT IT INCLUDES:
     • Creates comprehensive documentation task list
     • Generates documentation index and navigation
     • Template files for API reference and developer guides
     • Individual file documentation templates
     • Quality assurance and review workflows
-    
+
     FILTERING: Uses default public API filtering for documentation
     OUTPUT: Complete documentation workflow with templates and guides
-    
+
     EXAMPLE:
         aid ./src --ai-action flow-for-multi-file-docs
         # Creates ./.aid/ directory with DOCS-TASK-LIST.md and documentation templates
-        
+
         aid ./src --ai-action flow-for-multi-file-docs --raw
         # Full source code in documentation workflow (for detailed docs)
 
 --RAW MODE FOR AI ACTIONS:
 
     Adding --raw flag includes full source code bodies in AI prompts for comprehensive analysis.
-    
+
     CONTEXT SIZE CONSIDERATIONS:
     • Large codebases: Analyze specific parts/folders that fit in AI context, or use default
-      filtering (public APIs only, no implementation/comments) which may be insufficient 
+      filtering (public APIs only, no implementation/comments) which may be insufficient
       for some analysis types but fits in smaller contexts
     • Small codebases: Use --raw for full source code analysis
     • Recommended: Gemini 2.5 Pro with 1M context window for largest codebase capacity
@@ -649,29 +649,29 @@ CUSTOMIZING AI ACTION OUTPUT:
     --ai-output PATH        Custom output file path
                            Supports template variables:
                            %%YYYY-MM-DD%% - Current date
-                           %%HH-MM-SS%%   - Current time  
+                           %%HH-MM-SS%%   - Current time
                            %%folder-basename%% - Directory name
-    
+
     EXAMPLES:
         aid ./src --ai-action prompt-for-refactoring-suggestion \
             --ai-output "./docs/refactoring-%%YYYY-MM-DD%%.md"
-            
+
         aid ./ --ai-action prompt-for-security-analysis \
             --ai-output "./security-audit.md"
 
 COMBINING WITH FILTERING:
 
     AI actions can be combined with custom filtering for specialized analysis:
-    
+
     # Security analysis with all visibility levels
     aid ./ --ai-action prompt-for-security-analysis --private=1 --protected=1
-    
+
     # Performance analysis without comments
     aid ./ --ai-action prompt-for-performance-analysis --comments=0
-    
+
     # Refactoring analysis for specific file types
     aid ./ --ai-action prompt-for-refactoring-suggestion --include "*.go,*.py"
-    
+
     # Full source code analysis (large context required - use Gemini 2.5 Pro recommended)
     aid ./small-module --ai-action prompt-for-security-analysis --raw
 
@@ -680,7 +680,7 @@ WORKFLOW INTEGRATION:
     # CI/CD Security Pipeline
     aid --ai-action prompt-for-security-analysis . > security-prompt.md
     # Feed security-prompt.md + distilled code to LLM
-    
+
     # Code Review Assistant
     aid --ai-action prompt-for-refactoring-suggestion ./changed-files > review.md
     # Use review.md as context for AI-powered code review
@@ -731,7 +731,7 @@ func showFilteringHelp() {
 		gray = colorGray
 		reset = colorReset
 	}
-	
+
 	fmt.Printf(`%sFILTERING - COMPLETE REFERENCE%s
 
 AI Distiller provides flexible filtering to control exactly what code elements
@@ -746,16 +746,16 @@ Controls which code elements are included based on their access level:
                           • Public functions, classes, methods
                           • Exported symbols (Go)
                           • Non-prefixed symbols (Python)
-    
+
     --protected 0|1        Include protected members (default: 0)
                           • Protected methods (Java, C#, C++)
                           • _single_underscore methods (Python convention)
-    
+
     --internal 0|1         Include internal/package-private members (default: 0)
                           • Package-private (Java)
                           • lowercase symbols (Go)
                           • module-level privates
-    
+
     --private 0|1          Include private members (default: 0)
                           • Private methods/fields
                           • __double_underscore methods (Python)
@@ -769,34 +769,34 @@ Controls what parts of the code structure are included:
                           • Single-line comments (// # ;)
                           • Block comments (/* */ """ )
                           • Inline comments
-    
+
     --docstrings 0|1       Include documentation comments (default: 1)
                           • JSDoc comments
                           • Python docstrings
                           • Go package comments
                           • XML documentation (C#)
-    
+
     --implementation 0|1   Include function/method bodies (default: 0)
                           • Function implementations
                           • Method bodies
                           • Constructor implementations
                           • Property getters/setters
-    
+
     --imports 0|1          Include import statements (default: 1)
                           • import/require statements
                           • using directives
                           • #include directives
-    
+
     --annotations 0|1      Include decorators/annotations (default: 1)
                           • Python decorators (@property)
                           • Java annotations (@Override)
                           • C# attributes ([Serializable])
-    
+
     --fields 0|1           Include fields/properties (default: 1)
                           • Class fields and properties
                           • Instance and static variables
                           • Data members
-    
+
     --methods 0|1          Include methods/functions (default: 1)
                           • Class methods and functions
                           • Instance and static methods
@@ -806,10 +806,10 @@ ALTERNATIVE FILTERING SYNTAX:
 
     --include-only CATEGORIES    Include ONLY specified categories
     --exclude-items CATEGORIES   Exclude specified categories
-    
+
     Categories: public, protected, internal, private, comments, docstrings,
                implementation, imports, annotations
-    
+
     EXAMPLES:
         --include-only public,imports         # Only public APIs and imports
         --exclude-items comments,private      # Everything except comments and private
@@ -821,13 +821,13 @@ Controls which files are processed:
 
     --include PATTERNS     Include files matching patterns (comma-separated)
     --exclude PATTERNS     Exclude files matching patterns (comma-separated)
-    
+
     Pattern syntax:
         *.ext              Files with specific extension
         **/pattern         Recursive directory matching
         dir/*              Files in specific directory
         *test*             Files containing "test"
-    
+
     EXAMPLES:
         --include "*.go,*.py"              # Only Go and Python files
         --exclude "*test*,*spec*,*.json"   # Exclude test and config files
@@ -874,7 +874,7 @@ Check your filtering with dry-run approach:
 
     aid ./ --stdout --format=text           # Quick preview
     aid ./ --format=md                      # Formatted preview
-    
+
 Common mistakes:
     • Forgetting --private=1 for security analysis
     • Including --comments=1 when not needed (increases token count)
@@ -899,7 +899,7 @@ func showGitHelp() {
 		gray = colorGray
 		reset = colorReset
 	}
-	
+
 	fmt.Printf(`%sGIT MODE - COMPLETE REFERENCE%s
 
 When you target a .git directory, AI Distiller switches to a special git analysis
@@ -928,7 +928,7 @@ OPTIONS:
     --git-limit NUM            Limit number of commits (default: 200)
                               0 = all commits
                               Useful for large repositories
-    
+
     --with-analysis-prompt     Prepend comprehensive AI analysis prompt
                               Guides LLM to generate insights about:
                               • Contributor statistics and expertise areas
@@ -942,7 +942,7 @@ EXAMPLES:
 
 Basic Git History:
     aid .git                           # Last 200 commits
-    aid .git --git-limit=50            # Last 50 commits  
+    aid .git --git-limit=50            # Last 50 commits
     aid .git --git-limit=0             # All commits (careful with large repos)
 
 With AI Analysis Guidance:
@@ -966,7 +966,7 @@ Project Understanding:
     # Feed to LLM: "Explain this project's evolution and key architectural decisions"
 
 Contributor Analysis:
-    aid .git --git-limit=1000 --with-analysis-prompt > team-analysis.md  
+    aid .git --git-limit=1000 --with-analysis-prompt > team-analysis.md
     # Feed to LLM: "Analyze development patterns and contributor expertise"
 
 CODE REVIEW INTEGRATION:
@@ -975,10 +975,10 @@ Combine git mode with regular distillation for comprehensive analysis:
 
     # 1. Get recent changes
     aid .git --git-limit=20 > recent-changes.md
-    
-    # 2. Get current codebase structure  
+
+    # 2. Get current codebase structure
     aid --ai-action prompt-for-refactoring-suggestion . > code-analysis.md
-    
+
     # 3. Feed both to LLM for comprehensive review
 
 LIMITATIONS:
@@ -1045,28 +1045,28 @@ func showCheatSheet() {
 		gray = colorGray
 		reset = colorReset
 	}
-	
+
 	fmt.Printf(`%sAI DISTILLER - QUICK REFERENCE%s
 
 Transform source code into AI-optimized formats. Compress codebases 60-90%% while preserving
-semantic information. Generate complete prompts - copy output directly to Gemini 2.5 Pro, 
+semantic information. Generate complete prompts - copy output directly to Gemini 2.5 Pro,
 ChatGPT-o3/4o, or Claude for perfect AI-powered analysis.
 
 BASIC USAGE:
   aid ./project/src                       # Basic distillation (public APIs only, no implementation/comments)
-  aid ./src --stdout                      # Print to terminal  
+  aid ./src --stdout                      # Print to terminal
   aid ./src --format=md -o analysis.md    # Markdown output
 
 AI ACTIONS:
   --ai-action prompt-for-refactoring-suggestion     # Refactoring analysis
-  --ai-action prompt-for-complex-codebase-analysis  # Architecture overview  
+  --ai-action prompt-for-complex-codebase-analysis  # Architecture overview
   --ai-action prompt-for-security-analysis          # Security audit
   --ai-action prompt-for-performance-analysis       # Performance optimization
   --ai-action prompt-for-best-practices-analysis    # Code quality assessment
   --ai-action prompt-for-bug-hunting               # Systematic bug detection
   --ai-action prompt-for-single-file-docs          # Single file documentation
   --ai-action prompt-for-diagrams                  # Generate Mermaid diagrams
-  
+
   Add --raw to process all text files without language parsing (docs, configs, etc.)
 
 ESSENTIAL FILTERING:
@@ -1127,17 +1127,17 @@ Explore the project on GitHub: %s%s
 // getAIActionsList returns a list of available AI actions with descriptions
 func getAIActionsList() []string {
 	registry := ai.NewActionRegistry()
-	
+
 	// Register actions to get the list
 	aiactions.Register(registry)
-	
+
 	var actions []string
 	actionList := registry.List()
 	for _, action := range actionList {
 		description := action.Description()
 		actions = append(actions, fmt.Sprintf("  %-35s %s", action.Name(), description))
 	}
-	
+
 	return actions
 }
 
@@ -1149,18 +1149,18 @@ func showExtendedHelp() {
 		// Determine the project root (executable should be in project root during development)
 		projectRoot := filepath.Dir(execPath)
 		docsPath := filepath.Join(projectRoot, "docs", "COMMAND-LINE-OPTIONS.md")
-		
+
 		// If not found, try relative to current directory (for development)
 		if _, err := os.Stat(docsPath); os.IsNotExist(err) {
 			docsPath = filepath.Join("docs", "COMMAND-LINE-OPTIONS.md")
 		}
-		
+
 		if content, err := os.ReadFile(docsPath); err == nil {
 			fmt.Print(string(content))
 			return
 		}
 	}
-	
+
 	// Fallback to embedded content
 	fmt.Print(getExtendedHelpContent())
 }

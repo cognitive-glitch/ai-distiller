@@ -3,8 +3,9 @@
 // Benchmarks process real test files across different languages and complexity levels
 // to track performance over time and prevent regressions.
 
-use criterion::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
+use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use distiller_core::{ProcessOptions, processor::Processor};
+use std::hint::black_box;
 use std::path::{Path, PathBuf};
 
 // Language processors

@@ -33,12 +33,12 @@ template<typename T>
 void processContainer(vector<T>& container) {
     // Using algorithm
     sort(container.begin(), container.end());
-    
+
     // Using iterator
-    copy(container.begin(), container.end(), 
+    copy(container.begin(), container.end(),
          ostream_iterator<T>(cout, " "));
     cout << endl;
-    
+
     // Using functional
     auto sum = accumulate(container.begin(), container.end(), T{}, plus<T>());
     cout << "Sum: " << sum << endl;
@@ -47,12 +47,12 @@ void processContainer(vector<T>& container) {
 class TimedOperation {
 private:
     steady_clock::time_point start;
-    
+
 public:
     TimedOperation() : start(steady_clock::now()) {
         // Using chrono
     }
-    
+
     ~TimedOperation() {
         auto end = steady_clock::now();
         auto duration = duration_cast<milliseconds>(end - start);
@@ -65,12 +65,12 @@ void demonstrateRandom() {
     random_device rd;
     mt19937 gen(rd());
     uniform_int_distribution<> dis(1, 100);
-    
+
     vector<int> numbers;
     for (int i = 0; i < 10; ++i) {
         numbers.push_back(dis(gen));
     }
-    
+
     processContainer(numbers);
 }
 
@@ -80,7 +80,7 @@ void demonstrateJSON() {
     j["name"] = "Test";
     j["value"] = 42;
     j["array"] = {1, 2, 3};
-    
+
     cout << "JSON: " << j.dump() << endl;
 }
 
@@ -103,9 +103,9 @@ int main() {
         TimedOperation timer;
         demonstrateRandom();
     }
-    
+
     demonstrateJSON();
     demonstrateLogging();
-    
+
     return 0;
 }

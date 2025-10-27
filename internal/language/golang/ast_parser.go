@@ -918,13 +918,13 @@ func (p *ASTParser) processFunction(fn *ast.FuncDecl) *ir.DistilledFunction {
 
 		// Mark as method
 		distilledFn.Modifiers = append(distilledFn.Modifiers, ir.ModifierAbstract) // Using Abstract as "method" marker
-		
-		// CRITICAL FIX: For methods, visibility should be the minimum of method name visibility 
+
+		// CRITICAL FIX: For methods, visibility should be the minimum of method name visibility
 		// and receiver type visibility (Go rule: a method can't be more visible than its receiver type)
 		methodVisibility := p.getVisibility(fn.Name.Name)
 		receiverVisibility := p.getReceiverTypeVisibility(recvType)
 		distilledFn.Visibility = p.getMinimumVisibility(methodVisibility, receiverVisibility)
-		
+
 	}
 
 	// Process type parameters (generics)
@@ -1093,12 +1093,12 @@ func (p *ASTParser) getReceiverTypeVisibility(recvType string) ir.Visibility {
 	if strings.HasPrefix(recvType, "*") {
 		recvType = recvType[1:]
 	}
-	
+
 	// Extract base type name for generic types (Cache[K,V] -> Cache)
 	if bracketIndex := strings.Index(recvType, "["); bracketIndex != -1 {
 		recvType = recvType[:bracketIndex]
 	}
-	
+
 	// Determine visibility based on Go naming convention
 	return p.getVisibility(recvType)
 }

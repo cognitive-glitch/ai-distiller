@@ -37,17 +37,17 @@ graph TB
     subgraph "Presentation Layer"
         UI[User Interface]
     end
-    
+
     subgraph "Business Logic"
         API[API Layer]
         SVC[Services]
     end
-    
+
     subgraph "Data Layer"
         DB[(Database)]
         CACHE[(Cache)]
     end
-    
+
     UI --> API
     API --> SVC
     SVC --> DB

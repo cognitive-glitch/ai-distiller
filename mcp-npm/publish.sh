@@ -60,7 +60,7 @@ echo ""
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo -e "${YELLOW}Publishing to npm...${NC}"
     npm publish --access public
-    
+
     if [ $? -eq 0 ]; then
         echo ""
         echo -e "${GREEN}✓ Successfully published!${NC}"

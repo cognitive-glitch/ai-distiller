@@ -120,7 +120,7 @@ func NewSymbolTable(filePath, language string) *SymbolTable {
 // AddSymbol adds a symbol to the table
 func (st *SymbolTable) AddSymbol(symbol *Symbol) {
 	st.Symbols[symbol.Name] = symbol
-	
+
 	// Track nested scopes (classes, modules, etc.)
 	if symbol.Kind == SymbolKindClass || symbol.Kind == SymbolKindModule || symbol.Kind == SymbolKindNamespace {
 		st.NestedScopes[symbol.Name] = symbol
@@ -220,7 +220,7 @@ func (sg *SemanticGraph) GetSymbolTable(filePath string) (*SymbolTable, bool) {
 // AddCallSite adds a call site to the graph
 func (sg *SemanticGraph) AddCallSite(callSite CallSite) {
 	sg.CallSites = append(sg.CallSites, callSite)
-	
+
 	// Update call graph if call is resolved
 	if callSite.IsResolved {
 		if callees, exists := sg.CallGraph[callSite.CallerID]; exists {
@@ -234,7 +234,7 @@ func (sg *SemanticGraph) AddCallSite(callSite CallSite) {
 // AddDependency adds a dependency relationship
 func (sg *SemanticGraph) AddDependency(dep DependencyInfo) {
 	sg.Dependencies = append(sg.Dependencies, dep)
-	
+
 	// Update dependency graph
 	if deps, exists := sg.DependencyGraph[dep.SourceFile]; exists {
 		sg.DependencyGraph[dep.SourceFile] = append(deps, dep.TargetModule)
@@ -249,18 +249,18 @@ func (sg *SemanticGraph) updateStatistics() {
 	stats.TotalFiles = len(sg.FileSymbolTables)
 	stats.TotalSymbols = 0
 	stats.SymbolsByKind = make(map[SymbolKind]int)
-	
+
 	for _, table := range sg.FileSymbolTables {
 		stats.TotalSymbols += len(table.Symbols)
 		for _, symbol := range table.Symbols {
 			stats.SymbolsByKind[symbol.Kind]++
 		}
 	}
-	
+
 	stats.TotalCallSites = len(sg.CallSites)
 	stats.ResolvedCalls = 0
 	stats.UnresolvedCalls = 0
-	
+
 	for _, callSite := range sg.CallSites {
 		if callSite.IsResolved {
 			stats.ResolvedCalls++
@@ -268,7 +268,7 @@ func (sg *SemanticGraph) updateStatistics() {
 			stats.UnresolvedCalls++
 		}
 	}
-	
+
 	stats.TotalDependencies = len(sg.Dependencies)
 }
 

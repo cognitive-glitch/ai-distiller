@@ -59,7 +59,7 @@ func (f *LanguageAwareTextFormatter) Format(w io.Writer, file *ir.DistilledFile)
 		// Use buffered approach for filtering
 		return f.formatWithFiltering(w, file)
 	}
-	
+
 	// Direct formatting without filtering
 	return f.formatDirect(w, file)
 }
@@ -105,12 +105,12 @@ func (f *LanguageAwareTextFormatter) formatDirect(w io.Writer, file *ir.Distille
 // formatWithFiltering buffers output and applies import filtering
 func (f *LanguageAwareTextFormatter) formatWithFiltering(w io.Writer, file *ir.DistilledFile) error {
 	var buf bytes.Buffer
-	
+
 	// Format to buffer
 	if err := f.formatDirect(&buf, file); err != nil {
 		return err
 	}
-	
+
 	// Apply import filtering
 	content := buf.String()
 	filteredContent, removedImports, err := importfilter.FilterImports(content, file.Language, f.options.DebugLevel)
@@ -119,14 +119,14 @@ func (f *LanguageAwareTextFormatter) formatWithFiltering(w io.Writer, file *ir.D
 		fmt.Fprint(w, content)
 		return nil
 	}
-	
+
 	// Log removed imports in debug mode
 	if len(removedImports) > 0 && f.options.DebugLevel >= 3 {
 		for _, imp := range removedImports {
 			fmt.Fprintf(os.Stderr, "[import filter] Removed unused import: %s\n", imp)
 		}
 	}
-	
+
 	// Write filtered content
 	fmt.Fprint(w, filteredContent)
 	return nil
@@ -418,20 +418,20 @@ func (f *LanguageAwareTextFormatter) formatNodeGeneric(w io.Writer, node ir.Dist
 // generateDistillationInstructions generates dynamic instructions based on processing options
 func (f *LanguageAwareTextFormatter) generateDistillationInstructions() string {
 	opts := f.options.ProcessingOptions
-	
+
 	// Build list of what's included
 	var included []string
 	var excluded []string
-	
+
 	// Visibility levels - handle case when not all flags are explicitly set
 	visibilityIncluded := []string{}
-	
+
 	// Default values if not explicitly set (only public is true by default)
 	includePublic := true
 	includeProtected := false
 	includeInternal := false
 	includePrivate := false
-	
+
 	// Use actual values if they were set
 	if opts.IncludePublic || opts.IncludeProtected || opts.IncludeInternal || opts.IncludePrivate {
 		includePublic = opts.IncludePublic
@@ -439,7 +439,7 @@ func (f *LanguageAwareTextFormatter) generateDistillationInstructions() string {
 		includeInternal = opts.IncludeInternal
 		includePrivate = opts.IncludePrivate
 	}
-	
+
 	if includePublic {
 		visibilityIncluded = append(visibilityIncluded, "public")
 	}
@@ -452,7 +452,7 @@ func (f *LanguageAwareTextFormatter) generateDistillationInstructions() string {
 	if includePrivate {
 		visibilityIncluded = append(visibilityIncluded, "private")
 	}
-	
+
 	if len(visibilityIncluded) > 0 {
 		if len(visibilityIncluded) == 4 {
 			included = append(included, "All visibility levels (public, protected, internal, private)")
@@ -460,49 +460,49 @@ func (f *LanguageAwareTextFormatter) generateDistillationInstructions() string {
 			included = append(included, strings.Join(visibilityIncluded, ", ")+" members")
 		}
 	}
-	
+
 	// Content types
 	if opts.IncludeImports {
 		included = append(included, "import statements")
 	} else {
 		excluded = append(excluded, "import statements")
 	}
-	
+
 	if opts.IncludeDocstrings {
 		included = append(included, "documentation/docstrings")
 	}
-	
+
 	if opts.IncludeAnnotations {
 		included = append(included, "decorators/annotations")
 	}
-	
+
 	if opts.IncludeImplementation {
 		included = append(included, "function/method implementations")
 	} else {
 		excluded = append(excluded, "function/method bodies")
 	}
-	
+
 	if opts.IncludeComments {
 		included = append(included, "code comments")
 	} else {
 		excluded = append(excluded, "code comments")
 	}
-	
+
 	// Build the instructions
 	instructions := "⚡ PROJECT ARCHITECTURE OVERVIEW: This distilled code shows "
-	
+
 	if len(included) > 0 {
 		instructions += strings.Join(included, ", ")
 		instructions += " providing a complete map of available classes, methods, functions, data types, interfaces, and their relationships."
 	} else {
 		instructions += "all public APIs, classes, methods, functions, data types, and interfaces available in this project."
 	}
-	
+
 	if len(excluded) > 0 {
 		instructions += " (Excludes: " + strings.Join(excluded, ", ") + ")"
 	}
-	
+
 	instructions += " 📋 USE THIS DISTILLATION TO: 1) Understand the project's architecture and available components, 2) See what classes/methods/types exist and how to use them correctly, 3) Find the right APIs and their exact signatures, 4) Understand relationships between components. ✅ TRUST THIS OVERVIEW: When implementing features or fixing bugs, reference the distilled signatures above to use the correct classes, methods, parameters, and types - no need to read source files for information already captured here."
-	
+
 	return instructions
 }

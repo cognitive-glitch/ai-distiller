@@ -40,7 +40,7 @@ AI Distiller maximizes type information extraction, even from loosely typed Pyth
 
 ```python
 # Input
-def process_data(items: List[Dict[str, Any]], 
+def process_data(items: List[Dict[str, Any]],
                  callback: Callable[[str], None] = None) -> Optional[DataFrame]:
     """Process items and optionally notify via callback."""
     pass
@@ -79,7 +79,7 @@ from .utils import helper
 
 The text format uses UML-inspired visibility prefixes:
 - `+` public members
-- `#` protected members  
+- `#` protected members
 - `-` private members
 - `~` internal/package-private
 
@@ -94,16 +94,16 @@ The text format uses UML-inspired visibility prefixes:
 ```python
 class User:
     """Represents a user in the system."""
-    
+
     def __init__(self, name: str, email: str):
         self.name = name
         self.email = email
         self._id = self._generate_id()
-    
+
     def get_display_name(self) -> str:
         """Returns the user's display name."""
         return self.name.title()
-    
+
     def _generate_id(self) -> str:
         """Internal method to generate user ID."""
         return f"usr_{hash(self.email)}"
@@ -169,42 +169,42 @@ import asyncio
 
 class AsyncService(ABC):
     """Abstract base class for async services."""
-    
+
     def __init__(self, name: str, timeout: float = 30.0):
         self.name = name
         self.timeout = timeout
         self._running = False
-    
+
     @abstractmethod
     async def process(self, data: bytes) -> bytes:
         """Process data asynchronously."""
         pass
-    
+
     async def start(self) -> None:
         """Start the service."""
         self._running = True
         await self._initialize()
-    
+
     async def stop(self) -> None:
         """Stop the service."""
         self._running = False
         await self._cleanup()
-    
+
     async def stream_data(self) -> AsyncIterator[bytes]:
         """Stream processed data."""
         while self._running:
             chunk = await self._get_next_chunk()
             if chunk:
                 yield await self.process(chunk)
-    
+
     async def _initialize(self) -> None:
         """Initialize service resources."""
         await asyncio.sleep(0.1)
-    
+
     async def _cleanup(self) -> None:
         """Clean up service resources."""
         await asyncio.sleep(0.1)
-    
+
     async def _get_next_chunk(self) -> Optional[bytes]:
         """Get next data chunk."""
         return b"data"
@@ -269,34 +269,34 @@ class ConfigDict(TypedDict):
 
 class Cache(Generic[K, V]):
     """Generic cache implementation."""
-    
+
     def __init__(self, max_size: int = 100):
         self._cache: dict[K, V] = {}
         self.max_size = max_size
-    
+
     @overload
     def get(self, key: K, default: None = None) -> Union[V, None]: ...
-    
+
     @overload
     def get(self, key: K, default: V) -> V: ...
-    
+
     def get(self, key: K, default: Union[V, None] = None) -> Union[V, None]:
         """Get value from cache."""
         return self._cache.get(key, default)
-    
+
     def put(self, key: K, value: V) -> None:
         """Put value in cache."""
         if len(self._cache) >= self.max_size:
             self._evict_oldest()
         self._cache[key] = value
-    
+
     def _evict_oldest(self) -> None:
         """Evict oldest entry from cache."""
         if self._cache:
             oldest = next(iter(self._cache))
             del self._cache[oldest]
 
-def process_config(config: ConfigDict, 
+def process_config(config: ConfigDict,
                   mode: Literal['dev', 'prod'] = 'prod') -> bool:
     """Process configuration based on mode."""
     return config['debug'] if mode == 'dev' else False
@@ -377,7 +377,7 @@ class Cache(Generic[K, V]):
 
 5. **Complex f-string parsing** (🟢 Minor)
    - **Issue**: f-strings with nested braces may fail
-   - **Example**: `f"{x:.{precision}f}"` 
+   - **Example**: `f"{x:.{precision}f}"`
    - **Workaround**: Use `.format()` method
 
 6. **Type comment support** (🟢 Minor)
@@ -393,7 +393,7 @@ AI Distiller works best with fully typed Python:
 
 ```python
 # Good - Full type information preserved
-def process(data: List[Dict[str, Any]], 
+def process(data: List[Dict[str, Any]],
            options: Optional[ProcessOptions] = None) -> Result:
     pass
 
@@ -410,10 +410,10 @@ Make your intentions clear:
 class Service:
     def public_method(self):  # Clearly public
         pass
-    
+
     def _internal_method(self):  # Clearly internal
         pass
-    
+
     def __private_method(self):  # Clearly private
         pass
 ```
@@ -541,16 +541,16 @@ distillFile("app.py", strip_implementation=true)
 >
 > ```python
 > class RateLimitMiddleware(BaseMiddleware):
->     def __init__(self, requests_per_minute: int = 60, 
+>     def __init__(self, requests_per_minute: int = 60,
 >                  redis_client: Optional[Redis] = None):
 >         self.limit = requests_per_minute
 >         self.redis = redis_client or {}  # Fallback to memory
->     
+>
 >     def process_request(self, request: Request) -> Optional[Response]:
 >         client_id = self._get_client_id(request)
 >         if self._is_rate_limited(client_id):
 >             return Response(
->                 status=429, 
+>                 status=429,
 >                 body={"error": "Rate limit exceeded"},
 >                 headers={"Retry-After": str(self._get_retry_after(client_id))}
 >             )
@@ -582,7 +582,7 @@ aid ./src --strip "non-public,implementation" \
 
 1. **Handle Dynamic Imports**: Static analysis can't detect dynamic imports. Document them:
    ```python
-   # AI-DISTILLER: Dynamic imports from plugins/* 
+   # AI-DISTILLER: Dynamic imports from plugins/*
    ```
 
 2. **Type Aliases**: Define at module level for better extraction:
@@ -645,7 +645,7 @@ items: list[str]
 ## Future Enhancements
 
 - [ ] Full `async`/`await` support
-- [ ] Metaclass parameter preservation  
+- [ ] Metaclass parameter preservation
 - [ ] Nested class extraction
 - [ ] Type comment (PEP 484) support
 - [ ] Protocol implementation detection

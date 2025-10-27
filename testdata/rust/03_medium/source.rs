@@ -16,7 +16,7 @@ pub enum AnalysisError {
 pub trait DataSource {
     type Content: AsRef<[u8]>;
     fn get_content(&self) -> Result<Self::Content, AnalysisError>;
-    
+
     /// Default method with lifetime parameters
     fn content_slice<'a>(&'a self) -> Option<&'a [u8]> where Self::Content: 'a {
         None // Default implementation
@@ -40,12 +40,12 @@ impl<T: Display> AnalysisResult<T> {
             metadata: None,
         }
     }
-    
+
     /// Private validation method
     fn is_valid(&self) -> bool {
         !self.source_id.is_empty()
     }
-    
+
     /// Internal metadata setter
     pub(crate) fn set_metadata(&mut self, metadata: String) {
         self.metadata = Some(metadata);
@@ -73,7 +73,7 @@ where
 
 /// Advanced generic function with multiple lifetime parameters
 pub fn compare_sources<'a, 'b, S1, S2>(
-    source1: &'a S1, 
+    source1: &'a S1,
     source2: &'b S2
 ) -> Result<bool, AnalysisError>
 where
@@ -82,7 +82,7 @@ where
 {
     let content1 = source1.get_content()?;
     let content2 = source2.get_content()?;
-    
+
     Ok(content1.as_ref() == content2.as_ref())
 }
 
@@ -105,14 +105,14 @@ impl Debug for InMemorySource {
 }
 
 /// Generic trait with lifetime bounds
-pub trait Processor<'a, T> 
-where 
-    T: Clone + 'a 
+pub trait Processor<'a, T>
+where
+    T: Clone + 'a
 {
     type Output: 'a;
-    
+
     fn process(&self, input: &'a T) -> Self::Output;
-    
+
     /// Private helper method
     fn validate_input(&self, _input: &T) -> bool {
         true
@@ -124,7 +124,7 @@ pub struct StringProcessor;
 
 impl<'a> Processor<'a, String> for StringProcessor {
     type Output = &'a str;
-    
+
     fn process(&self, input: &'a String) -> Self::Output {
         if self.validate_input(input) {
             input.as_str()

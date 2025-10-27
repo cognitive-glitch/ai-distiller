@@ -65,19 +65,19 @@ class Vector {
 public:
     using value_type = T;
     using size_type = std::size_t;
-    
+
     Vector() noexcept(noexcept(Allocator())) = default;
     explicit Vector(size_type count, const T& value = T());
-    
+
     template<typename InputIt>
     Vector(InputIt first, InputIt last);
-    
+
     void push_back(const T& value);
     void push_back(T&& value);
-    
+
     template<typename... Args>
     void emplace_back(Args&&... args);
-    
+
 private:
     T* data_;
     size_type size_;
@@ -91,16 +91,16 @@ template<typename T, typename Allocator = std::allocator<T>>
 class Vector {
     using value_type = T;
     using size_type = std::size_t;
-    
+
     Vector() noexcept(noexcept(Allocator())) = default;
     explicit Vector(size_type count, const T& value = T());
-    
+
     template<typename InputIt>
     Vector(InputIt first, InputIt last);
-    
+
     void push_back(const T& value);
     void push_back(T&& value);
-    
+
     template<typename... Args>
     void emplace_back(Args&&... args);
 };
@@ -118,12 +118,12 @@ public:
     Widget& operator=(const Widget&) = delete;
     Widget& operator=(Widget&&) noexcept = default;
     ~Widget() = default;
-    
+
     [[nodiscard]] bool process() const;
     void update() && = delete;  // Only lvalues
-    
+
     explicit operator bool() const { return valid_; }
-    
+
 private:
     bool valid_ = false;
 };
@@ -138,10 +138,10 @@ class Widget {
     Widget& operator=(const Widget&) = delete;
     Widget& operator=(Widget&&) noexcept = default;
     ~Widget() = default;
-    
+
     bool process() const;
     void update() && = delete;
-    
+
     explicit operator bool() const;
 };
 ```
@@ -200,7 +200,7 @@ class Counter {
 };
 
 // Also good - Traditional style
-template<typename T, 
+template<typename T,
          typename = std::enable_if_t<std::is_integral_v<T>>>
 class Counter {
     T count = 0;
@@ -217,12 +217,12 @@ public:
     // Public interface
     void start();
     void stop();
-    
+
 protected:
     // Extension points
     virtual void onStart();
     virtual void onStop();
-    
+
 private:
     // Implementation details
     void cleanup();
@@ -238,10 +238,10 @@ Use modern memory management:
 class ResourceManager {
 public:
     using ResourcePtr = std::unique_ptr<Resource>;
-    
+
     ResourcePtr acquire(const std::string& name);
     void release(ResourcePtr resource);
-    
+
 private:
     std::unordered_map<std::string, ResourcePtr> resources_;
 };
@@ -254,7 +254,7 @@ private:
 
 Input:
 ```cpp
-template<typename Key, typename Value, 
+template<typename Key, typename Value,
          typename Hash = std::hash<Key>,
          typename KeyEqual = std::equal_to<Key>,
          typename Allocator = std::allocator<std::pair<const Key, Value>>>
@@ -264,33 +264,33 @@ public:
     using mapped_type = Value;
     using value_type = std::pair<const Key, Value>;
     using iterator = /* implementation-defined */;
-    
+
     HashMap() = default;
     explicit HashMap(std::size_t bucket_count);
-    
+
     template<typename InputIt>
     HashMap(InputIt first, InputIt last);
-    
+
     iterator find(const Key& key);
     const_iterator find(const Key& key) const;
-    
+
     template<typename K>
     iterator find(const K& key);
-    
+
     std::pair<iterator, bool> insert(const value_type& value);
-    
+
     template<typename... Args>
     std::pair<iterator, bool> emplace(Args&&... args);
-    
+
     Value& operator[](const Key& key);
     Value& operator[](Key&& key);
-    
+
 private:
     struct Node {
         value_type data;
         Node* next;
     };
-    
+
     std::vector<Node*> buckets_;
     std::size_t size_ = 0;
     Hash hasher_;
@@ -306,24 +306,24 @@ class HashMap {
     using mapped_type = Value;
     using value_type = std::pair<const Key, Value>;
     using iterator = /* implementation-defined */;
-    
+
     HashMap() = default;
     explicit HashMap(std::size_t bucket_count);
-    
+
     template<typename InputIt>
     HashMap(InputIt first, InputIt last);
-    
+
     iterator find(const Key& key);
     const_iterator find(const Key& key) const;
-    
+
     template<typename K>
     iterator find(const K& key);
-    
+
     std::pair<iterator, bool> insert(const value_type& value);
-    
+
     template<typename... Args>
     std::pair<iterator, bool> emplace(Args&&... args);
-    
+
     Value& operator[](const Key& key);
     Value& operator[](Key&& key);
 };

@@ -73,12 +73,12 @@ func (s *GoStripper) Strip(file *DistilledFile, options StrippingOptions) (*Dist
     if err != nil {
         return nil, err
     }
-    
+
     // Then apply Go-specific rules (e.g., non-exported identifiers)
     if options.NonPublic {
         file = s.stripNonExported(file)
     }
-    
+
     return file, nil
 }
 

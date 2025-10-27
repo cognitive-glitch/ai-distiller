@@ -8,7 +8,7 @@ After each distillation, AI Distiller displays a summary that shows compression 
 
 - Show compression ratio (% saved)
 - Show data sizes (from X to Y) with human-readable units
-- Show processing time in milliseconds  
+- Show processing time in milliseconds
 - Estimate token count reduction
 - Must be 1-3 lines maximum
 - Should evoke positive emotions and joy from efficiency
@@ -193,7 +193,7 @@ func (f *BarFormatter) Format(w io.Writer, stats DistillationStats) error {
     barWidth := 40
     filled := int(barWidth * stats.CompressionRatio / 100)
     bar := strings.Repeat("█", filled) + strings.Repeat("░", barWidth-filled)
-    
+
     fmt.Fprintf(w, "🚀 Distilled in %dms!\n", stats.DurationMS)
     fmt.Fprintf(w, "[%s] %s [%s]  %.1f%% saved!\n",
         humanize.Bytes(uint64(stats.OriginalBytes)),
@@ -241,13 +241,13 @@ Token counts are estimates using the cl100k_base tokenizer (GPT-4 standard):
 
 **Format:**
 ```
-🚀 T-{time}ms... LIFTOFF! 
+🚀 T-{time}ms... LIFTOFF!
    └─ Payload reduced by {ratio}%: {original_size} ▶ {distilled_size} [{bar}]
 ```
 
 **Example:**
 ```
-🚀 T-450ms... LIFTOFF! 
+🚀 T-450ms... LIFTOFF!
    └─ Payload reduced by 97.6%: 5.2MB ▶ 128KB [████████████████████░]
 ```
 
@@ -409,7 +409,7 @@ Token counts are estimates using the cl100k_base tokenizer (GPT-4 standard):
 
 This document represents a true collaborative effort:
 - **Claude**: Proposed the adaptive strategy and implementation architecture
-- **Gemini Pro**: Provided detailed variant analysis and progressive enhancement approach  
+- **Gemini Pro**: Provided detailed variant analysis and progressive enhancement approach
 - **o3**: Contributed technical depth on Go implementation and edge cases
 - **Human**: Guided creative exploration and pushed for maximum user delight
 
@@ -585,7 +585,7 @@ Coming up next: Complete re-evaluation of all 15 variants by all team members, i
 
 This adaptive approach with Visual Progress Bar as the centerpiece balances:
 - **Joy and celebration** in interactive use
-- **Clean logs** in CI/CD environments  
+- **Clean logs** in CI/CD environments
 - **Flexibility** for user preferences
 - **Information density** without overwhelming
 

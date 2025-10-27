@@ -136,9 +136,9 @@ func runTest(config TestConfig) TestResult {
 
 func calculateStats(file *ir.DistilledFile) ParseStats {
 	stats := ParseStats{}
-	
+
 	countNodes(file.Children, &stats)
-	
+
 	return stats
 }
 
@@ -169,7 +169,7 @@ func countNodes(nodes []ir.DistilledNode, stats *ParseStats) {
 func printTestResult(result TestResult) {
 	fmt.Printf("Language: %s\n", result.Language)
 	fmt.Printf("File: %s\n", result.File)
-	
+
 	if result.Success {
 		fmt.Printf("Status: ✅ SUCCESS\n")
 		fmt.Printf("Statistics:\n")
@@ -194,11 +194,11 @@ func printSummary(results []TestResult) {
 			successful++
 		}
 	}
-	
+
 	fmt.Printf("Total tests: %d\n", len(results))
 	fmt.Printf("Successful: %d\n", successful)
 	fmt.Printf("Failed: %d\n", len(results)-successful)
-	
+
 	if successful == len(results) {
 		fmt.Println("🎉 All tests passed!")
 	} else {
@@ -251,12 +251,12 @@ func testStrippingModes(tests []TestConfig) {
 
 	for _, stripTest := range strippingTests {
 		fmt.Printf("\n--- %s ---\n", stripTest.Name)
-		
+
 		for _, test := range tests {
 			result := runStrippingTest(test, stripTest.Opts)
 			fmt.Printf("%s: ", test.Language)
 			if result.Success {
-				fmt.Printf("✅ Classes: %d, Functions: %d, Fields: %d\n", 
+				fmt.Printf("✅ Classes: %d, Functions: %d, Fields: %d\n",
 					result.Stats.Classes, result.Stats.Functions, result.Stats.Fields)
 			} else {
 				fmt.Printf("❌ Error: %v\n", result.Error)

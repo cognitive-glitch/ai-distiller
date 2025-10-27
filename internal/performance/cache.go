@@ -324,7 +324,7 @@ func (c *Cache) recordHit(duration time.Duration) {
 	defer c.metrics.mutex.Unlock()
 
 	c.metrics.Hits++
-	
+
 	// Update average hit time
 	if c.metrics.Hits == 1 {
 		c.metrics.AverageHitTime = duration
@@ -388,15 +388,15 @@ func (c *Cache) evictIfNecessary() {
 		}
 
 		entry := entryWithKey.entry
-		
+
 		// Remove file
 		os.Remove(entry.ResultPath)
-		
+
 		// Remove from index
 		delete(c.index, entryWithKey.key)
-		
+
 		totalSize -= entry.ResultSize
-		
+
 		// Update metrics
 		if c.enableMetrics {
 			c.metrics.mutex.Lock()
@@ -414,7 +414,7 @@ func (c *Cache) evictIfNecessary() {
 // loadIndex loads the cache index from disk
 func (c *Cache) loadIndex() {
 	indexPath := filepath.Join(c.dir, "index.json")
-	
+
 	data, err := os.ReadFile(indexPath)
 	if err != nil {
 		return // Index doesn't exist yet
@@ -433,7 +433,7 @@ func (c *Cache) loadIndex() {
 	if c.enableMetrics {
 		var totalSize int64
 		var entryCount int64
-		
+
 		for _, entry := range index {
 			totalSize += entry.ResultSize
 			entryCount++
@@ -449,11 +449,11 @@ func (c *Cache) loadIndex() {
 // saveIndex saves the cache index to disk
 func (c *Cache) saveIndex() {
 	indexPath := filepath.Join(c.dir, "index.json")
-	
+
 	c.mutex.RLock()
 	data, err := json.MarshalIndent(c.index, "", "  ")
 	c.mutex.RUnlock()
-	
+
 	if err != nil {
 		return
 	}

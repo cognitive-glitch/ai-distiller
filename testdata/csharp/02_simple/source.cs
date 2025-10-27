@@ -109,7 +109,7 @@ public readonly struct Money : IEquatable<Money>
     {
         if (left.Currency != right.Currency)
             throw new InvalidOperationException("Cannot add different currencies");
-        
+
         return new Money(left.Amount + right.Amount, left.Currency);
     }
 }
@@ -124,13 +124,13 @@ public class SavingsAccount : BankAccount
     /// <summary>
     /// Interest rate as percentage
     /// </summary>
-    public decimal InterestRate 
-    { 
+    public decimal InterestRate
+    {
         get => _interestRate;
         set => _interestRate = Math.Max(0, Math.Min(value, 10)); // 0-10% range
     }
 
-    public SavingsAccount(string accountNumber, decimal interestRate, decimal openingBalance = 0m) 
+    public SavingsAccount(string accountNumber, decimal interestRate, decimal openingBalance = 0m)
         : base(accountNumber, openingBalance)
     {
         InterestRate = interestRate;

@@ -38,7 +38,7 @@ func (f *JSONFormatter) Format(w io.Writer, stats Stats) error {
 		FileCount:      stats.FileCount,
 		OutputPath:     stats.OutputPath,
 	}
-	
+
 	if stats.OriginalTokens > 0 && stats.DistilledTokens > 0 {
 		output.TokensBefore = stats.OriginalTokens
 		output.TokensAfter = stats.DistilledTokens
@@ -46,7 +46,7 @@ func (f *JSONFormatter) Format(w io.Writer, stats Stats) error {
 		output.TokenSavingsPct = getCompressionRatio(stats.OriginalTokens, stats.DistilledTokens)
 		output.Tokenizer = "cl100k_base" // GPT-4 tokenizer
 	}
-	
+
 	encoder := json.NewEncoder(w)
 	encoder.SetIndent("", "  ")
 	return encoder.Encode(output)

@@ -5,11 +5,11 @@ def hello():
 
 class Config:
     """Configuration class for the application."""
-    
+
     def __init__(self, port=8080, host="localhost"):
         self.port = port
         self.host = host
-    
+
     def get_url(self):
         """Return the full URL for the server."""
         return f"http://{self.host}:{self.port}"

@@ -703,7 +703,7 @@ int printf(const char *format, ...);
             assert!(!func.parameters.is_empty());
 
             // Check for variadic parameter
-            let has_variadic = func.parameters.iter().any(|p| p.is_variadic);
+            let _has_variadic = func.parameters.iter().any(|p| p.is_variadic);
             // Variadic parameter detection is optional - parser may not fully support it
             // assert!(has_variadic, "Expected variadic parameter");
         } else {

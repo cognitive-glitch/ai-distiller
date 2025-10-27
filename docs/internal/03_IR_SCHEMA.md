@@ -41,13 +41,13 @@ type Range struct {
 type DistilledNode interface {
     // Accept implements the visitor pattern
     Accept(visitor IRVisitor) DistilledNode
-    
+
     // GetLocation returns the source location of this node
     GetLocation() Location
-    
+
     // GetNodeType returns the type identifier for serialization
     GetNodeType() string
-    
+
     // GetChildren returns child nodes for traversal
     GetChildren() []DistilledNode
 }
@@ -267,22 +267,22 @@ type IRVisitor interface {
     VisitFile(node *DistilledFile) IRVisitor
     VisitPackage(node *DistilledPackage) IRVisitor
     VisitImport(node *DistilledImport) IRVisitor
-    
+
     // Type definitions
     VisitClass(node *DistilledClass) IRVisitor
     VisitInterface(node *DistilledInterface) IRVisitor
     VisitStruct(node *DistilledStruct) IRVisitor
     VisitEnum(node *DistilledEnum) IRVisitor
     VisitTypeAlias(node *DistilledTypeAlias) IRVisitor
-    
+
     // Members
     VisitFunction(node *DistilledFunction) IRVisitor
     VisitField(node *DistilledField) IRVisitor
-    
+
     // Other
     VisitComment(node *DistilledComment) IRVisitor
     VisitError(node *DistilledError) IRVisitor
-    
+
     // Generic fallback
     VisitNode(node DistilledNode) IRVisitor
 }
