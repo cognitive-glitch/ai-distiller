@@ -550,7 +550,7 @@ end
         if let ir::Node::Class(class) = &file.children[0] {
             assert_eq!(class.name, "Person");
             // At minimum, should have initialize method
-            assert!(class.children.len() >= 1);
+            assert!(!class.children.is_empty());
         } else {
             panic!("Expected a class");
         }
@@ -578,7 +578,7 @@ end
         if let ir::Node::Function(func) = &file.children[0] {
             assert_eq!(func.name, "with_block");
             // Should capture block parameter
-            assert!(func.parameters.len() >= 1);
+            assert!(!func.parameters.is_empty());
         } else {
             panic!("Expected a function");
         }
@@ -614,7 +614,7 @@ end
         if let ir::Node::Class(class) = &file.children[0] {
             assert_eq!(class.name, "MyClass");
             // At minimum should capture the self.class_method
-            assert!(class.children.len() >= 1);
+            assert!(!class.children.is_empty());
         } else {
             panic!("Expected a class");
         }
@@ -931,9 +931,9 @@ end
             assert_eq!(methods[1].name, "subtract");
             assert_eq!(methods[1].parameters.len(), 2);
             assert_eq!(methods[2].name, "multiply");
-            assert!(methods[2].parameters.len() >= 1); // variadic parameter
+            assert!(!methods[2].parameters.is_empty()); // variadic parameter
             assert_eq!(methods[3].name, "divide");
-            assert!(methods[3].parameters.len() >= 1); // required + optional
+            assert!(!methods[3].parameters.is_empty()); // required + optional
         } else {
             panic!("Expected a class");
         }

@@ -700,7 +700,7 @@ int printf(const char *format, ...);
         assert!(!file.children.is_empty());
         if let Node::Function(func) = &file.children[0] {
             assert_eq!(func.name, "printf");
-            assert!(func.parameters.len() >= 1);
+            assert!(!func.parameters.is_empty());
 
             // Check for variadic parameter
             let has_variadic = func.parameters.iter().any(|p| p.is_variadic);

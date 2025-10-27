@@ -351,27 +351,53 @@ fn generate_output_path(input: &Path, format: Format) -> Result<PathBuf> {
 /// Register all supported language processors
 fn register_all_languages(processor: &mut Processor) {
     // Python
-    processor.register_language(Box::new(PythonProcessor::new().expect("Failed to create PythonProcessor")));
+    processor.register_language(Box::new(
+        PythonProcessor::new().expect("Failed to create PythonProcessor"),
+    ));
 
     // TypeScript/JavaScript
-    processor.register_language(Box::new(TypeScriptProcessor::new().expect("Failed to create TypeScriptProcessor")));
-    processor.register_language(Box::new(JavaScriptProcessor::new().expect("Failed to create JavaScriptProcessor")));
+    processor.register_language(Box::new(
+        TypeScriptProcessor::new().expect("Failed to create TypeScriptProcessor"),
+    ));
+    processor.register_language(Box::new(
+        JavaScriptProcessor::new().expect("Failed to create JavaScriptProcessor"),
+    ));
 
     // Systems languages
-    processor.register_language(Box::new(RustProcessor::new().expect("Failed to create RustProcessor")));
-    processor.register_language(Box::new(CppProcessor::new().expect("Failed to create CppProcessor")));
-    processor.register_language(Box::new(CProcessor::new().expect("Failed to create CProcessor")));
-    processor.register_language(Box::new(GoProcessor::new().expect("Failed to create GoProcessor")));
+    processor.register_language(Box::new(
+        RustProcessor::new().expect("Failed to create RustProcessor"),
+    ));
+    processor.register_language(Box::new(
+        CppProcessor::new().expect("Failed to create CppProcessor"),
+    ));
+    processor.register_language(Box::new(
+        CProcessor::new().expect("Failed to create CProcessor"),
+    ));
+    processor.register_language(Box::new(
+        GoProcessor::new().expect("Failed to create GoProcessor"),
+    ));
 
     // JVM languages
-    processor.register_language(Box::new(JavaProcessor::new().expect("Failed to create JavaProcessor")));
-    processor.register_language(Box::new(KotlinProcessor::new().expect("Failed to create KotlinProcessor")));
+    processor.register_language(Box::new(
+        JavaProcessor::new().expect("Failed to create JavaProcessor"),
+    ));
+    processor.register_language(Box::new(
+        KotlinProcessor::new().expect("Failed to create KotlinProcessor"),
+    ));
 
     // .NET languages
-    processor.register_language(Box::new(CSharpProcessor::new().expect("Failed to create CSharpProcessor")));
+    processor.register_language(Box::new(
+        CSharpProcessor::new().expect("Failed to create CSharpProcessor"),
+    ));
 
     // Other languages
-    processor.register_language(Box::new(SwiftProcessor::new().expect("Failed to create SwiftProcessor")));
-    processor.register_language(Box::new(RubyProcessor::new().expect("Failed to create RubyProcessor")));
-    processor.register_language(Box::new(PhpProcessor::new().expect("Failed to create PhpProcessor")));
+    processor.register_language(Box::new(
+        SwiftProcessor::new().expect("Failed to create SwiftProcessor"),
+    ));
+    processor.register_language(Box::new(
+        RubyProcessor::new().expect("Failed to create RubyProcessor"),
+    ));
+    processor.register_language(Box::new(
+        PhpProcessor::new().expect("Failed to create PhpProcessor"),
+    ));
 }

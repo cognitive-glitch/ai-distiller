@@ -1451,7 +1451,7 @@ fn test_react_user_profile() {
         interfaces.len() >= 2,
         "Should find at least 2 interfaces (User, UserProfileProps)"
     );
-    assert!(functions.len() >= 1, "Should find UserProfile component");
+    assert!(!functions.is_empty(), "Should find UserProfile component");
 
     println!(
         "✅ React component parse: {} interfaces, {} functions",
@@ -1486,7 +1486,7 @@ fn test_react_custom_hook() {
         })
         .collect();
 
-    assert!(functions.len() >= 1, "Should find useAuth function");
+    assert!(!functions.is_empty(), "Should find useAuth function");
 
     // Verify useAuth function found
     let use_auth = functions.iter().find(|f| f.name == "useAuth");
@@ -1532,7 +1532,7 @@ fn test_react_generic_component() {
         .collect();
 
     // Note: Type params not captured yet - C2 finding
-    assert!(functions.len() >= 1, "Should find DataTable function");
+    assert!(!functions.is_empty(), "Should find DataTable function");
 
     println!(
         "✅ Generic component parse: {} functions, {} generic",
@@ -1561,7 +1561,7 @@ fn test_malformed_typescript() {
             println!("  Found {} top-level nodes", file.children.len());
             // Tree-sitter should recover and parse valid nodes
             assert!(
-                file.children.len() >= 1,
+                !file.children.is_empty(),
                 "Should find at least some valid nodes"
             );
         }

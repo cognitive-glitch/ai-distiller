@@ -821,7 +821,7 @@ impl<T> Container<T> {
             .collect();
 
         // Methods may or may not be associated depending on parser support for generic impl blocks
-        if methods.len() > 0 {
+        if !methods.is_empty() {
             assert_eq!(methods[0].name, "new");
             if methods.len() > 1 {
                 assert_eq!(methods[1].name, "get");

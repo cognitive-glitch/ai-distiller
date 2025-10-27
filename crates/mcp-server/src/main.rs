@@ -181,7 +181,8 @@ impl McpServer {
         register_all_languages(&mut processor);
 
         // Process directory
-        let node = processor.process_path(path)
+        let node = processor
+            .process_path(path)
             .context("Failed to process directory")?;
 
         // Extract files
@@ -219,7 +220,8 @@ impl McpServer {
         register_all_languages(&mut processor);
 
         // Process file
-        let node = processor.process_path(path)
+        let node = processor
+            .process_path(path)
             .context("Failed to process file")?;
 
         // Extract files
@@ -259,13 +261,9 @@ impl McpServer {
 
             // Check filters if provided
             if let Some(ref filters) = params.filters {
-                let filename = path.file_name()
-                    .and_then(|n| n.to_str())
-                    .unwrap_or("");
+                let filename = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
 
-                let matches = filters.iter().any(|filter| {
-                    filename.contains(filter)
-                });
+                let matches = filters.iter().any(|filter| filename.contains(filter));
 
                 if !matches {
                     continue;
@@ -295,12 +293,27 @@ impl McpServer {
                 "get_capa".to_string(),
             ],
             supported_languages: vec![
-                "Python", "TypeScript", "JavaScript", "Go", "Rust",
-                "Java", "Kotlin", "Swift", "Ruby", "PHP", "C#", "C++", "C",
-            ].into_iter().map(String::from).collect(),
-            supported_formats: vec![
-                "text", "md", "json", "jsonl", "xml",
-            ].into_iter().map(String::from).collect(),
+                "Python",
+                "TypeScript",
+                "JavaScript",
+                "Go",
+                "Rust",
+                "Java",
+                "Kotlin",
+                "Swift",
+                "Ruby",
+                "PHP",
+                "C#",
+                "C++",
+                "C",
+            ]
+            .into_iter()
+            .map(String::from)
+            .collect(),
+            supported_formats: vec!["text", "md", "json", "jsonl", "xml"]
+                .into_iter()
+                .map(String::from)
+                .collect(),
         })
     }
 
@@ -309,27 +322,32 @@ impl McpServer {
         match format {
             "text" => {
                 let formatter = TextFormatter::new();
-                formatter.format_files(files)
+                formatter
+                    .format_files(files)
                     .context("Failed to format as text")
             }
             "md" | "markdown" => {
                 let formatter = MarkdownFormatter::new();
-                formatter.format_files(files)
+                formatter
+                    .format_files(files)
                     .context("Failed to format as markdown")
             }
             "json" => {
                 let formatter = JsonFormatter::new();
-                formatter.format_files(files)
+                formatter
+                    .format_files(files)
                     .context("Failed to format as JSON")
             }
             "jsonl" => {
                 let formatter = JsonlFormatter::new();
-                formatter.format_files(files)
+                formatter
+                    .format_files(files)
                     .context("Failed to format as JSONL")
             }
             "xml" => {
                 let formatter = XmlFormatter::new();
-                formatter.format_files(files)
+                formatter
+                    .format_files(files)
                     .context("Failed to format as XML")
             }
             _ => anyhow::bail!("Unsupported format: {}", format),
@@ -379,29 +397,55 @@ fn extract_files(node: &Node) -> Vec<File> {
 /// Register all supported language processors
 fn register_all_languages(processor: &mut Processor) {
     // Python
-    processor.register_language(Box::new(PythonProcessor::new().expect("Failed to create PythonProcessor")));
+    processor.register_language(Box::new(
+        PythonProcessor::new().expect("Failed to create PythonProcessor"),
+    ));
 
     // TypeScript/JavaScript
-    processor.register_language(Box::new(TypeScriptProcessor::new().expect("Failed to create TypeScriptProcessor")));
-    processor.register_language(Box::new(JavaScriptProcessor::new().expect("Failed to create JavaScriptProcessor")));
+    processor.register_language(Box::new(
+        TypeScriptProcessor::new().expect("Failed to create TypeScriptProcessor"),
+    ));
+    processor.register_language(Box::new(
+        JavaScriptProcessor::new().expect("Failed to create JavaScriptProcessor"),
+    ));
 
     // Systems languages
-    processor.register_language(Box::new(RustProcessor::new().expect("Failed to create RustProcessor")));
-    processor.register_language(Box::new(CppProcessor::new().expect("Failed to create CppProcessor")));
-    processor.register_language(Box::new(CProcessor::new().expect("Failed to create CProcessor")));
-    processor.register_language(Box::new(GoProcessor::new().expect("Failed to create GoProcessor")));
+    processor.register_language(Box::new(
+        RustProcessor::new().expect("Failed to create RustProcessor"),
+    ));
+    processor.register_language(Box::new(
+        CppProcessor::new().expect("Failed to create CppProcessor"),
+    ));
+    processor.register_language(Box::new(
+        CProcessor::new().expect("Failed to create CProcessor"),
+    ));
+    processor.register_language(Box::new(
+        GoProcessor::new().expect("Failed to create GoProcessor"),
+    ));
 
     // JVM languages
-    processor.register_language(Box::new(JavaProcessor::new().expect("Failed to create JavaProcessor")));
-    processor.register_language(Box::new(KotlinProcessor::new().expect("Failed to create KotlinProcessor")));
+    processor.register_language(Box::new(
+        JavaProcessor::new().expect("Failed to create JavaProcessor"),
+    ));
+    processor.register_language(Box::new(
+        KotlinProcessor::new().expect("Failed to create KotlinProcessor"),
+    ));
 
     // .NET languages
-    processor.register_language(Box::new(CSharpProcessor::new().expect("Failed to create CSharpProcessor")));
+    processor.register_language(Box::new(
+        CSharpProcessor::new().expect("Failed to create CSharpProcessor"),
+    ));
 
     // Other languages
-    processor.register_language(Box::new(SwiftProcessor::new().expect("Failed to create SwiftProcessor")));
-    processor.register_language(Box::new(RubyProcessor::new().expect("Failed to create RubyProcessor")));
-    processor.register_language(Box::new(PhpProcessor::new().expect("Failed to create PhpProcessor")));
+    processor.register_language(Box::new(
+        SwiftProcessor::new().expect("Failed to create SwiftProcessor"),
+    ));
+    processor.register_language(Box::new(
+        RubyProcessor::new().expect("Failed to create RubyProcessor"),
+    ));
+    processor.register_language(Box::new(
+        PhpProcessor::new().expect("Failed to create PhpProcessor"),
+    ));
 }
 
 /// Helper function to send a JSON-RPC response
@@ -455,14 +499,18 @@ async fn main() -> Result<()> {
                     }
                 };
 
-                log::info!("📥 Received request: method={}, id={:?}", request.method, request.id);
+                log::info!(
+                    "📥 Received request: method={}, id={:?}",
+                    request.method,
+                    request.id
+                );
 
                 // Handle request based on method
                 let response = match request.method.as_str() {
                     "distil_directory" => {
                         // Parse params
                         let params: DistilDirectoryParams = match serde_json::from_value(
-                            request.params.unwrap_or(serde_json::Value::Null)
+                            request.params.unwrap_or(serde_json::Value::Null),
                         ) {
                             Ok(p) => p,
                             Err(e) => {
@@ -506,7 +554,7 @@ async fn main() -> Result<()> {
                     "distil_file" => {
                         // Parse params
                         let params: DistilFileParams = match serde_json::from_value(
-                            request.params.unwrap_or(serde_json::Value::Null)
+                            request.params.unwrap_or(serde_json::Value::Null),
                         ) {
                             Ok(p) => p,
                             Err(e) => {
@@ -550,7 +598,7 @@ async fn main() -> Result<()> {
                     "list_dir" => {
                         // Parse params
                         let params: ListDirParams = match serde_json::from_value(
-                            request.params.unwrap_or(serde_json::Value::Null)
+                            request.params.unwrap_or(serde_json::Value::Null),
                         ) {
                             Ok(p) => p,
                             Err(e) => {

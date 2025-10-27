@@ -659,7 +659,7 @@ fn test_function_with_return_type() {
     if let Node::Function(func) = &file.children[0] {
         assert_eq!(func.name, "calculate");
         assert!(
-            func.parameters.len() >= 1,
+            !func.parameters.is_empty(),
             "Expected at least 1 parameter, got {}",
             func.parameters.len()
         );
@@ -1158,7 +1158,7 @@ fn test_malformed_python() {
             println!("  Found {} top-level nodes", file.children.len());
             // Tree-sitter should recover and parse valid nodes
             assert!(
-                file.children.len() >= 1,
+                !file.children.is_empty(),
                 "Should find at least some valid nodes"
             );
         }

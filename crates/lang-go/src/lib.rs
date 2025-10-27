@@ -1437,7 +1437,7 @@ func Printf(format string, args ...interface{}) (int, error) {
         // Validate Printf function with format string and variadic args
         assert_eq!(functions[1].name, "Printf");
         assert!(
-            functions[1].parameters.len() >= 1,
+            !functions[1].parameters.is_empty(),
             "Expected at least format parameter"
         );
     }
@@ -1534,7 +1534,7 @@ func Sum(numbers ...int) int {
                 println!("  Found {} top-level nodes", file.children.len());
                 // Tree-sitter should recover and parse valid nodes
                 assert!(
-                    file.children.len() >= 1,
+                    !file.children.is_empty(),
                     "Should find at least some valid nodes"
                 );
             }
