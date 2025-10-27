@@ -4,268 +4,246 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-AI Distiller (`aid`) is a high-performance CLI tool that extracts essential code structure from large codebases for LLM consumption. It processes 12+ programming languages via tree-sitter, producing ultra-compact output (90-98% reduction) while preserving semantic information.
+AI Distiller (`aid`) is a high-performance CLI tool written in Rust that extracts essential code structure from large codebases for LLM consumption. It processes 13 programming languages via tree-sitter, producing ultra-compact output (90-98% reduction) while preserving semantic information.
 
 **Core Purpose**: Enable AI assistants to understand entire codebases by fitting them into context windows, eliminating hallucinations caused by partial code visibility.
 
----
+## Quick Start Commands
 
-## 🦀 Rust Refactoring (Target Architecture)
+### Building
 
-### Strategic Goals
+```bash
+# Build debug version
+cargo build -p aid-cli
 
-AI Distiller is being rewritten in Rust to achieve:
+# Build optimized release
+cargo build --release -p aid-cli
 
-1. **Performance**: 2-3x faster processing (no CGO overhead)
-2. **Safety**: Memory safety and fearless concurrency
-3. **Simplicity**: Smaller binaries, cleaner architecture
-4. **MCP Simplification**: Reduce from 10+ functions to 4 core operations
+# Run without installing
+cargo run -p aid-cli -- testdata/python/01_basic/source.py -vv
+```
 
-### Target Architecture
+### Testing
 
-**Cargo Workspace Monorepo**:
+```bash
+# Run all tests (309 tests across 23 crates)
+cargo test --all-features
+
+# Run tests for specific crate
+cargo test -p lang-python --lib
+cargo test -p distiller-core --test integration_tests
+
+# Run tests with output for debugging
+cargo test -- --nocapture
+
+# Run specific test
+cargo test test_python_class --  --nocapture
+```
+
+### Code Quality
+
+```bash
+# Check for clippy warnings (must pass in CI)
+cargo clippy --all-features -- -D warnings
+
+# Format code
+cargo fmt --all
+
+# Check formatting without modifying
+cargo fmt --all -- --check
+```
+
+### Benchmarking
+
+```bash
+# Run benchmarks
+cargo bench -p aid-cli
+```
+
+## Architecture
+
+### Cargo Workspace Structure
+
 ```
 crates/
-├── aid-cli/            # Binary CLI entry point
-├── distiller-core/     # Core library (IR, processor, error)
-├── lang-python/        # Python language processor
-├── lang-typescript/    # TypeScript processor
-├── lang-*/             # Other language processors (12+ total)
-├── formatter-text/     # Text output formatter
-├── formatter-*/        # Other formatters (markdown, JSON, XML)
-└── mcp-server/         # Simplified MCP server (4 functions)
+├── aid-cli/              # CLI binary entry point
+├── distiller-core/       # Core library (IR, processor, error, stripper)
+│   ├── src/ir/          # Intermediate Representation nodes
+│   ├── src/parser/      # Tree-sitter parser pooling
+│   ├── src/processor/   # File and directory processing
+│   └── src/stripper/    # Visitor-based filtering
+├── lang-*/              # 13 language processors (Python, TypeScript, Go, etc.)
+│   └── src/lib.rs       # Implements LanguageProcessor trait
+├── formatter-*/         # 5 output formatters (text, markdown, JSON, JSONL, XML)
+│   └── src/lib.rs       # Implements Formatter trait
+└── mcp-server/          # Model Context Protocol server (optional)
 ```
 
-### Key Design Decisions
+### Data Flow
 
-#### 1. NO tokio in Core (CRITICAL)
+```
+File Input → Language Processor (tree-sitter) → IR Generation →
+Stripper (filtering) → Formatter → Output
+```
+
+### Core Abstractions
+
+**LanguageProcessor Trait** (`distiller-core/src/processor.rs`):
+```rust
+pub trait LanguageProcessor: Send + Sync {
+    fn language(&self) -> &str;
+    fn supported_extensions(&self) -> &[&str];
+    fn can_process(&self, filename: &str) -> bool;
+    fn process_with_options(&self, reader: Box<dyn Read>,
+                          filename: &str,
+                          options: &ProcessOptions) -> Result<File>;
+}
+```
+
+**IR Node Types** (`distiller-core/src/ir/`):
+- `Node` - Enum: File, Directory, Class, Function, Field, etc.
+- `File` - Root node containing classes, functions, imports
+- `Class/Struct` - Container for methods and fields
+- `Function` - Methods/functions with parameters and return types
+- `Field` - Class fields/properties
+- `Import` - Import/use statements
+
+**Stripper Pattern** (`distiller-core/src/stripper/`):
+Visitor-based filtering system. Apply filtering via `Stripper::new(options)` - never implement custom filtering logic.
+
+## Key Design Decisions
+
+### 1. NO tokio in Core (CRITICAL)
+
 - **Use rayon** for CPU parallelism (NOT tokio/async)
-- **Rationale**: AI Distiller has zero network I/O; local filesystem is OS-buffered
+- **Rationale**: AI Distiller is CPU-bound; local filesystem is OS-buffered
 - **Benefits**: Simpler code, smaller binaries, cleaner stack traces
 - **Exception**: MCP server MAY use minimal tokio for JSON-RPC only
 
-#### 2. Simplified MCP Interface
-Reduce from 10+ functions to **4 core operations**:
-1. `distil_directory(path, options)` - Process directory
-2. `distil_file(path, options)` - Process single file
-3. `list_dir(path, filters)` - List directory with metadata
-4. `get_capa()` - Get server capabilities
+All processing is synchronous. Parallelism is achieved via rayon's thread pool.
 
-#### 3. Feature-Gated Languages
-- Each language is optional cargo crate
-- Modular compilation for smaller binaries
-- Example: `cargo build --features lang-python,lang-typescript`
+### 2. Tree-sitter Integration
 
-#### 4. IR Design
-- Enum-based nodes for zero-cost dispatch
-- Visitor pattern for extensible operations
-- Synchronous trait interfaces (no async)
+- Uses native Rust bindings (`tree-sitter` crate)
+- Parser pooling for thread-safe access (`ParserPool`)
+- No CGO dependencies (unlike Go version)
+- All grammars compiled into binary
 
-### Target Performance
+### 3. Visitor Pattern for Filtering
 
-| Metric | Go Baseline | Rust Target |
-|--------|-------------|-------------|
-| Django (970 files) | 231ms | < 150ms |
-| Binary size | 38MB | < 25MB |
-| Memory (10k files) | ~800MB | < 500MB |
-| Startup time | ~80ms | < 50ms |
+Standardized stripper system via the Visitor pattern:
 
-### Development Status
+```rust
+// ✅ CORRECT: Use standardized stripper
+let options = StripperOptions {
+    remove_private: true,
+    remove_implementations: true,
+    remove_comments: true,
+};
+let stripper = Stripper::new(options);
+let filtered_file = stripper.visit_file(&file);
 
-**See `RUST_PROGRESS.md` for implementation progress.**
-
-**Current Branch**: `clever-river` (Rust rewrite in progress)
-
----
-
-## Go Implementation (Current)
-
-### Essential Development Commands
-
-#### Building
-
-```bash
-# Standard build (CGO required for full language support)
-make build                 # Full build with all parsers (~38MB)
-make build-verbose         # Shows CGO warnings during build
-make aid ARGS="test.py"    # Quick build + run (development)
-```
-
-#### Testing
-
-```bash
-# Primary test commands
-make test                  # Default: enhanced output with gotestsum
-make test-pretty          # Package summary with ✓/✖ indicators
-make test-dots            # Dot progress (good for large suites)
-make test-watch           # Auto-rerun on file changes
-
-# Specialized tests
-make test-integration     # Integration tests via testrunner
-make test-update          # Update expected test files
-make test-regenerate      # Regenerate all expected outputs
-make generate-expected-testdata  # Build aid + regenerate all
-
-# Legacy/basic
-make test-basic           # Standard Go test output (no gotestsum)
-```
-
-#### Development Utilities
-
-```bash
-make dev-init             # Initialize dev environment (install tools)
-make clean                # Remove build artifacts
-make lint                 # Run golangci-lint
-make fmt                  # Format code with gofmt
-```
-
----
-
-## Architecture (Go)
-
-### Core Data Flow
-
-```
-CLI Input → File Discovery → Language Detection → Parser (tree-sitter)
-→ IR Generation → Semantic Analysis → Stripper → Formatter → Output
-```
-
-### Module Structure
-
-```
-cmd/
-├── aid/                   # Main CLI entry point
-├── parser-test/          # Parser validation tool
-├── performance-test/     # Performance benchmarking
-└── semantic-test/        # Semantic analysis testing
-
-internal/
-├── cli/                  # Command-line interface & flag handling
-├── processor/            # Core file processing orchestration
-├── parser/               # Tree-sitter WASM runtime & language parsers
-├── language/             # Language-specific processors (Python, Go, TS, etc.)
-├── ir/                   # Intermediate Representation (IR) node types
-├── semantic/             # Semantic analysis (dependency graphs, call tracking)
-├── stripper/             # Visitor pattern for filtering IR nodes
-├── formatter/            # Output formatters (text, markdown, JSON, XML)
-├── ai/                   # AI integration helpers
-├── aiactions/            # AI action handlers (security, refactoring, etc.)
-├── ignore/               # .aidignore file handling
-├── importfilter/         # Import statement filtering
-├── summary/              # Summary generation & token counting
-├── performance/          # Performance tracking & metrics
-├── project/              # Project root detection
-├── debug/                # Debug system (-v, -vv, -vvv)
-└── version/              # Version information
-```
-
-### Key Interfaces
-
-**LanguageProcessor** (`internal/language/`):
-```go
-type LanguageProcessor interface {
-    Language() string
-    SupportedExtensions() []string
-    CanProcess(filename string) bool
-    ProcessWithOptions(ctx, reader, filename, ProcessOptions) (*ir.DistilledFile, error)
+// ❌ WRONG: Custom filtering logic
+for node in file.children {
+    if node.visibility == Visibility::Private {
+        continue;  // DON'T DO THIS
+    }
 }
 ```
 
-**IR Node Types** (`internal/ir/`):
-- `DistilledFile` - Root node
-- `DistilledClass` - Classes/structs
-- `DistilledFunction` - Methods/functions
-- `DistilledField` - Properties/fields
-- `DistilledImport` - Import statements
+### 4. Error Handling
 
-**Visitor Pattern** (`internal/stripper/`):
-Standardized filtering via `stripper.New()` - NEVER implement custom filtering.
+Uses `thiserror` for error types and `anyhow` for error context in CLI/applications.
 
----
+```rust
+// In libraries: use thiserror
+#[derive(Debug, thiserror::Error)]
+pub enum DistilError {
+    #[error("Parse error: {0}")]
+    ParseError(String),
+}
 
-## Language Parser Development (Go)
-
-### Architecture Pattern (CRITICAL)
-
-All language parsers follow this proven two-stage pattern:
-
-```go
-func (p *Processor) ProcessWithOptions(ctx context.Context, reader io.Reader,
-    filename string, opts processor.ProcessOptions) (*ir.DistilledFile, error) {
-
-    // Stage 1: Parse with tree-sitter
-    file, err := p.treeparser.ProcessSource(ctx, source, filename)
-    if err != nil {
-        return nil, err
-    }
-
-    // Stage 2: Apply standardized stripper (NEVER custom filtering)
-    stripperOpts := stripper.Options{
-        RemovePrivate:         !opts.IncludePrivate,
-        RemoveImplementations: !opts.IncludeImplementation,
-        RemoveComments:        !opts.IncludeComments,
-        RemoveImports:         !opts.IncludeImports,
-    }
-
-    s := stripper.New(stripperOpts)
-    stripped := file.Accept(s)
-    return stripped.(*ir.DistilledFile), nil
+// In binaries: use anyhow
+fn main() -> anyhow::Result<()> {
+    processor.process_path(path)
+        .context("Failed to process path")?
 }
 ```
 
-### Language-Specific Patterns
+## Language Processor Development
 
-**Method Association**:
-- **Go**: Two-pass (collect types → associate methods)
-- **TypeScript/JavaScript**: Single-pass within class body
-- **Python**: Native tree-sitter nesting
+### Standard Pattern
 
-**Visibility Detection**:
-- **Go**: Uppercase = public, lowercase = package-private
-- **TypeScript/JavaScript**: Keywords + `#private` fields + JSDoc
-- **Python**: `_private`, `__dunder__` conventions
+All language processors follow this structure:
 
-**Tree-sitter Safety** (CRITICAL):
-```go
-func (p *Parser) nodeText(node *sitter.Node) string {
-    if node == nil {
-        return ""
+```rust
+pub struct PythonProcessor {
+    pool: Arc<ParserPool>,
+}
+
+impl PythonProcessor {
+    pub fn new() -> Result<Self> {
+        let pool = Arc::new(ParserPool::new(
+            tree_sitter_python::LANGUAGE.into()
+        )?);
+        Ok(Self { pool })
     }
-    start := node.StartByte()
-    end := node.EndByte()
-    sourceLen := uint32(len(p.source))
-    if start > end || end > sourceLen {
-        return ""
+}
+
+impl LanguageProcessor for PythonProcessor {
+    fn language(&self) -> &str { "python" }
+
+    fn supported_extensions(&self) -> &[&str] {
+        &["py", "pyi", "pyw"]
     }
-    return string(p.source[start:end])
+
+    fn can_process(&self, filename: &str) -> bool {
+        // Check file extension
+    }
+
+    fn process_with_options(&self,
+                          reader: Box<dyn Read>,
+                          filename: &str,
+                          options: &ProcessOptions) -> Result<File> {
+        // 1. Read source code
+        // 2. Parse with tree-sitter via pool
+        // 3. Walk AST and build IR nodes
+        // 4. Return File node (stripper applied later by processor)
+    }
 }
 ```
 
-### Common Pitfalls
+### Tree-sitter Safety
 
-❌ **NEVER**: Use custom `applyOptions` filtering
-✅ **ALWAYS**: Use standardized `stripper.New()`
+Always validate node positions:
 
-❌ **NEVER**: Use line-based regex parsing
-✅ **ALWAYS**: Use tree-sitter AST traversal
+```rust
+fn node_text<'a>(&self, node: tree_sitter::Node, source: &'a [u8]) -> &'a str {
+    let start = node.start_byte();
+    let end = node.end_byte();
 
-❌ **NEVER**: Skip boundary checks on node text extraction
-✅ **ALWAYS**: Validate start/end byte positions
+    // Validate boundaries
+    if start > end || end > source.len() {
+        return "";
+    }
 
----
+    std::str::from_utf8(&source[start..end]).unwrap_or("")
+}
+```
 
-## Testing Strategy (Go)
+## Testing
 
-### Test File Organization
+### Test Organization
 
 ```
 testdata/
 ├── python/
 │   ├── 01_basic/
-│   │   ├── source.py
-│   │   ├── default.txt                    # Public APIs only
-│   │   ├── implementation=1.txt           # With implementations
-│   │   └── private=1,protected=1,internal=1,implementation=0.txt
+│   │   ├── source.py              # Input file
+│   │   └── expected/
+│   │       ├── default.txt        # Public APIs only
+│   │       ├── implementation=1.txt
+│   │       └── private=1,protected=1,internal=1.txt
 │   ├── 02_simple/
 │   └── ...
 ├── typescript/
@@ -273,195 +251,135 @@ testdata/
 └── ...
 ```
 
-**Naming Convention**: Expected files reflect non-default CLI parameters:
-- `default.txt` - Public APIs, no implementation (default behavior)
+**Expected File Naming**: Files in `expected/` reflect CLI parameters used:
+- `default.txt` - Default output (public, no implementation)
 - `implementation=1.txt` - Includes method bodies
-- `private=1,protected=1,internal=1,implementation=0.txt` - All visibility levels
+- `private=1,protected=1,internal=1.txt` - All visibility levels
 
-### Integration Tests
-
-Located in `internal/testrunner/`:
-- Uses `testdata/` directory structure
-- Validates parser output against expected files
-- Run with `make test-integration`
-
-### Updating Expected Files
+### Running Tests
 
 ```bash
-# Update all expected files after parser changes
-make test-regenerate
+# All tests
+cargo test --all-features
 
-# Or update during test run
-make test-update
+# Specific language
+cargo test -p lang-python
 
-# Generate for specific language after changes
-./build/aid testdata/python/01_basic/source.py --stdout > testdata/python/01_basic/default.txt
+# Integration tests
+cargo test -p distiller-core --test integration_tests
+
+# Single test with output
+cargo test test_python_class -- --nocapture --test-threads=1
 ```
 
----
+### Adding Tests
 
-## Debugging (Go)
+1. Create source file in `testdata/<lang>/<scenario>/source.<ext>`
+2. Generate expected output:
+   ```bash
+   cargo run -p aid-cli -- testdata/python/01_basic/source.py --stdout > testdata/python/01_basic/expected/default.txt
+   ```
+3. Add test case in language processor's `lib.rs`
 
-### Debug Levels
+## Development Workflow
 
-```bash
-aid src/ -v        # Level 1: Basic info (file counts, phases)
-aid src/ -vv       # Level 2: Detailed (timing, AST node counts)
-aid src/ -vvv      # Level 3: Full trace (IR dumps, raw structures)
-```
+### Adding a New Language Processor
 
-**Implementation**:
-- Uses `debug.FromContext(ctx)` for propagation
-- Subsystem scoping: `dbg.WithSubsystem("parser")`
-- Performance guards: `if dbg.IsEnabledFor(debug.LevelDetailed)`
-- Output: stderr with format `[HH:MM:SS.mmm] [subsystem] LEVEL: message`
+1. **Create crate structure**:
+   ```bash
+   cargo new --lib crates/lang-newlang
+   ```
 
----
+2. **Update workspace** in root `Cargo.toml`:
+   ```toml
+   members = [
+       # ... existing members
+       "crates/lang-newlang",
+   ]
+   ```
 
-## Critical Development Principles
+3. **Add dependencies** in `crates/lang-newlang/Cargo.toml`:
+   ```toml
+   [dependencies]
+   distiller-core = { path = "../distiller-core" }
+   tree-sitter = { workspace = true }
+   tree-sitter-newlang = "x.y.z"
+   # ... other deps
+   ```
 
-### NO MOCKS OR SIMULATED DATA
+4. **Implement LanguageProcessor trait**
 
-**NEVER**:
-- Create mock implementations returning fixed data
-- Use hardcoded test data pretending to be parser output
-- Write placeholder functions that don't work
-- Test mocked behavior instead of real functionality
+5. **Register in CLI** (`crates/aid-cli/src/main.rs`):
+   ```rust
+   processor.register_language(Box::new(
+       NewLangProcessor::new()?
+   ));
+   ```
 
-**ALWAYS**:
-- Implement real, working parsers using tree-sitter
-- Test against actual parser output
-- Use `testdata/` files for validation
+6. **Add test cases** in `testdata/newlang/`
 
-### Stripper Integration
+### Adding a New Formatter
 
-The `internal/stripper/` package provides standardized filtering via the Visitor pattern:
+1. Create crate: `cargo new --lib crates/formatter-newformat`
+2. Implement formatter trait
+3. Register in CLI
+4. Add tests
 
-```go
-// ✅ CORRECT: Use standardized stripper
-s := stripper.New(stripper.Options{
-    RemovePrivate:         true,
-    RemoveImplementations: true,
-    RemoveComments:        true,
-})
-stripped := file.Accept(s)
+## Common Pitfalls
 
-// ❌ WRONG: Custom filtering logic
-for _, node := range file.Children {
-    if node.Visibility == "private" {
-        continue  // DON'T DO THIS
-    }
-}
-```
+### ❌ DON'T
 
-### Performance Requirements
+- Use tokio/async in core or language processors
+- Implement custom filtering logic (use `Stripper`)
+- Skip tree-sitter node boundary validation
+- Use line-based regex parsing instead of AST traversal
+- Create mocks in tests (use real tree-sitter parsing)
 
-- **Speed**: Process 10MB codebases in <2 seconds
-- **Concurrency**: Default 80% CPU cores (`--workers=0`)
-- **Memory**: Stream processing, bounded channels
-- **One-pass**: No multiple IR traversals
+### ✅ DO
 
----
+- Use rayon for parallelism
+- Use standardized `Stripper` for filtering
+- Validate all tree-sitter node positions
+- Use AST-based traversal
+- Test against real parser output
 
-## Git Commit Protocol
+## Performance Targets
 
-**Pre-commit Checklist**:
-1. Run `git status` - verify no unwanted files
-2. Check for temporary files: `*.tmp`, `*.log`, `.aid.*.txt` in root
-3. Review with `git diff --cached`
-4. Ensure `.gitignore` is properly configured
-5. Run `make test` (Go) or `cargo test` (Rust) - all tests must pass
+- **Single file**: < 50ms
+- **Directory (1000 files)**: < 2 seconds
+- **Binary size**: < 30MB (release, stripped)
+- **Memory**: < 500MB for 10k files
 
-**Commit Style**:
+Current performance:
+- Python: 473ms for 15k lines (31 lines/ms)
+- TypeScript: 382ms for 17k lines (44 lines/ms)
+- Go: 319ms for 17k lines (53 lines/ms)
+
+## Git Commit Style
+
 ```
 feat(parser): add support for async/await in TypeScript
 fix(go): resolve method association for embedded structs
-chore: update expected test files for Python parser
-feat(rust): Phase 1 Foundation - Cargo workspace, IR, error system
+chore: update expected test files
+refactor(core): improve error handling in stripper
+perf(python): optimize AST traversal performance
 ```
 
----
+## Important Files
 
-## Important Files & Documentation
-
-- `BUILD.md` - Cross-compilation setup and build requirements (Go)
-- `RUST_PROGRESS.md` - Rust refactoring implementation progress
-- `README.rust.md` - Rust implementation quick start
-- `docs/TESTING.md` - Comprehensive testing guide with gotestsum formats (Go)
-- `docs/CROSS_COMPILATION.md` - Detailed cross-compilation instructions (Go)
-- `docs/lang/*.md` - Language-specific parser documentation (Go)
-- `.aidignore` - File exclusion patterns (gitignore syntax)
-
----
-
-## Quick Reference
-
-### Common Tasks (Go)
-
-```bash
-# Add new language parser
-1. Create internal/language/<lang>/processor.go
-2. Implement LanguageProcessor interface
-3. Use tree-sitter parser (see internal/parser/grammars/)
-4. Register in internal/language/registry.go
-5. Add testdata/<lang>/ with test cases
-6. Run make generate-expected-testdata
-
-# Fix failing test
-1. Reproduce: add failing test case to testdata/
-2. Debug: aid testdata/<lang>/file.ext -vvv
-3. Fix parser in internal/language/<lang>/
-4. Verify: make test-integration
-5. Update: make test-regenerate
-
-# Add output format
-1. Create internal/formatter/<format>.go
-2. Implement Formatter interface
-3. Register in formatter registry
-4. Test with --format <format>
-```
-
-### Common Tasks (Rust)
-
-```bash
-# Build and test
-cargo build --release -p aid-cli
-cargo test --all-features
-cargo clippy --all-features -- -D warnings
-
-# Run
-cargo run -p aid-cli -- --help
-cargo run -p aid-cli -- testdata/python/01_basic/source.py -vvv
-
-# Add language processor
-1. Create crates/lang-<lang>/
-2. Implement LanguageProcessor trait
-3. Add to workspace members in Cargo.toml
-4. Write tests with insta snapshots
-```
-
-### Performance Debugging (Go)
-
-```bash
-# Profile memory usage
-go test -memprofile=mem.prof -run=TestProcessor
-go tool pprof mem.prof
-
-# Profile CPU usage
-go test -cpuprofile=cpu.prof -bench=BenchmarkProcessor
-go tool pprof cpu.prof
-
-# Benchmark specific functionality
-make bench
-```
-
----
+- `Cargo.toml` - Workspace configuration
+- `RUST_PROGRESS.md` - Implementation progress tracking
+- `README.md` - User-facing documentation
+- `testdata/` - Integration test fixtures
+- `docs/lang/*.md` - Language-specific parser documentation
 
 ## Notes for AI Assistants
 
-- **Language**: Use English for all communication, code, and documentation
-- **CLI Examples**: Already comprehensive in README.md - don't duplicate
-- **Focus**: Architecture understanding and development workflow
-- **Testing**: Always run tests after changes; update expected files if parser behavior changes
-- **Parallelism**: Use `make aid` (Go) or `cargo run -p aid-cli` (Rust) for rapid iteration
-- **Progress**: See `RUST_PROGRESS.md` for Rust implementation status
+- All code must use Rust 2024 edition (Rust 1.90.0+)
+- Tests must pass before any PR: `cargo test --all-features`
+- Clippy must pass: `cargo clippy --all-features -- -D warnings`
+- Code must be formatted: `cargo fmt --all`
+- No mocks or fake implementations - test against real tree-sitter parsing
+- Update testdata expected files when parser behavior changes
+- Language processors should be self-contained (minimal dependencies)
+- Keep CLI focused - complex logic belongs in libraries
