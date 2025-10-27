@@ -1034,4 +1034,423 @@ public class Account
             panic!("Expected a class");
         }
     }
+
+    #[test]
+    fn test_empty_file() {
+        let source = "";
+        let processor = CSharpProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let file = processor
+            .process(source, Path::new("Test.cs"), &opts)
+            .unwrap();
+
+        assert_eq!(file.children.len(), 0);
+        assert_eq!(file.path, "Test.cs");
+    }
+
+    #[test]
+    fn test_interface_declaration() {
+        let source = r#"
+public interface ILogger
+{
+    void Log(string message);
+    string Name { get; }
+    event EventHandler<LogEventArgs> LogReceived;
+}
+"#;
+        let processor = CSharpProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let file = processor
+            .process(source, Path::new("Test.cs"), &opts)
+            .unwrap();
+
+        assert_eq!(file.children.len(), 1);
+        if let Node::Class(interface) = &file.children[0] {
+            assert_eq!(interface.name, "ILogger");
+            assert_eq!(interface.visibility, Visibility::Public);
+            assert!(interface.decorators.contains(&"interface".to_string()));
+
+            let methods: Vec<_> = interface
+                .children
+                .iter()
+                .filter_map(|n| match n {
+                    Node::Function(f) => Some(f),
+                    _ => None,
+                })
+                .collect();
+            assert_eq!(methods.len(), 1);
+            assert_eq!(methods[0].name, "Log");
+
+            let properties: Vec<_> = interface
+                .children
+                .iter()
+                .filter_map(|n| match n {
+                    Node::Field(f) => Some(f),
+                    _ => None,
+                })
+                .collect();
+            assert_eq!(properties.len(), 2);
+        } else {
+            panic!("Expected an interface");
+        }
+    }
+
+    #[test]
+    fn test_abstract_class() {
+        let source = r#"
+public abstract class Vehicle
+{
+    protected string _brand;
+    public abstract void Start();
+    public virtual void Stop() { }
+    protected abstract int GetSpeed();
+}
+"#;
+        let processor = CSharpProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let file = processor
+            .process(source, Path::new("Test.cs"), &opts)
+            .unwrap();
+
+        assert_eq!(file.children.len(), 1);
+        if let Node::Class(class) = &file.children[0] {
+            assert_eq!(class.name, "Vehicle");
+            assert_eq!(class.visibility, Visibility::Public);
+            assert!(class.modifiers.contains(&Modifier::Abstract));
+
+            let methods: Vec<_> = class
+                .children
+                .iter()
+                .filter_map(|n| match n {
+                    Node::Function(f) => Some(f),
+                    _ => None,
+                })
+                .collect();
+            assert_eq!(methods.len(), 3);
+
+            let abstract_methods = methods
+                .iter()
+                .filter(|m| m.modifiers.contains(&Modifier::Abstract))
+                .count();
+            assert_eq!(abstract_methods, 2);
+
+            let virtual_methods = methods
+                .iter()
+                .filter(|m| m.modifiers.contains(&Modifier::Virtual))
+                .count();
+            assert_eq!(virtual_methods, 1);
+        } else {
+            panic!("Expected an abstract class");
+        }
+    }
+
+    #[test]
+    fn test_sealed_class() {
+        let source = r#"
+public sealed class FinalClass
+{
+    public void DoSomething() { }
+    private int _value;
+}
+"#;
+        let processor = CSharpProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let file = processor
+            .process(source, Path::new("Test.cs"), &opts)
+            .unwrap();
+
+        assert_eq!(file.children.len(), 1);
+        if let Node::Class(class) = &file.children[0] {
+            assert_eq!(class.name, "FinalClass");
+            assert_eq!(class.visibility, Visibility::Public);
+            assert!(class.modifiers.contains(&Modifier::Final)); // sealed maps to Final
+            assert_eq!(class.children.len(), 2); // 1 method + 1 field
+        } else {
+            panic!("Expected a sealed class");
+        }
+    }
+
+    #[test]
+    fn test_partial_class() {
+        let source = r#"
+public partial class DataContext
+{
+    public void Initialize() { }
+    private string _connectionString;
+}
+"#;
+        let processor = CSharpProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let file = processor
+            .process(source, Path::new("Test.cs"), &opts)
+            .unwrap();
+
+        assert_eq!(file.children.len(), 1);
+        if let Node::Class(class) = &file.children[0] {
+            assert_eq!(class.name, "DataContext");
+            assert_eq!(class.visibility, Visibility::Public);
+            // Note: partial keyword is not stored in modifiers in current implementation
+            // but the class should still be parsed correctly
+            assert_eq!(class.children.len(), 2);
+        } else {
+            panic!("Expected a partial class");
+        }
+    }
+
+    #[test]
+    fn test_async_method() {
+        let source = r#"
+public class AsyncService
+{
+    public async Task<string> FetchDataAsync()
+    {
+        await Task.Delay(100);
+        return "data";
+    }
+
+    private async void HandleEventAsync() { }
+}
+"#;
+        let processor = CSharpProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let file = processor
+            .process(source, Path::new("Test.cs"), &opts)
+            .unwrap();
+
+        assert_eq!(file.children.len(), 1);
+        if let Node::Class(class) = &file.children[0] {
+            assert_eq!(class.name, "AsyncService");
+
+            let methods: Vec<_> = class
+                .children
+                .iter()
+                .filter_map(|n| match n {
+                    Node::Function(f) => Some(f),
+                    _ => None,
+                })
+                .collect();
+            assert_eq!(methods.len(), 2);
+
+            let async_methods = methods
+                .iter()
+                .filter(|m| m.modifiers.contains(&Modifier::Async))
+                .count();
+            assert_eq!(async_methods, 2);
+
+            let fetch_method = methods.iter().find(|m| m.name == "FetchDataAsync");
+            assert!(fetch_method.is_some());
+            if let Some(m) = fetch_method {
+                assert_eq!(m.visibility, Visibility::Public);
+                assert!(m.modifiers.contains(&Modifier::Async));
+            }
+        } else {
+            panic!("Expected a class with async methods");
+        }
+    }
+
+    #[test]
+    fn test_generic_class() {
+        let source = r#"
+public class Repository<T, TKey> where T : class where TKey : struct
+{
+    private Dictionary<TKey, T> _items;
+    public void Add(TKey key, T item) { }
+    public T Get(TKey key) { return default(T); }
+}
+"#;
+        let processor = CSharpProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let file = processor
+            .process(source, Path::new("Test.cs"), &opts)
+            .unwrap();
+
+        assert_eq!(file.children.len(), 1);
+        if let Node::Class(class) = &file.children[0] {
+            assert_eq!(class.name, "Repository");
+            assert_eq!(class.visibility, Visibility::Public);
+            assert_eq!(class.type_params.len(), 2);
+            assert_eq!(class.type_params[0].name, "T");
+            assert_eq!(class.type_params[1].name, "TKey");
+
+            let methods: Vec<_> = class
+                .children
+                .iter()
+                .filter_map(|n| match n {
+                    Node::Function(f) => Some(f),
+                    _ => None,
+                })
+                .collect();
+            assert_eq!(methods.len(), 2);
+        } else {
+            panic!("Expected a generic class");
+        }
+    }
+
+    #[test]
+    fn test_indexer_property() {
+        let source = r#"
+public class Collection
+{
+    private string[] _items;
+    public string this[int index]
+    {
+        get { return _items[index]; }
+        set { _items[index] = value; }
+    }
+}
+"#;
+        let processor = CSharpProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let file = processor
+            .process(source, Path::new("Test.cs"), &opts)
+            .unwrap();
+
+        assert_eq!(file.children.len(), 1);
+        if let Node::Class(class) = &file.children[0] {
+            assert_eq!(class.name, "Collection");
+            // Indexers might be parsed as properties or special methods
+            // Verify the class structure is captured
+            assert!(!class.children.is_empty());
+        } else {
+            panic!("Expected a class with indexer");
+        }
+    }
+
+    #[test]
+    fn test_operator_overloading() {
+        let source = r#"
+public class Vector
+{
+    public int X { get; set; }
+    public int Y { get; set; }
+
+    public static Vector operator +(Vector a, Vector b)
+    {
+        return new Vector { X = a.X + b.X, Y = a.Y + b.Y };
+    }
+
+    public static bool operator ==(Vector a, Vector b)
+    {
+        return a.X == b.X && a.Y == b.Y;
+    }
+
+    public static bool operator !=(Vector a, Vector b)
+    {
+        return !(a == b);
+    }
+}
+"#;
+        let processor = CSharpProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let file = processor
+            .process(source, Path::new("Test.cs"), &opts)
+            .unwrap();
+
+        assert_eq!(file.children.len(), 1);
+        if let Node::Class(class) = &file.children[0] {
+            assert_eq!(class.name, "Vector");
+
+            let operators: Vec<_> = class
+                .children
+                .iter()
+                .filter_map(|n| match n {
+                    Node::Function(f) if f.decorators.contains(&"operator".to_string()) => Some(f),
+                    _ => None,
+                })
+                .collect();
+            assert_eq!(operators.len(), 3);
+
+            // All operators should be static
+            for op in &operators {
+                assert!(op.modifiers.contains(&Modifier::Static));
+            }
+        } else {
+            panic!("Expected a class with operator overloading");
+        }
+    }
+
+    #[test]
+    fn test_nullable_reference_types() {
+        let source = r#"
+#nullable enable
+public class UserService
+{
+    public string? GetUserName(int? userId)
+    {
+        return userId.HasValue ? "User" + userId.Value : null;
+    }
+
+    private Dictionary<string, object?>? _cache;
+}
+"#;
+        let processor = CSharpProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let file = processor
+            .process(source, Path::new("Test.cs"), &opts)
+            .unwrap();
+
+        assert_eq!(file.children.len(), 1);
+        if let Node::Class(class) = &file.children[0] {
+            assert_eq!(class.name, "UserService");
+
+            let methods: Vec<_> = class
+                .children
+                .iter()
+                .filter_map(|n| match n {
+                    Node::Function(f) => Some(f),
+                    _ => None,
+                })
+                .collect();
+            assert_eq!(methods.len(), 1);
+
+            let method = &methods[0];
+            assert_eq!(method.name, "GetUserName");
+            // Nullable types should be captured in return_type and parameter types
+            assert!(method.return_type.is_some());
+        } else {
+            panic!("Expected a class with nullable reference types");
+        }
+    }
+
+    #[test]
+    fn test_init_only_properties() {
+        let source = r#"
+public class Person
+{
+    public string FirstName { get; init; }
+    public string LastName { get; init; }
+    public int Age { get; set; }
+    public string FullName => FirstName + " " + LastName;
+}
+"#;
+        let processor = CSharpProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let file = processor
+            .process(source, Path::new("Test.cs"), &opts)
+            .unwrap();
+
+        assert_eq!(file.children.len(), 1);
+        if let Node::Class(class) = &file.children[0] {
+            assert_eq!(class.name, "Person");
+
+            let properties: Vec<_> = class
+                .children
+                .iter()
+                .filter_map(|n| match n {
+                    Node::Field(f) => Some(f),
+                    _ => None,
+                })
+                .collect();
+            assert_eq!(properties.len(), 4);
+
+            // Verify all properties are captured
+            let first_name = properties.iter().find(|p| p.name == "FirstName");
+            assert!(first_name.is_some());
+            if let Some(prop) = first_name {
+                assert_eq!(prop.visibility, Visibility::Public);
+            }
+        } else {
+            panic!("Expected a class with init-only properties");
+        }
+    }
 }

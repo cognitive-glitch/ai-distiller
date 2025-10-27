@@ -332,7 +332,7 @@ impl JavaScriptProcessor {
                     file.children.push(Node::Class(class));
                 }
             }
-            "function_declaration" => {
+            "function_declaration" | "generator_function_declaration" => {
                 if let Some(func) = self.parse_function(node, source)? {
                     file.children.push(Node::Function(func));
                 }
@@ -598,5 +598,424 @@ function _privateHelper(...args) {
         assert_eq!(functions[2].visibility, Visibility::Private);
         assert_eq!(functions[2].parameters.len(), 1);
         assert!(functions[2].parameters[0].is_variadic);
+    }
+
+    // ===== Enhanced Test Coverage =====
+
+    #[test]
+    fn test_empty_file() {
+        let processor = JavaScriptProcessor::new().unwrap();
+        let source = "";
+        let opts = ProcessOptions::default();
+
+        let file = processor.process(source, Path::new("test.js"), &opts).unwrap();
+        assert_eq!(file.children.len(), 0, "Empty file should have no children");
+    }
+
+    #[test]
+    fn test_es6_class() {
+        let processor = JavaScriptProcessor::new().unwrap();
+        let source = r#"
+class Person {
+    constructor(name, age) {
+        this.name = name;
+        this.age = age;
+    }
+
+    greet() {
+        return `Hello, I'm ${this.name}`;
+    }
+
+    getAge() {
+        return this.age;
+    }
+}
+"#;
+
+        let opts = ProcessOptions::default();
+        let file = processor.process(source, Path::new("test.js"), &opts).unwrap();
+
+        assert_eq!(file.children.len(), 1);
+        if let Node::Class(class) = &file.children[0] {
+            assert_eq!(class.name, "Person");
+            assert_eq!(class.visibility, Visibility::Public);
+            assert_eq!(class.children.len(), 3);
+
+            let methods: Vec<_> = class.children.iter()
+                .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+                .collect();
+
+            assert_eq!(methods.len(), 3);
+            assert_eq!(methods[0].name, "constructor");
+            assert_eq!(methods[0].parameters.len(), 2);
+            assert_eq!(methods[1].name, "greet");
+            assert_eq!(methods[2].name, "getAge");
+        } else {
+            panic!("Expected class node");
+        }
+    }
+
+    #[test]
+    fn test_class_inheritance() {
+        let processor = JavaScriptProcessor::new().unwrap();
+        let source = r#"
+class Animal {
+    constructor(name) {
+        this.name = name;
+    }
+}
+
+class Dog extends Animal {
+    constructor(name, breed) {
+        super(name);
+        this.breed = breed;
+    }
+
+    bark() {
+        return 'Woof!';
+    }
+}
+"#;
+
+        let opts = ProcessOptions::default();
+        let file = processor.process(source, Path::new("test.js"), &opts).unwrap();
+
+        assert_eq!(file.children.len(), 2);
+
+        if let Node::Class(base_class) = &file.children[0] {
+            assert_eq!(base_class.name, "Animal");
+            assert_eq!(base_class.extends.len(), 0);
+        } else {
+            panic!("Expected Animal class");
+        }
+
+        if let Node::Class(derived_class) = &file.children[1] {
+            assert_eq!(derived_class.name, "Dog");
+            assert_eq!(derived_class.extends.len(), 1);
+            assert_eq!(derived_class.extends[0].name, "Animal");
+            assert_eq!(derived_class.children.len(), 2);
+        } else {
+            panic!("Expected Dog class");
+        }
+    }
+
+    #[test]
+    fn test_async_await() {
+        let processor = JavaScriptProcessor::new().unwrap();
+        let source = r#"
+async function fetchUserData(userId) {
+    const response = await fetch(`/api/users/${userId}`);
+    const data = await response.json();
+    return data;
+}
+
+async function processData(items) {
+    const results = await Promise.all(items.map(async item => {
+        return await transform(item);
+    }));
+    return results;
+}
+"#;
+
+        let opts = ProcessOptions::default();
+        let file = processor.process(source, Path::new("test.js"), &opts).unwrap();
+
+        let functions: Vec<_> = file.children.iter()
+            .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+            .collect();
+
+        assert_eq!(functions.len(), 2);
+
+        assert_eq!(functions[0].name, "fetchUserData");
+        assert!(functions[0].modifiers.contains(&Modifier::Async),
+                "fetchUserData should be async");
+        assert_eq!(functions[0].parameters.len(), 1);
+        assert_eq!(functions[0].parameters[0].name, "userId");
+
+        assert_eq!(functions[1].name, "processData");
+        assert!(functions[1].modifiers.contains(&Modifier::Async),
+                "processData should be async");
+    }
+
+    #[test]
+    fn test_arrow_functions() {
+        let processor = JavaScriptProcessor::new().unwrap();
+        let source = r#"
+const add = (a, b) => a + b;
+const multiply = (x, y) => {
+    return x * y;
+};
+const greet = name => `Hello ${name}`;
+"#;
+
+        let opts = ProcessOptions::default();
+        let file = processor.process(source, Path::new("test.js"), &opts).unwrap();
+
+        // Arrow functions are typically not parsed as function declarations
+        // They are variable declarations with arrow function expressions
+        // This test validates that the parser doesn't crash on arrow functions
+        // Successfully parsing without panic is sufficient validation
+        let _ = file;
+    }
+
+    #[test]
+    fn test_destructuring() {
+        let processor = JavaScriptProcessor::new().unwrap();
+        let source = r#"
+function processUser({ id, name, email }) {
+    return { id, name, email };
+}
+
+function getCoordinates({ x = 0, y = 0 } = {}) {
+    return [x, y];
+}
+
+function handleArray([first, second, ...rest]) {
+    return { first, second, rest };
+}
+"#;
+
+        let opts = ProcessOptions::default();
+        let file = processor.process(source, Path::new("test.js"), &opts).unwrap();
+
+        let functions: Vec<_> = file.children.iter()
+            .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+            .collect();
+
+        assert_eq!(functions.len(), 3);
+        assert_eq!(functions[0].name, "processUser");
+        assert_eq!(functions[1].name, "getCoordinates");
+        assert_eq!(functions[2].name, "handleArray");
+    }
+
+    #[test]
+    fn test_spread_operator() {
+        let processor = JavaScriptProcessor::new().unwrap();
+        let source = r#"
+function sum(...numbers) {
+    return numbers.reduce((a, b) => a + b, 0);
+}
+
+function merge(obj1, obj2, ...rest) {
+    return Object.assign({}, obj1, obj2, ...rest);
+}
+"#;
+
+        let opts = ProcessOptions::default();
+        let file = processor.process(source, Path::new("test.js"), &opts).unwrap();
+
+        let functions: Vec<_> = file.children.iter()
+            .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+            .collect();
+
+        assert_eq!(functions.len(), 2);
+
+        assert_eq!(functions[0].name, "sum");
+        assert_eq!(functions[0].parameters.len(), 1);
+        assert_eq!(functions[0].parameters[0].name, "numbers");
+        assert!(functions[0].parameters[0].is_variadic,
+                "Rest parameter should be marked as variadic");
+
+        assert_eq!(functions[1].name, "merge");
+        assert_eq!(functions[1].parameters.len(), 3);
+        assert_eq!(functions[1].parameters[2].name, "rest");
+        assert!(functions[1].parameters[2].is_variadic);
+    }
+
+    #[test]
+    fn test_private_fields() {
+        let processor = JavaScriptProcessor::new().unwrap();
+        let source = r#"
+class BankAccount {
+    #balance = 0;
+    #accountNumber;
+
+    constructor(initialBalance, accountNumber) {
+        this.#balance = initialBalance;
+        this.#accountNumber = accountNumber;
+    }
+
+    #validateAmount(amount) {
+        return amount > 0;
+    }
+
+    deposit(amount) {
+        if (this.#validateAmount(amount)) {
+            this.#balance += amount;
+        }
+    }
+
+    getBalance() {
+        return this.#balance;
+    }
+}
+"#;
+
+        let opts = ProcessOptions::default();
+        let file = processor.process(source, Path::new("test.js"), &opts).unwrap();
+
+        assert_eq!(file.children.len(), 1);
+        if let Node::Class(class) = &file.children[0] {
+            assert_eq!(class.name, "BankAccount");
+
+            let methods: Vec<_> = class.children.iter()
+                .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+                .collect();
+
+            // Find private methods
+            let private_methods: Vec<_> = methods.iter()
+                .filter(|m| m.visibility == Visibility::Private)
+                .collect();
+
+            assert!(!private_methods.is_empty(), "Should have private methods");
+
+            // Check #validateAmount is private
+            let validate_method = methods.iter()
+                .find(|m| m.name == "#validateAmount");
+            assert!(validate_method.is_some(), "Should find #validateAmount method");
+            assert_eq!(validate_method.unwrap().visibility, Visibility::Private);
+        } else {
+            panic!("Expected class node");
+        }
+    }
+
+    #[test]
+    fn test_static_methods() {
+        let processor = JavaScriptProcessor::new().unwrap();
+        let source = r#"
+class MathUtils {
+    static PI = 3.14159;
+
+    static add(a, b) {
+        return a + b;
+    }
+
+    static multiply(x, y) {
+        return x * y;
+    }
+
+    static async fetchConstants() {
+        return { PI: MathUtils.PI };
+    }
+}
+"#;
+
+        let opts = ProcessOptions::default();
+        let file = processor.process(source, Path::new("test.js"), &opts).unwrap();
+
+        assert_eq!(file.children.len(), 1);
+        if let Node::Class(class) = &file.children[0] {
+            assert_eq!(class.name, "MathUtils");
+
+            let methods: Vec<_> = class.children.iter()
+                .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+                .collect();
+
+            // Find static methods
+            let static_methods: Vec<_> = methods.iter()
+                .filter(|m| m.modifiers.contains(&Modifier::Static))
+                .collect();
+
+            assert!(static_methods.len() >= 2,
+                   "Should have at least 2 static methods, got {}", static_methods.len());
+
+            // Verify specific static methods
+            assert!(methods.iter().any(|m| m.name == "add" && m.modifiers.contains(&Modifier::Static)));
+            assert!(methods.iter().any(|m| m.name == "multiply" && m.modifiers.contains(&Modifier::Static)));
+
+            // Check for async + static combination
+            let async_static: Vec<_> = methods.iter()
+                .filter(|m| m.modifiers.contains(&Modifier::Static) &&
+                           m.modifiers.contains(&Modifier::Async))
+                .collect();
+            assert!(!async_static.is_empty(), "Should have async static method");
+        } else {
+            panic!("Expected class node");
+        }
+    }
+
+    #[test]
+    fn test_generator_function() {
+        let processor = JavaScriptProcessor::new().unwrap();
+        let source = r#"
+function* numberGenerator() {
+    yield 1;
+    yield 2;
+    yield 3;
+}
+
+function* fibonacciGenerator(n) {
+    let a = 0, b = 1;
+    for (let i = 0; i < n; i++) {
+        yield a;
+        [a, b] = [b, a + b];
+    }
+}
+
+class Range {
+    *[Symbol.iterator]() {
+        for (let i = this.start; i <= this.end; i++) {
+            yield i;
+        }
+    }
+}
+"#;
+
+        let opts = ProcessOptions::default();
+        let file = processor.process(source, Path::new("test.js"), &opts).unwrap();
+
+        let functions: Vec<_> = file.children.iter()
+            .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+            .collect();
+
+        assert!(functions.len() >= 2,
+               "Should have at least 2 generator functions, got {}", functions.len());
+
+        assert!(functions.iter().any(|f| f.name == "numberGenerator"));
+        assert!(functions.iter().any(|f| f.name == "fibonacciGenerator"));
+    }
+
+    #[test]
+    fn test_export_statements() {
+        let processor = JavaScriptProcessor::new().unwrap();
+        let source = r#"
+export default class DefaultClass {
+    constructor() {}
+}
+
+export class NamedClass {
+    method() {}
+}
+
+export function namedFunction(param) {
+    return param;
+}
+
+export const CONSTANT = 42;
+
+export { namedFunction as renamedFunction };
+"#;
+
+        let opts = ProcessOptions::default();
+        let file = processor.process(source, Path::new("test.js"), &opts).unwrap();
+
+        // Verify exports don't cause parsing errors
+        assert!(file.children.len() >= 2,
+               "Should have parsed classes and functions, got {} children",
+               file.children.len());
+
+        // Check for specific exports
+        let classes: Vec<_> = file.children.iter()
+            .filter_map(|n| if let Node::Class(c) = n { Some(c) } else { None })
+            .collect();
+
+        let functions: Vec<_> = file.children.iter()
+            .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+            .collect();
+
+        assert!(classes.iter().any(|c| c.name == "DefaultClass" || c.name == "NamedClass"),
+               "Should have exported classes");
+        assert!(functions.iter().any(|f| f.name == "namedFunction"),
+               "Should have exported function");
     }
 }

@@ -814,4 +814,408 @@ type Repository[T any] interface {
         assert_eq!(interfaces[0].type_params[0].name, "T");
         assert_eq!(interfaces[0].children.len(), 3);
     }
+
+    // ===== Enhanced Test Coverage (11 new tests) =====
+
+    #[test]
+    fn test_empty_file() {
+        let processor = GoProcessor::new().unwrap();
+        let source = "package main\n";
+        let opts = ProcessOptions::default();
+
+        let file = processor.process(source, Path::new("test.go"), &opts).unwrap();
+        assert_eq!(file.children.len(), 0, "Empty file should have no children");
+    }
+
+    #[test]
+    fn test_multiple_functions() {
+        let processor = GoProcessor::new().unwrap();
+        let source = r#"
+package main
+
+func Add(x int, y int) int {
+    return x + y
+}
+
+func Greet(name string, age int) string {
+    return "Hello"
+}
+
+func Process(data []byte, count int) ([]byte, error) {
+    return data, nil
+}
+"#;
+        let opts = ProcessOptions::default();
+
+        let file = processor.process(source, Path::new("test.go"), &opts).unwrap();
+
+        let functions: Vec<_> = file.children.iter()
+            .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+            .collect();
+
+        assert_eq!(functions.len(), 3);
+
+        // Validate Add function
+        assert_eq!(functions[0].name, "Add");
+        assert_eq!(functions[0].parameters.len(), 2);
+        assert_eq!(functions[0].parameters[0].name, "x");
+        assert_eq!(functions[0].parameters[0].param_type.name, "int");
+        assert_eq!(functions[0].parameters[1].name, "y");
+        assert_eq!(functions[0].parameters[1].param_type.name, "int");
+
+        // Validate Greet function
+        assert_eq!(functions[1].name, "Greet");
+        assert_eq!(functions[1].parameters.len(), 2);
+        assert_eq!(functions[1].parameters[0].name, "name");
+        assert_eq!(functions[1].parameters[0].param_type.name, "string");
+    }
+
+    #[test]
+    fn test_struct_methods() {
+        let processor = GoProcessor::new().unwrap();
+        let source = r#"
+package main
+
+type Counter struct {
+    value int
+}
+
+func (c Counter) Get() int {
+    return c.value
+}
+
+func (c *Counter) Increment() {
+    c.value++
+}
+"#;
+        let opts = ProcessOptions::default();
+
+        let file = processor.process(source, Path::new("test.go"), &opts).unwrap();
+
+        let structs: Vec<_> = file.children.iter()
+            .filter_map(|n| if let Node::Class(cls) = n { Some(cls) } else { None })
+            .collect();
+
+        assert_eq!(structs.len(), 1);
+        assert_eq!(structs[0].name, "Counter");
+
+        let methods: Vec<_> = file.children.iter()
+            .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+            .collect();
+
+        assert_eq!(methods.len(), 2);
+        assert_eq!(methods[0].name, "Get");
+        assert_eq!(methods[1].name, "Increment");
+
+        // Both methods should have Static modifier (receiver methods)
+        assert!(methods[0].modifiers.contains(&Modifier::Static));
+        assert!(methods[1].modifiers.contains(&Modifier::Static));
+    }
+
+    #[test]
+    fn test_interface_definition() {
+        let processor = GoProcessor::new().unwrap();
+        let source = r#"
+package main
+
+type Writer interface {
+    Write(data []byte) (int, error)
+    Close() error
+}
+"#;
+        let opts = ProcessOptions::default();
+
+        let file = processor.process(source, Path::new("test.go"), &opts).unwrap();
+
+        let interfaces: Vec<_> = file.children.iter()
+            .filter_map(|n| if let Node::Interface(iface) = n { Some(iface) } else { None })
+            .collect();
+
+        assert_eq!(interfaces.len(), 1);
+        assert_eq!(interfaces[0].name, "Writer");
+        assert_eq!(interfaces[0].visibility, Visibility::Public);
+        assert_eq!(interfaces[0].children.len(), 2);
+
+        // Validate interface methods
+        if let Node::Function(write_method) = &interfaces[0].children[0] {
+            assert_eq!(write_method.name, "Write");
+        } else {
+            panic!("Expected function node for Write method");
+        }
+
+        if let Node::Function(close_method) = &interfaces[0].children[1] {
+            assert_eq!(close_method.name, "Close");
+        } else {
+            panic!("Expected function node for Close method");
+        }
+    }
+
+    #[test]
+    fn test_embedded_struct() {
+        let processor = GoProcessor::new().unwrap();
+        let source = r#"
+package main
+
+type Base struct {
+    ID int
+}
+
+type Extended struct {
+    Base
+    Name string
+}
+"#;
+        let opts = ProcessOptions::default();
+
+        let file = processor.process(source, Path::new("test.go"), &opts).unwrap();
+
+        let structs: Vec<_> = file.children.iter()
+            .filter_map(|n| if let Node::Class(cls) = n { Some(cls) } else { None })
+            .collect();
+
+        assert_eq!(structs.len(), 2);
+
+        // Validate Base struct
+        assert_eq!(structs[0].name, "Base");
+        assert_eq!(structs[0].children.len(), 1);
+
+        // Validate Extended struct with embedded field
+        assert_eq!(structs[1].name, "Extended");
+        assert_eq!(structs[1].children.len(), 2);
+
+        // Check for embedded Base field
+        let fields: Vec<_> = structs[1].children.iter()
+            .filter_map(|n| if let Node::Field(f) = n { Some(f) } else { None })
+            .collect();
+
+        assert_eq!(fields.len(), 2);
+        assert!(fields.iter().any(|f| f.name == "Base"), "Expected embedded Base field");
+        assert!(fields.iter().any(|f| f.name == "Name"), "Expected Name field");
+    }
+
+    #[test]
+    fn test_generic_function() {
+        let processor = GoProcessor::new().unwrap();
+        let source = r#"
+package main
+
+func Max[T comparable](a, b T) T {
+    if a > b {
+        return a
+    }
+    return b
+}
+
+func Map[T any, R any](slice []T, fn func(T) R) []R {
+    result := make([]R, len(slice))
+    return result
+}
+"#;
+        let opts = ProcessOptions::default();
+
+        let file = processor.process(source, Path::new("test.go"), &opts).unwrap();
+
+        let functions: Vec<_> = file.children.iter()
+            .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+            .collect();
+
+        assert_eq!(functions.len(), 2);
+
+        // Validate Max function with type parameters
+        assert_eq!(functions[0].name, "Max");
+        assert!(!functions[0].type_params.is_empty(),
+               "Expected type parameters for generic function");
+
+        // Validate Map function with multiple type parameters
+        assert_eq!(functions[1].name, "Map");
+        assert!(!functions[1].type_params.is_empty(),
+               "Expected type parameters for generic function");
+    }
+
+    #[test]
+    fn test_package_level_variables() {
+        let processor = GoProcessor::new().unwrap();
+        let source = r#"
+package main
+
+var GlobalCounter int = 0
+var (
+    AppName string = "MyApp"
+    Version string = "1.0.0"
+)
+"#;
+        let opts = ProcessOptions::default();
+
+        // Note: Current implementation may not parse package-level vars as separate nodes
+        let file = processor.process(source, Path::new("test.go"), &opts).unwrap();
+        assert!(file.path.contains("test.go"));
+
+        // This test validates the processor doesn't crash on package-level variables
+        // Full var parsing may be added in future enhancements
+    }
+
+    #[test]
+    fn test_unexported_types() {
+        let processor = GoProcessor::new().unwrap();
+        let source = r#"
+package main
+
+type publicStruct struct {
+    Public int
+    private int
+}
+
+func publicFunc() {}
+func privateFunc() {}
+
+type internalInterface interface {
+    method()
+}
+"#;
+        let opts = ProcessOptions::default();
+
+        let file = processor.process(source, Path::new("test.go"), &opts).unwrap();
+
+        // Validate visibility detection
+        let structs: Vec<_> = file.children.iter()
+            .filter_map(|n| if let Node::Class(cls) = n { Some(cls) } else { None })
+            .collect();
+
+        assert_eq!(structs.len(), 1);
+        assert_eq!(structs[0].name, "publicStruct");
+        assert_eq!(structs[0].visibility, Visibility::Internal,
+                  "Lowercase struct should be internal/unexported");
+
+        // Check field visibility
+        let fields: Vec<_> = structs[0].children.iter()
+            .filter_map(|n| if let Node::Field(f) = n { Some(f) } else { None })
+            .collect();
+
+        assert_eq!(fields[0].visibility, Visibility::Public, "Uppercase field should be public");
+        assert_eq!(fields[1].visibility, Visibility::Internal, "Lowercase field should be internal");
+
+        // Validate functions
+        let functions: Vec<_> = file.children.iter()
+            .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+            .collect();
+
+        assert_eq!(functions.len(), 2);
+        assert_eq!(functions[0].visibility, Visibility::Internal,
+                  "Lowercase function should be internal");
+        assert_eq!(functions[1].visibility, Visibility::Internal,
+                  "Lowercase function should be internal");
+    }
+
+    #[test]
+    fn test_multiple_return_values() {
+        let processor = GoProcessor::new().unwrap();
+        let source = r#"
+package main
+
+func Divide(a, b int) (int, error) {
+    if b == 0 {
+        return 0, errors.New("division by zero")
+    }
+    return a / b, nil
+}
+
+func GetUser(id int) (*User, bool, error) {
+    return nil, false, nil
+}
+"#;
+        let opts = ProcessOptions::default();
+
+        let file = processor.process(source, Path::new("test.go"), &opts).unwrap();
+
+        let functions: Vec<_> = file.children.iter()
+            .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+            .collect();
+
+        assert_eq!(functions.len(), 2);
+
+        // Validate Divide function
+        assert_eq!(functions[0].name, "Divide");
+        assert_eq!(functions[0].parameters.len(), 2);
+
+        // Validate GetUser function
+        assert_eq!(functions[1].name, "GetUser");
+        assert_eq!(functions[1].parameters.len(), 1);
+    }
+
+    #[test]
+    fn test_pointer_receiver() {
+        let processor = GoProcessor::new().unwrap();
+        let source = r#"
+package main
+
+type Buffer struct {
+    data []byte
+}
+
+func (b *Buffer) Write(p []byte) (int, error) {
+    b.data = append(b.data, p...)
+    return len(p), nil
+}
+
+func (b *Buffer) Reset() {
+    b.data = b.data[:0]
+}
+"#;
+        let opts = ProcessOptions::default();
+
+        let file = processor.process(source, Path::new("test.go"), &opts).unwrap();
+
+        let methods: Vec<_> = file.children.iter()
+            .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+            .collect();
+
+        assert_eq!(methods.len(), 2);
+
+        // Both methods have pointer receivers
+        assert_eq!(methods[0].name, "Write");
+        assert!(methods[0].modifiers.contains(&Modifier::Static),
+               "Pointer receiver method should have Static modifier");
+
+        assert_eq!(methods[1].name, "Reset");
+        assert!(methods[1].modifiers.contains(&Modifier::Static),
+               "Pointer receiver method should have Static modifier");
+    }
+
+    #[test]
+    fn test_variadic_parameters() {
+        let processor = GoProcessor::new().unwrap();
+        let source = r#"
+package main
+
+func Sum(numbers ...int) int {
+    total := 0
+    for _, n := range numbers {
+        total += n
+    }
+    return total
+}
+
+func Printf(format string, args ...interface{}) (int, error) {
+    return 0, nil
+}
+"#;
+        let opts = ProcessOptions::default();
+
+        let file = processor.process(source, Path::new("test.go"), &opts).unwrap();
+
+        let functions: Vec<_> = file.children.iter()
+            .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+            .collect();
+
+        assert_eq!(functions.len(), 2);
+
+        // Validate Sum function with variadic parameter
+        assert_eq!(functions[0].name, "Sum");
+        assert!(!functions[0].parameters.is_empty(), "Expected at least one parameter");
+
+        // Validate Printf function with format string and variadic args
+        assert_eq!(functions[1].name, "Printf");
+        assert!(functions[1].parameters.len() >= 1,
+               "Expected at least format parameter");
+    }
 }

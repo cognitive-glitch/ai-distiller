@@ -853,4 +853,417 @@ public class SimpleOOP {
             panic!("Expected a class");
         }
     }
+
+    // ===== Enhanced Test Coverage (11 new tests) =====
+
+    #[test]
+    fn test_empty_file() {
+        let source = "";
+        let processor = JavaProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let file = processor
+            .process(source, Path::new("Test.java"), &opts)
+            .unwrap();
+
+        assert_eq!(file.children.len(), 0, "Empty file should have no children");
+    }
+
+    #[test]
+    fn test_interface_with_default_methods() {
+        let source = r#"
+interface Logger {
+    void log(String message);
+
+    default void debug(String message) {
+        log("DEBUG: " + message);
+    }
+
+    default void error(String message) {
+        log("ERROR: " + message);
+    }
+}
+"#;
+        let processor = JavaProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let file = processor
+            .process(source, Path::new("Test.java"), &opts)
+            .unwrap();
+
+        assert_eq!(file.children.len(), 1);
+        if let ir::Node::Class(interface) = &file.children[0] {
+            assert_eq!(interface.name, "Logger");
+            assert!(interface.decorators.contains(&"interface".to_string()));
+
+            let methods: Vec<_> = interface
+                .children
+                .iter()
+                .filter_map(|n| if let ir::Node::Function(f) = n { Some(f) } else { None })
+                .collect();
+
+            assert_eq!(methods.len(), 3, "Expected 3 methods (1 abstract + 2 default)");
+            assert_eq!(methods[0].name, "log");
+            assert_eq!(methods[1].name, "debug");
+            assert_eq!(methods[2].name, "error");
+        } else {
+            panic!("Expected interface node");
+        }
+    }
+
+    #[test]
+    fn test_abstract_class() {
+        let source = r#"
+abstract class Shape {
+    protected String color;
+
+    public abstract double area();
+    public abstract double perimeter();
+
+    public void setColor(String color) {
+        this.color = color;
+    }
+}
+"#;
+        let processor = JavaProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let file = processor
+            .process(source, Path::new("Test.java"), &opts)
+            .unwrap();
+
+        assert_eq!(file.children.len(), 1);
+        if let ir::Node::Class(class) = &file.children[0] {
+            assert_eq!(class.name, "Shape");
+            assert!(class.modifiers.contains(&Modifier::Abstract),
+                   "Expected abstract modifier on class");
+
+            let abstract_methods: Vec<_> = class
+                .children
+                .iter()
+                .filter_map(|n| if let ir::Node::Function(f) = n { Some(f) } else { None })
+                .filter(|f| f.modifiers.contains(&Modifier::Abstract))
+                .collect();
+
+            assert_eq!(abstract_methods.len(), 2, "Expected 2 abstract methods");
+            assert_eq!(abstract_methods[0].name, "area");
+            assert_eq!(abstract_methods[1].name, "perimeter");
+        } else {
+            panic!("Expected class node");
+        }
+    }
+
+    #[test]
+    fn test_generic_class() {
+        let source = r#"
+public class Box<T> {
+    private T content;
+
+    public void set(T content) {
+        this.content = content;
+    }
+
+    public T get() {
+        return content;
+    }
+}
+"#;
+        let processor = JavaProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let file = processor
+            .process(source, Path::new("Test.java"), &opts)
+            .unwrap();
+
+        assert_eq!(file.children.len(), 1);
+        if let ir::Node::Class(class) = &file.children[0] {
+            assert_eq!(class.name, "Box");
+            assert_eq!(class.type_params.len(), 1, "Expected one type parameter");
+            assert_eq!(class.type_params[0].name, "T");
+
+            let fields: Vec<_> = class
+                .children
+                .iter()
+                .filter_map(|n| if let ir::Node::Field(f) = n { Some(f) } else { None })
+                .collect();
+
+            assert_eq!(fields.len(), 1);
+            assert_eq!(fields[0].name, "content");
+
+            let methods: Vec<_> = class
+                .children
+                .iter()
+                .filter_map(|n| if let ir::Node::Function(f) = n { Some(f) } else { None })
+                .collect();
+
+            assert_eq!(methods.len(), 2);
+        } else {
+            panic!("Expected class node");
+        }
+    }
+
+    #[test]
+    fn test_annotations() {
+        let source = r#"
+@Deprecated
+@SuppressWarnings("unchecked")
+public class LegacyService {
+    @Override
+    @Deprecated
+    public String toString() {
+        return "LegacyService";
+    }
+}
+"#;
+        let processor = JavaProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let file = processor
+            .process(source, Path::new("Test.java"), &opts)
+            .unwrap();
+
+        assert_eq!(file.children.len(), 1);
+        if let ir::Node::Class(class) = &file.children[0] {
+            assert_eq!(class.name, "LegacyService");
+
+            let methods: Vec<_> = class
+                .children
+                .iter()
+                .filter_map(|n| if let ir::Node::Function(f) = n { Some(f) } else { None })
+                .collect();
+
+            assert_eq!(methods.len(), 1);
+            assert_eq!(methods[0].name, "toString");
+            assert!(
+                !methods[0].decorators.is_empty(),
+                "Expected method to have annotations"
+            );
+        } else {
+            panic!("Expected class node");
+        }
+    }
+
+    #[test]
+    fn test_inner_class() {
+        let source = r#"
+public class Outer {
+    private int outerField;
+
+    public class Inner {
+        private int innerField;
+
+        public void innerMethod() {
+            outerField = 10;
+        }
+    }
+}
+"#;
+        let processor = JavaProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let file = processor
+            .process(source, Path::new("Test.java"), &opts)
+            .unwrap();
+
+        assert_eq!(file.children.len(), 1);
+        if let ir::Node::Class(outer) = &file.children[0] {
+            assert_eq!(outer.name, "Outer");
+
+            let nested_classes: Vec<_> = outer
+                .children
+                .iter()
+                .filter_map(|n| if let ir::Node::Class(c) = n { Some(c) } else { None })
+                .collect();
+
+            assert_eq!(nested_classes.len(), 1, "Expected one nested class");
+            assert_eq!(nested_classes[0].name, "Inner");
+            assert_eq!(nested_classes[0].visibility, Visibility::Public);
+        } else {
+            panic!("Expected class node");
+        }
+    }
+
+    #[test]
+    fn test_static_inner_class() {
+        let source = r#"
+public class Outer {
+    private static int staticField;
+
+    public static class StaticInner {
+        private int value;
+
+        public void method() {
+            staticField = 42;
+        }
+    }
+}
+"#;
+        let processor = JavaProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let file = processor
+            .process(source, Path::new("Test.java"), &opts)
+            .unwrap();
+
+        assert_eq!(file.children.len(), 1);
+        if let ir::Node::Class(outer) = &file.children[0] {
+            assert_eq!(outer.name, "Outer");
+
+            let nested_classes: Vec<_> = outer
+                .children
+                .iter()
+                .filter_map(|n| if let ir::Node::Class(c) = n { Some(c) } else { None })
+                .collect();
+
+            assert_eq!(nested_classes.len(), 1, "Expected one static nested class");
+            assert_eq!(nested_classes[0].name, "StaticInner");
+            // Note: tree-sitter-java may not always detect 'static' on nested classes
+        } else {
+            panic!("Expected class node");
+        }
+    }
+
+    #[test]
+    fn test_enum_with_methods() {
+        let source = r#"
+public enum Status {
+    ACTIVE, INACTIVE, PENDING;
+
+    public boolean isActive() {
+        return this == ACTIVE;
+    }
+}
+"#;
+        let processor = JavaProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let file = processor
+            .process(source, Path::new("Test.java"), &opts)
+            .unwrap();
+
+        // Note: tree-sitter-java parses enums as enum_declaration, not class_declaration
+        // This test validates that we don't crash on enum parsing
+        assert!(!file.children.is_empty(), "Expected enum to be parsed");
+    }
+
+    #[test]
+    fn test_varargs_method() {
+        let source = r#"
+public class Util {
+    public static int sum(int... numbers) {
+        int total = 0;
+        for (int n : numbers) {
+            total += n;
+        }
+        return total;
+    }
+}
+"#;
+        let processor = JavaProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let file = processor
+            .process(source, Path::new("Test.java"), &opts)
+            .unwrap();
+
+        assert_eq!(file.children.len(), 1);
+        if let ir::Node::Class(class) = &file.children[0] {
+            assert_eq!(class.name, "Util");
+
+            let methods: Vec<_> = class
+                .children
+                .iter()
+                .filter_map(|n| if let ir::Node::Function(f) = n { Some(f) } else { None })
+                .collect();
+
+            assert_eq!(methods.len(), 1);
+            assert_eq!(methods[0].name, "sum");
+            assert_eq!(methods[0].parameters.len(), 1);
+            assert!(
+                methods[0].parameters[0].is_variadic,
+                "Expected parameter to be variadic"
+            );
+        } else {
+            panic!("Expected class node");
+        }
+    }
+
+    #[test]
+    fn test_synchronized_method() {
+        let source = r#"
+public class Counter {
+    private int count = 0;
+
+    public synchronized void increment() {
+        count++;
+    }
+
+    public synchronized int getCount() {
+        return count;
+    }
+}
+"#;
+        let processor = JavaProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let file = processor
+            .process(source, Path::new("Test.java"), &opts)
+            .unwrap();
+
+        assert_eq!(file.children.len(), 1);
+        if let ir::Node::Class(class) = &file.children[0] {
+            assert_eq!(class.name, "Counter");
+
+            let methods: Vec<_> = class
+                .children
+                .iter()
+                .filter_map(|n| if let ir::Node::Function(f) = n { Some(f) } else { None })
+                .collect();
+
+            assert_eq!(methods.len(), 2);
+            assert_eq!(methods[0].name, "increment");
+            assert_eq!(methods[1].name, "getCount");
+            // Note: synchronized is not currently tracked in modifiers but parsed correctly
+        } else {
+            panic!("Expected class node");
+        }
+    }
+
+    #[test]
+    fn test_final_class() {
+        let source = r#"
+public final class Constants {
+    public static final int MAX_VALUE = 100;
+    public static final String APP_NAME = "MyApp";
+
+    public final String getName() {
+        return APP_NAME;
+    }
+}
+"#;
+        let processor = JavaProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let file = processor
+            .process(source, Path::new("Test.java"), &opts)
+            .unwrap();
+
+        assert_eq!(file.children.len(), 1);
+        if let ir::Node::Class(class) = &file.children[0] {
+            assert_eq!(class.name, "Constants");
+            assert!(class.modifiers.contains(&Modifier::Final),
+                   "Expected final modifier on class");
+
+            let fields: Vec<_> = class
+                .children
+                .iter()
+                .filter_map(|n| if let ir::Node::Field(f) = n { Some(f) } else { None })
+                .collect();
+
+            assert_eq!(fields.len(), 2);
+            assert!(fields[0].modifiers.contains(&Modifier::Final),
+                   "Expected final modifier on field");
+
+            let methods: Vec<_> = class
+                .children
+                .iter()
+                .filter_map(|n| if let ir::Node::Function(f) = n { Some(f) } else { None })
+                .collect();
+
+            assert_eq!(methods.len(), 1);
+            assert!(methods[0].modifiers.contains(&Modifier::Final),
+                   "Expected final modifier on method");
+        } else {
+            panic!("Expected class node");
+        }
+    }
 }

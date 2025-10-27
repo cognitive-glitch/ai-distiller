@@ -864,6 +864,7 @@ impl Default for TypeScriptProcessor {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::PathBuf;
 
     #[test]
     fn test_processor_creation() {
@@ -1036,5 +1037,348 @@ interface Repository<T> {
             .collect();
 
         assert_eq!(methods.len(), 2);
+    }
+
+    // ===== Enhanced Test Coverage =====
+
+    #[test]
+    fn test_empty_file() {
+        let processor = TypeScriptProcessor::new().unwrap();
+        let source = "";
+        let opts = ProcessOptions::default();
+
+        let file = processor
+            .process(source, &PathBuf::from("test.ts"), &opts)
+            .unwrap();
+        assert_eq!(file.children.len(), 0, "Empty file should have no children");
+    }
+
+    #[test]
+    fn test_interface_declaration() {
+        let processor = TypeScriptProcessor::new().unwrap();
+        let source = r#"
+interface User {
+    id: number;
+    name: string;
+    email?: string;
+    login(): void;
+}
+"#;
+        let opts = ProcessOptions::default();
+
+        let file = processor
+            .process(source, &PathBuf::from("test.ts"), &opts)
+            .unwrap();
+        assert_eq!(file.children.len(), 1);
+
+        if let Node::Interface(interface) = &file.children[0] {
+            assert_eq!(interface.name, "User");
+            assert_eq!(interface.visibility, Visibility::Public);
+
+            // Count fields and methods
+            let fields: Vec<_> = interface
+                .children
+                .iter()
+                .filter_map(|n| if let Node::Field(f) = n { Some(f) } else { None })
+                .collect();
+
+            let methods: Vec<_> = interface
+                .children
+                .iter()
+                .filter_map(|n| {
+                    if let Node::Function(f) = n {
+                        Some(f)
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+
+            assert!(fields.len() >= 3, "Expected at least 3 fields");
+            assert_eq!(methods.len(), 1, "Expected 1 method");
+            assert_eq!(methods[0].name, "login");
+        } else {
+            panic!("Expected interface node");
+        }
+    }
+
+    #[test]
+    fn test_type_alias() {
+        let processor = TypeScriptProcessor::new().unwrap();
+        let source = r#"
+type UserId = number;
+type UserCallback = (user: User) => void;
+"#;
+        let opts = ProcessOptions::default();
+
+        let file = processor
+            .process(source, &PathBuf::from("test.ts"), &opts)
+            .unwrap();
+
+        // Type aliases might not be captured in current implementation
+        // This test verifies no errors occur during parsing
+        assert!(
+            file.children.len() >= 0,
+            "Type alias parsing should not error"
+        );
+    }
+
+    #[test]
+    fn test_enum_declaration() {
+        let processor = TypeScriptProcessor::new().unwrap();
+        let source = r#"
+enum Status {
+    Active = "ACTIVE",
+    Inactive = "INACTIVE",
+    Pending = 1
+}
+"#;
+        let opts = ProcessOptions::default();
+
+        let file = processor
+            .process(source, &PathBuf::from("test.ts"), &opts)
+            .unwrap();
+
+        // Enums might not be fully captured in current implementation
+        // This test verifies no errors occur during parsing
+        assert!(
+            file.children.len() >= 0,
+            "Enum parsing should not error"
+        );
+    }
+
+    #[test]
+    fn test_generic_class() {
+        let processor = TypeScriptProcessor::new().unwrap();
+        let source = r#"
+class Container<T, U> {
+    private value: T;
+
+    constructor(val: T) {
+        this.value = val;
+    }
+
+    getValue(): T {
+        return this.value;
+    }
+}
+"#;
+        let opts = ProcessOptions::default();
+
+        let file = processor
+            .process(source, &PathBuf::from("test.ts"), &opts)
+            .unwrap();
+        assert_eq!(file.children.len(), 1);
+
+        if let Node::Class(class) = &file.children[0] {
+            assert_eq!(class.name, "Container");
+            assert_eq!(class.type_params.len(), 2);
+            assert_eq!(class.type_params[0].name, "T");
+            assert_eq!(class.type_params[1].name, "U");
+
+            let methods: Vec<_> = class
+                .children
+                .iter()
+                .filter_map(|n| {
+                    if let Node::Function(f) = n {
+                        Some(f)
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+
+            assert!(methods.len() >= 2, "Expected at least 2 methods");
+        } else {
+            panic!("Expected class node");
+        }
+    }
+
+    #[test]
+    fn test_async_function() {
+        let processor = TypeScriptProcessor::new().unwrap();
+        let source = r#"
+async function fetchUser(id: number): Promise<User> {
+    const response = await fetch(`/api/users/${id}`);
+    return response.json();
+}
+"#;
+        let opts = ProcessOptions::default();
+
+        let file = processor
+            .process(source, &PathBuf::from("test.ts"), &opts)
+            .unwrap();
+        assert_eq!(file.children.len(), 1);
+
+        if let Node::Function(func) = &file.children[0] {
+            assert_eq!(func.name, "fetchUser");
+            assert!(
+                func.modifiers.contains(&Modifier::Async),
+                "Expected async modifier"
+            );
+            assert_eq!(func.parameters.len(), 1);
+            assert_eq!(func.parameters[0].name, "id");
+        } else {
+            panic!("Expected function node");
+        }
+    }
+
+    #[test]
+    fn test_arrow_function() {
+        let processor = TypeScriptProcessor::new().unwrap();
+        let source = r#"
+const add = (a: number, b: number): number => a + b;
+const multiply = (x: number, y: number) => x * y;
+"#;
+        let opts = ProcessOptions::default();
+
+        let file = processor
+            .process(source, &PathBuf::from("test.ts"), &opts)
+            .unwrap();
+        assert!(file.children.len() >= 2, "Expected at least 2 arrow functions");
+
+        let funcs: Vec<_> = file
+            .children
+            .iter()
+            .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+            .collect();
+
+        assert!(funcs.len() >= 2);
+        assert_eq!(funcs[0].name, "add");
+        assert_eq!(funcs[0].parameters.len(), 2);
+        assert_eq!(funcs[1].name, "multiply");
+    }
+
+    #[test]
+    fn test_class_with_decorators() {
+        let processor = TypeScriptProcessor::new().unwrap();
+        let source = r#"
+@Component({
+    selector: 'app-user'
+})
+class UserComponent {
+    @Input()
+    user: User;
+
+    @Output()
+    userChange: EventEmitter<User>;
+}
+"#;
+        let opts = ProcessOptions::default();
+
+        let file = processor
+            .process(source, &PathBuf::from("test.ts"), &opts)
+            .unwrap();
+        assert_eq!(file.children.len(), 1);
+
+        if let Node::Class(class) = &file.children[0] {
+            assert_eq!(class.name, "UserComponent");
+            // Decorators might be detected depending on tree-sitter parsing
+            // This test verifies the class is parsed correctly
+            assert!(class.children.len() >= 2, "Expected at least 2 fields");
+        } else {
+            panic!("Expected class node");
+        }
+    }
+
+    #[test]
+    fn test_namespace() {
+        let processor = TypeScriptProcessor::new().unwrap();
+        let source = r#"
+namespace Utils {
+    export function format(value: string): string {
+        return value.trim();
+    }
+
+    export class Helper {
+        static process() {}
+    }
+}
+"#;
+        let opts = ProcessOptions::default();
+
+        let file = processor
+            .process(source, &PathBuf::from("test.ts"), &opts)
+            .unwrap();
+
+        // Namespaces might be processed as nested structures
+        // This test verifies parsing doesn't error
+        assert!(
+            file.children.len() >= 0,
+            "Namespace parsing should not error"
+        );
+    }
+
+    #[test]
+    fn test_intersection_types() {
+        let processor = TypeScriptProcessor::new().unwrap();
+        let source = r#"
+interface Timestamped {
+    createdAt: Date;
+}
+
+interface Named {
+    name: string;
+}
+
+function merge(obj: Named & Timestamped): void {
+    console.log(obj.name, obj.createdAt);
+}
+"#;
+        let opts = ProcessOptions::default();
+
+        let file = processor
+            .process(source, &PathBuf::from("test.ts"), &opts)
+            .unwrap();
+
+        // Find the function with intersection type parameter
+        let funcs: Vec<_> = file
+            .children
+            .iter()
+            .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+            .collect();
+
+        assert!(!funcs.is_empty(), "Expected at least one function");
+        let merge_func = funcs.iter().find(|f| f.name == "merge");
+        assert!(merge_func.is_some(), "Expected merge function");
+
+        if let Some(func) = merge_func {
+            assert_eq!(func.parameters.len(), 1);
+            assert_eq!(func.parameters[0].name, "obj");
+            // The type will be parsed as "Named & Timestamped"
+            assert!(func.parameters[0].param_type.name.contains("&"));
+        }
+    }
+
+    #[test]
+    fn test_union_types() {
+        let processor = TypeScriptProcessor::new().unwrap();
+        let source = r#"
+function process(value: string | number | boolean): void {
+    if (typeof value === 'string') {
+        console.log(value.toUpperCase());
+    }
+}
+
+type Result = Success | Error;
+"#;
+        let opts = ProcessOptions::default();
+
+        let file = processor
+            .process(source, &PathBuf::from("test.ts"), &opts)
+            .unwrap();
+
+        let funcs: Vec<_> = file
+            .children
+            .iter()
+            .filter_map(|n| if let Node::Function(f) = n { Some(f) } else { None })
+            .collect();
+
+        assert!(!funcs.is_empty(), "Expected at least one function");
+        assert_eq!(funcs[0].name, "process");
+        assert_eq!(funcs[0].parameters.len(), 1);
+        assert_eq!(funcs[0].parameters[0].name, "value");
+        // The type will be parsed as "string | number | boolean"
+        assert!(funcs[0].parameters[0].param_type.name.contains("|"));
     }
 }

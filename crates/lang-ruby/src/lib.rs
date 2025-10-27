@@ -460,4 +460,456 @@ end
             panic!("Expected a class");
         }
     }
+
+    // ===== Enhanced Test Coverage (11 new tests) =====
+
+    #[test]
+    fn test_empty_file() {
+        let source = "";
+        let processor = RubyProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let result = processor.process(source, Path::new("test.rb"), &opts);
+        assert!(result.is_ok());
+
+        let file = result.unwrap();
+        assert_eq!(file.children.len(), 0, "Empty file should have no children");
+    }
+
+    #[test]
+    fn test_class_methods() {
+        let source = r#"
+class Calculator
+  def self.add(a, b)
+    a + b
+  end
+
+  def self.multiply(x, y)
+    x * y
+  end
+
+  def instance_method
+    "instance"
+  end
+end
+"#;
+        let processor = RubyProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let result = processor.process(source, Path::new("test.rb"), &opts);
+        assert!(result.is_ok());
+
+        let file = result.unwrap();
+        assert_eq!(file.children.len(), 1);
+
+        if let ir::Node::Class(class) = &file.children[0] {
+            assert_eq!(class.name, "Calculator");
+            assert_eq!(class.children.len(), 3);
+
+            // Check that class methods are captured
+            let methods: Vec<_> = class
+                .children
+                .iter()
+                .filter_map(|n| if let ir::Node::Function(f) = n { Some(f) } else { None })
+                .collect();
+
+            assert_eq!(methods.len(), 3);
+            assert_eq!(methods[0].name, "add");
+            assert_eq!(methods[1].name, "multiply");
+            assert_eq!(methods[2].name, "instance_method");
+        } else {
+            panic!("Expected a class");
+        }
+    }
+
+    #[test]
+    fn test_attr_accessor() {
+        let source = r#"
+class Person
+  attr_accessor :name, :age
+  attr_reader :id
+  attr_writer :email
+
+  def initialize(id)
+    @id = id
+  end
+end
+"#;
+        let processor = RubyProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let result = processor.process(source, Path::new("test.rb"), &opts);
+        assert!(result.is_ok());
+
+        let file = result.unwrap();
+        assert_eq!(file.children.len(), 1);
+
+        if let ir::Node::Class(class) = &file.children[0] {
+            assert_eq!(class.name, "Person");
+            // At minimum, should have initialize method
+            assert!(class.children.len() >= 1);
+        } else {
+            panic!("Expected a class");
+        }
+    }
+
+    #[test]
+    fn test_block_syntax() {
+        let source = r#"
+def with_block(items, &block)
+  items.each(&block)
+end
+
+def yield_example
+  yield if block_given?
+end
+"#;
+        let processor = RubyProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let result = processor.process(source, Path::new("test.rb"), &opts);
+        assert!(result.is_ok());
+
+        let file = result.unwrap();
+        assert_eq!(file.children.len(), 2);
+
+        if let ir::Node::Function(func) = &file.children[0] {
+            assert_eq!(func.name, "with_block");
+            // Should capture block parameter
+            assert!(func.parameters.len() >= 1);
+        } else {
+            panic!("Expected a function");
+        }
+    }
+
+    #[test]
+    fn test_singleton_methods() {
+        let source = r#"
+class MyClass
+  class << self
+    def singleton_one
+      "singleton"
+    end
+
+    def singleton_two(arg)
+      arg
+    end
+  end
+
+  def self.class_method
+    "class method"
+  end
+end
+"#;
+        let processor = RubyProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let result = processor.process(source, Path::new("test.rb"), &opts);
+        assert!(result.is_ok());
+
+        let file = result.unwrap();
+        assert_eq!(file.children.len(), 1);
+
+        if let ir::Node::Class(class) = &file.children[0] {
+            assert_eq!(class.name, "MyClass");
+            // At minimum should capture the self.class_method
+            assert!(class.children.len() >= 1);
+        } else {
+            panic!("Expected a class");
+        }
+    }
+
+    #[test]
+    fn test_module_mixin() {
+        let source = r#"
+module Loggable
+  def log(message)
+    puts message
+  end
+end
+
+class Service
+  include Loggable
+
+  def perform
+    log("performing")
+  end
+end
+"#;
+        let processor = RubyProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let result = processor.process(source, Path::new("test.rb"), &opts);
+        assert!(result.is_ok());
+
+        let file = result.unwrap();
+        assert_eq!(file.children.len(), 2);
+
+        // Check module
+        if let ir::Node::Class(module) = &file.children[0] {
+            assert_eq!(module.name, "Loggable");
+            assert!(module.decorators.contains(&"module".to_string()));
+        } else {
+            panic!("Expected a module");
+        }
+
+        // Check class
+        if let ir::Node::Class(class) = &file.children[1] {
+            assert_eq!(class.name, "Service");
+        } else {
+            panic!("Expected a class");
+        }
+    }
+
+    #[test]
+    fn test_visibility_keywords() {
+        let source = r#"
+class VisibilityExample
+  def public_method
+    "public"
+  end
+
+  private
+
+  def private_method
+    "private"
+  end
+
+  protected
+
+  def protected_method
+    "protected"
+  end
+
+  public
+
+  def another_public
+    "public again"
+  end
+end
+"#;
+        let processor = RubyProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let result = processor.process(source, Path::new("test.rb"), &opts);
+        assert!(result.is_ok());
+
+        let file = result.unwrap();
+        assert_eq!(file.children.len(), 1);
+
+        if let ir::Node::Class(class) = &file.children[0] {
+            assert_eq!(class.name, "VisibilityExample");
+            assert_eq!(class.children.len(), 4);
+
+            let methods: Vec<_> = class
+                .children
+                .iter()
+                .filter_map(|n| if let ir::Node::Function(f) = n { Some(f) } else { None })
+                .collect();
+
+            assert_eq!(methods.len(), 4);
+            assert_eq!(methods[0].name, "public_method");
+            assert_eq!(methods[1].name, "private_method");
+            assert_eq!(methods[2].name, "protected_method");
+            assert_eq!(methods[3].name, "another_public");
+        } else {
+            panic!("Expected a class");
+        }
+    }
+
+    #[test]
+    fn test_method_aliasing() {
+        let source = r#"
+class Aliased
+  def original_method
+    "original"
+  end
+
+  alias_method :new_name, :original_method
+  alias another_alias original_method
+
+  def another_method
+    "another"
+  end
+end
+"#;
+        let processor = RubyProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let result = processor.process(source, Path::new("test.rb"), &opts);
+        assert!(result.is_ok());
+
+        let file = result.unwrap();
+        assert_eq!(file.children.len(), 1);
+
+        if let ir::Node::Class(class) = &file.children[0] {
+            assert_eq!(class.name, "Aliased");
+            // At minimum should capture the actual method definitions
+            assert!(class.children.len() >= 2);
+        } else {
+            panic!("Expected a class");
+        }
+    }
+
+    #[test]
+    fn test_nested_classes() {
+        let source = r#"
+class Outer
+  class Inner
+    def inner_method
+      "inner"
+    end
+  end
+
+  class AnotherInner
+    def another_inner_method
+      "another"
+    end
+  end
+
+  def outer_method
+    "outer"
+  end
+end
+"#;
+        let processor = RubyProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let result = processor.process(source, Path::new("test.rb"), &opts);
+        assert!(result.is_ok());
+
+        let file = result.unwrap();
+        assert_eq!(file.children.len(), 1);
+
+        if let ir::Node::Class(outer) = &file.children[0] {
+            assert_eq!(outer.name, "Outer");
+            // Should have 2 nested classes + 1 method
+            assert_eq!(outer.children.len(), 3);
+
+            // Find nested classes
+            let nested_classes: Vec<_> = outer
+                .children
+                .iter()
+                .filter_map(|n| if let ir::Node::Class(c) = n { Some(c) } else { None })
+                .collect();
+
+            assert_eq!(nested_classes.len(), 2);
+            assert_eq!(nested_classes[0].name, "Inner");
+            assert_eq!(nested_classes[1].name, "AnotherInner");
+        } else {
+            panic!("Expected a class");
+        }
+    }
+
+    #[test]
+    fn test_multiple_inheritance() {
+        let source = r#"
+module Logging
+  def log(msg)
+    puts msg
+  end
+end
+
+module Validation
+  def validate
+    true
+  end
+end
+
+module Serialization
+  def to_json
+    "{}"
+  end
+end
+
+class MultiMixin
+  include Logging
+  include Validation
+  include Serialization
+
+  def process
+    validate && log("processing")
+  end
+end
+"#;
+        let processor = RubyProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let result = processor.process(source, Path::new("test.rb"), &opts);
+        assert!(result.is_ok());
+
+        let file = result.unwrap();
+        // 3 modules + 1 class
+        assert_eq!(file.children.len(), 4);
+
+        // Verify modules
+        let modules: Vec<_> = file
+            .children
+            .iter()
+            .filter_map(|n| if let ir::Node::Class(c) = n {
+                if c.decorators.contains(&"module".to_string()) {
+                    Some(c)
+                } else {
+                    None
+                }
+            } else {
+                None
+            })
+            .collect();
+
+        assert_eq!(modules.len(), 3);
+        assert_eq!(modules[0].name, "Logging");
+        assert_eq!(modules[1].name, "Validation");
+        assert_eq!(modules[2].name, "Serialization");
+
+        // Verify class
+        if let ir::Node::Class(class) = &file.children[3] {
+            assert_eq!(class.name, "MultiMixin");
+        } else {
+            panic!("Expected a class");
+        }
+    }
+
+    #[test]
+    fn test_multiple_methods_with_parameters() {
+        let source = r#"
+class Calculator
+  def add(a, b)
+    a + b
+  end
+
+  def subtract(x, y)
+    x - y
+  end
+
+  def multiply(*numbers)
+    numbers.reduce(1, :*)
+  end
+
+  def divide(numerator, denominator = 1)
+    numerator / denominator
+  end
+end
+"#;
+        let processor = RubyProcessor::new().unwrap();
+        let opts = ProcessOptions::default();
+        let result = processor.process(source, Path::new("test.rb"), &opts);
+        assert!(result.is_ok());
+
+        let file = result.unwrap();
+        assert_eq!(file.children.len(), 1);
+
+        if let ir::Node::Class(class) = &file.children[0] {
+            assert_eq!(class.name, "Calculator");
+            assert_eq!(class.children.len(), 4);
+
+            let methods: Vec<_> = class
+                .children
+                .iter()
+                .filter_map(|n| if let ir::Node::Function(f) = n { Some(f) } else { None })
+                .collect();
+
+            assert_eq!(methods.len(), 4);
+            assert_eq!(methods[0].name, "add");
+            assert_eq!(methods[0].parameters.len(), 2);
+            assert_eq!(methods[1].name, "subtract");
+            assert_eq!(methods[1].parameters.len(), 2);
+            assert_eq!(methods[2].name, "multiply");
+            assert!(methods[2].parameters.len() >= 1); // variadic parameter
+            assert_eq!(methods[3].name, "divide");
+            assert!(methods[3].parameters.len() >= 1); // required + optional
+        } else {
+            panic!("Expected a class");
+        }
+    }
 }
