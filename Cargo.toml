@@ -15,6 +15,7 @@ members = [
     "crates/lang-cpp",
     "crates/lang-php",
     "crates/lang-csharp",
+    "crates/lang-c",
     # Language processors will be added here as they're created
     # Formatters will be added here as they're created
 ]
