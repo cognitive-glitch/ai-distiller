@@ -103,15 +103,13 @@ The MCP server provides 4 core operations:
 
 ### Core Abstractions
 
-**LanguageProcessor Trait** (`distiller-core/src/processor.rs`):
+**LanguageProcessor Trait** (`distiller-core/src/processor/language.rs`):
 ```rust
 pub trait LanguageProcessor: Send + Sync {
-    fn language(&self) -> &str;
-    fn supported_extensions(&self) -> &[&str];
-    fn can_process(&self, filename: &str) -> bool;
-    fn process_with_options(&self, reader: Box<dyn Read>,
-                          filename: &str,
-                          options: &ProcessOptions) -> Result<File>;
+    fn language(&self) -> &'static str;
+    fn supported_extensions(&self) -> &'static [&'static str];
+    fn can_process(&self, path: &Path) -> bool;
+    fn process(&self, source: &str, path: &Path, opts: &ProcessOptions) -> Result<File>;
 }
 ```
 
@@ -205,24 +203,24 @@ impl PythonProcessor {
 }
 
 impl LanguageProcessor for PythonProcessor {
-    fn language(&self) -> &str { "python" }
+    fn language(&self) -> &'static str { "python" }
 
-    fn supported_extensions(&self) -> &[&str] {
-        &["py", "pyi", "pyw"]
+    fn supported_extensions(&self) -> &'static [&'static str] {
+        &["py", "pyw"]
     }
 
-    fn can_process(&self, filename: &str) -> bool {
-        // Check file extension
+    fn can_process(&self, path: &Path) -> bool {
+        path.extension()
+            .and_then(|ext| ext.to_str())
+            .is_some_and(|ext| ext == "py" || ext == "pyw")
     }
 
-    fn process_with_options(&self,
-                          reader: Box<dyn Read>,
-                          filename: &str,
-                          options: &ProcessOptions) -> Result<File> {
-        // 1. Read source code
-        // 2. Parse with tree-sitter via pool
-        // 3. Walk AST and build IR nodes
-        // 4. Return File node (stripper applied later by processor)
+    fn process(&self, source: &str, path: &Path, _opts: &ProcessOptions) -> Result<File> {
+        let filename = path.to_string_lossy().into_owned();
+        // 1. Parse source with tree-sitter via pool
+        // 2. Walk AST and build IR nodes
+        // 3. Return File node (stripper applied later by processor)
+        self.parse_source(source, &filename)
     }
 }
 ```

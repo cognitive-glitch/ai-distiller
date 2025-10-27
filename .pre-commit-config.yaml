@@ -33,6 +33,6 @@ repos:
       - id: cargo-clippy
         name: Cargo Clippy
         language: system
-        entry: cargo clippy --all-targets --all-features --workspace --
+        entry: cargo clippy --all-targets --all-features --workspace -- -D warnings
         files: \.rs$
         pass_filenames: false # Always run, regardless of changed files
