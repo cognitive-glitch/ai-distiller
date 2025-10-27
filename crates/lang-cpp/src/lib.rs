@@ -51,7 +51,7 @@ impl CppProcessor {
         if let Some(p) = parent
             && p.kind() == "template_declaration"
         {
-            type_params = self.parse_template_parameters(p, source);
+            type_params = Self::parse_template_parameters(p, source);
         }
 
         let mut cursor = node.walk();
@@ -63,7 +63,7 @@ impl CppProcessor {
                     }
                 }
                 "base_class_clause" => {
-                    extends = self.parse_base_classes(child, source);
+                    extends = Self::parse_base_classes(child, source);
                 }
                 "field_declaration_list" => {
                     self.parse_class_body(child, source, &mut children)?;
@@ -90,7 +90,7 @@ impl CppProcessor {
         }))
     }
 
-    fn parse_template_parameters(&self, node: TSNode, source: &str) -> Vec<TypeParam> {
+    fn parse_template_parameters(node: TSNode, source: &str) -> Vec<TypeParam> {
         let mut params = Vec::new();
         let mut cursor = node.walk();
 
@@ -121,7 +121,7 @@ impl CppProcessor {
         params
     }
 
-    fn parse_base_classes(&self, node: TSNode, source: &str) -> Vec<TypeRef> {
+    fn parse_base_classes(node: TSNode, source: &str) -> Vec<TypeRef> {
         let mut bases = Vec::new();
         let mut cursor = node.walk();
 
@@ -141,7 +141,7 @@ impl CppProcessor {
         for child in node.children(&mut cursor) {
             match child.kind() {
                 "access_specifier" => {
-                    current_visibility = self.parse_access_specifier(child, source);
+                    current_visibility = Self::parse_access_specifier(child, source);
                 }
                 "function_definition" => {
                     if let Some(mut func) = self.parse_function(child, source)? {
@@ -150,7 +150,7 @@ impl CppProcessor {
                     }
                 }
                 "field_declaration" => {
-                    if let Some(mut field) = self.parse_field(child, source)? {
+                    if let Some(mut field) = Self::parse_field(child, source)? {
                         field.visibility = current_visibility;
                         children.push(Node::Field(field));
                     }
@@ -168,7 +168,7 @@ impl CppProcessor {
         Ok(())
     }
 
-    fn parse_access_specifier(&self, node: TSNode, source: &str) -> Visibility {
+    fn parse_access_specifier(node: TSNode, source: &str) -> Visibility {
         let text = Self::node_text(node, source);
         match text.as_str() {
             "public" => Visibility::Public,
@@ -255,7 +255,7 @@ impl CppProcessor {
                     name = Self::node_text(child, source);
                 }
                 "parameter_list" => {
-                    *parameters = self.parse_parameters(child, source);
+                    *parameters = Self::parse_parameters(child, source);
                 }
                 "type_qualifier" => {
                     let text = Self::node_text(child, source);
@@ -278,7 +278,7 @@ impl CppProcessor {
         name
     }
 
-    fn parse_parameters(&self, node: TSNode, source: &str) -> Vec<Parameter> {
+    fn parse_parameters(node: TSNode, source: &str) -> Vec<Parameter> {
         let mut parameters = Vec::new();
         let mut cursor = node.walk();
 
@@ -321,7 +321,7 @@ impl CppProcessor {
         parameters
     }
 
-    fn parse_field(&self, node: TSNode, source: &str) -> Result<Option<Field>> {
+    fn parse_field(node: TSNode, source: &str) -> Result<Option<Field>> {
         let mut name = String::new();
         let mut field_type = None;
         let visibility = Visibility::Private; // Will be overridden by caller
@@ -400,7 +400,7 @@ impl CppProcessor {
             "preproc_include" => {
                 // Parse includes as imports
                 let text = Self::node_text(node, source);
-                if let Some(import) = self.parse_include(text) {
+                if let Some(import) = Self::parse_include(text) {
                     file.children.push(Node::Import(import));
                 }
             }
@@ -415,7 +415,7 @@ impl CppProcessor {
         Ok(())
     }
 
-    fn parse_include(&self, text: String) -> Option<Import> {
+    fn parse_include(text: String) -> Option<Import> {
         // Extract module from #include <module> or #include "module"
         let text = text.trim();
         if !text.starts_with("#include") {

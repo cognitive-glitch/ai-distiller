@@ -57,7 +57,7 @@ impl SwiftProcessor {
         (visibility, modifiers)
     }
 
-    fn parse_type_parameters(&self, node: TSNode, source: &str) -> Vec<TypeParam> {
+    fn parse_type_parameters(node: TSNode, source: &str) -> Vec<TypeParam> {
         let mut type_params = Vec::new();
         let mut cursor = node.walk();
 
@@ -103,7 +103,7 @@ impl SwiftProcessor {
         type_params
     }
 
-    fn get_class_type(&self, node: TSNode, _source: &str) -> Option<String> {
+    fn get_class_type(node: TSNode, _source: &str) -> Option<String> {
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
             match child.kind() {
@@ -118,12 +118,12 @@ impl SwiftProcessor {
     }
 
     fn parse_class_declaration(&self, node: TSNode, source: &str) -> Result<Option<Class>> {
-        let class_type = self.get_class_type(node, source);
+        let class_type = Self::get_class_type(node, source);
         let mut name = String::new();
         let mut extends = Vec::new();
         let mut children = Vec::new();
         let (visibility, extra_modifiers) = Self::parse_modifiers(node, source);
-        let type_params = self.parse_type_parameters(node, source);
+        let type_params = Self::parse_type_parameters(node, source);
 
         let line_start = node.start_position().row + 1;
         let line_end = node.end_position().row + 1;
@@ -137,7 +137,7 @@ impl SwiftProcessor {
                     }
                 }
                 "type_inheritance_clause" | "inheritance_specifier" => {
-                    self.parse_type_inheritance(child, source, &mut extends)?;
+                    Self::parse_type_inheritance(child, source, &mut extends)?;
                 }
                 "class_body" | "enum_class_body" | "struct_body" | "protocol_body" => {
                     self.parse_body(child, source, &mut children)?;
@@ -198,7 +198,7 @@ impl SwiftProcessor {
                     }
                 }
                 "type_inheritance_clause" | "inheritance_specifier" => {
-                    self.parse_type_inheritance(child, source, &mut extends)?;
+                    Self::parse_type_inheritance(child, source, &mut extends)?;
                 }
                 "protocol_body" => {
                     self.parse_body(child, source, &mut children)?;
@@ -222,7 +222,6 @@ impl SwiftProcessor {
     }
 
     fn parse_type_inheritance(
-        &self,
         node: TSNode,
         source: &str,
         extends: &mut Vec<TypeRef>,
@@ -244,7 +243,7 @@ impl SwiftProcessor {
         let mut parameters = Vec::new();
         let mut return_type = None;
         let (visibility, _) = Self::parse_modifiers(node, source);
-        let type_params = self.parse_type_parameters(node, source);
+        let type_params = Self::parse_type_parameters(node, source);
 
         let line_start = node.start_position().row + 1;
         let line_end = node.end_position().row + 1;
@@ -260,7 +259,7 @@ impl SwiftProcessor {
                 }
                 // Direct parameter handling (tree-sitter-swift puts parameters as direct children)
                 "parameter" => {
-                    self.parse_single_parameter(child, source, &mut parameters)?;
+                    Self::parse_single_parameter(child, source, &mut parameters)?;
                 }
                 // Legacy parameter wrapper handling (for compatibility)
                 "function_value_parameters" | "parameter_clause" => {
@@ -322,14 +321,13 @@ impl SwiftProcessor {
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
             if child.kind() == "parameter" || child.kind() == "function_value_parameter" {
-                self.parse_single_parameter(child, source, params)?;
+                Self::parse_single_parameter(child, source, params)?;
             }
         }
         Ok(())
     }
 
     fn parse_single_parameter(
-        &self,
         node: TSNode,
         source: &str,
         params: &mut Vec<Parameter>,
@@ -383,7 +381,7 @@ impl SwiftProcessor {
         Ok(())
     }
 
-    fn parse_property(&self, node: TSNode, source: &str) -> Result<Option<Field>> {
+    fn parse_property(node: TSNode, source: &str) -> Result<Option<Field>> {
         let mut name = String::new();
         let mut field_type = None;
         let (visibility, _) = Self::parse_modifiers(node, source);
@@ -436,7 +434,7 @@ impl SwiftProcessor {
                     }
                 }
                 "property_declaration" | "protocol_property_declaration" => {
-                    if let Some(field) = self.parse_property(child, source)? {
+                    if let Some(field) = Self::parse_property(child, source)? {
                         children.push(ir::Node::Field(field));
                     }
                 }

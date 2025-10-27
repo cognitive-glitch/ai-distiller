@@ -131,12 +131,7 @@ impl CSharpProcessor {
         params
     }
 
-    fn parse_type_parameter_constraints(
-        &self,
-        node: TSNode,
-        source: &str,
-        type_params: &mut [TypeParam],
-    ) {
+    fn parse_type_parameter_constraints(node: TSNode, source: &str, type_params: &mut [TypeParam]) {
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
             if child.kind() == "type_parameter_constraints_clause" {
@@ -205,7 +200,7 @@ impl CSharpProcessor {
                     implements = impl_list;
                 }
                 "type_parameter_constraints_clause" => {
-                    self.parse_type_parameter_constraints(child, source, &mut type_params);
+                    Self::parse_type_parameter_constraints(child, source, &mut type_params);
                 }
                 "declaration_list" => {
                     self.parse_class_body(child, source, &mut children)?;
@@ -274,7 +269,7 @@ impl CSharpProcessor {
                     implements = impl_list;
                 }
                 "type_parameter_constraints_clause" => {
-                    self.parse_type_parameter_constraints(child, source, &mut type_params);
+                    Self::parse_type_parameter_constraints(child, source, &mut type_params);
                 }
                 "declaration_list" => {
                     self.parse_class_body(child, source, &mut children)?;
@@ -306,7 +301,7 @@ impl CSharpProcessor {
         for child in node.children(&mut cursor) {
             match child.kind() {
                 "field_declaration" => {
-                    if let Some(field) = self.parse_field(child, source)? {
+                    if let Some(field) = Self::parse_field(child, source)? {
                         children.push(Node::Field(field));
                     }
                 }
@@ -321,12 +316,12 @@ impl CSharpProcessor {
                     }
                 }
                 "property_declaration" => {
-                    if let Some(prop) = self.parse_property(child, source)? {
+                    if let Some(prop) = Self::parse_property(child, source)? {
                         children.push(Node::Field(prop));
                     }
                 }
                 "event_declaration" | "event_field_declaration" => {
-                    if let Some(event) = self.parse_event(child, source)? {
+                    if let Some(event) = Self::parse_event(child, source)? {
                         children.push(Node::Field(event));
                     }
                 }
@@ -341,7 +336,7 @@ impl CSharpProcessor {
         Ok(())
     }
 
-    fn parse_field(&self, node: TSNode, source: &str) -> Result<Option<Field>> {
+    fn parse_field(node: TSNode, source: &str) -> Result<Option<Field>> {
         let (visibility, modifiers) = Self::parse_modifiers(node, source);
         let mut field_type = None;
         let mut name = String::new();
@@ -382,7 +377,7 @@ impl CSharpProcessor {
         }))
     }
 
-    fn parse_property(&self, node: TSNode, source: &str) -> Result<Option<Field>> {
+    fn parse_property(node: TSNode, source: &str) -> Result<Option<Field>> {
         let (visibility, modifiers) = Self::parse_modifiers(node, source);
         let mut field_type = None;
         let mut name = String::new();
@@ -418,7 +413,7 @@ impl CSharpProcessor {
         }))
     }
 
-    fn parse_event(&self, node: TSNode, source: &str) -> Result<Option<Field>> {
+    fn parse_event(node: TSNode, source: &str) -> Result<Option<Field>> {
         let (visibility, mut modifiers) = Self::parse_modifiers(node, source);
         modifiers.push(Modifier::Event);
         let mut field_type = None;
@@ -497,7 +492,7 @@ impl CSharpProcessor {
                     return_type = Some(TypeRef::new("void".to_string()));
                 }
                 "parameter_list" => {
-                    parameters = self.parse_parameters(child, source);
+                    parameters = Self::parse_parameters(child, source);
                 }
                 "type_parameter_list" => {
                     type_params = self.parse_type_parameters(child, source);
@@ -540,7 +535,7 @@ impl CSharpProcessor {
                     }
                 }
                 "parameter_list" => {
-                    parameters = self.parse_parameters(child, source);
+                    parameters = Self::parse_parameters(child, source);
                 }
                 _ => {}
             }
@@ -591,7 +586,7 @@ impl CSharpProcessor {
                     }
                 }
                 "parameter_list" => {
-                    parameters = self.parse_parameters(child, source);
+                    parameters = Self::parse_parameters(child, source);
                 }
                 _ => {}
             }
@@ -615,7 +610,7 @@ impl CSharpProcessor {
         }))
     }
 
-    fn parse_parameters(&self, node: TSNode, source: &str) -> Vec<Parameter> {
+    fn parse_parameters(node: TSNode, source: &str) -> Vec<Parameter> {
         let mut parameters = Vec::new();
         let mut cursor = node.walk();
 

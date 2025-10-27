@@ -79,7 +79,7 @@ impl JavaProcessor {
         (visibility, modifiers, decorators)
     }
 
-    fn parse_type_parameters(&self, node: TSNode, source: &str) -> Vec<TypeParam> {
+    fn parse_type_parameters(node: TSNode, source: &str) -> Vec<TypeParam> {
         let mut params = Vec::new();
         let mut cursor = node.walk();
 
@@ -113,7 +113,7 @@ impl JavaProcessor {
         params
     }
 
-    fn parse_interface_list(&self, node: TSNode, source: &str) -> Vec<TypeRef> {
+    fn parse_interface_list(node: TSNode, source: &str) -> Vec<TypeRef> {
         let mut interfaces = Vec::new();
         let mut cursor = node.walk();
 
@@ -156,7 +156,7 @@ impl JavaProcessor {
                     name = Self::node_text(child, source);
                 }
                 "type_parameters" => {
-                    type_params = self.parse_type_parameters(child, source);
+                    type_params = Self::parse_type_parameters(child, source);
                 }
                 "superclass" => {
                     if let Some(type_node) = child.child_by_field_name("type") {
@@ -164,7 +164,7 @@ impl JavaProcessor {
                     }
                 }
                 "super_interfaces" => {
-                    implements = self.parse_interface_list(child, source);
+                    implements = Self::parse_interface_list(child, source);
                 }
                 "class_body" => {
                     self.parse_class_body(child, source, &mut children)?;
@@ -206,10 +206,10 @@ impl JavaProcessor {
                     name = Self::node_text(child, source);
                 }
                 "type_parameters" => {
-                    type_params = self.parse_type_parameters(child, source);
+                    type_params = Self::parse_type_parameters(child, source);
                 }
                 "extends_interfaces" => {
-                    extends = self.parse_interface_list(child, source);
+                    extends = Self::parse_interface_list(child, source);
                 }
                 "interface_body" => {
                     self.parse_class_body(child, source, &mut children)?;
@@ -303,7 +303,7 @@ impl JavaProcessor {
                                 for decl_child in body_child.children(&mut decl_cursor) {
                                     match decl_child.kind() {
                                         "field_declaration" => {
-                                            let fields = self.parse_field(decl_child, source)?;
+                                            let fields = Self::parse_field(decl_child, source)?;
                                             for field in fields {
                                                 children.push(ir::Node::Field(field));
                                             }
@@ -372,7 +372,7 @@ impl JavaProcessor {
         for child in node.children(&mut cursor) {
             match child.kind() {
                 "field_declaration" | "constant_declaration" => {
-                    let fields = self.parse_field(child, source)?;
+                    let fields = Self::parse_field(child, source)?;
                     for field in fields {
                         children.push(ir::Node::Field(field));
                     }
@@ -424,7 +424,7 @@ impl JavaProcessor {
 
         for child in node.children(&mut cursor) {
             if child.kind() == "annotation_type_element_declaration"
-                && let Some(method) = self.parse_annotation_element(child, source)?
+                && let Some(method) = Self::parse_annotation_element(child, source)?
             {
                 children.push(ir::Node::Function(method));
             }
@@ -433,7 +433,7 @@ impl JavaProcessor {
         Ok(())
     }
 
-    fn parse_annotation_element(&self, node: TSNode, source: &str) -> Result<Option<Function>> {
+    fn parse_annotation_element(node: TSNode, source: &str) -> Result<Option<Function>> {
         let mut name = String::new();
         let mut return_type = None;
         let line_start = node.start_position().row + 1;
@@ -470,7 +470,7 @@ impl JavaProcessor {
         }
     }
 
-    fn parse_field(&self, node: TSNode, source: &str) -> Result<Vec<Field>> {
+    fn parse_field(node: TSNode, source: &str) -> Result<Vec<Field>> {
         let mut fields = Vec::new();
         let (visibility, modifiers, _) = Self::parse_modifiers(node, source);
         let mut field_type = None;
@@ -529,7 +529,7 @@ impl JavaProcessor {
                     // Already parsed
                 }
                 "type_parameters" => {
-                    type_params = self.parse_type_parameters(child, source);
+                    type_params = Self::parse_type_parameters(child, source);
                 }
                 "type"
                 | "void_type"
@@ -545,7 +545,7 @@ impl JavaProcessor {
                     name = Self::node_text(child, source);
                 }
                 "formal_parameters" => {
-                    parameters = self.parse_parameters(child, source)?;
+                    parameters = Self::parse_parameters(child, source)?;
                 }
                 "marker_annotation" | "annotation" => {
                     // This case probably never executes since annotations are in modifiers
@@ -590,7 +590,7 @@ impl JavaProcessor {
                     name = Self::node_text(child, source);
                 }
                 "formal_parameters" => {
-                    parameters = self.parse_parameters(child, source)?;
+                    parameters = Self::parse_parameters(child, source)?;
                 }
                 _ => {}
             }
@@ -614,7 +614,7 @@ impl JavaProcessor {
         }
     }
 
-    fn parse_parameters(&self, node: TSNode, source: &str) -> Result<Vec<Parameter>> {
+    fn parse_parameters(node: TSNode, source: &str) -> Result<Vec<Parameter>> {
         let mut parameters = Vec::new();
         let mut cursor = node.walk();
 

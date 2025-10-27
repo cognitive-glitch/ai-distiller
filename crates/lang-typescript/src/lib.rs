@@ -130,9 +130,10 @@ impl TypeScriptProcessor {
                                 let mut imports_cursor = clause_child.walk();
                                 for import_child in clause_child.children(&mut imports_cursor) {
                                     if import_child.kind() == "import_specifier" {
-                                        symbols.push(
-                                            self.parse_import_specifier(import_child, source)?,
-                                        );
+                                        symbols.push(Self::parse_import_specifier(
+                                            import_child,
+                                            source,
+                                        )?);
                                     }
                                 }
                             }
@@ -180,11 +181,7 @@ impl TypeScriptProcessor {
         }))
     }
 
-    fn parse_import_specifier(
-        &self,
-        node: tree_sitter::Node,
-        source: &str,
-    ) -> Result<ImportedSymbol> {
+    fn parse_import_specifier(node: tree_sitter::Node, source: &str) -> Result<ImportedSymbol> {
         let mut name = String::new();
         let mut alias = None;
 
@@ -234,18 +231,17 @@ impl TypeScriptProcessor {
                     for heritage_child in child.children(&mut heritage_cursor) {
                         match heritage_child.kind() {
                             "extends_clause" => {
-                                extends = self.parse_extends_clause(heritage_child, source)?;
+                                extends = Self::parse_extends_clause(heritage_child, source)?;
                             }
                             "implements_clause" => {
-                                implements =
-                                    self.parse_implements_clause(heritage_child, source)?;
+                                implements = Self::parse_implements_clause(heritage_child, source)?;
                             }
                             _ => {}
                         }
                     }
                 }
                 "type_parameters" => {
-                    type_params = self.parse_type_parameters(child, source)?;
+                    type_params = Self::parse_type_parameters(child, source)?;
                 }
                 "class_body" => {
                     let mut body_cursor = child.walk();
@@ -306,10 +302,10 @@ impl TypeScriptProcessor {
                     name = Self::node_text(child, source);
                 }
                 "extends_type_clause" => {
-                    extends = self.parse_extends_type_clause(child, source)?;
+                    extends = Self::parse_extends_type_clause(child, source)?;
                 }
                 "type_parameters" => {
-                    type_params = self.parse_type_parameters(child, source)?;
+                    type_params = Self::parse_type_parameters(child, source)?;
                 }
                 "interface_body" => {
                     let mut body_cursor = child.walk();
@@ -317,7 +313,7 @@ impl TypeScriptProcessor {
                         match body_child.kind() {
                             "property_signature" => {
                                 // Check if it's actually a method (has formal_parameters)
-                                if self.has_formal_parameters(body_child) {
+                                if Self::has_formal_parameters(body_child) {
                                     if let Some(method) = self.parse_method(body_child, source)? {
                                         children.push(Node::Function(method));
                                     }
@@ -355,7 +351,7 @@ impl TypeScriptProcessor {
         }))
     }
 
-    fn parse_extends_clause(&self, node: tree_sitter::Node, source: &str) -> Result<Vec<TypeRef>> {
+    fn parse_extends_clause(node: tree_sitter::Node, source: &str) -> Result<Vec<TypeRef>> {
         let mut extends = Vec::new();
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
@@ -366,11 +362,7 @@ impl TypeScriptProcessor {
         Ok(extends)
     }
 
-    fn parse_implements_clause(
-        &self,
-        node: tree_sitter::Node,
-        source: &str,
-    ) -> Result<Vec<TypeRef>> {
+    fn parse_implements_clause(node: tree_sitter::Node, source: &str) -> Result<Vec<TypeRef>> {
         let mut implements = Vec::new();
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
@@ -381,11 +373,7 @@ impl TypeScriptProcessor {
         Ok(implements)
     }
 
-    fn parse_extends_type_clause(
-        &self,
-        node: tree_sitter::Node,
-        source: &str,
-    ) -> Result<Vec<TypeRef>> {
+    fn parse_extends_type_clause(node: tree_sitter::Node, source: &str) -> Result<Vec<TypeRef>> {
         let mut extends = Vec::new();
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
@@ -396,11 +384,7 @@ impl TypeScriptProcessor {
         Ok(extends)
     }
 
-    fn parse_type_parameters(
-        &self,
-        node: tree_sitter::Node,
-        source: &str,
-    ) -> Result<Vec<TypeParam>> {
+    fn parse_type_parameters(node: tree_sitter::Node, source: &str) -> Result<Vec<TypeParam>> {
         let mut params = Vec::new();
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
@@ -448,7 +432,7 @@ impl TypeScriptProcessor {
                     return_type = self.parse_type_annotation(child, source)?;
                 }
                 "type_parameters" => {
-                    type_params = self.parse_type_parameters(child, source)?;
+                    type_params = Self::parse_type_parameters(child, source)?;
                 }
                 "accessibility_modifier" => {
                     visibility = Self::parse_visibility(child, source);
@@ -509,7 +493,7 @@ impl TypeScriptProcessor {
                     return_type = self.parse_type_annotation(child, source)?;
                 }
                 "type_parameters" => {
-                    type_params = self.parse_type_parameters(child, source)?;
+                    type_params = Self::parse_type_parameters(child, source)?;
                 }
                 "async" => {
                     modifiers.push(Modifier::Async);
@@ -585,7 +569,7 @@ impl TypeScriptProcessor {
                     return_type = self.parse_type_annotation(child, source)?;
                 }
                 "type_parameters" => {
-                    type_params = self.parse_type_parameters(child, source)?;
+                    type_params = Self::parse_type_parameters(child, source)?;
                 }
                 "async" => {
                     modifiers.push(Modifier::Async);
@@ -608,7 +592,7 @@ impl TypeScriptProcessor {
         }))
     }
 
-    fn has_formal_parameters(&self, node: tree_sitter::Node) -> bool {
+    fn has_formal_parameters(node: tree_sitter::Node) -> bool {
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
             if child.kind() == "formal_parameters" {
