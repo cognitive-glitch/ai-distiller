@@ -40,22 +40,27 @@ impl KotlinProcessor {
         let mut cursor = node.walk();
 
         for child in node.children(&mut cursor) {
-            let text = self.node_text(child, source);
-            match text.as_str() {
-                "public" => visibility = Visibility::Public,
-                "private" => visibility = Visibility::Private,
-                "protected" => visibility = Visibility::Protected,
-                "internal" => visibility = Visibility::Internal,
-                "abstract" => modifiers.push(Modifier::Abstract),
-                "open" => modifiers.push(Modifier::Virtual),
-                "final" => modifiers.push(Modifier::Final),
-                "override" => modifiers.push(Modifier::Override),
-                "suspend" => modifiers.push(Modifier::Async),
-                "inline" => modifiers.push(Modifier::Inline),
-                "data" => modifiers.push(Modifier::Data),
-                "sealed" => modifiers.push(Modifier::Sealed),
-                "const" => modifiers.push(Modifier::Const),
-                _ => {}
+            if child.kind() == "modifiers" {
+                let mut mod_cursor = child.walk();
+                for mod_child in child.children(&mut mod_cursor) {
+                    let text = self.node_text(mod_child, source);
+                    match text.as_str() {
+                        "public" => visibility = Visibility::Public,
+                        "private" => visibility = Visibility::Private,
+                        "protected" => visibility = Visibility::Protected,
+                        "internal" => visibility = Visibility::Internal,
+                        "abstract" => modifiers.push(Modifier::Abstract),
+                        "open" => modifiers.push(Modifier::Virtual),
+                        "final" => modifiers.push(Modifier::Final),
+                        "override" => modifiers.push(Modifier::Override),
+                        "suspend" => modifiers.push(Modifier::Async),
+                        "inline" => modifiers.push(Modifier::Inline),
+                        "data" => modifiers.push(Modifier::Data),
+                        "sealed" => modifiers.push(Modifier::Sealed),
+                        "const" => modifiers.push(Modifier::Const),
+                        _ => {}
+                    }
+                }
             }
         }
 
@@ -69,16 +74,22 @@ impl KotlinProcessor {
         let (visibility, modifiers) = self.parse_modifiers(node, source);
         let type_params = Vec::new();
         let decorators = Vec::new();
-        let children = Vec::new();
+        let mut children = Vec::new();
         let line_start = node.start_position().row + 1;
         let line_end = node.end_position().row + 1;
 
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
-            if child.kind() == "simple_identifier" || child.kind() == "type_identifier" {
-                if name.is_empty() {
-                    name = self.node_text(child, source);
+            match child.kind() {
+                "identifier" => {
+                    if name.is_empty() {
+                        name = self.node_text(child, source);
+                    }
                 }
+                "class_body" => {
+                    self.parse_class_body(child, source, &mut children)?;
+                }
+                _ => {}
             }
         }
 
@@ -100,10 +111,89 @@ impl KotlinProcessor {
         }))
     }
 
+    fn parse_object(&self, node: TSNode, source: &str) -> Result<Option<Class>> {
+        let mut name = String::new();
+        let extends = Vec::new();
+        let implements = Vec::new();
+        let (visibility, modifiers) = self.parse_modifiers(node, source);
+        let type_params = Vec::new();
+        let decorators = vec!["object".to_string()];
+        let mut children = Vec::new();
+        let line_start = node.start_position().row + 1;
+        let line_end = node.end_position().row + 1;
+
+        let mut cursor = node.walk();
+        for child in node.children(&mut cursor) {
+            match child.kind() {
+                "identifier" => {
+                    if name.is_empty() {
+                        name = self.node_text(child, source);
+                    }
+                }
+                "class_body" => {
+                    self.parse_class_body(child, source, &mut children)?;
+                }
+                _ => {}
+            }
+        }
+
+        if name.is_empty() {
+            return Ok(None);
+        }
+
+        Ok(Some(Class {
+            name,
+            visibility,
+            modifiers,
+            extends,
+            implements,
+            type_params,
+            decorators,
+            children,
+            line_start,
+            line_end,
+        }))
+    }
+
+    fn parse_class_body(
+        &self,
+        node: TSNode,
+        source: &str,
+        children: &mut Vec<Node>,
+    ) -> Result<()> {
+        let mut cursor = node.walk();
+        for child in node.children(&mut cursor) {
+            match child.kind() {
+                "function_declaration" => {
+                    if let Some(func) = self.parse_function(child, source)? {
+                        children.push(Node::Function(func));
+                    }
+                }
+                "property_declaration" => {
+                    if let Some(field) = self.parse_property(child, source)? {
+                        children.push(Node::Field(field));
+                    }
+                }
+                "class_declaration" | "object_declaration" => {
+                    // Nested classes/objects
+                    if child.kind() == "class_declaration" {
+                        if let Some(class) = self.parse_class(child, source)? {
+                            children.push(Node::Class(class));
+                        }
+                    } else if let Some(obj) = self.parse_object(child, source)? {
+                        children.push(Node::Class(obj));
+                    }
+                }
+                _ => {}
+            }
+        }
+        Ok(())
+    }
+
     fn parse_function(&self, node: TSNode, source: &str) -> Result<Option<Function>> {
         let mut name = String::new();
         let return_type = None;
-        let parameters = Vec::new();
+        let mut parameters = Vec::new();
         let (visibility, modifiers) = self.parse_modifiers(node, source);
         let type_params = Vec::new();
         let decorators = Vec::new();
@@ -112,10 +202,16 @@ impl KotlinProcessor {
 
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
-            if child.kind() == "simple_identifier" {
-                if name.is_empty() {
-                    name = self.node_text(child, source);
+            match child.kind() {
+                "identifier" => {
+                    if name.is_empty() {
+                        name = self.node_text(child, source);
+                    }
                 }
+                "function_value_parameters" => {
+                    parameters = self.parse_parameters(child, source);
+                }
+                _ => {}
             }
         }
 
@@ -148,7 +244,7 @@ impl KotlinProcessor {
             if child.kind() == "variable_declaration" {
                 let mut var_cursor = child.walk();
                 for var_child in child.children(&mut var_cursor) {
-                    if var_child.kind() == "simple_identifier" && name.is_empty() {
+                    if var_child.kind() == "identifier" && name.is_empty() {
                         name = self.node_text(var_child, source);
                     }
                 }
@@ -167,6 +263,44 @@ impl KotlinProcessor {
             modifiers,
             line,
         }))
+    }
+
+    fn parse_parameters(&self, node: TSNode, source: &str) -> Vec<Parameter> {
+        let mut parameters = Vec::new();
+        let mut cursor = node.walk();
+
+        for child in node.children(&mut cursor) {
+            if child.kind() == "parameter" {
+                let mut param_type = TypeRef::new("unknown".to_string());
+                let mut name = String::new();
+
+                let mut param_cursor = child.walk();
+                for param_child in child.children(&mut param_cursor) {
+                    match param_child.kind() {
+                        "identifier" => {
+                            name = self.node_text(param_child, source);
+                        }
+                        "user_type" => {
+                            param_type = TypeRef::new(self.node_text(param_child, source));
+                        }
+                        _ => {}
+                    }
+                }
+
+                if !name.is_empty() {
+                    parameters.push(Parameter {
+                        name,
+                        param_type,
+                        default_value: None,
+                        is_variadic: false,
+                        is_optional: false,
+                        decorators: Vec::new(),
+                    });
+                }
+            }
+        }
+
+        parameters
     }
 
     fn parse_import(&self, node: TSNode, source: &str) -> Option<Import> {
@@ -189,9 +323,14 @@ impl KotlinProcessor {
                     file.children.push(Node::Import(import));
                 }
             }
-            "class_declaration" | "object_declaration" => {
+            "class_declaration" => {
                 if let Some(class) = self.parse_class(node, source)? {
                     file.children.push(Node::Class(class));
+                }
+            }
+            "object_declaration" => {
+                if let Some(obj) = self.parse_object(node, source)? {
+                    file.children.push(Node::Class(obj));
                 }
             }
             "function_declaration" => {
@@ -286,12 +425,12 @@ data class User(
         assert!(file.children.len() >= 1);
         let has_user_class = file.children.iter().any(|child| {
             if let Node::Class(class) = child {
-                class.name == "User"
+                class.name == "User" && class.modifiers.contains(&Modifier::Data)
             } else {
                 false
             }
         });
-        assert!(has_user_class, "Expected a User class");
+        assert!(has_user_class, "Expected a User data class");
     }
 
     #[test]
@@ -309,6 +448,14 @@ sealed class UserState {
             .unwrap();
 
         assert!(file.children.len() >= 1);
+        let has_sealed = file.children.iter().any(|child| {
+            if let Node::Class(class) = child {
+                class.name == "UserState" && class.modifiers.contains(&Modifier::Sealed)
+            } else {
+                false
+            }
+        });
+        assert!(has_sealed, "Expected a sealed class");
     }
 
     #[test]
@@ -325,6 +472,14 @@ fun String.isValidEmail(): Boolean {
             .unwrap();
 
         assert!(file.children.len() >= 1);
+        let has_func = file.children.iter().any(|child| {
+            if let Node::Function(func) = child {
+                func.name == "isValidEmail"
+            } else {
+                false
+            }
+        });
+        assert!(has_func, "Expected isValidEmail function");
     }
 
     #[test]
@@ -345,6 +500,14 @@ class User {
             .unwrap();
 
         assert!(file.children.len() >= 1);
+        let has_user = file.children.iter().any(|child| {
+            if let Node::Class(class) = child {
+                class.name == "User"
+            } else {
+                false
+            }
+        });
+        assert!(has_user, "Expected User class");
     }
 
     #[test]
@@ -363,6 +526,14 @@ class Repository<T> {
             .unwrap();
 
         assert!(file.children.len() >= 1);
+        let has_repo = file.children.iter().any(|child| {
+            if let Node::Class(class) = child {
+                class.name == "Repository"
+            } else {
+                false
+            }
+        });
+        assert!(has_repo, "Expected Repository class");
     }
 
     #[test]
@@ -382,6 +553,14 @@ class Test {
             .unwrap();
 
         assert!(file.children.len() >= 1);
+        let has_test = file.children.iter().any(|child| {
+            if let Node::Class(class) = child {
+                class.name == "Test"
+            } else {
+                false
+            }
+        });
+        assert!(has_test, "Expected Test class");
     }
 
     #[test]
@@ -398,5 +577,13 @@ suspend fun fetchUser(id: Long): User? {
             .unwrap();
 
         assert!(file.children.len() >= 1);
+        let has_suspend = file.children.iter().any(|child| {
+            if let Node::Function(func) = child {
+                func.name == "fetchUser" && func.modifiers.contains(&Modifier::Async)
+            } else {
+                false
+            }
+        });
+        assert!(has_suspend, "Expected suspend function");
     }
 }

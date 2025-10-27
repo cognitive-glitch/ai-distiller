@@ -1,0 +1,13 @@
+[package]
+name = "lang-php"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+distiller-core = { path = "../distiller-core" }
+tree-sitter = "0.24"
+tree-sitter-php = "0.23"
+parking_lot = "0.12"
+
+[dev-dependencies]
+insta = { version = "1.34", features = ["yaml"] }

@@ -12,6 +12,8 @@ members = [
     "crates/lang-swift",
     "crates/lang-java",
     "crates/lang-kotlin",
+    "crates/lang-cpp",
+    "crates/lang-php",
     "crates/lang-csharp",
     # Language processors will be added here as they're created
     # Formatters will be added here as they're created
