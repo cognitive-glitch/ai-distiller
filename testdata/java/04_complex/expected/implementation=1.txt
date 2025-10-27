@@ -17,7 +17,7 @@ public class Advanced<T extends Number & Runnable & Serializable> {
                         System.out.println("Local runner executing with value: " + value);
                     }
                 }
-                
+
                 // Return an anonymous inner class instance
                 return new Runnable() {
                     private static final int MAX_ITERATIONS = 5;

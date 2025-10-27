@@ -57,17 +57,17 @@ class ConfigManager
   def initialize
     # Using YAML
     @config = YAML.load_file('config.yml') rescue {}
-    
+
     # Using settings from require_relative
     @settings = Settings.load
-    
+
     # Platform-specific code
     setup_platform_specific
-    
+
     # Setup cache if available
     setup_cache
   end
-  
+
   def to_json
     # Using JSON
     JSON.pretty_generate({
@@ -77,19 +77,19 @@ class ConfigManager
       cache: @cache_type
     })
   end
-  
+
   private
-  
+
   def setup_platform_specific
     if RUBY_PLATFORM =~ /darwin/
       # Would use osx/cocoa here if we were on Mac
       puts "Running on macOS"
       # OSX::NSApplication.sharedApplication if this were real
     end
-    
+
     # For Linux/Windows, the requires would be used here
   end
-  
+
   def setup_cache
     if REDIS_AVAILABLE
       # Using Redis if available
@@ -103,7 +103,7 @@ class ConfigManager
       @cache_type = 'none'
     end
   end
-  
+
   def development_helpers
     if ENV['RAILS_ENV'] == 'development'
       # Using pry in development

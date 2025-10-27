@@ -6,7 +6,7 @@ module MetaProgrammingUtils
             base.class_eval do
               # Dynamically add instance variables and accessors
               attr_accessor :metadata
-              
+
               # Add a class instance variable
               @dynamic_methods = []
             end
@@ -15,17 +15,17 @@ module MetaProgrammingUtils
         def add_dynamic_accessor(name, default_value = ...)
             @dynamic_methods ||= []
                   @dynamic_methods << name
-                  
+
                   # Define getter
                   define_method(name) do
                     instance_variable_get("@#{name}") || default_value
                   end
-                  
+
                   # Define setter
                   define_method("#{name}=") do |value|
                     instance_variable_set("@#{name}", value)
                   end
-                  
+
                   # Define query method
                   define_method("#{name}?") do
                     !!instance_variable_get("@#{name}")
@@ -51,10 +51,10 @@ module EigenclassDemo
     def custom_new(*args*, &block)
         instance = allocate
             instance.send(:initialize, *args, &block) if instance.respond_to?(:initialize, true)
-            
+
             # Add a singleton method to this specific instance
             instance.define_singleton_method(:created_with_custom_new?) { true }
-            
+
             instance
 
 module Trackable
@@ -68,9 +68,9 @@ module Trackable
         def track_method(method_name)
             @tracked_methods ||= []
                   @tracked_methods << method_name
-                  
+
                   original_method = instance_method(method_name)
-                  
+
                   define_method(method_name) do |*args, &block|
                     track_method_call(method_name, args)
                     original_method.bind(self).call(*args, &block)
@@ -91,7 +91,7 @@ class ConfigurableModel
     def initialize(initial_config = ...)
         @config = initial_config
             @metadata = {}
-            
+
             # Dynamically define methods based on config keys
             initial_config.each do |key, value|
               self.class.add_dynamic_accessor(key, value)
@@ -103,7 +103,7 @@ class ConfigurableModel
                 value = send(field)
                 validation_block.call(value)
               end
-              
+
               alias_method "#{field}_valid?", "validate_#{field}"
             end
     def evaluate_expression(expression, context = ...)
@@ -111,7 +111,7 @@ class ConfigurableModel
             context.each do |key, value|
               binding_context.local_variable_set(key, value)
             end
-            
+
             # Only allow simple mathematical expressions
             if expression.match?(/\A[\d\s+\-*\/().]+\z/)
               binding_context.eval(expression)
@@ -155,7 +155,7 @@ class SmartDocument < ConfigurableModel
               def word_count
                 content.split.length
               end
-              
+
               def summary(length = 50)
                 content[0, length] + (content.length > length ? "..." : "")
               end

@@ -39,7 +39,7 @@ interface MutableRepository<T : Any> : Repository<T> {
 abstract class BaseService<T : Entity, R : MutableRepository<T>>(
     protected val repository: R
 ) where T : Comparable<T> {
-    
+
     /**
      * Generic method with reified type parameter
      */
@@ -48,7 +48,7 @@ abstract class BaseService<T : Entity, R : MutableRepository<T>>(
             .filterIsInstance<U>()
             .forEach { emit(it) }
     }
-    
+
     /**
      * Higher-order function with generic parameters
      */
@@ -60,7 +60,7 @@ abstract class BaseService<T : Entity, R : MutableRepository<T>>(
             .map { transformer(it) }
             .filter(filter)
     }
-    
+
     /**
      * Method with generic constraints
      */
@@ -70,7 +70,7 @@ abstract class BaseService<T : Entity, R : MutableRepository<T>>(
     ): U? where U : Any {
         return repository.findById(id)?.let { mapper(it) }
     }
-    
+
     /**
      * Abstract method for subclasses
      */
@@ -83,7 +83,7 @@ abstract class BaseService<T : Entity, R : MutableRepository<T>>(
 interface Entity : Comparable<Entity> {
     val id: String
     val version: Long
-    
+
     override fun compareTo(other: Entity): Int = id.compareTo(other.id)
 }
 
@@ -97,7 +97,7 @@ data class User(
     val email: String,
     val role: UserRole
 ) : Entity {
-    
+
     /**
      * Custom comparison based on name
      */
@@ -117,7 +117,7 @@ enum class UserRole {
 sealed class ValidationResult {
     object Valid : ValidationResult()
     data class Invalid(val errors: List<String>) : ValidationResult()
-    
+
     /**
      * Helper methods using when expressions
      */
@@ -134,21 +134,21 @@ sealed class ValidationResult {
 class UserRepository : MutableRepository<User> {
     private val users = mutableMapOf<String, User>()
     private val mutex = kotlinx.coroutines.sync.Mutex()
-    
+
     override suspend fun findById(id: String): User? = withContext(Dispatchers.IO) {
         delay(10) // Simulate database delay
         mutex.withLock { users[id] }
     }
-    
+
     override suspend fun findAll(): List<User> = withContext(Dispatchers.IO) {
         delay(20)
         mutex.withLock { users.values.toList() }
     }
-    
+
     override suspend fun count(): Long = withContext(Dispatchers.IO) {
         mutex.withLock { users.size.toLong() }
     }
-    
+
     override suspend fun save(entity: User): User = withContext(Dispatchers.IO) {
         delay(15)
         mutex.withLock {
@@ -156,7 +156,7 @@ class UserRepository : MutableRepository<User> {
             entity
         }
     }
-    
+
     override suspend fun update(entity: User): User = withContext(Dispatchers.IO) {
         delay(15)
         mutex.withLock {
@@ -164,12 +164,12 @@ class UserRepository : MutableRepository<User> {
             users[entity.id]!!
         }
     }
-    
+
     override suspend fun delete(id: String): Boolean = withContext(Dispatchers.IO) {
         delay(10)
         mutex.withLock { users.remove(id) != null }
     }
-    
+
     override suspend fun saveAll(entities: List<User>): List<User> = withContext(Dispatchers.IO) {
         delay(entities.size * 5L)
         mutex.withLock {
@@ -177,7 +177,7 @@ class UserRepository : MutableRepository<User> {
             entities
         }
     }
-    
+
     /**
      * Repository-specific method with Flow
      */
@@ -194,27 +194,27 @@ class UserRepository : MutableRepository<User> {
 class UserService(
     repository: UserRepository
 ) : BaseService<User, UserRepository>(repository) {
-    
+
     private val eventChannel = Channel<UserEvent>(Channel.UNLIMITED)
-    
+
     override suspend fun validateEntity(entity: User): ValidationResult {
         val errors = mutableListOf<String>()
-        
+
         if (entity.name.isBlank()) {
             errors.add("Name cannot be blank")
         }
-        
+
         if (!entity.email.contains("@")) {
             errors.add("Invalid email format")
         }
-        
+
         return if (errors.isEmpty()) {
             ValidationResult.Valid
         } else {
             ValidationResult.Invalid(errors)
         }
     }
-    
+
     /**
      * Method using inline function with reified type
      */
@@ -223,7 +223,7 @@ class UserService(
             if (event is T) emit(event)
         }
     }
-    
+
     /**
      * Method with higher-order function parameter
      */
@@ -236,7 +236,7 @@ class UserService(
             processor(batch)
         }
     }
-    
+
     /**
      * Coroutine-based method with structured concurrency
      */
@@ -250,7 +250,7 @@ class UserService(
                     email = dto.email,
                     role = dto.role
                 )
-                
+
                 when (val validation = validateEntity(user)) {
                     is ValidationResult.Valid -> {
                         repository.save(user)
@@ -264,7 +264,7 @@ class UserService(
             }
         }.awaitAll()
     }
-    
+
     /**
      * Private method for ID generation
      */
@@ -297,26 +297,26 @@ class Cache<K : Any, V : Any>(
 ) {
     private val data = mutableMapOf<K, CacheEntry<V>>()
     private val accessOrder = mutableListOf<K>()
-    
+
     /**
      * Generic method with nullable return
      */
     fun get(key: K): V? {
         val entry = data[key] ?: return null
-        
+
         if (entry.isExpired()) {
             data.remove(key)
             accessOrder.remove(key)
             return null
         }
-        
+
         // Update access order
         accessOrder.remove(key)
         accessOrder.add(key)
-        
+
         return entry.value
     }
-    
+
     /**
      * Put method with eviction logic
      */
@@ -329,12 +329,12 @@ class Cache<K : Any, V : Any>(
                 accessOrder.remove(oldestKey)
             }
         }
-        
+
         data[key] = CacheEntry(value, System.currentTimeMillis() + ttlMillis)
         accessOrder.remove(key)
         accessOrder.add(key)
     }
-    
+
     /**
      * Clear expired entries
      */
@@ -346,7 +346,7 @@ class Cache<K : Any, V : Any>(
             accessOrder.remove(key)
         }
     }
-    
+
     /**
      * Inner data class for cache entries
      */
@@ -406,22 +406,22 @@ fun main() = runBlocking {
     val userRepository = UserRepository()
     val userService = UserService(userRepository)
     val cache = Cache<String, User>()
-    
+
     // Create users asynchronously
     val userDtos = listOf(
         UserDto("Alice", "alice@example.com", UserRole.ADMIN),
         UserDto("Bob", "bob@example.com", UserRole.USER),
         UserDto("Charlie", "charlie@example.com", UserRole.MODERATOR)
     )
-    
+
     val createdUsers = userService.createUsersAsync(userDtos)
     println("Created ${createdUsers.size} users")
-    
+
     // Use cache
     createdUsers.forEach { user ->
         cache.put(user.id, user)
     }
-    
+
     // Process users in batches
     userService.processUsersInBatches(2) { batch ->
         println("Processing batch of ${batch.size} users")
@@ -429,12 +429,12 @@ fun main() = runBlocking {
             println("- ${user.name} (${user.role})")
         }
     }
-    
+
     // Use generic method with reified type
     userService.findByType<User>().collect { user ->
         println("Found user: ${user.name}")
     }
-    
+
     // Use extension function
     val users = listOf("Alice", "Bob", "Charlie")
     users.forEachAsync {

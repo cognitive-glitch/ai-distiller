@@ -1,6 +1,6 @@
 {
-  "name": "@janreges/ai-distiller-mcp",
-  "version": "1.3.3",
+  "name": "@cognitive/ai-distiller-mcp",
+  "version": "2.0.0",
   "description": "AI Distiller (aid) - Essential code structure extractor for LLMs. Provides AI with accurate code signatures, data types, and API contracts from your actual codebase, reducing guesswork and trial-error coding. Accelerates analysis workflows including security audits, performance reviews, git history insights, refactoring suggestions, and comprehensive structural analysis.",
   "keywords": [
     "mcp",
@@ -16,12 +16,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/janreges/ai-distiller.git"
+    "url": "git+https://github.com/cognitive-glitch/ai-distiller-reboot.git"
   },
   "bugs": {
-    "url": "https://github.com/janreges/ai-distiller/issues"
+    "url": "https://github.com/cognitive-glitch/ai-distiller-reboot/issues"
   },
-  "homepage": "https://github.com/janreges/ai-distiller#readme",
+  "homepage": "https://github.com/cognitive-glitch/ai-distiller-reboot#readme",
   "main": "mcp-server-wrapper.js",
   "types": "dist/mcp-server-sdk.d.ts",
   "bin": {

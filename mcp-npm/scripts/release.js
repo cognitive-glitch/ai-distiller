@@ -77,22 +77,22 @@ async function main() {
     console.log('\nCreating test package...');
     exec('npm pack');
 
-    const tarballName = `janreges-ai-distiller-mcp-${version}.tgz`;
+    const tarballName = `cognitive-ai-distiller-mcp-${version}.tgz`;
     console.log(`\nCreated ${tarballName}`);
 
     // Test installation
     const testInstall = await question('\nTest installation locally? (Y/n): ');
     if (testInstall.toLowerCase() !== 'n') {
-      const testDir = path.join('/tmp', `test-aid-mcp-${Date.now()}`);
+  const testDir = path.join(os.tmpdir(), `test-aid-mcp-${Date.now()}`);
       fs.mkdirSync(testDir, { recursive: true });
-      
+
       console.log(`\nTesting in ${testDir}...`);
       process.chdir(testDir);
-      
+
       try {
         exec(`npm install ${path.join(path.dirname(packageJsonPath), tarballName)}`);
         console.log('\nInstallation test passed!');
-        
+
         // Try to run the binary
         const testRun = await question('\nTest running the MCP server? (Y/n): ');
         if (testRun.toLowerCase() !== 'n') {
@@ -106,7 +106,7 @@ async function main() {
           process.exit(1);
         }
       }
-      
+
       process.chdir(path.dirname(packageJsonPath));
     }
 
@@ -133,7 +133,7 @@ async function main() {
       exec('git add .');
       exec(`git commit -m "chore: release AI Distiller MCP v${version}"`);
       exec(`git tag mcp-v${version}`);
-      
+
       const push = await question('\nPush to git? (Y/n): ');
       if (push.toLowerCase() !== 'n') {
         exec('git push');
@@ -147,7 +147,7 @@ async function main() {
     }
 
     console.log('\n🎉 Release complete!');
-    console.log(`\nUsers can now install with: npm install @janreges/ai-distiller-mcp`);
+    console.log(`\nUsers can now install with: npm install @cognitive/ai-distiller-mcp`);
 
   } catch (error) {
     console.error('\n❌ Error:', error.message);

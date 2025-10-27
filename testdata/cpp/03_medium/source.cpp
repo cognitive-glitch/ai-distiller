@@ -26,7 +26,7 @@ struct has_process_method {
 private:
     template<typename U>
     static auto test(int) -> decltype(std::declval<U>().process(std::declval<Args>()...), std::true_type{});
-    
+
     template<typename>
     static std::false_type test(...);
 
@@ -53,10 +53,10 @@ public:
      * @param resource Pointer to resource
      * @param deleter Custom deleter (optional)
      */
-    explicit ResourceManager(Resource* resource = nullptr, 
+    explicit ResourceManager(Resource* resource = nullptr,
                            Deleter deleter = Deleter{})
         : resource_(resource), deleter_(std::move(deleter)) {}
-    
+
     /**
      * @brief Move constructor
      * @param other Source object
@@ -64,7 +64,7 @@ public:
     ResourceManager(ResourceManager&& other) noexcept
         : resource_(std::exchange(other.resource_, nullptr)),
           deleter_(std::move(other.deleter_)) {}
-    
+
     /**
      * @brief Move assignment operator
      * @param other Source object
@@ -78,30 +78,30 @@ public:
         }
         return *this;
     }
-    
+
     /**
      * @brief Destructor
      */
     ~ResourceManager() {
         reset();
     }
-    
+
     /**
      * @brief Deleted copy constructor
      */
     ResourceManager(const ResourceManager&) = delete;
-    
+
     /**
      * @brief Deleted copy assignment
      */
     ResourceManager& operator=(const ResourceManager&) = delete;
-    
+
     /**
      * @brief Get raw pointer to resource
      * @return Raw pointer
      */
     Resource* get() const noexcept { return resource_; }
-    
+
     /**
      * @brief Release ownership of resource
      * @return Raw pointer to released resource
@@ -109,7 +109,7 @@ public:
     Resource* release() noexcept {
         return std::exchange(resource_, nullptr);
     }
-    
+
     /**
      * @brief Reset with new resource
      * @param resource New resource pointer
@@ -120,7 +120,7 @@ public:
         }
         resource_ = resource;
     }
-    
+
     /**
      * @brief Boolean conversion operator
      * @return true if managing a resource
@@ -128,7 +128,7 @@ public:
     explicit operator bool() const noexcept {
         return resource_ != nullptr;
     }
-    
+
     /**
      * @brief Dereference operator
      * @return Reference to resource
@@ -136,7 +136,7 @@ public:
     Resource& operator*() const {
         return *resource_;
     }
-    
+
     /**
      * @brief Arrow operator
      * @return Pointer to resource
@@ -159,14 +159,14 @@ public:
      * @brief Virtual destructor
      */
     virtual ~IProcessor() = default;
-    
+
     /**
      * @brief Process data
      * @param data Input data
      * @return Processed result
      */
     virtual std::string process(const std::string& data) = 0;
-    
+
     /**
      * @brief Get processor name
      * @return Processor identifier
@@ -184,7 +184,7 @@ public:
      * @param name Processor name
      */
     explicit TextProcessor(const std::string& name) : name_(name) {}
-    
+
     /**
      * @brief Process text data
      * @param data Input text
@@ -193,7 +193,7 @@ public:
     std::string process(const std::string& data) override {
         return "[" + name_ + "] " + data;
     }
-    
+
     /**
      * @brief Get processor name
      * @return Name string
@@ -222,7 +222,7 @@ public:
     static T add(const T& a, const T& b) {
         return a + b;
     }
-    
+
     /**
      * @brief Multiply two values
      * @param a First value
@@ -232,7 +232,7 @@ public:
     static T multiply(const T& a, const T& b) {
         return a * b;
     }
-    
+
     /**
      * @brief Get type information
      * @return Type name string
@@ -257,7 +257,7 @@ public:
     static double add(const double& a, const double& b) {
         return a + b;
     }
-    
+
     /**
      * @brief Multiply two doubles
      * @param a First value
@@ -267,7 +267,7 @@ public:
     static double multiply(const double& a, const double& b) {
         return a * b;
     }
-    
+
     /**
      * @brief Divide two doubles with zero check
      * @param a Dividend
@@ -281,7 +281,7 @@ public:
         }
         return a / b;
     }
-    
+
     /**
      * @brief Get type information
      * @return Type name string
@@ -307,7 +307,7 @@ public:
     static T* add(T* ptr, std::ptrdiff_t offset) {
         return ptr + offset;
     }
-    
+
     /**
      * @brief Get type information
      * @return Type name string
@@ -326,7 +326,7 @@ public:
      * @brief Constructor
      */
     ProcessingPipeline() = default;
-    
+
     /**
      * @brief Add processor to pipeline
      * @param processor Unique pointer to processor
@@ -334,7 +334,7 @@ public:
     void addProcessor(std::unique_ptr<IProcessor> processor) {
         processors_.push_back(std::move(processor));
     }
-    
+
     /**
      * @brief Process data through pipeline synchronously
      * @param input Input data
@@ -347,7 +347,7 @@ public:
         }
         return result;
     }
-    
+
     /**
      * @brief Process data asynchronously
      * @param input Input data
@@ -358,7 +358,7 @@ public:
             return this->process(input);
         });
     }
-    
+
     /**
      * @brief Process multiple inputs in parallel
      * @param inputs Vector of input strings
@@ -368,14 +368,14 @@ public:
         const std::vector<std::string>& inputs) const {
         std::vector<std::future<std::string>> futures;
         futures.reserve(inputs.size());
-        
+
         for (const auto& input : inputs) {
             futures.push_back(processAsync(input));
         }
-        
+
         return futures;
     }
-    
+
     /**
      * @brief Get number of processors
      * @return Processor count
@@ -400,7 +400,7 @@ protected:
 private:
     /// Vector of processor smart pointers
     std::vector<std::unique_ptr<IProcessor>> processors_;
-    
+
     /**
      * @brief Private helper for internal operations
      * @param data Data to validate
@@ -419,7 +419,7 @@ private:
  * @return Processed result if T has process method, empty string otherwise
  */
 template<typename T>
-auto safeProcess(T& obj, const std::string& data) 
+auto safeProcess(T& obj, const std::string& data)
     -> std::enable_if_t<has_process_method_v<T, std::string>, std::string> {
     return obj.process(data);
 }
@@ -458,9 +458,9 @@ public:
      * @brief Constructor
      * @param message Error message
      */
-    explicit ProcessingException(const std::string& message) 
+    explicit ProcessingException(const std::string& message)
         : message_(message) {}
-    
+
     /**
      * @brief Get error message
      * @return Error message C-string
@@ -482,27 +482,27 @@ void demonstrateAdvancedFeatures() {
         std::cout << "Custom deleting processor: " << p->getName() << std::endl;
         delete p;
     };
-    
+
     ResourceManager<TextProcessor, decltype(customDeleter)> manager(
         new TextProcessor("Advanced"), customDeleter);
-    
+
     // Processing pipeline
     ProcessingPipeline pipeline;
     pipeline.addProcessor(makeUnique<TextProcessor>("First"));
     pipeline.addProcessor(makeUnique<TextProcessor>("Second"));
-    
+
     // Async processing
     auto future = pipeline.processAsync("Hello World");
     std::string result = future.get();
-    
+
     // Template specialization
     auto intSum = Calculator<int>::add(5, 10);
     auto doubleSum = Calculator<double>::add(3.14, 2.86);
-    
+
     // SFINAE demonstration
     TextProcessor processor("SFINAE Test");
     std::string sfResult = safeProcess(processor, "test data");
-    
+
     std::cout << "Async result: " << result << std::endl;
     std::cout << "Int sum: " << intSum << std::endl;
     std::cout << "Double sum: " << doubleSum << std::endl;

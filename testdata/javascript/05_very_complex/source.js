@@ -109,7 +109,7 @@ class CooperativeScheduler {
      */
     async run() {
         const startTime = performance.now();
-        
+
         while (this.isRunning && this.tasks.size > 0) {
             if (this.taskQueue.length === 0) {
                 // Wait for a short period if no tasks are ready to run, preventing a busy loop.
@@ -125,18 +125,18 @@ class CooperativeScheduler {
             const taskStartTime = performance.now();
             task._updateMetadata('status', 'running');
             task._updateMetadata('lastRun', Date.now());
-            
+
             const result = task.iterator.next();
 
             if (result.done) {
                 // Task is complete, perform cleanup. This is crucial for memory management.
                 const taskEndTime = performance.now();
                 const taskDuration = taskEndTime - taskStartTime;
-                
+
                 console.log(`Task ${task.id} completed in ${taskDuration.toFixed(2)}ms. Cleaning up.`);
                 task._updateMetadata('status', 'completed');
                 task._updateMetadata('completedAt', Date.now());
-                
+
                 this._metrics.tasksExecuted++;
                 this.tasks.delete(taskId);
                 continue;
@@ -153,16 +153,16 @@ class CooperativeScheduler {
                     task.iterator.throw(error); // Propagate error back into the generator
                 }
             }
-            
+
             task._updateMetadata('status', 'waiting');
             // Re-queue the task for its next turn (cooperative multitasking).
             this.taskQueue.push(taskId);
         }
-        
+
         const endTime = performance.now();
         this._metrics.totalRuntime = endTime - startTime;
         this._metrics.averageTaskTime = this._metrics.totalRuntime / Math.max(this._metrics.tasksExecuted, 1);
-        
+
         this.isRunning = false;
         console.log('Scheduler stopped. All tasks finished.');
     }
@@ -191,7 +191,7 @@ class CooperativeScheduler {
         });
 
         const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Shutdown timeout exceeded')), timeout));
-        
+
         const results = await Promise.allSettled([Promise.race([Promise.all(completionPromises), timeoutPromise])]);
         console.log('Shutdown complete.', results);
     }
@@ -268,7 +268,7 @@ class MemoryPool {
             this._reused++;
             return this._pool.pop();
         }
-        
+
         this._created++;
         return this._factory();
     }
@@ -329,7 +329,7 @@ function* dataFetcherTask(task) {
 
 function* complexIteratorTask() {
     console.log('Complex iterator task started.');
-    
+
     // Custom iterator that yields prime numbers
     const primeIterator = {
         current: 2,
@@ -354,7 +354,7 @@ function* complexIteratorTask() {
         console.log(`Prime: ${prime}`);
         yield delay(100);
     }
-    
+
     console.log('Complex iterator task finished.');
 }
 

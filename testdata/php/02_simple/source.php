@@ -14,21 +14,21 @@ interface PersistableInterface
 {
     /**
      * Get entity ID
-     * 
+     *
      * @return int|null
      */
     public function getId(): ?int;
-    
+
     /**
      * Set entity ID
-     * 
+     *
      * @param int $id Entity ID
      */
     public function setId(int $id): void;
-    
+
     /**
      * Get creation timestamp
-     * 
+     *
      * @return DateTimeInterface|null
      */
     public function getCreatedAt(): ?DateTimeInterface;
@@ -41,14 +41,14 @@ interface CacheableInterface
 {
     /**
      * Get cache key
-     * 
+     *
      * @return string
      */
     public function getCacheKey(): string;
-    
+
     /**
      * Get cache TTL in seconds
-     * 
+     *
      * @return int
      */
     public function getCacheTtl(): int;
@@ -63,12 +63,12 @@ abstract class BaseEntity implements PersistableInterface, JsonSerializable
      * @var int|null Entity ID
      */
     protected ?int $id = null;
-    
+
     /**
      * @var DateTimeInterface|null Creation timestamp
      */
     protected ?DateTimeInterface $createdAt = null;
-    
+
     /**
      * @var DateTimeInterface|null Update timestamp
      */
@@ -100,7 +100,7 @@ abstract class BaseEntity implements PersistableInterface, JsonSerializable
 
     /**
      * Set creation timestamp
-     * 
+     *
      * @param DateTimeInterface $createdAt Creation timestamp
      */
     public function setCreatedAt(DateTimeInterface $createdAt): void
@@ -110,7 +110,7 @@ abstract class BaseEntity implements PersistableInterface, JsonSerializable
 
     /**
      * Get update timestamp
-     * 
+     *
      * @return DateTimeInterface|null
      */
     public function getUpdatedAt(): ?DateTimeInterface
@@ -120,7 +120,7 @@ abstract class BaseEntity implements PersistableInterface, JsonSerializable
 
     /**
      * Set update timestamp
-     * 
+     *
      * @param DateTimeInterface $updatedAt Update timestamp
      */
     public function setUpdatedAt(DateTimeInterface $updatedAt): void
@@ -130,14 +130,14 @@ abstract class BaseEntity implements PersistableInterface, JsonSerializable
 
     /**
      * Abstract method to get entity name
-     * 
+     *
      * @return string
      */
     abstract public function getEntityName(): string;
 
     /**
      * Abstract method to validate entity
-     * 
+     *
      * @return bool
      */
     abstract protected function validate(): bool;
@@ -167,11 +167,11 @@ trait TimestampableTrait
     protected function updateTimestamps(): void
     {
         $now = new \DateTime();
-        
+
         if ($this->createdAt === null) {
             $this->createdAt = $now;
         }
-        
+
         $this->updatedAt = $now;
     }
 }
@@ -188,7 +188,7 @@ trait ValidatableTrait
 
     /**
      * Add validation error
-     * 
+     *
      * @param string $field Field name
      * @param string $message Error message
      */
@@ -199,7 +199,7 @@ trait ValidatableTrait
 
     /**
      * Get validation errors
-     * 
+     *
      * @return array<string, string>
      */
     public function getValidationErrors(): array
@@ -217,7 +217,7 @@ trait ValidatableTrait
 
     /**
      * Check if entity has validation errors
-     * 
+     *
      * @return bool
      */
     public function hasValidationErrors(): bool
@@ -238,22 +238,22 @@ class Product extends BaseEntity implements CacheableInterface
      * @var string Product name
      */
     private string $name;
-    
+
     /**
      * @var float Product price
      */
     private float $price;
-    
+
     /**
      * @var string Product description
      */
     private string $description;
-    
+
     /**
      * @var bool Product availability
      */
     private bool $isAvailable = true;
-    
+
     /**
      * @var list<string> Product categories
      */
@@ -266,7 +266,7 @@ class Product extends BaseEntity implements CacheableInterface
 
     /**
      * Create new product
-     * 
+     *
      * @param string $name Product name
      * @param float $price Product price
      * @param string $description Product description
@@ -281,7 +281,7 @@ class Product extends BaseEntity implements CacheableInterface
 
     /**
      * Get product name
-     * 
+     *
      * @return string
      */
     public function getName(): string
@@ -291,7 +291,7 @@ class Product extends BaseEntity implements CacheableInterface
 
     /**
      * Set product name
-     * 
+     *
      * @param string $name Product name
      */
     public function setName(string $name): void
@@ -302,7 +302,7 @@ class Product extends BaseEntity implements CacheableInterface
 
     /**
      * Get product price
-     * 
+     *
      * @return float
      */
     public function getPrice(): float
@@ -312,7 +312,7 @@ class Product extends BaseEntity implements CacheableInterface
 
     /**
      * Set product price
-     * 
+     *
      * @param float $price Product price
      */
     public function setPrice(float $price): void
@@ -335,15 +335,15 @@ class Product extends BaseEntity implements CacheableInterface
     protected function validate(): bool
     {
         $this->clearValidationErrors();
-        
+
         if (empty($this->name)) {
             $this->addValidationError('name', 'Product name is required');
         }
-        
+
         if ($this->price < 0) {
             $this->addValidationError('price', 'Product price must be positive');
         }
-        
+
         return !$this->hasValidationErrors();
     }
 
@@ -365,7 +365,7 @@ class Product extends BaseEntity implements CacheableInterface
 
     /**
      * Add category to product
-     * 
+     *
      * @param string $category Category name
      */
     public function addCategory(string $category): void
@@ -377,7 +377,7 @@ class Product extends BaseEntity implements CacheableInterface
 
     /**
      * Static factory method for creating sale products
-     * 
+     *
      * @param string $name Product name
      * @param float $originalPrice Original price
      * @param float $discountPercent Discount percentage
@@ -387,7 +387,7 @@ class Product extends BaseEntity implements CacheableInterface
     {
         $salePrice = $originalPrice * (1 - $discountPercent / 100);
         $description = sprintf("Sale item - %d%% off!", $discountPercent);
-        
+
         return new self($name, $salePrice, $description);
     }
 }
@@ -401,12 +401,12 @@ class Category extends BaseEntity
      * @var string Category name
      */
     public readonly string $name;
-    
+
     /**
      * @var string Category slug
      */
     public readonly string $slug;
-    
+
     /**
      * @var Category|null Parent category
      */
@@ -414,7 +414,7 @@ class Category extends BaseEntity
 
     /**
      * Create new category
-     * 
+     *
      * @param string $name Category name
      * @param string $slug Category slug
      */
@@ -442,7 +442,7 @@ class Category extends BaseEntity
 
     /**
      * Set parent category
-     * 
+     *
      * @param Category|null $parent Parent category
      */
     public function setParent(?Category $parent): void
@@ -452,7 +452,7 @@ class Category extends BaseEntity
 
     /**
      * Get parent category
-     * 
+     *
      * @return Category|null
      */
     public function getParent(): ?Category

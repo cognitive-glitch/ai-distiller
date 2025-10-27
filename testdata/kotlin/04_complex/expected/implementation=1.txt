@@ -104,7 +104,7 @@ class ProductNotificationService {
                 notificationChannel.send(notification)
             }
         }
-        
+
         // Distribute notifications to subscribers
         launch {
             for (notification in notificationChannel) {
@@ -154,7 +154,7 @@ class DataProcessingOrchestrator {
                 processData(workerId)
             }
         }
-        
+
         // Error handling coroutine
         launch {
             for (error in errorChannel) {
@@ -162,7 +162,7 @@ class DataProcessingOrchestrator {
                 // Could implement retry logic here
             }
         }
-        
+
         // Results aggregation
         launch {
             val results = mutableListOf<ProcessingResult>()
@@ -188,7 +188,7 @@ fun main() {
 = runBlocking {
     // DSL Query example
     val repository = ProductRepository()
-    
+
     println("=== DSL Query Example ===")
     repository.executeQuery {
         where {

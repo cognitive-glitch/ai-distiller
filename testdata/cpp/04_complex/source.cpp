@@ -74,7 +74,7 @@ struct is_callable {
 private:
     template<typename U>
     static auto test(int) -> decltype(std::declval<U>()(std::declval<Args>()...), std::true_type{});
-    
+
     template<typename>
     static std::false_type test(...);
 
@@ -103,7 +103,7 @@ public:
     bool operator!=(const Derived& other) const {
         return !static_cast<const Derived*>(this)->operator==(other);
     }
-    
+
     /**
      * @brief Greater than operator
      * @param other Other object to compare
@@ -112,7 +112,7 @@ public:
     bool operator>(const Derived& other) const {
         return other < static_cast<const Derived&>(*this);
     }
-    
+
     /**
      * @brief Less than or equal operator
      * @param other Other object to compare
@@ -121,7 +121,7 @@ public:
     bool operator<=(const Derived& other) const {
         return !(static_cast<const Derived&>(*this) > other);
     }
-    
+
     /**
      * @brief Greater than or equal operator
      * @param other Other object to compare
@@ -149,7 +149,7 @@ public:
      * @param y Y coordinate
      */
     Point(double x, double y) : x_(x), y_(y) {}
-    
+
     /**
      * @brief Equality operator
      * @param other Other point
@@ -158,7 +158,7 @@ public:
     bool operator==(const Point& other) const {
         return std::abs(x_ - other.x_) < 1e-9 && std::abs(y_ - other.y_) < 1e-9;
     }
-    
+
     /**
      * @brief Less than operator
      * @param other Other point
@@ -167,7 +167,7 @@ public:
     bool operator<(const Point& other) const {
         return (x_ < other.x_) || (x_ == other.x_ && y_ < other.y_);
     }
-    
+
     /**
      * @brief Get distance from origin
      * @return Distance value
@@ -193,7 +193,7 @@ public:
      * @param args Values to store
      */
     explicit VariadicProcessor(Args... args) : data_(std::forward<Args>(args)...) {}
-    
+
     /**
      * @brief Get element at index
      * @tparam Index Index to get
@@ -203,7 +203,7 @@ public:
     auto get() -> decltype(std::get<Index>(data_)) {
         return std::get<Index>(data_);
     }
-    
+
     /**
      * @brief Apply function to all elements
      * @tparam F Function type
@@ -213,7 +213,7 @@ public:
     void forEach(F&& f) {
         forEachImpl(std::forward<F>(f), std::index_sequence_for<Args...>{});
     }
-    
+
     /**
      * @brief Get size of stored tuple
      * @return Number of elements
@@ -224,7 +224,7 @@ public:
 
 private:
     std::tuple<Args...> data_;  ///< Stored data
-    
+
     /**
      * @brief Implementation of forEach
      * @tparam F Function type
@@ -273,7 +273,7 @@ struct CompileTimeString {
     constexpr CompileTimeString(const char (&str)[N]) {
         std::copy_n(str, N, data);
     }
-    
+
     char data[N];  ///< String data
 };
 
@@ -300,7 +300,7 @@ public:
     static std::unique_ptr<T> create(Args&&... args) {
         return std::make_unique<T>(std::forward<Args>(args)...);
     }
-    
+
     /**
      * @brief Create instance with initialization from tuple
      * @tparam Tuple Tuple type
@@ -345,7 +345,7 @@ struct DataVisitor {
     std::string operator()(int value) const {
         return "Integer: " + std::to_string(value);
     }
-    
+
     /**
      * @brief Visit double
      * @param value Double value
@@ -354,7 +354,7 @@ struct DataVisitor {
     std::string operator()(double value) const {
         return "Double: " + std::to_string(value);
     }
-    
+
     /**
      * @brief Visit string
      * @param value String value
@@ -371,7 +371,7 @@ struct DataVisitor {
  * @tparam Allocator Allocator type
  * @tparam Compare Comparison function type
  */
-template<typename T, 
+template<typename T,
          typename Allocator = std::allocator<T>,
          typename Compare = std::less<T>>
 class AdvancedContainer {
@@ -379,7 +379,7 @@ public:
     using value_type = T;
     using allocator_type = Allocator;
     using compare_type = Compare;
-    
+
     /**
      * @brief Constructor
      * @param comp Comparison function
@@ -388,7 +388,7 @@ public:
     explicit AdvancedContainer(const Compare& comp = Compare{},
                               const Allocator& alloc = Allocator{})
         : compare_(comp), allocator_(alloc) {}
-    
+
     /**
      * @brief Insert element
      * @param value Value to insert
@@ -397,7 +397,7 @@ public:
         auto it = std::lower_bound(data_.begin(), data_.end(), value, compare_);
         data_.insert(it, value);
     }
-    
+
     /**
      * @brief Insert element with perfect forwarding
      * @tparam Args Argument types
@@ -408,7 +408,7 @@ public:
         T value(std::forward<Args>(args)...);
         insert(value);
     }
-    
+
     /**
      * @brief Find element
      * @param value Value to find
@@ -418,19 +418,19 @@ public:
         auto it = std::lower_bound(data_.begin(), data_.end(), value, compare_);
         return (it != data_.end() && !compare_(value, *it)) ? it : data_.end();
     }
-    
+
     /**
      * @brief Get size
      * @return Number of elements
      */
     size_t size() const { return data_.size(); }
-    
+
     /**
      * @brief Begin iterator
      * @return Iterator to beginning
      */
     auto begin() const { return data_.begin(); }
-    
+
     /**
      * @brief End iterator
      * @return Iterator to end
@@ -448,7 +448,7 @@ private:
     std::vector<T> data_;     ///< Stored data
     Compare compare_;         ///< Comparison function
     Allocator allocator_;     ///< Allocator instance
-    
+
     /**
      * @brief Private helper method
      * @param value Value to validate
@@ -469,12 +469,12 @@ template<typename T, typename Allocator, typename Compare>
 class AdvancedContainer<T*, Allocator, Compare> {
 public:
     using value_type = T*;
-    
+
     /**
      * @brief Constructor for pointer specialization
      */
     AdvancedContainer() = default;
-    
+
     /**
      * @brief Insert pointer
      * @param ptr Pointer to insert
@@ -484,7 +484,7 @@ public:
             pointers_.push_back(ptr);
         }
     }
-    
+
     /**
      * @brief Get size
      * @return Number of pointers
@@ -513,14 +513,14 @@ public:
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
             return processData(data);
         });
-        
+
         if (future.wait_for(std::chrono::milliseconds(timeoutMs)) == std::future_status::ready) {
             return future.get();
         }
-        
+
         return std::nullopt;
     }
-    
+
     /**
      * @brief Process multiple items in parallel
      * @tparam Container Container type
@@ -530,18 +530,18 @@ public:
     template<typename Container>
     std::vector<std::string> processParallel(const Container& items) {
         std::vector<std::future<std::string>> futures;
-        
+
         for (const auto& item : items) {
             futures.push_back(std::async(std::launch::async, [item]() {
                 return processData(item);
             }));
         }
-        
+
         std::vector<std::string> results;
         for (auto& future : futures) {
             results.push_back(future.get());
         }
-        
+
         return results;
     }
 
@@ -556,7 +556,7 @@ private:
     static std::string processData(const T& data) {
         return "Processed: " + std::to_string(data);
     }
-    
+
     /**
      * @brief Specialization for string
      * @param data String data
@@ -573,32 +573,32 @@ private:
 void demonstrateComplexFeatures() {
     // Compile-time computation
     constexpr auto fact5 = factorial(5);
-    
+
     // CRTP demonstration
     Point p1(1.0, 2.0);
     Point p2(3.0, 4.0);
     bool isLess = p1 < p2;
-    
+
     // Variadic template
     VariadicProcessor<int, double, std::string> processor(42, 3.14, "Hello");
-    
+
     // Variant visitor
     std::vector<DataVariant> variants = {42, 3.14, std::string("test")};
     for (const auto& var : variants) {
         std::string result = std::visit(DataVisitor{}, var);
         std::cout << result << std::endl;
     }
-    
+
     // Advanced container
     AdvancedContainer<int> container;
     container.insert(3);
     container.insert(1);
     container.insert(4);
-    
+
     // Async processing
     AsyncProcessor asyncProc;
     auto result = asyncProc.processWithTimeout(42, 200);
-    
+
     std::cout << "Factorial(5): " << fact5 << std::endl;
     std::cout << "Point comparison: " << (isLess ? "true" : "false") << std::endl;
     std::cout << "Container size: " << container.size() << std::endl;

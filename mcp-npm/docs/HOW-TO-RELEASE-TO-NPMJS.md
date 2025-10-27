@@ -23,11 +23,11 @@ git tag mcp-v$(node -p "require('./package.json').version") && git push && git p
 1. **NPM Account**: Ensure you're logged in to npm:
    ```bash
    npm login
-   # Username: janreges
+   # Username: cognitive
    ```
 
 2. **AI Distiller Binary Release**: The `aid` binary must be released on GitHub first:
-   - Release URL format: `https://github.com/janreges/ai-distiller/releases/tag/vX.Y.Z`
+   - Release URL format: `https://github.com/cognitive-glitch/ai-distiller-reboot/releases/tag/vX.Y.Z`
    - Required files for each platform:
      - `aid-darwin-amd64-vX.Y.Z.tar.gz`
      - `aid-darwin-arm64-vX.Y.Z.tar.gz`
@@ -82,10 +82,10 @@ After successful publish, test the package:
 
 ```bash
 # In a new directory
-npx @janreges/ai-distiller-mcp@latest
+npx @cognitive/ai-distiller-mcp@latest
 
 # Or install globally
-npm install -g @janreges/ai-distiller-mcp@latest
+npm install -g @cognitive/ai-distiller-mcp@latest
 aid-mcp --version
 ```
 
@@ -122,18 +122,18 @@ Before publishing, test the package installation locally:
 # Create a test package
 npm pack
 
-# This creates: janreges-ai-distiller-mcp-X.Y.Z.tgz
+# This creates: cognitive-ai-distiller-mcp-X.Y.Z.tgz
 
 # Test in a clean directory
 mkdir /tmp/test-mcp
 cd /tmp/test-mcp
-npm install /path/to/mcp-npm/janreges-ai-distiller-mcp-X.Y.Z.tgz
+npm install /path/to/mcp-npm/cognitive-ai-distiller-mcp-X.Y.Z.tgz
 
 # Verify the binary was downloaded and extracted
-ls -la node_modules/@janreges/ai-distiller-mcp/bin/
+ls -la node_modules/@cognitive/ai-distiller-mcp/bin/
 
 # Test the MCP server
-npx @janreges/ai-distiller-mcp
+npx @cognitive/ai-distiller-mcp
 ```
 
 ### 4. Dry Run
@@ -183,8 +183,8 @@ However, if you need to fix bugs in the MCP wrapper without a new aid release:
 
 ### Binary Not Found After Install
 
-1. Check if postinstall script ran: `npm ls @janreges/ai-distiller-mcp`
-2. Manually run postinstall: `cd node_modules/@janreges/ai-distiller-mcp && npm run postinstall`
+1. Check if postinstall script ran: `npm ls @cognitive/ai-distiller-mcp`
+2. Manually run postinstall: `cd node_modules/@cognitive/ai-distiller-mcp && npm run postinstall`
 3. Check permissions on extracted binary
 
 ### Platform Not Supported

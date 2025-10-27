@@ -14,12 +14,12 @@ import kotlin.random.Random
 interface Entity {
     val id: String
     val createdAt: Long
-    
+
     /**
      * Default implementation of a method
      */
     fun getAge(): Long = System.currentTimeMillis() - createdAt
-    
+
     /**
      * Abstract method to be implemented
      */
@@ -32,7 +32,7 @@ interface Entity {
 interface Auditable {
     var lastModified: Long
     var modifiedBy: String?
-    
+
     /**
      * Method to mark entity as modified
      */
@@ -49,25 +49,25 @@ abstract class BaseEntity(
     override val id: String,
     override val createdAt: Long = System.currentTimeMillis()
 ) : Entity {
-    
+
     /**
      * Protected property for subclasses
      */
     protected var isActive: Boolean = true
         private set
-    
+
     /**
      * Public method to activate/deactivate
      */
     fun setActive(active: Boolean) {
         isActive = active
     }
-    
+
     /**
      * Abstract method for validation
      */
     abstract fun validate(): Boolean
-    
+
     /**
      * Open method that can be overridden
      */
@@ -85,10 +85,10 @@ class Product(
     val category: String,
     private var _price: Double
 ) : BaseEntity(id), Auditable {
-    
+
     override var lastModified: Long = System.currentTimeMillis()
     override var modifiedBy: String? = null
-    
+
     /**
      * Property with custom getter and setter
      */
@@ -100,41 +100,41 @@ class Product(
                 markModified("system")
             }
         }
-    
+
     /**
      * Lazy property
      */
     val description: String by lazy {
         "Product: $name in category $category"
     }
-    
+
     /**
      * Observable property
      */
     var stock: Int by Delegates.observable(0) { _, oldValue, newValue ->
         println("Stock changed from $oldValue to $newValue for product $name")
     }
-    
+
     /**
      * Vetoable property
      */
     var discount: Double by Delegates.vetoable(0.0) { _, _, newValue ->
         newValue in 0.0..1.0
     }
-    
+
     override fun getEntityType(): String = "Product"
-    
+
     override fun validate(): Boolean {
-        return name.isNotBlank() && 
-               category.isNotBlank() && 
+        return name.isNotBlank() &&
+               category.isNotBlank() &&
                price >= 0 &&
                stock >= 0
     }
-    
+
     override fun getStatusMessage(): String {
         return super.getStatusMessage() + " - Stock: $stock"
     }
-    
+
     /**
      * Product-specific method
      */
@@ -145,17 +145,17 @@ class Product(
             price
         }
     }
-    
+
     companion object {
         private var nextId = 1
-        
+
         /**
          * Factory method for creating products
          */
         fun create(name: String, category: String, price: Double): Product {
             return Product("PROD_${nextId++}", name, category, price)
         }
-        
+
         /**
          * Validation constants
          */
@@ -172,25 +172,25 @@ class Category(
     val name: String,
     private val auditDelegate: Auditable
 ) : BaseEntity(id), Auditable by auditDelegate {
-    
+
     private val _products = mutableListOf<Product>()
-    
+
     /**
      * Read-only property exposing products
      */
     val products: List<Product> get() = _products.toList()
-    
+
     /**
      * Property with custom getter
      */
     val productCount: Int get() = _products.size
-    
+
     override fun getEntityType(): String = "Category"
-    
+
     override fun validate(): Boolean {
         return name.isNotBlank() && name.length <= 50
     }
-    
+
     /**
      * Add product to category
      */
@@ -203,7 +203,7 @@ class Category(
             false
         }
     }
-    
+
     /**
      * Remove product from category
      */
@@ -215,7 +215,7 @@ class Category(
             false
         }
     }
-    
+
     /**
      * Get products by price range
      */
@@ -240,7 +240,7 @@ class ProductService(
 ) {
     private val products = mutableMapOf<String, Product>()
     private val categories = mutableMapOf<String, Category>()
-    
+
     /**
      * Public method to add product
      */
@@ -257,19 +257,19 @@ class ProductService(
             Result.failure(e)
         }
     }
-    
+
     /**
      * Find product by ID
      */
     fun findProduct(id: String): Product? = products[id]
-    
+
     /**
      * Get all products in category
      */
     fun getProductsInCategory(categoryName: String): List<Product> {
         return products.values.filter { it.category == categoryName }
     }
-    
+
     /**
      * Private helper method
      */
@@ -284,19 +284,19 @@ class ProductService(
  */
 class AuditService {
     private val auditLog = mutableListOf<AuditEntry>()
-    
+
     /**
      * Log an action
      */
     fun logAction(action: String, entityId: String) {
         auditLog.add(AuditEntry(action, entityId, System.currentTimeMillis()))
     }
-    
+
     /**
      * Get audit log
      */
     fun getAuditLog(): List<AuditEntry> = auditLog.toList()
-    
+
     /**
      * Internal audit entry class
      */
@@ -312,19 +312,19 @@ class AuditService {
  */
 object ConfigManager {
     private val config = mutableMapOf<String, String>()
-    
+
     /**
      * Set configuration value
      */
     fun setConfig(key: String, value: String) {
         config[key] = value
     }
-    
+
     /**
      * Get configuration value
      */
     fun getConfig(key: String): String? = config[key]
-    
+
     /**
      * Get configuration with default
      */
@@ -339,24 +339,24 @@ object ConfigManager {
 class ShoppingCart {
     private val items = mutableListOf<CartItem>()
     private var _customerId: String? = null
-    
+
     /**
      * Primary constructor
      */
     constructor()
-    
+
     /**
      * Secondary constructor with customer ID
      */
     constructor(customerId: String) : this() {
         _customerId = customerId
     }
-    
+
     /**
      * Property for customer ID
      */
     val customerId: String? get() = _customerId
-    
+
     /**
      * Add item to cart
      */
@@ -368,14 +368,14 @@ class ShoppingCart {
             items.add(CartItem(product, quantity))
         }
     }
-    
+
     /**
      * Calculate total price
      */
     fun calculateTotal(): Double {
         return items.sumOf { it.product.price * it.quantity }
     }
-    
+
     /**
      * Nested data class for cart items
      */
@@ -391,29 +391,29 @@ class ShoppingCart {
 fun main() {
     val auditService = AuditService()
     val productService = ProductService(auditService)
-    
+
     // Create products
     val laptop = Product.create("Gaming Laptop", "Electronics", 1299.99)
     laptop.stock = 50
     laptop.discount = 0.1
-    
+
     val phone = Product.create("Smartphone", "Electronics", 699.99)
     phone.stock = 100
-    
+
     // Add products to service
     productService.addProduct(laptop)
     productService.addProduct(phone)
-    
+
     // Create category with delegation
     val electronics = Category("CAT_1", "Electronics", AuditImpl())
     electronics.addProduct(laptop)
     electronics.addProduct(phone)
-    
+
     // Use shopping cart
     val cart = ShoppingCart("CUSTOMER_123")
     cart.addItem(laptop, 1)
     cart.addItem(phone, 2)
-    
+
     println("Cart total: ${cart.calculateTotal()}")
     println("Electronics category has ${electronics.productCount} products")
 }

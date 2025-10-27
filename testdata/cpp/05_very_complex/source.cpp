@@ -71,7 +71,7 @@ concept Callable = requires(F f, Args... args) {
  * @tparam T Type to check
  */
 template<typename T>
-concept AdvancedNumeric = Arithmetic<T> && Incrementable<T> && 
+concept AdvancedNumeric = Arithmetic<T> && Incrementable<T> &&
     requires(T a, T b) {
         { a + b } -> std::convertible_to<T>;
         { a - b } -> std::convertible_to<T>;
@@ -95,36 +95,36 @@ struct SimpleTask {
         SimpleTask get_return_object() {
             return SimpleTask{std::coroutine_handle<promise_type>::from_promise(*this)};
         }
-        
+
         /**
          * @brief Initial suspend
          * @return Never suspend initially
          */
         std::suspend_never initial_suspend() { return {}; }
-        
+
         /**
          * @brief Final suspend
          * @return Always suspend finally
          */
         std::suspend_always final_suspend() noexcept { return {}; }
-        
+
         /**
          * @brief Handle return void
          */
         void return_void() {}
-        
+
         /**
          * @brief Handle unhandled exception
          */
         void unhandled_exception() {}
     };
-    
+
     /**
      * @brief Constructor
      * @param h Coroutine handle
      */
     explicit SimpleTask(std::coroutine_handle<promise_type> h) : handle_(h) {}
-    
+
     /**
      * @brief Destructor
      */
@@ -133,13 +133,13 @@ struct SimpleTask {
             handle_.destroy();
         }
     }
-    
+
     /**
      * @brief Move constructor
      * @param other Other task
      */
     SimpleTask(SimpleTask&& other) noexcept : handle_(std::exchange(other.handle_, {})) {}
-    
+
     /**
      * @brief Move assignment
      * @param other Other task
@@ -154,7 +154,7 @@ struct SimpleTask {
         }
         return *this;
     }
-    
+
     /**
      * @brief Deleted copy operations
      */
@@ -173,7 +173,7 @@ template<typename T>
 struct Generator {
     struct promise_type {
         T current_value;  ///< Current generated value
-        
+
         /**
          * @brief Get return object
          * @return Generator instance
@@ -181,29 +181,29 @@ struct Generator {
         Generator get_return_object() {
             return Generator{std::coroutine_handle<promise_type>::from_promise(*this)};
         }
-        
+
         /**
          * @brief Initial suspend
          * @return Always suspend initially
          */
         std::suspend_always initial_suspend() { return {}; }
-        
+
         /**
          * @brief Final suspend
          * @return Always suspend finally
          */
         std::suspend_always final_suspend() noexcept { return {}; }
-        
+
         /**
          * @brief Handle return void
          */
         void return_void() {}
-        
+
         /**
          * @brief Handle unhandled exception
          */
         void unhandled_exception() {}
-        
+
         /**
          * @brief Handle co_yield
          * @param value Value to yield
@@ -214,13 +214,13 @@ struct Generator {
             return {};
         }
     };
-    
+
     /**
      * @brief Constructor
      * @param h Coroutine handle
      */
     explicit Generator(std::coroutine_handle<promise_type> h) : handle_(h) {}
-    
+
     /**
      * @brief Destructor
      */
@@ -229,13 +229,13 @@ struct Generator {
             handle_.destroy();
         }
     }
-    
+
     /**
      * @brief Move constructor
      * @param other Other generator
      */
     Generator(Generator&& other) noexcept : handle_(std::exchange(other.handle_, {})) {}
-    
+
     /**
      * @brief Move assignment
      * @param other Other generator
@@ -250,13 +250,13 @@ struct Generator {
         }
         return *this;
     }
-    
+
     /**
      * @brief Deleted copy operations
      */
     Generator(const Generator&) = delete;
     Generator& operator=(const Generator&) = delete;
-    
+
     /**
      * @brief Check if generator has more values
      * @return true if more values available
@@ -268,7 +268,7 @@ struct Generator {
         }
         return false;
     }
-    
+
     /**
      * @brief Get current value
      * @return Current value
@@ -296,7 +296,7 @@ struct TypeAnalyzer {
     static constexpr bool is_const = std::is_const_v<std::remove_reference_t<T>>;
     static constexpr size_t size = sizeof(T);
     static constexpr size_t alignment = alignof(T);
-    
+
     /**
      * @brief Get type category as string
      * @return Type category description
@@ -324,17 +324,17 @@ template<typename T>
 class HasAdvancedMethods {
 private:
     template<typename U>
-    static auto test_serialize(int) 
+    static auto test_serialize(int)
         -> decltype(std::declval<U>().serialize(), std::true_type{});
     template<typename>
     static std::false_type test_serialize(...);
-    
+
     template<typename U>
     static auto test_deserialize(int)
         -> decltype(std::declval<U>().deserialize(std::string{}), std::true_type{});
     template<typename>
     static std::false_type test_deserialize(...);
-    
+
     template<typename U>
     static auto test_validate(int)
         -> decltype(std::declval<U>().validate(), std::true_type{});
@@ -413,7 +413,7 @@ public:
      * @param name Processor name
      */
     explicit AdvancedProcessor(const std::string& name) : name_(name) {}
-    
+
     /**
      * @brief Process data using concepts
      * @param data Input data
@@ -424,7 +424,7 @@ public:
         ++result;
         return result * static_cast<T>(2);
     }
-    
+
     /**
      * @brief Process container of data
      * @tparam Container Container type
@@ -432,20 +432,20 @@ public:
      * @return Processed results
      */
     template<Container Container>
-    auto processContainer(const Container& container) 
+    auto processContainer(const Container& container)
         -> std::vector<typename Container::value_type>
         requires std::same_as<typename Container::value_type, T> {
-        
+
         std::vector<T> results;
         results.reserve(container.size());
-        
+
         for (const auto& item : container) {
             results.push_back(process(item));
         }
-        
+
         return results;
     }
-    
+
     /**
      * @brief Generate sequence using coroutine
      * @param start Starting value
@@ -457,7 +457,7 @@ public:
             co_yield start + static_cast<T>(i);
         }
     }
-    
+
     /**
      * @brief Process data asynchronously
      * @param data Input data
@@ -483,7 +483,7 @@ protected:
 
 private:
     std::string name_;  ///< Processor name
-    
+
     /**
      * @brief Private helper using consteval
      * @param value Compile-time value
@@ -507,10 +507,10 @@ public:
     template<typename T>
     void store(T&& value) requires (!std::is_same_v<std::decay_t<T>, TypeErasedContainer>) {
         using DecayedT = std::decay_t<T>;
-        
+
         data_.emplace_back(std::make_unique<Wrapper<DecayedT>>(std::forward<T>(value)));
     }
-    
+
     /**
      * @brief Process all stored values
      * @tparam F Function type
@@ -522,7 +522,7 @@ public:
             f(wrapper->getValue());
         }
     }
-    
+
     /**
      * @brief Get stored value by type
      * @tparam T Type to retrieve
@@ -537,7 +537,7 @@ public:
         }
         return std::nullopt;
     }
-    
+
     /**
      * @brief Get size
      * @return Number of stored items
@@ -553,14 +553,14 @@ private:
          * @brief Virtual destructor
          */
         virtual ~WrapperBase() = default;
-        
+
         /**
          * @brief Get stored value as any
          * @return std::any containing the value
          */
         virtual std::any getValue() const = 0;
     };
-    
+
     /**
      * @brief Concrete wrapper for specific type
      * @tparam T Wrapped type
@@ -572,7 +572,7 @@ private:
          * @param value Value to wrap
          */
         explicit Wrapper(T value) : value_(std::move(value)) {}
-        
+
         /**
          * @brief Get value implementation
          * @return std::any containing the value
@@ -580,10 +580,10 @@ private:
         std::any getValue() const override {
             return value_;
         }
-        
+
         T value_;  ///< Stored value
     };
-    
+
     /// Vector of type-erased wrappers
     std::vector<std::unique_ptr<WrapperBase>> data_;
 };
@@ -604,7 +604,7 @@ namespace AdvancedFeatures {
         }
         return len;
     }
-    
+
     /**
      * @brief Constexpr function with complex logic
      * @tparam T Numeric type
@@ -619,7 +619,7 @@ namespace AdvancedFeatures {
         }
         return result;
     }
-    
+
     /**
      * @brief Use ranges and views (C++20)
      * @tparam Range Range type
@@ -629,7 +629,7 @@ namespace AdvancedFeatures {
     template<std::ranges::range Range>
     auto processRange(Range&& range) {
         namespace views = std::views;
-        
+
         return range | views::filter([](const auto& x) { return x > 0; })
                     | views::transform([](const auto& x) { return x * 2; })
                     | views::take(10);
@@ -643,45 +643,45 @@ void demonstrateVeryComplexFeatures() {
     // Concepts demonstration
     AdvancedProcessor<int> intProcessor("IntProcessor");
     auto result = intProcessor.process(42);
-    
+
     // Coroutine demonstration
     auto generator = intProcessor.generateSequence(1, 5);
     std::vector<int> generated;
     while (generator.next()) {
         generated.push_back(generator.value());
     }
-    
+
     // Type-erased container
     TypeErasedContainer container;
     container.store(123);
     container.store(3.14);
     container.store(std::string("Hello"));
-    
+
     // Process with lambda
     container.processAll([](const std::any& value) {
         // Type inspection would go here
         std::cout << "Processing stored value" << std::endl;
     });
-    
+
     // Consteval demonstration
     constexpr auto strLen = AdvancedFeatures::processString("Hello, World!");
     constexpr auto calcResult = AdvancedFeatures::complexCalculation(5);
-    
+
     // Ranges demonstration (C++20)
     std::vector<int> numbers = {-2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
     auto processed = AdvancedFeatures::processRange(numbers);
-    
+
     std::cout << "Int processor result: " << result << std::endl;
     std::cout << "Generated values: " << generated.size() << std::endl;
     std::cout << "Container size: " << container.size() << std::endl;
     std::cout << "String length (consteval): " << strLen << std::endl;
     std::cout << "Calculation result (constexpr): " << calcResult << std::endl;
-    
+
     // Type analysis demonstration
     using IntAnalysis = TypeAnalyzer<int>;
     std::cout << "Int category: " << IntAnalysis::category() << std::endl;
     std::cout << "Int size: " << IntAnalysis::size << std::endl;
-    
+
     // Advanced method detection
     constexpr bool hasSerialize = HasAdvancedMethods<std::string>::has_serialize;
     std::cout << "String has serialize: " << (hasSerialize ? "true" : "false") << std::endl;

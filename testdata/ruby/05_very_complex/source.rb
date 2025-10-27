@@ -13,37 +13,37 @@ module AdvancedMetaprogramming
       @intercepted_methods = {}
     end
   end
-  
+
   module ClassMethods
     # Method chain interception
     def intercept_method_chain(*method_names, &interceptor)
       method_names.each do |method_name|
         @intercepted_methods[method_name] = interceptor
-        
+
         if method_defined?(method_name)
           alias_method("#{method_name}_original", method_name)
-          
+
           define_method(method_name) do |*args, &block|
             result = nil
-            
+
             # Call interceptor before original method
             interceptor_result = @intercepted_methods[method_name].call(self, method_name, args, block) if @intercepted_methods[method_name]
-            
+
             # Call original method unless interceptor returned :skip
             unless interceptor_result == :skip
               result = send("#{method_name}_original", *args, &block)
             end
-            
+
             result
           end
         end
       end
     end
-    
+
     # Create method chains that can be dynamically extended
     def method_chain(name, &definition)
       @method_chains[name] = definition
-      
+
       define_method(name) do |*args, &block|
         chain_context = MethodChainContext.new(self, name)
         chain_context.instance_exec(*args, &@method_chains[name])
@@ -51,7 +51,7 @@ module AdvancedMetaprogramming
       end
     end
   end
-  
+
   # Context for method chains
   class MethodChainContext
     def initialize(target, chain_name)
@@ -59,19 +59,19 @@ module AdvancedMetaprogramming
       @chain_name = chain_name
       @steps = []
     end
-    
+
     def step(name, &block)
       @steps << { name: name, block: block }
       self
     end
-    
+
     def execute(&final_block)
       result = nil
-      
+
       @steps.each do |step|
         result = @target.instance_eval(&step[:block])
       end
-      
+
       @target.instance_eval(&final_block) if final_block
       result
     end
@@ -85,13 +85,13 @@ module CodeGenerator
     crud_template = <<~RUBY
       class #{class_name}
         TABLE_NAME = '#{table_name}'
-        
+
         def self.find(id)
           # Simulated database query
           query = "SELECT * FROM \#{TABLE_NAME} WHERE id = \#{id}"
           execute_query(query)
         end
-        
+
         def self.create(attributes)
           instance = new
           attributes.each do |key, value|
@@ -100,27 +100,27 @@ module CodeGenerator
           instance.save
           instance
         end
-        
+
         def save
           # Simulated save operation
           puts "Saving \#{self.class.name} to \#{TABLE_NAME}"
           true
         end
-        
+
         def update(attributes)
           attributes.each do |key, value|
             send("\#{key}=", value) if respond_to?("\#{key}=")
           end
           save
         end
-        
+
         def destroy
           puts "Deleting \#{self.class.name} from \#{TABLE_NAME}"
           true
         end
-        
+
         private
-        
+
         def self.execute_query(query)
           puts "Executing: \#{query}"
           # Return mock result
@@ -128,11 +128,11 @@ module CodeGenerator
         end
       end
     RUBY
-    
+
     # Use eval to create the class dynamically
     eval(crud_template)
   end
-  
+
   # Generate validation methods using binding
   def self.generate_validators(target_class, validations)
     validations.each do |field, rules|
@@ -140,12 +140,12 @@ module CodeGenerator
       target_class.class_eval(validation_code)
     end
   end
-  
+
   private
-  
+
   def self.build_validation_code(field, rules)
     validations = []
-    
+
     rules.each do |rule, value|
       case rule
       when :presence
@@ -163,14 +163,14 @@ module CodeGenerator
         validations << "errors << '#{field} format is invalid' unless #{field}.match?(#{value.inspect})"
       end
     end
-    
+
     <<~RUBY
       def validate_#{field}
         errors = []
         #{validations.join("\n    ")}
         errors
       end
-      
+
       def #{field}_valid?
         validate_#{field}.empty?
       end
@@ -181,12 +181,12 @@ end
 # Complex reflection and runtime code modification
 class RuntimeCodeModifier
   include AdvancedMetaprogramming
-  
+
   def initialize
     @original_methods = {}
     @modified_methods = {}
   end
-  
+
   # Modify method implementations at runtime
   def modify_method(target, method_name, &new_implementation)
     # Store original method
@@ -194,28 +194,28 @@ class RuntimeCodeModifier
       original_method = target.method(method_name)
       @original_methods["#{target.class}##{method_name}"] = original_method
     end
-    
+
     # Define new method
     if target.is_a?(Class)
       target.define_method(method_name, &new_implementation)
     else
       target.define_singleton_method(method_name, &new_implementation)
     end
-    
+
     @modified_methods["#{target.class}##{method_name}"] = new_implementation
   end
-  
+
   # Restore original method
   def restore_method(target, method_name)
     key = "#{target.class}##{method_name}"
     original_method = @original_methods[key]
-    
+
     if original_method
       target.define_method(method_name, original_method)
       @modified_methods.delete(key)
     end
   end
-  
+
   # Create a proxy that intercepts all method calls
   def create_method_proxy(target)
     proxy_class = Class.new do
@@ -224,7 +224,7 @@ class RuntimeCodeModifier
         @modifier = modifier
         @call_log = []
       end
-      
+
       def method_missing(method_name, *args, &block)
         # Log the method call
         @call_log << {
@@ -233,7 +233,7 @@ class RuntimeCodeModifier
           timestamp: Time.now,
           caller_location: caller_locations(1, 1).first
         }
-        
+
         # Check if method should be intercepted
         if @modifier.should_intercept?(method_name)
           @modifier.intercept_call(@target, method_name, args, block)
@@ -241,27 +241,27 @@ class RuntimeCodeModifier
           @target.send(method_name, *args, &block)
         end
       end
-      
+
       def respond_to_missing?(method_name, include_private = false)
         @target.respond_to?(method_name, include_private)
       end
-      
+
       def call_log
         @call_log.dup
       end
     end
-    
+
     proxy_class.new(target, self)
   end
-  
+
   def should_intercept?(method_name)
     # Custom logic for determining if method should be intercepted
     method_name.to_s.start_with?('get_', 'set_', 'find_')
   end
-  
+
   def intercept_call(target, method_name, args, block)
     puts "Intercepting call to #{method_name} with args: #{args.inspect}"
-    
+
     # Custom handling based on method name pattern
     case method_name.to_s
     when /^get_(.+)$/
@@ -288,41 +288,41 @@ class QueryDSL
     @order_by = []
     @limit_value = nil
   end
-  
+
   # DSL methods
   def where(condition)
     @conditions << condition
     self
   end
-  
+
   def join(table, on:)
     @joins << { table: table, on: on }
     self
   end
-  
+
   def order(field, direction: :asc)
     @order_by << { field: field, direction: direction }
     self
   end
-  
+
   def limit(count)
     @limit_value = count
     self
   end
-  
+
   # Compile DSL to executable Ruby code
   def compile_to_ruby
     code_parts = []
-    
+
     # Start with basic query structure
     code_parts << "def execute_query"
     code_parts << "  results = []"
-    
+
     # Add joins
     @joins.each do |join_spec|
       code_parts << "  # JOIN #{join_spec[:table]} ON #{join_spec[:on]}"
     end
-    
+
     # Add conditions
     if @conditions.any?
       conditions_code = @conditions.map { |c| "    #{c}" }.join(" &&\n")
@@ -330,28 +330,28 @@ class QueryDSL
       code_parts << conditions_code
       code_parts << "  end"
     end
-    
+
     # Add ordering
     @order_by.each do |order_spec|
       direction = order_spec[:direction] == :desc ? ".reverse" : ""
       code_parts << "  results.sort_by! { |r| r[:#{order_spec[:field]}] }#{direction}"
     end
-    
+
     # Add limit
     if @limit_value
       code_parts << "  results = results.first(#{@limit_value})"
     end
-    
+
     code_parts << "  results"
     code_parts << "end"
-    
+
     code_parts.join("\n")
   end
-  
+
   # Execute the compiled code
   def execute
     compiled_code = compile_to_ruby
-    
+
     # Create a context for execution
     execution_context = Object.new
     execution_context.instance_eval(compiled_code)
@@ -362,40 +362,40 @@ end
 # Meta-class that can redefine itself at runtime
 class SelfModifyingClass
   @modifications = []
-  
+
   def self.add_modification(&block)
     @modifications << block
     apply_modifications
   end
-  
+
   def self.apply_modifications
     @modifications.each do |modification|
       class_eval(&modification)
     end
   end
-  
+
   # Method that can redefine the class
   def self.evolve(&evolution_block)
     # Create a new version of the class
     new_class = Class.new(self) do
       class_eval(&evolution_block)
     end
-    
+
     # Replace the current class in the constant table
     parent_module = name.split('::')[0..-2].inject(Object) { |mod, const| mod.const_get(const) }
     class_name = name.split('::').last
-    
+
     parent_module.send(:remove_const, class_name)
     parent_module.const_set(class_name, new_class)
-    
+
     new_class
   end
-  
+
   # Instance method that can modify its own class
   def modify_self_class(&block)
     self.class.class_eval(&block)
   end
-  
+
   def inspect_modifications
     self.class.instance_variable_get(:@modifications)
   end
@@ -408,20 +408,20 @@ class CustomDispatchFactory
       define_method(:method_missing) do |method_name, *args, &block|
         # Use custom dispatch logic
         dispatch_result = dispatch_logic.call(self, method_name, args, block)
-        
+
         if dispatch_result.is_a?(Proc)
           instance_exec(*args, &dispatch_result)
         else
           dispatch_result
         end
       end
-      
+
       define_method(:respond_to_missing?) do |method_name, include_private = false|
         # Always respond true for dynamic dispatch
         true
       end
     end
-    
+
     Object.const_set(class_name, new_class)
     new_class
   end

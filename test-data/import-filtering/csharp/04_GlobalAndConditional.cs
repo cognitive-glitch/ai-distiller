@@ -47,18 +47,18 @@ namespace ImportFilteringTests
         [DataMember]
         [Required]
         public string Name { get; set; }
-        
+
         [DataMember]
         [EmailAddress]
         public string Email { get; set; }
-        
+
         public int Age { get; set; }
     }
-    
+
     public class GlobalAndConditionalImports
     {
         private readonly HttpClient httpClient = new HttpClient();
-        
+
         public async Task<User> FetchUserAsync(string userId)
         {
             #if NET6_0_OR_GREATER
@@ -71,7 +71,7 @@ namespace ImportFilteringTests
             return DeserializeUser(response);
             #endif
         }
-        
+
         public string SerializeUser(User user)
         {
             #if USE_NEWTONSOFT
@@ -79,14 +79,14 @@ namespace ImportFilteringTests
             return JsonConvert.SerializeObject(user, Formatting.Indented);
             #else
             // Using System.Text.Json (via global using or alias)
-            var options = new JsonSerializerOptions 
-            { 
-                WriteIndented = true 
+            var options = new JsonSerializerOptions
+            {
+                WriteIndented = true
             };
             return JsonSerializer.Serialize(user, options);
             #endif
         }
-        
+
         public User DeserializeUser(string json)
         {
             #if USE_NEWTONSOFT
@@ -95,14 +95,14 @@ namespace ImportFilteringTests
             return JsonSerializer.Deserialize<User>(json);
             #endif
         }
-        
+
         public void DebugLog(string message, [CallerMemberName] string caller = null)
         {
             #if DEBUG
             // Using System.Diagnostics in debug mode
             Debug.WriteLine($"[{caller}] {message}");
             Trace.WriteLine($"Trace: {message}");
-            
+
             // Using CallerMemberName from System.Runtime.CompilerServices
             Console.WriteLine($"Called from: {caller}");
             #else
@@ -110,7 +110,7 @@ namespace ImportFilteringTests
             Console.WriteLine($"Log: {message}");
             #endif
         }
-        
+
         public void PlatformSpecificOperation()
         {
             #if WINDOWS
@@ -131,15 +131,15 @@ namespace ImportFilteringTests
             Console.WriteLine("Platform-specific operation not available");
             #endif
         }
-        
+
         public bool ValidateUser(User user)
         {
             // Using DataAnnotations
             var context = new ValidationContext(user);
             var results = new List<ValidationResult>();
-            
+
             bool isValid = Validator.TryValidateObject(user, context, results, true);
-            
+
             if (!isValid)
             {
                 foreach (var result in results)
@@ -147,10 +147,10 @@ namespace ImportFilteringTests
                     Console.WriteLine($"Validation error: {result.ErrorMessage}");
                 }
             }
-            
+
             return isValid;
         }
-        
+
         #if DEBUG
         [Conditional("DEBUG")]
         public void DebugOnlyMethod()

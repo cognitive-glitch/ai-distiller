@@ -21,30 +21,30 @@ end
 
 class DataProcessor
   include Enumerable  # Actually this doesn't make sense for a class, but testing
-  
+
   def initialize
     @data = []
   end
-  
+
   def process(data_string)
     # Using JSON
     parsed = JSON.parse(data_string)
-    
+
     # Using Net::HTTP
     response = fetch_remote_data(parsed['url']) if parsed['url']
-    
+
     # Using string_utils (from require_relative)
     cleaned = StringUtils.clean(parsed['content'] || '')
-    
+
     {
       parsed: parsed,
       cleaned: cleaned,
       response: response
     }
   end
-  
+
   private
-  
+
   def fetch_remote_data(url_string)
     # Using Net::HTTP but not URI directly (it's used internally by Net::HTTP)
     response = Net::HTTP.get_response(URI(url_string))

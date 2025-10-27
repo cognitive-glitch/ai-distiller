@@ -9,11 +9,11 @@ use std::pin::Pin;
 // The parser must handle `extern "C"` blocks.
 extern "C" {
     fn validate_syntax_natively(input: *const c_char) -> i32;
-    
+
     /// Additional FFI function for complex validation
     fn complex_validation(
-        input: *const c_char, 
-        length: usize, 
+        input: *const c_char,
+        length: usize,
         callback: extern "C" fn(i32)
     ) -> i32;
 }
@@ -31,7 +31,7 @@ macro_rules! new_config {
         println!("Created config via macro: {}", config.name);
         config
     }};
-    
+
     // Multiple macro patterns
     ($name:expr) => {
         new_config!($name, 1)
@@ -77,7 +77,7 @@ impl AnalysisService {
             async_processor: None,
         }
     }
-    
+
     /// Asynchronously validates a piece of code using the native FFI function.
     /// This tests `async fn` syntax and `unsafe` blocks.
     pub async fn validate_code(&self, code: &str) -> Result<bool, &'static str> {
@@ -105,17 +105,17 @@ impl AnalysisService {
     fn name_from_code(&self, code: &str) -> String {
         code.lines().next().unwrap_or("unknown").to_string()
     }
-    
+
     /// Internal unsafe method for advanced operations
     pub(crate) unsafe fn direct_memory_access(&self, ptr: *mut u8, len: usize) -> Option<String> {
         if ptr.is_null() || len == 0 {
             return None;
         }
-        
+
         let slice = std::slice::from_raw_parts(ptr, len);
         String::from_utf8(slice.to_vec()).ok()
     }
-    
+
     /// Private async method
     async fn process_cache(&self) -> usize {
         let guard = self.cache.lock().unwrap();
@@ -127,9 +127,9 @@ impl AnalysisService {
 pub trait AsyncProcessor {
     type Item;
     type Error;
-    
+
     async fn process_async(&self, item: Self::Item) -> Result<String, Self::Error>;
-    
+
     /// Default async implementation
     async fn batch_process(&self, items: Vec<Self::Item>) -> Vec<Result<String, Self::Error>> {
         let mut results = Vec::new();
@@ -144,7 +144,7 @@ pub trait AsyncProcessor {
 impl AsyncProcessor for AnalysisService {
     type Item = String;
     type Error = &'static str;
-    
+
     async fn process_async(&self, item: Self::Item) -> Result<String, Self::Error> {
         self.validate_code(&item).await?;
         Ok(format!("Processed: {}", item))
@@ -164,12 +164,12 @@ impl FFIData {
     pub fn new_integer(value: i64) -> Self {
         Self { integer: value }
     }
-    
+
     /// Unsafe getter
     pub unsafe fn get_integer(&self) -> i64 {
         self.integer
     }
-    
+
     /// Private unsafe method
     unsafe fn get_bytes(&self) -> &[u8; 8] {
         &self.bytes
@@ -181,11 +181,11 @@ impl FFIData {
 fn main() {
     let _config = new_config!("My Project", 1);
     let _simple_config = new_config!("Simple");
-    
+
     // Test generated validators
     if let Err(e) = validate_name("") {
         println!("Validation error: {}", e);
     }
-    
+
     println!("Complex constructs defined.");
 }

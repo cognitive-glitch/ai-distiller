@@ -1,24 +1,25 @@
-benchmark/
-test_repos/
-test_project/
-differential_testing_results.json
-coverage.txt
-aid
-.aid/
-tmp/
-.*.aid.txt
+# Rust build artifacts
+/target
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test artifacts
+*.profraw
+*.profdata
+
+# Build artifacts
+/build
+/dist
+
+# Temporary files
 *.tmp
 *.log
-aid.*.txt
-.claude/
-
-# Binary files
-aid
-aid-*
-
-# Build directories
-build/
-
-# Tools (osxcross is large)
-tools/osxcross/
-test-results.xml

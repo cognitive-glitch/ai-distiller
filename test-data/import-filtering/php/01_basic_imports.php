@@ -18,25 +18,25 @@ use Doctrine\ORM\EntityManager;
 class UserController
 {
     private AuthService $authService;
-    
+
     public function __construct(AuthService $authService)
     {
         $this->authService = $authService;
     }
-    
+
     public function showUser(int $id): Response
     {
         // Using AuthService
         if (!$this->authService->isAuthenticated()) {
             return new Response('Unauthorized', 401);
         }
-        
+
         // Using User model
         $user = User::find($id);
         if (!$user) {
             return new Response('User not found', 404);
         }
-        
+
         // Using Response
         return new Response(json_encode([
             'id' => $user->getId(),
@@ -44,7 +44,7 @@ class UserController
             'email' => $user->getEmail()
         ]), 200, ['Content-Type' => 'application/json']);
     }
-    
+
     public function listUsers(): Response
     {
         $users = User::all();

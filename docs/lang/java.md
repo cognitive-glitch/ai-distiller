@@ -55,7 +55,7 @@ AI Distiller models Java code as a semantic graph, representing not just the syn
 
 Java visibility in AI Distiller follows standard Java keywords in text format:
 - **Public**: `public` keyword (accessible everywhere)
-- **Private**: `private` keyword (class-only access)  
+- **Private**: `private` keyword (class-only access)
 - **Protected**: `protected` keyword (package + subclass access)
 - **Package-private**: no keyword (package-only access, Java default)
 
@@ -127,12 +127,12 @@ public class UserService extends BaseService implements Cacheable, Auditable {
      */
     public class Basic {
         private static final String GREETING_PREFIX = "Hello, ";
-        
+
         public static void main(String[] args) {
             String world = "World";
             System.out.println(createGreeting(world));
         }
-        
+
         private static String createGreeting(String name) {
             return GREETING_PREFIX + name;
         }
@@ -186,17 +186,17 @@ public class UserService extends BaseService implements Cacheable, Auditable {
         public final String id;
         protected String name;
         private int version;
-        
+
         public SimpleOOP(String id, String name) {
             this.id = Objects.requireNonNull(id);
             this.name = name;
             this.version = 1;
         }
-        
+
         public String getName() {
             return name;
         }
-        
+
         @Override
         public String toString() {
             return "SimpleOOP{id='" + id + "', name='" + name + "'}";
@@ -263,7 +263,7 @@ public class UserService extends BaseService implements Cacheable, Auditable {
 - **Solution**: Use `--internal=1` flag to include package-private types and see complete sealed interface definitions with permits clause
 - Results in incomplete/non-compilable code representations in default output only
 
-**Inheritance Resolution**  
+**Inheritance Resolution**
 - Inherited public methods from parent classes are not displayed in child classes
 - Example: `UserStore extends BaseStore` - missing `save()` method from parent
 - Public API surface appears incomplete for inherited classes
@@ -278,7 +278,7 @@ public class UserService extends BaseService implements Cacheable, Auditable {
 - Method `throws` declarations are not being extracted despite parser support
 - This affects API completeness and exception handling documentation
 
-**Generic Type Arguments in Inheritance**  
+**Generic Type Arguments in Inheritance**
 - Generic arguments in `extends` clauses are dropped (e.g., `extends BaseStore<User>` becomes `extends BaseStore`)
 
 **Multiple Type Definitions**

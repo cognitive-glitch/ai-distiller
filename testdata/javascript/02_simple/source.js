@@ -11,7 +11,7 @@ class UserModel {
     #id;
     #email;
     #createdAt;
-    
+
     /**
      * Creates a new user
      * @param {number} id - User ID
@@ -25,7 +25,7 @@ class UserModel {
         this.#createdAt = new Date();
         this._validateEmail();
     }
-    
+
     /**
      * Gets user ID (readonly)
      * @returns {number} User ID
@@ -33,7 +33,7 @@ class UserModel {
     get id() {
         return this.#id;
     }
-    
+
     /**
      * Gets user email
      * @returns {string} User email
@@ -41,7 +41,7 @@ class UserModel {
     get email() {
         return this.#email;
     }
-    
+
     /**
      * Sets user email with validation
      * @param {string} email - New email
@@ -50,7 +50,7 @@ class UserModel {
         this.#email = email;
         this._validateEmail();
     }
-    
+
     /**
      * Gets creation timestamp
      * @returns {Date} Creation date
@@ -58,7 +58,7 @@ class UserModel {
     get createdAt() {
         return new Date(this.#createdAt);
     }
-    
+
     /**
      * Private email validation
      * @private
@@ -68,7 +68,7 @@ class UserModel {
             throw new Error('Invalid email format');
         }
     }
-    
+
     /**
      * Gets user display string
      * @returns {string} Formatted user info
@@ -77,7 +77,7 @@ class UserModel {
         const age = this._getAccountAge();
         return `User #${this.#id}: ${this.name} (${this.#email}) - ${age} days old`;
     }
-    
+
     /**
      * Private helper for account age calculation
      * @private
@@ -88,7 +88,7 @@ class UserModel {
         const diffTime = Math.abs(now - this.#createdAt);
         return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     }
-    
+
     /**
      * Converts user to JSON object
      * @returns {Object} User data
@@ -101,7 +101,7 @@ class UserModel {
             createdAt: this.#createdAt.toISOString()
         };
     }
-    
+
     /**
      * Static factory method for creating users
      * @static
@@ -115,7 +115,7 @@ class UserModel {
         }
         return user;
     }
-    
+
     /**
      * Static method to validate user data
      * @static
@@ -123,9 +123,9 @@ class UserModel {
      * @returns {boolean} True if valid
      */
     static isValidUserData(data) {
-        return data && 
-               typeof data.id === 'number' && 
-               typeof data.email === 'string' && 
+        return data &&
+               typeof data.id === 'number' &&
+               typeof data.email === 'string' &&
                typeof data.name === 'string' &&
                data.email.includes('@');
     }

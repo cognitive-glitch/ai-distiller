@@ -1,0 +1,51 @@
+[package]
+name = "distiller-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Core library for AI Distiller - code structure extraction"
+
+[dependencies]
+# Error handling
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+
+# Parallelism
+rayon = { workspace = true }
+
+# Parsing
+tree-sitter = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Utilities
+once_cell = { workspace = true }
+parking_lot = { workspace = true }
+walkdir = { workspace = true }
+ignore = { workspace = true }
+glob = { workspace = true }
+num_cpus = "1.16"
+
+# Logging
+log = "0.4"
+env_logger = "0.11"
+
+[dev-dependencies]
+insta = { workspace = true }
+proptest = { workspace = true }
+
+# Language processors for integration tests
+lang-python = { path = "../lang-python" }
+lang-typescript = { path = "../lang-typescript" }
+lang-go = { path = "../lang-go" }
+lang-c = { path = "../lang-c" }
+
+# Benchmarks will be added in Phase 8
+# [[bench]]
+# name = "processing"
+# harness = false

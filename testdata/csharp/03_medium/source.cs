@@ -148,8 +148,8 @@ public class CachedRepository<TEntity, TKey> : IRepository<TEntity, TKey>
     /// </summary>
     internal (int CacheSize, int RepositorySize) GetStats()
     {
-        var repoSize = _innerRepository is InMemoryRepository<TEntity, TKey> inMem 
-            ? inMem.GetEntityCount() 
+        var repoSize = _innerRepository is InMemoryRepository<TEntity, TKey> inMem
+            ? inMem.GetEntityCount()
             : 0;
         return (_cache.Count, repoSize);
     }
@@ -186,7 +186,7 @@ public class UserService
     public async Task<User?> CreateUserAsync(string name, string email)
     {
         var user = new User(Guid.NewGuid(), name, email);
-        
+
         if (!user.IsValid)
             return null;
 
@@ -201,7 +201,7 @@ public class UserService
     /// </summary>
     private static bool IsValidUserData(string name, string email)
     {
-        return !string.IsNullOrWhiteSpace(name) && 
+        return !string.IsNullOrWhiteSpace(name) &&
                !string.IsNullOrWhiteSpace(email) &&
                email.Contains("@");
     }

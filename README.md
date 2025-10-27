@@ -1,19 +1,19 @@
 # AI Distiller (`aid`)
 
-> **Note:** This is the very first version of this tool. We would be very grateful for any feedback in the form of a discussion or by creating an issue on [GitHub](https://github.com/janreges/ai-distiller/issues). Thank you\!
+> **Note:** This is the very first version of this tool. We would be very grateful for any feedback in the form of a discussion or by creating an issue on [GitHub](https://github.com/cognitive-glitch/ai-distiller-reboot/issues). Thank you!
 
-🚀 **MCP Server Available**: Install the Model Context Protocol server for AI Distiller from NPM: [`@janreges/ai-distiller-mcp`](https://www.npmjs.com/package/@janreges/ai-distiller-mcp) - seamlessly integrate with Claude, Cursor, and other MCP-compatible AI tools!
+🚀 **MCP Server Available**: Install the Model Context Protocol server for AI Distiller from NPM: [`@cognitive/ai-distiller-mcp`](https://www.npmjs.com/package/@cognitive/ai-distiller-mcp) - seamlessly integrate with Claude, Cursor, and other MCP-compatible AI tools!
 
 <p align="center">
   <img src="docs/assets/aid-mascot-300.png" alt="AI Distiller (aid) Mascot" width="200">
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Languages-12+-blue" alt="12+ Languages">
-  <img src="https://img.shields.io/badge/Performance-5k+_files/sec-green" alt="Performance">
+  <img src="https://img.shields.io/badge/Languages-13+-blue" alt="13 Languages">
+  <img src="https://img.shields.io/badge/Performance-10k+_files/sec-green" alt="Performance">
   <img src="https://img.shields.io/badge/Compression-90%25+-orange" alt="Compression">
-  <img src="https://img.shields.io/badge/Tests-1211_passed-purple" alt="Tests">
-</p
+  <img src="https://img.shields.io/badge/Tests-309_passed-purple" alt="Tests">
+</p>
 
 
 ## **🤔 Why AI Distiller?**
@@ -52,19 +52,19 @@ Very simply, it can be said that `aid`, within the distillation process, will le
 
 ## **✨ Key Features**
 
-| Feature | Description | 
+| Feature | Description |
 | ------- | ----------- |
-| 🚀 Extreme Speed | Processes tens of megabytes of code in hundreds of milliseconds. By default, it uses 80% of available CPU cores, but can be configured, e.g., with `--workers=1` to use only a single CPU core. |  
-| 🧠 Intelligent Distillation | Understands 12+ programming languages and extracts only public APIs (methods, properties, types). |  
-| ⚙️ High Configurability | Allows including private, protected, and internal members, implementation, or comments. |  
-| 🤖 AI Prompt Generation | Generates ready-to-use prompts with distilled code for AI analysis. The tool creates files with prompts that AI agents can then execute for security audits, refactoring, etc. See `--ai-action` switch. |  
-| 📋 Analysis Automation | Creates a complete checklist and directory structure for AI agents, who can then systematically analyze the entire project. See the flow-for-\* actions for the `--ai-action` switch. |  
-| 📜 Git Analysis | Processes commit history and prepares data for in-depth analysis of development quality and team dynamics. |  
-| 💻 Multi-platform | A single binary file with no dependencies for Windows, Linux, and macOS (x64 & ARM). |  
+| 🚀 Extreme Speed | Processes tens of megabytes of code in hundreds of milliseconds. By default, it uses 80% of available CPU cores, but can be configured, e.g., with `--workers=1` to use only a single CPU core. |
+| 🧠 Intelligent Distillation | Understands 13 programming languages and extracts only public APIs (methods, properties, types). |
+| ⚙️ High Configurability | Allows including private, protected, and internal members, implementation, or comments. |
+| 🤖 AI Prompt Generation | Generates ready-to-use prompts with distilled code for AI analysis. The tool creates files with prompts that AI agents can then execute for security audits, refactoring, etc. See `--ai-action` switch. |
+| 📋 Analysis Automation | Creates a complete checklist and directory structure for AI agents, who can then systematically analyze the entire project. See the flow-for-\* actions for the `--ai-action` switch. |
+| 📜 Git Analysis | Processes commit history and prepares data for in-depth analysis of development quality and team dynamics. |
+| 💻 Multi-platform | A single binary file with no dependencies for Windows, Linux, and macOS (x64 & ARM). |
 | 🔌 Integration via MCP | Can be integrated into tools like Claude Code, VS Code, Cursor, Windsurf and others thanks to the included MCP server. |
 
 ### 🎯 Intelligent Filtering
- 
+
 Control exactly what to include with our new granular flag system:
 
 **Visibility Control**:
@@ -171,14 +171,14 @@ AID_PROJECT_ROOT=/build/workspace aid src/
 ```
 
 ### 🌍 Language Support
-Currently supports 12 languages via tree-sitter:
-- **Full Support**: Python, Go, JavaScript, PHP, Ruby
-- **Beta**: TypeScript, Java, C#, Rust, Kotlin, Swift, C++
-- **Coming Soon**: Zig, Scala, Clojure
+Currently supports 13 languages via tree-sitter:
+- **Full Support**: Python, TypeScript, Go
+- **Beta**: JavaScript, PHP, Ruby, Java, C#, Rust, Kotlin, Swift, C++, C
 
 #### Language-Specific Documentation:
 - [C++](docs/lang/cpp.md) - C++11/14/17/20 support with templates, namespaces, modern features
 - [C#](docs/lang/csharp.md) - Complete C# 12 support with records, nullable reference types, pattern matching
+- [C](docs/lang/c.md) - C89/C99/C11/C17 support with structs, function pointers, header files
 - [Go](docs/lang/go.md) - Full Go support with interfaces, goroutines, generics (1.18+)
 - [Java](docs/lang/java.md) - Java 8-21 support with records, sealed classes, pattern matching
 - [JavaScript](docs/lang/javascript.md) - ES6+ support with classes, modules, async/await
@@ -192,7 +192,7 @@ Currently supports 12 languages via tree-sitter:
 
 ## 🎯 How It Works
 
-1. **Scans** your codebase recursively for supported file types (10+ languages)
+1. **Scans** your codebase recursively for supported file types (13 languages)
 2. **Parses** each file using language-specific tree-sitter parsers (all bundled, no dependencies)
 3. **Extracts** only what you need: public APIs, type signatures, class hierarchies
 4. **Outputs** in your preferred format: compact text, markdown, or structured JSON
@@ -262,7 +262,7 @@ We've worked extensively to make dependency-aware distillation as reliable as po
 
 **Areas for Enhancement**:
 - **Large Projects**: Performance may be limited with 50+ files
-- **Language Processors**: C#, C++, TypeScript have fundamental limitations  
+- **Language Processors**: C#, C++, TypeScript have fundamental limitations
 - **Complex Call Patterns**: Advanced metaprogramming patterns may be limited
 
 ### 💡 When to Use Dependency-Aware Analysis
@@ -397,7 +397,7 @@ aid src/ --dependency-aware --include="*.py,*.js,*.go"
 
 **Most AI agents and IDEs are "context misers"** - they try to save tokens at the expense of actual codebase knowledge. They rely on:
 - 🔍 **Grep/search** to find relevant code snippets
-- 📄 **Limited context** showing only 10-50 lines around matches  
+- 📄 **Limited context** showing only 10-50 lines around matches
 - 🎲 **Guessing interfaces** based on partial information
 
 **This is why AI-generated code often fails on first attempts** - the AI is literally guessing method signatures, parameter types, and return values because it can't see the full picture.
@@ -454,15 +454,15 @@ aid ./micro-service --private=1 --protected=1 --implementation=1
 **macOS / Linux / WSL:**
 ```bash
 # Install to ~/.aid/bin (recommended, no sudo required)
-curl -sSL https://raw.githubusercontent.com/janreges/ai-distiller/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/cognitive/ai-distiller/main/install.sh | bash
 
 # Install to /usr/local/bin (requires sudo)
-curl -sSL https://raw.githubusercontent.com/janreges/ai-distiller/main/install.sh | bash -s -- --sudo
+curl -sSL https://raw.githubusercontent.com/cognitive/ai-distiller/main/install.sh | bash -s -- --sudo
 ```
 
 **Windows PowerShell:**
 ```powershell
-iwr https://raw.githubusercontent.com/janreges/ai-distiller/main/install.ps1 -useb | iex
+iwr https://raw.githubusercontent.com/cognitive/ai-distiller/main/install.ps1 -useb | iex
 ```
 
 The installer will:
@@ -492,12 +492,12 @@ aid main.py                             # Specific file
 ```python
 class Car:
     """A car with basic attributes and methods."""
-    
+
     def __init__(self, make: str, model: str):
         self.make = make
         self.model = model
         self._mileage = 0  # Private
-    
+
     def drive(self, distance: int) -> None:
         """Drive the car."""
         if distance > 0:
@@ -528,7 +528,7 @@ export interface User {
 
 export class UserService {
   private cache = new Map<number, User>();
-  
+
   async getUser(id: number): Promise<User | null> {
     return this.cache.get(id) || null;
   }
@@ -592,10 +592,10 @@ AI Distiller now integrates seamlessly with Claude Code/Desktop through the Mode
 
 ```bash
 # One-line installation
-claude mcp add aid -- npx -y @janreges/ai-distiller-mcp
+claude mcp add aid -- npx -y @cognitive/ai-distiller-mcp
 ```
 
-📦 **NPM Package**: [`@janreges/ai-distiller-mcp`](https://www.npmjs.com/package/@janreges/ai-distiller-mcp) - Full documentation and examples available
+📦 **NPM Package**: [`@cognitive/ai-distiller-mcp`](https://www.npmjs.com/package/@cognitive/ai-distiller-mcp) - Full documentation and examples available
 
 #### Available MCP Tools
 
@@ -890,7 +890,7 @@ aid ./api --comments=0 --implementation=0 --format md > api-ref.md
 # Extract only method signatures (no fields/properties) - great for large codebases
 aid ./src --fields=0 --implementation=0 > methods-only.txt
 
-# Extract only data structures (no method noise)  
+# Extract only data structures (no method noise)
 aid ./models --methods=0 > data-structures.txt
 
 # Focus on public API methods only
@@ -1096,7 +1096,7 @@ No! AI Distiller runs 100% locally. It only extracts and formats your code struc
 <details>
 <summary><strong>Which programming languages are supported?</strong></summary>
 
-Currently 12+ languages via tree-sitter: Python, TypeScript, JavaScript, Go, Java, C#, Rust, Ruby, Swift, Kotlin, PHP, C++. All parsers are bundled in the binary - no external dependencies needed.
+Currently 13 languages via tree-sitter: Python, TypeScript, JavaScript, Go, Java, C#, Rust, Ruby, Swift, Kotlin, PHP, C++, C. All parsers are bundled in the binary - no external dependencies needed.
 </details>
 
 ## 🤝 Contributing
@@ -1106,55 +1106,65 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 ### Development Setup
 
 ```bash
-# Clone and setup
-git clone https://github.com/janreges/ai-distiller
+# Clone the repository
+git clone https://github.com/cognitive-glitch/ai-distiller-reboot
 cd ai-distiller
-make dev-init    # Initialize development environment
 
-# Run tests
-make test         # Unit tests
-make test-integration  # Integration tests
+# Build debug version
+cargo build -p aid-cli
 
-# Build binary
-make build        # Build for current platform
+# Run with verbosity
+cargo run -p aid-cli -- testdata/python/01_basic/source.py -vv
+
+# Build optimized release
+cargo build --release -p aid-cli
+
+# Run all tests (309 tests across 23 crates)
+cargo test --all-features
+
+# Run tests for specific language
+cargo test -p lang-python --lib
+cargo test -p lang-typescript --lib
+cargo test -p lang-go --lib
+
+# Run integration tests
+cargo test -p distiller-core --test integration_tests
+
+# Check code quality
+cargo clippy --all-features -- -D warnings
+cargo fmt --all -- --check
+
+# Run benchmarks
+cargo bench -p aid-cli
 ```
 
-### Building Release Binaries
+### Architecture Overview
 
-AI Distiller requires CGO for full language support via tree-sitter parsers. To build release binaries for all supported platforms:
+AI Distiller is built using Rust with a modular Cargo workspace structure:
 
-#### Prerequisites
-
-**Ubuntu/Debian:**
-```bash
-# Install cross-compilation toolchains
-sudo apt-get update
-sudo apt-get install -y gcc-aarch64-linux-gnu gcc-mingw-w64-x86-64
-
-# For macOS cross-compilation, you need osxcross:
-# 1. Clone osxcross: git clone https://github.com/tpoechtrager/osxcross tools/osxcross
-# 2. Obtain macOS SDK (see https://github.com/tpoechtrager/osxcross#packaging-the-sdk)
-# 3. Place SDK in tools/osxcross/tarballs/
-# 4. Build osxcross: cd tools/osxcross && ./build.sh
+```
+crates/
+├── aid-cli/              # CLI binary entry point
+├── distiller-core/       # Core library (IR, processor, error, stripper)
+├── lang-python/          # Python language processor (full support)
+├── lang-typescript/      # TypeScript processor (full support)
+├── lang-go/              # Go processor (full support)
+├── lang-*/               # Additional language processors
+├── formatter-text/       # Text formatter (ultra-compact)
+├── formatter-markdown/   # Markdown formatter
+├── formatter-json/       # JSON formatter
+├── formatter-jsonl/      # JSON Lines formatter
+├── formatter-xml/        # XML formatter
+└── mcp-server/           # Model Context Protocol server
 ```
 
-#### Build All Platforms
+**Key Design Principles:**
+- **NO tokio in core** - Uses rayon for CPU parallelism only
+- **Native Rust bindings** - Tree-sitter integration without CGO
+- **Zero unsafe** - Except tree-sitter FFI
+- **Comprehensive testing** - 309 tests covering unit, integration, and edge cases
 
-```bash
-# Build release archives for all platforms
-./scripts/build-releases.sh
-
-# This creates:
-# - aid-linux-amd64.tar.gz    (Linux 64-bit)
-# - aid-linux-arm64.tar.gz    (Linux ARM64)
-# - aid-darwin-amd64.tar.gz   (macOS Intel)
-# - aid-darwin-arm64.tar.gz   (macOS Apple Silicon)
-# - aid-windows-amd64.zip     (Windows 64-bit)
-```
-
-The script automatically detects available toolchains and builds for all possible platforms. Each archive contains the `aid` binary (or `aid.exe` for Windows) with full language support.
-
-**Note**: Without proper toolchains, only the native platform will be built.
+For detailed development guidelines, see [CLAUDE.md](CLAUDE.md).
 
 ## 📄 License
 
@@ -1163,5 +1173,5 @@ MIT License - see [LICENSE](LICENSE) for details.
 ## 🙏 Acknowledgments
 
 - Built on [tree-sitter](https://tree-sitter.github.io/) for accurate parsing
-- Inspired by the need for better AI-code interaction
-- Created with ❤️ by Claude Code & Ján Regeš from [SiteOne](https://www.siteone.io/) (Czech Republic).
+- Inspired by the need for better AI-code interaction from ❤️ from [SiteOne](https://www.siteone.io/) (Czech Republic).
+- Fully rewritten and improved by [cognitive-glitch](https://github.com/cognitive-glitch) due to the original version being abandoned by the original author.

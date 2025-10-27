@@ -129,7 +129,7 @@ JavaScript's dynamic nature means some patterns cannot be statically analyzed:
 
 <details open><summary>Basic Function and Class</summary><blockquote>
   <details><summary>basic.js - source code</summary><blockquote>
-    
+
 ```javascript
 /**
  * @param {string} message - The greeting message
@@ -145,11 +145,11 @@ class User {
         this.email = email;
         this._id = Math.random();
     }
-    
+
     getName() {
         return this.name;
     }
-    
+
     async sendEmail(subject, body) {
         console.log(`Sending email to ${this.email}`);
         // Implementation here
@@ -158,10 +158,10 @@ class User {
 
 module.exports = { greet, User };
 ```
-    
+
   </blockquote></details>
   <details open><summary>Default compact AI-friendly version (`default output (public only, no implementation)`)</summary><blockquote>
-    
+
 ```
 <file path="basic.js">
 +greet(message: string) -> string
@@ -174,10 +174,10 @@ class User
 # module.exports = { greet, User }
 </file>
 ```
-    
+
   </blockquote></details>
   <details><summary>Full version (`--public=1 --protected=1 --internal=1 --private=1 --implementation=1`)</summary><blockquote>
-    
+
 ```
 <file path="basic.js">
 +greet(message: string) -> string:
@@ -192,12 +192,12 @@ class User
             this.email = email;
             this._id = Math.random();
         }
-    
+
     +getName():
         {
             return this.name;
         }
-    
+
     +async sendEmail(subject, body):
         {
             console.log(`Sending email to ${this.email}`);
@@ -207,13 +207,13 @@ class User
 # module.exports = { greet, User }
 </file>
 ```
-    
+
   </blockquote></details>
 </blockquote></details>
 
 <details><summary>React Component with Hooks</summary><blockquote>
   <details><summary>UserList.jsx - source code</summary><blockquote>
-    
+
 ```javascript
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
@@ -224,13 +224,13 @@ import PropTypes from 'prop-types';
  */
 const useUsers = () => {
     const [users, setUsers] = useState([]);
-    
+
     useEffect(() => {
         fetch('/api/users')
             .then(res => res.json())
             .then(data => setUsers(data));
     }, []);
-    
+
     return users;
 };
 
@@ -242,7 +242,7 @@ const useUsers = () => {
  */
 function UserList({ title, onUserClick }) {
     const users = useUsers();
-    
+
     return (
         <div className="user-list">
             <h2>{title}</h2>
@@ -264,10 +264,10 @@ UserList.propTypes = {
 
 export default UserList;
 ```
-    
+
   </blockquote></details>
   <details open><summary>Default compact AI-friendly version (`default output (public only, no implementation)`)</summary><blockquote>
-    
+
 ```
 <file path="UserList.jsx">
 import React as react from react
@@ -282,13 +282,13 @@ import PropTypes as PropTypes from prop-types
 # Exports: UserList
 </file>
 ```
-    
+
   </blockquote></details>
 </blockquote></details>
 
 <details><summary>Complex Module with Mixed Patterns</summary><blockquote>
   <details><summary>api-client.js - source code</summary><blockquote>
-    
+
 ```javascript
 import axios from 'axios';
 
@@ -309,12 +309,12 @@ class ApiClient {
             headers: { 'X-API-Key': apiKey }
         });
     }
-    
+
     async get(endpoint) {
         const response = await this.axios.get(buildUrl(endpoint));
         return response.data;
     }
-    
+
     async post(endpoint, data) {
         const response = await this.axios.post(buildUrl(endpoint), data);
         return response.data;
@@ -332,10 +332,10 @@ export const quickGet = async (endpoint) => {
 
 export default ApiClient;
 ```
-    
+
   </blockquote></details>
   <details open><summary>Default compact AI-friendly version (`default output (public only, no implementation)`)</summary><blockquote>
-    
+
 ```
 <file path="api-client.js">
 import axios from axios
@@ -353,13 +353,13 @@ class ApiClient:
 # Exports: createClient, quickGet, ApiClient
 </file>
 ```
-    
+
   </blockquote></details>
 </blockquote></details>
 
 <details><summary>Advanced Features Example</summary><blockquote>
   <details><summary>advanced-features.js - source code</summary><blockquote>
-    
+
 ```javascript
 // Object with spread syntax and methods
 const baseApi = {
@@ -370,22 +370,22 @@ const baseApi = {
 const dataService = {
     ...baseApi,
     cache: new Map(),
-    
+
     async getData(id, options = {}) {
         // Implementation
         return { id, ...options };
     },
-    
+
     *generateBatch(count = 10) {
         for (let i = 0; i < count; i++) {
             yield { id: i, data: `item-${i}` };
         }
     },
-    
+
     get cacheSize() {
         return this.cache.size;
     },
-    
+
     set maxCacheSize(value) {
         this._maxCache = value;
     }
@@ -395,16 +395,16 @@ const dataService = {
 class SecureStore {
     #encryptionKey;
     #data = new Map();
-    
+
     constructor(key) {
         this.#encryptionKey = key;
     }
-    
+
     async store(key, value) {
         const encrypted = await this.#encrypt(value);
         this.#data.set(key, encrypted);
     }
-    
+
     async #encrypt(data) {
         // Private method
         return btoa(JSON.stringify(data));
@@ -422,10 +422,10 @@ async function processItems(items, callback) {
     }
 }
 ```
-    
+
   </blockquote></details>
   <details open><summary>Default compact AI-friendly version (`default output (public only, no implementation)`)</summary><blockquote>
-    
+
 ```
 <file path="advanced-features.js">
 +final baseApi = { timeout, retry }
@@ -438,7 +438,7 @@ class SecureStore:
 +async processItems(items: string[], callback: Function) -> Promise<void>
 </file>
 ```
-    
+
   </blockquote></details>
 </blockquote></details>
 

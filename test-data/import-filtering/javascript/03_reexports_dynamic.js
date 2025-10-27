@@ -21,17 +21,17 @@ async function loadFeature(featureName) {
   if (!config.features[featureName]) {
     return null;
   }
-  
+
   // Dynamic imports based on feature
   switch (featureName) {
     case 'charts':
       const { Chart } = await import('./features/charts');
       return new Chart();
-      
+
     case 'maps':
       const maps = await import('./features/maps');
       return maps.default;
-      
+
     case 'analytics':
       // Dynamic import with error handling
       try {
@@ -44,7 +44,7 @@ async function loadFeature(featureName) {
         console.error('Failed to load analytics:', error);
         return null;
       }
-      
+
     default:
       return null;
   }

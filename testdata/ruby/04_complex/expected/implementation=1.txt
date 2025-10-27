@@ -9,13 +9,13 @@ module DSLBuilder
             define_method(name) do |*args, &block|
                     # Create a new DSL context
                     dsl_context = DSLContext.new(self)
-                    
+
                     # Execute default block first if provided
                     dsl_context.instance_eval(&default_block) if default_block
-                    
+
                     # Then execute the user-provided block
                     dsl_context.instance_eval(&block) if block
-                    
+
                     # Return self for chaining
                     self
                   end
@@ -59,10 +59,10 @@ module FluentInterface
                       elsif value
                         instance_variable_set("@#{method_name}", value)
                       end
-                      
+
                       self # Always return self for chaining
                     end
-                    
+
                     # Create getter method
                     define_method("get_#{method_name}") do
                       instance_variable_get("@#{method_name}")
@@ -79,21 +79,21 @@ module ReflectionUtils
                 end
                 super(*args) if defined?(super)
               end
-              
+
               # Add attribute accessors
               define_method(:get_attribute) do |key|
                 @attributes[key.to_sym]
               end
-              
+
               define_method(:set_attribute) do |key, value|
                 @attributes[key.to_sym] = value
                 self
               end
-              
+
               # Allow custom class definition
               class_eval(&block) if block_given?
             end
-            
+
             # Set the class name in the constant table
             Object.const_set(class_name.to_sym, new_class) unless Object.const_defined?(class_name.to_sym)
             new_class
@@ -118,7 +118,7 @@ class ConfigurationBuilder
             self
     def add_plugin(plugin_name, &configuration_block)
         @plugins ||= {}
-            
+
             if configuration_block
               plugin_config = PluginConfiguration.new
               plugin_config.instance_eval(&configuration_block)
@@ -126,11 +126,11 @@ class ConfigurationBuilder
             else
               @plugins[plugin_name] = true
             end
-            
+
             self
     def method_missing(method_name, *args*, &block)
         method_str = method_name.to_s
-            
+
             case method_str
             when /^with_(.+)$/
               # with_* methods for fluent configuration
@@ -164,13 +164,13 @@ class ConfigurationBuilder
               enabled_features: @enabled_features,
               callbacks: @callbacks&.keys
             }
-            
+
             # Add chainable attributes
             %w[name version description].each do |attr|
               value = instance_variable_get("@#{attr}")
               result[attr.to_sym] = value if value
             end
-            
+
             result.compact
     def validate_configuration
         errors = []
@@ -203,19 +203,19 @@ class DynamicClassFactory
     def self.create_model(name, &definition)
         model_class = ReflectionUtils.create_class(name) do
               include DSLBuilder
-              
+
               attr_reader :attributes
-              
+
               def initialize
                 @attributes = {}
               end
-              
+
               # Dynamic attribute methods
               def self.attr_with_validation(name, &validator)
                 define_method(name) do
                   @attributes[name]
                 end
-                
+
                 define_method("#{name}=") do |value|
                   if validator
                     unless validator.call(value)
@@ -225,7 +225,7 @@ class DynamicClassFactory
                   @attributes[name] = value
                 end
               end
-              
+
               # Class-level DSL for field definitions
               def self.field(name, type = :string, **options)
                 attr_with_validation(name) do |value|
@@ -240,19 +240,19 @@ class DynamicClassFactory
                     true
                   end
                 end
-                
+
                 # Add to schema
                 @schema ||= {}
                 @schema[name] = { type: type, options: options }
               end
-              
+
               def self.schema
                 @schema || {}
               end
             end
-            
+
             # Execute the definition block in the class context
             model_class.class_eval(&definition) if definition
-            
+
             model_class
 </file>

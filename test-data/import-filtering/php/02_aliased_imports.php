@@ -20,7 +20,7 @@ class OrderProcessor
 {
     /**
      * Process an order with validation
-     * 
+     *
      * @param array $data Order data
      * @return ProdModel The created product
      * @throws ValEx When validation fails
@@ -32,21 +32,21 @@ class OrderProcessor
             // Using aliased ValidationException
             throw new ValEx("Missing required fields");
         }
-        
+
         if ($data['quantity'] <= 0) {
             throw new ValEx("Invalid quantity: must be greater than 0");
         }
-        
+
         // Using aliased Product model
         $product = ProdModel::find($data['product_id']);
         if (!$product) {
             // Could use NotFound here, but using ValEx instead
             throw new ValEx("Product not found");
         }
-        
+
         // Using aliased DateTime
         $orderDate = new DT('now');
-        
+
         // Create order
         $order = new ProdModel([
             'product_id' => $product->id,
@@ -54,16 +54,16 @@ class OrderProcessor
             'ordered_at' => $orderDate->format('Y-m-d H:i:s'),
             'total' => $product->price * $data['quantity']
         ]);
-        
+
         $order->save();
-        
+
         return $order;
     }
-    
+
     /**
      * Get order statistics for a date
      * Uses DateTime alias in PHPDoc
-     * 
+     *
      * @param DT $date The date to check
      * @return array Statistics
      */
@@ -72,10 +72,10 @@ class OrderProcessor
         // Using the DateTime parameter
         $startOfDay = clone $date;
         $startOfDay->setTime(0, 0, 0);
-        
+
         $endOfDay = clone $date;
         $endOfDay->setTime(23, 59, 59);
-        
+
         return [
             'date' => $date->format('Y-m-d'),
             'start' => $startOfDay->format('c'),

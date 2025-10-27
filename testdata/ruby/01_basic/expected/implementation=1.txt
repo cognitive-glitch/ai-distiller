@@ -9,7 +9,7 @@ module UserUtils
     def self.strong_password?(password)
         return false unless password.is_a?(String)
             return false if password.length < MIN_PASSWORD_LENGTH
-            
+
             has_letter = password.match?(/[a-zA-Z]/)
             has_digit = password.match?(/\d/)
             has_letter && has_digit

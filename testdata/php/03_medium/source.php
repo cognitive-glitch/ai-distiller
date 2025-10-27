@@ -17,23 +17,23 @@ interface ContainerInterface
 {
     /**
      * Register a service in the container
-     * 
+     *
      * @param string $id Service identifier
      * @param callable|object $service Service factory or instance
      */
     public function register(string $id, callable|object $service): void;
-    
+
     /**
      * Resolve a service from the container
-     * 
+     *
      * @param string $id Service identifier
      * @return mixed
      */
     public function resolve(string $id): mixed;
-    
+
     /**
      * Check if service is registered
-     * 
+     *
      * @param string $id Service identifier
      * @return bool
      */
@@ -49,7 +49,7 @@ class Container implements ContainerInterface
      * @var array<string, callable|object> Service definitions
      */
     private array $services = [];
-    
+
     /**
      * @var array<string, object> Resolved instances
      */
@@ -78,10 +78,10 @@ class Container implements ContainerInterface
         }
 
         $service = $this->services[$id];
-        
+
         $instance = is_callable($service) ? $service($this) : $service;
         $this->instances[$id] = $instance;
-        
+
         return $instance;
     }
 
@@ -95,7 +95,7 @@ class Container implements ContainerInterface
 
     /**
      * Auto-wire a class using reflection
-     * 
+     *
      * @param string $className Class name
      * @return object
      * @throws ReflectionException
@@ -103,7 +103,7 @@ class Container implements ContainerInterface
     public function autowire(string $className): object
     {
         $reflection = new ReflectionClass($className);
-        
+
         if (!$reflection->isInstantiable()) {
             throw new InvalidArgumentException("Class '{$className}' is not instantiable");
         }
@@ -129,37 +129,37 @@ class Container implements ContainerInterface
 
 /**
  * Generic repository interface
- * 
+ *
  * @template T
  */
 interface RepositoryInterface
 {
     /**
      * Find entity by ID
-     * 
+     *
      * @param int $id Entity ID
      * @return T|null
      */
     public function find(int $id): ?object;
-    
+
     /**
      * Find all entities
-     * 
+     *
      * @return list<T>
      */
     public function findAll(): array;
-    
+
     /**
      * Save entity
-     * 
+     *
      * @param T $entity Entity to save
      * @return T
      */
     public function save(object $entity): object;
-    
+
     /**
      * Delete entity
-     * 
+     *
      * @param T $entity Entity to delete
      */
     public function delete(object $entity): void;
@@ -167,7 +167,7 @@ interface RepositoryInterface
 
 /**
  * Abstract base repository
- * 
+ *
  * @template T
  * @implements RepositoryInterface<T>
  */
@@ -177,7 +177,7 @@ abstract class AbstractRepository implements RepositoryInterface
      * @var array<int, T> In-memory storage
      */
     protected array $entities = [];
-    
+
     /**
      * @var int Next ID counter
      */
@@ -205,7 +205,7 @@ abstract class AbstractRepository implements RepositoryInterface
     public function save(object $entity): object
     {
         $reflection = new ReflectionClass($entity);
-        
+
         if ($reflection->hasMethod('getId') && $reflection->hasMethod('setId')) {
             $id = $entity->getId();
             if ($id === null) {
@@ -214,7 +214,7 @@ abstract class AbstractRepository implements RepositoryInterface
             }
             $this->entities[$id] = $entity;
         }
-        
+
         return $entity;
     }
 
@@ -224,7 +224,7 @@ abstract class AbstractRepository implements RepositoryInterface
     public function delete(object $entity): void
     {
         $reflection = new ReflectionClass($entity);
-        
+
         if ($reflection->hasMethod('getId')) {
             $id = $entity->getId();
             if ($id !== null) {
@@ -235,7 +235,7 @@ abstract class AbstractRepository implements RepositoryInterface
 
     /**
      * Find entities by criteria using closures
-     * 
+     *
      * @param Closure $criteria Criteria closure
      * @return Generator<T>
      */
@@ -250,7 +250,7 @@ abstract class AbstractRepository implements RepositoryInterface
 
     /**
      * Create a lazy-loaded collection
-     * 
+     *
      * @param Closure $loader Loader closure
      * @return Closure
      */
@@ -269,14 +269,14 @@ interface EventInterface
 {
     /**
      * Get event name
-     * 
+     *
      * @return string
      */
     public function getName(): string;
-    
+
     /**
      * Get event data
-     * 
+     *
      * @return array
      */
     public function getData(): array;
@@ -289,7 +289,7 @@ interface EventListenerInterface
 {
     /**
      * Handle the event
-     * 
+     *
      * @param EventInterface $event Event to handle
      */
     public function handle(EventInterface $event): void;
@@ -307,7 +307,7 @@ class EventDispatcher
 
     /**
      * Subscribe to an event
-     * 
+     *
      * @param string $eventName Event name
      * @param EventListenerInterface $listener Event listener
      */
@@ -318,13 +318,13 @@ class EventDispatcher
 
     /**
      * Dispatch an event
-     * 
+     *
      * @param EventInterface $event Event to dispatch
      */
     public function dispatch(EventInterface $event): void
     {
         $eventName = $event->getName();
-        
+
         if (!isset($this->listeners[$eventName])) {
             return;
         }
@@ -336,7 +336,7 @@ class EventDispatcher
 
     /**
      * Create anonymous event listener
-     * 
+     *
      * @param string $eventName Event name
      * @param Closure $handler Event handler
      */
@@ -344,7 +344,7 @@ class EventDispatcher
     {
         $this->subscribe($eventName, new class($handler) implements EventListenerInterface {
             public function __construct(private Closure $handler) {}
-            
+
             public function handle(EventInterface $event): void
             {
                 ($this->handler)($event);
@@ -360,7 +360,7 @@ class Event implements EventInterface
 {
     /**
      * Create new event
-     * 
+     *
      * @param string $name Event name
      * @param array<string, mixed> $data Event data
      */
@@ -393,7 +393,7 @@ class User
 {
     /**
      * Create new user
-     * 
+     *
      * @param int|null $id User ID
      * @param string $name User name
      * @param string $email User email
@@ -412,14 +412,14 @@ class User
 
 /**
  * User repository
- * 
+ *
  * @extends AbstractRepository<User>
  */
 class UserRepository extends AbstractRepository
 {
     /**
      * Find users by email domain
-     * 
+     *
      * @param string $domain Email domain
      * @return Generator<User>
      */
@@ -430,19 +430,19 @@ class UserRepository extends AbstractRepository
 
     /**
      * Get user statistics
-     * 
+     *
      * @return array
      */
     public function getStatistics(): array
     {
         $total = count($this->entities);
         $domains = [];
-        
+
         foreach ($this->entities as $user) {
             $domain = substr($user->getEmail(), strpos($user->getEmail(), '@') + 1);
             $domains[$domain] = ($domains[$domain] ?? 0) + 1;
         }
-        
+
         return [
             'total' => $total,
             'domains' => $domains,
@@ -457,7 +457,7 @@ class UserService
 {
     /**
      * Create user service
-     * 
+     *
      * @param UserRepository $repository User repository
      * @param EventDispatcher $dispatcher Event dispatcher
      */
@@ -468,7 +468,7 @@ class UserService
 
     /**
      * Create new user
-     * 
+     *
      * @param string $name User name
      * @param string $email User email
      * @return User
@@ -477,19 +477,19 @@ class UserService
     {
         $user = new User(null, $name, $email);
         $savedUser = $this->repository->save($user);
-        
+
         $this->dispatcher->dispatch(new Event('user.created', [
             'user_id' => $savedUser->getId(),
             'name' => $name,
             'email' => $email,
         ]));
-        
+
         return $savedUser;
     }
 
     /**
      * Get user statistics using generator
-     * 
+     *
      * @return Generator<string, mixed>
      */
     public function getUserStatistics(): Generator

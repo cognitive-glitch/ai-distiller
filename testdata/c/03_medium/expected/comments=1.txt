@@ -1,0 +1,46 @@
+<file path="testdata/c/03_medium//source.c">
+import stdio.h
+import stdlib.h
+import string.h
+import stdbool.h
+class List:
+class Iterator:
+class ListNode:
+    data: void
+    next
+    prev
+class List:
+    head
+    tail
+    size: size_t
+    compare: compare_fn
+    free_data: free_fn
+class Iterator:
+    current
+    list
+@enum
+class Status:
+class Config:
+    name: char
+    max_size: int
+    enabled: bool
+    threshold: double
+def list_create(cmp: compare_fn, free_func: free_fn)
+def list_destroy(list: unknown) -> void
+def list_add(list: unknown, data: void)
+def list_remove(list: unknown, data: void)
+def list_size(list: unknown) -> size_t
+def list_iterator(list: unknown)
+def iterator_has_next(iter: unknown) -> bool
+def iterator_next(iter: unknown) -> void
+def iterator_free(iter: unknown) -> void
+~static def find_node(list: unknown, data: void)
+~static def swap_nodes(a: unknown, b: unknown) -> void
+def list_sort(list: unknown) -> void
+def list_reverse(list: unknown) -> void
+def config_create(name: char)
+def config_destroy(config: unknown) -> void
+def config_is_valid(config: unknown) -> bool
+</file>
+
+

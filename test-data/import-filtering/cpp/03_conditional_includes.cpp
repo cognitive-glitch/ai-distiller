@@ -67,7 +67,7 @@ public:
         GetCurrentDir(buff, FILENAME_MAX);
         return string(buff);
     }
-    
+
     static string getUserInfo() {
         #ifdef _WIN32
             // Using Windows.h
@@ -85,10 +85,10 @@ public:
             return "unknown";
         #endif
     }
-    
+
     static void debugLog(const string& message) {
         DEBUG_PRINT(message);
-        
+
         #ifdef DEBUG
             // Using cassert in debug mode
             assert(!message.empty());
@@ -107,7 +107,7 @@ class FileOperations {
 public:
     static vector<string> listDirectory(const string& path) {
         vector<string> files;
-        
+
         #if __cplusplus >= 201703L
             // Using C++17 filesystem
             for (const auto& entry : fs::directory_iterator(path)) {
@@ -126,10 +126,10 @@ public:
                 files.push_back("(directory listing not available)");
             #endif
         #endif
-        
+
         return files;
     }
-    
+
     #ifdef USE_OPENSSL
     static string calculateSHA256(const string& data) {
         unsigned char hash[SHA256_DIGEST_LENGTH];
@@ -137,7 +137,7 @@ public:
         SHA256_Init(&sha256);
         SHA256_Update(&sha256, data.c_str(), data.length());
         SHA256_Final(hash, &sha256);
-        
+
         // Convert to hex string
         stringstream ss;
         for (int i = 0; i < SHA256_DIGEST_LENGTH; i++) {
@@ -151,19 +151,19 @@ public:
 int main() {
     cout << "Current directory: " << SystemInfo::getCurrentDirectory() << endl;
     cout << "Current user: " << SystemInfo::getUserInfo() << endl;
-    
+
     SystemInfo::debugLog("Application started");
-    
+
     auto files = FileOperations::listDirectory(".");
     cout << "Files in current directory:" << endl;
     for (const auto& file : files) {
         cout << "  " << file << endl;
     }
-    
+
     #ifdef USE_OPENSSL
         string data = "Hello, World!";
         cout << "SHA256 of '" << data << "': " << FileOperations::calculateSHA256(data) << endl;
     #endif
-    
+
     return 0;
 }

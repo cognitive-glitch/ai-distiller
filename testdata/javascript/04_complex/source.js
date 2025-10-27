@@ -166,7 +166,7 @@ class ConfigManager {
     constructor(config = {}) {
         this._observable = ObservableFactory.create(config);
         this._changeHistory = [];
-        
+
         // Private change listener
         this._internalListener = (change) => {
             this._changeHistory.push({
@@ -174,7 +174,7 @@ class ConfigManager {
                 timestamp: Date.now()
             });
         };
-        
+
         ObservableFactory.subscribe(this._observable, this._internalListener);
     }
 

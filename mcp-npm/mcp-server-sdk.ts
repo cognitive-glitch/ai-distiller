@@ -33,11 +33,11 @@ if (!fs.existsSync(binaryPath)) {
   console.error('');
   console.error('To fix this issue, try one of the following:');
   console.error('1. Check the installation logs above for any download errors');
-  console.error('2. Reinstall the package: npm install @janreges/ai-distiller-mcp');
+  console.error('2. Reinstall the package: npm install @cognitive/ai-distiller-mcp');
   console.error('3. Run the postinstall script manually:');
   console.error(`   cd ${path.join(__dirname, '..')} && npm run postinstall`);
   console.error('4. Download the binary manually from:');
-  console.error('   https://github.com/janreges/ai-distiller/releases/latest');
+  console.error('   https://github.com/cognitive-glitch/ai-distiller-reboot/releases/latest');
   console.error(`   and place it at: ${binaryPath}`);
   console.error('');
   console.error('Platform info:', process.platform, process.arch);
@@ -125,54 +125,54 @@ class AidDistillerServer {
         console.error(`[AID MCP] Arguments: ${JSON.stringify(args)}`);
         console.error(`[AID MCP] Working directory: ${process.env.AID_ROOT || process.cwd()}`);
       }
-      
+
       const child = spawn(binaryPath, args, {
         cwd: process.env.AID_ROOT || process.cwd(),
         env: process.env,
         stdio: ['ignore', 'pipe', 'pipe'] // Explicitly set stdio: ignore stdin, pipe stdout/stderr
       });
-      
+
       let stdout = '';
       let stderr = '';
-      
+
       child.stdout.on('data', (data) => {
         const chunk = data.toString();
         stdout += chunk;
         if (isDebug) console.error(`[AID MCP] Stdout chunk (${chunk.length} bytes): ${chunk.substring(0, 100)}...`);
       });
-      
+
       child.stderr.on('data', (data) => {
         const chunk = data.toString();
         stderr += chunk;
         if (isDebug) console.error(`[AID MCP] Stderr chunk: ${chunk}`);
       });
-      
+
       child.on('close', (code) => {
         if (isDebug) {
           console.error(`[AID MCP] Command exited with code: ${code}`);
           console.error(`[AID MCP] Total stdout length: ${stdout.length} bytes`);
           console.error(`[AID MCP] Total stderr length: ${stderr.length} bytes`);
         }
-        
+
         if (code !== 0) {
           // If command failed, include stderr in error message
           reject(new Error(stderr || `Aid exited with code ${code}`));
         } else {
           // Command succeeded - combine stderr and stdout
           let result = '';
-          
+
           // Put stderr (progress/info) first
           if (stderr && stderr.trim()) {
             result = stderr + '\n\n';
           }
-          
+
           // Then append stdout (actual content)
           result += stdout;
-          
+
           resolve(result);
         }
       });
-      
+
       child.on('error', (err) => {
         console.error(`[AID MCP] Process spawn error: ${err.message}`);
         if (isDebug) console.error(`[AID MCP] Error stack: ${err.stack}`);
@@ -206,7 +206,7 @@ class AidDistillerServer {
       async (params) => {
         if (isDebug) console.error(`[AID MCP] distill_file called with params: ${JSON.stringify(params)}`);
         const args = [params.file_path, '--stdout', '--show-ai-agent-instructions'];
-        
+
         if (params.output_format) args.push(`--format=${params.output_format}`);
         if (params.include_private) args.push('--private=1');
         if (params.include_protected) args.push('--protected=1');
@@ -215,16 +215,16 @@ class AidDistillerServer {
         if (params.include_comments) args.push('--comments=1');
         if (params.include_fields === false) args.push('--fields=0');
         if (params.include_methods === false) args.push('--methods=0');
-        
+
         if (isDebug) console.error(`[AID MCP] distill_file final args: ${JSON.stringify(args)}`);
         const result = await this.executeAidCommand(args);
-        
+
         // Check if result is empty
         if (!result || result.trim().length === 0) {
           if (isDebug) console.error(`[AID MCP] Warning: Empty result for file ${params.file_path}`);
           throw new Error(`No output received from aid command. File may not exist or aid binary may have issues.`);
         }
-        
+
         if (isDebug) console.error(`[AID MCP] distill_file result length: ${result.length} bytes`);
         return {
           content: [{
@@ -259,7 +259,7 @@ class AidDistillerServer {
       async (params) => {
         if (isDebug) console.error(`[AID MCP] distill_directory called with params: ${JSON.stringify(params)}`);
         const args = [params.directory_path, '--stdout', '--show-ai-agent-instructions'];
-        
+
         if (params.output_format) args.push(`--format=${params.output_format}`);
         if (params.recursive === false) args.push('--recursive=0');
         if (params.include_private) args.push('--private=1');
@@ -271,16 +271,16 @@ class AidDistillerServer {
         if (params.include_methods === false) args.push('--methods=0');
         if (params.include_patterns) args.push(`--include=${params.include_patterns}`);
         if (params.exclude_patterns) args.push(`--exclude=${params.exclude_patterns}`);
-        
+
         if (isDebug) console.error(`[AID MCP] distill_directory final args: ${JSON.stringify(args)}`);
         const result = await this.executeAidCommand(args);
-        
+
         // Check if result is empty
         if (!result || result.trim().length === 0) {
           if (isDebug) console.error(`[AID MCP] Warning: Empty result for directory ${params.directory_path}`);
           throw new Error(`No output received from aid command. Directory may not exist or aid binary may have issues.`);
         }
-        
+
         if (isDebug) console.error(`[AID MCP] distill_directory result length: ${result.length} bytes`);
         return {
           content: [{
@@ -313,10 +313,10 @@ class AidDistillerServer {
       async (params) => {
         if (isDebug) console.error(`[AID MCP] distill_with_dependencies called with params: ${JSON.stringify(params)}`);
         const args = [params.file_path, '--dependency-aware', '--stdout', '--show-ai-agent-instructions'];
-        
+
         // Add max-depth parameter
         args.push(`--max-depth=${params.max_depth || 2}`);
-        
+
         // Add standard distillation options
         if (params.output_format) args.push(`--format=${params.output_format}`);
         if (params.include_private) args.push('--private=1');
@@ -326,16 +326,16 @@ class AidDistillerServer {
         if (params.include_comments) args.push('--comments=1');
         if (params.include_fields === false) args.push('--fields=0');
         if (params.include_methods === false) args.push('--methods=0');
-        
+
         if (isDebug) console.error(`[AID MCP] distill_with_dependencies final args: ${JSON.stringify(args)}`);
         const result = await this.executeAidCommand(args);
-        
+
         // Check if result is empty
         if (!result || result.trim().length === 0) {
           if (isDebug) console.error(`[AID MCP] Warning: Empty result for dependency analysis of ${params.file_path}`);
           throw new Error(`No output received from dependency-aware distillation. File may not exist, may not be supported, or aid binary may have issues.`);
         }
-        
+
         if (isDebug) console.error(`[AID MCP] distill_with_dependencies result length: ${result.length} bytes`);
         return {
           content: [{
@@ -369,17 +369,17 @@ class AidDistillerServer {
           params.target_path,
           '--ai-action=prompt-for-bug-hunting'
         ];
-        
+
         if (params.include_private !== false) args.push('--private=1', '--protected=1', '--internal=1');
         if (params.include_patterns) args.push(`--include=${params.include_patterns}`);
         if (params.exclude_patterns) args.push(`--exclude=${params.exclude_patterns}`);
-        
+
         const result = await this.executeAidCommand(args);
-        
+
         // Extract file path from output
         const filePathMatch = result.match(/📋 Bug Analysis Prompt: (.+)/);
         const filePath = filePathMatch ? filePathMatch[1] : 'Check .aid/ directory';
-        
+
         return {
           content: [{
             type: "text",
@@ -407,16 +407,16 @@ class AidDistillerServer {
           params.target_path,
           '--ai-action=prompt-for-refactoring-suggestion'
         ];
-        
+
         if (params.include_implementation !== false) args.push('--implementation=1');
         if (params.include_patterns) args.push(`--include=${params.include_patterns}`);
         if (params.exclude_patterns) args.push(`--exclude=${params.exclude_patterns}`);
-        
+
         const result = await this.executeAidCommand(args);
-        
+
         const filePathMatch = result.match(/📋 Refactoring Analysis Prompt: (.+)/);
         const filePath = filePathMatch ? filePathMatch[1] : 'Check .aid/ directory';
-        
+
         return {
           content: [{
             type: "text",
@@ -443,15 +443,15 @@ class AidDistillerServer {
           params.target_path,
           '--ai-action=prompt-for-diagrams'
         ];
-        
+
         if (params.include_patterns) args.push(`--include=${params.include_patterns}`);
         if (params.exclude_patterns) args.push(`--exclude=${params.exclude_patterns}`);
-        
+
         const result = await this.executeAidCommand(args);
-        
+
         const filePathMatch = result.match(/📋 Diagram Generation Prompt: (.+)/);
         const filePath = filePathMatch ? filePathMatch[1] : 'Check .aid/ directory';
-        
+
         return {
           content: [{
             type: "text",
@@ -480,17 +480,17 @@ class AidDistillerServer {
           params.target_path,
           '--ai-action=prompt-for-security-analysis'
         ];
-        
+
         if (params.include_private !== false) args.push('--private=1', '--protected=1', '--internal=1');
         if (params.include_implementation !== false) args.push('--implementation=1');
         if (params.include_patterns) args.push(`--include=${params.include_patterns}`);
         if (params.exclude_patterns) args.push(`--exclude=${params.exclude_patterns}`);
-        
+
         const result = await this.executeAidCommand(args);
-        
+
         const filePathMatch = result.match(/📋 Security Analysis Prompt: (.+)/);
         const filePath = filePathMatch ? filePathMatch[1] : 'Check .aid/ directory';
-        
+
         return {
           content: [{
             type: "text",
@@ -518,17 +518,17 @@ class AidDistillerServer {
         if (params.doc_type === 'multi-file-docs' || params.doc_type === 'api-reference') {
           aiAction = 'flow-for-multi-file-docs';
         }
-        
+
         const args = [
           params.target_path,
           `--ai-action=${aiAction}`
         ];
-        
+
         if (params.include_patterns) args.push(`--include=${params.include_patterns}`);
         if (params.exclude_patterns) args.push(`--exclude=${params.exclude_patterns}`);
-        
+
         const result = await this.executeAidCommand(args);
-        
+
         return {
           content: [{
             type: "text",
@@ -561,14 +561,14 @@ class AidDistillerServer {
           params.target_path,
           '--ai-action=flow-for-deep-file-to-file-analysis'
         ];
-        
+
         if (params.include_private !== false) args.push('--private=1', '--protected=1', '--internal=1');
         if (params.include_implementation !== false) args.push('--implementation=1');
         if (params.include_patterns) args.push(`--include=${params.include_patterns}`);
         if (params.exclude_patterns) args.push(`--exclude=${params.exclude_patterns}`);
-        
+
         const result = await this.executeAidCommand(args);
-        
+
         return {
           content: [{
             type: "text",
@@ -594,12 +594,12 @@ class AidDistillerServer {
           params.target_path,
           '--ai-action=flow-for-multi-file-docs'
         ];
-        
+
         if (params.include_patterns) args.push(`--include=${params.include_patterns}`);
         if (params.exclude_patterns) args.push(`--exclude=${params.exclude_patterns}`);
-        
+
         const result = await this.executeAidCommand(args);
-        
+
         return {
           content: [{
             type: "text",
@@ -627,14 +627,14 @@ class AidDistillerServer {
           params.target_path,
           '--ai-action=prompt-for-complex-codebase-analysis'
         ];
-        
+
         if (params.include_private !== false) args.push('--private=1', '--protected=1', '--internal=1');
         if (params.include_implementation !== false) args.push('--implementation=1');
         if (params.include_patterns) args.push(`--include=${params.include_patterns}`);
         if (params.exclude_patterns) args.push(`--exclude=${params.exclude_patterns}`);
-        
+
         const result = await this.executeAidCommand(args);
-        
+
         return {
           content: [{
             type: "text",
@@ -661,13 +661,13 @@ class AidDistillerServer {
           params.target_path,
           '--ai-action=prompt-for-performance-analysis'
         ];
-        
+
         if (params.include_implementation !== false) args.push('--implementation=1');
         if (params.include_patterns) args.push(`--include=${params.include_patterns}`);
         if (params.exclude_patterns) args.push(`--exclude=${params.exclude_patterns}`);
-        
+
         const result = await this.executeAidCommand(args);
-        
+
         return {
           content: [{
             type: "text",
@@ -694,13 +694,13 @@ class AidDistillerServer {
           params.target_path,
           '--ai-action=prompt-for-best-practices-analysis'
         ];
-        
+
         if (params.include_private !== false) args.push('--private=1', '--protected=1', '--internal=1');
         if (params.include_patterns) args.push(`--include=${params.include_patterns}`);
         if (params.exclude_patterns) args.push(`--exclude=${params.exclude_patterns}`);
-        
+
         const result = await this.executeAidCommand(args);
-        
+
         return {
           content: [{
             type: "text",
@@ -752,7 +752,7 @@ class AidDistillerServer {
           params.target_path,
           `--ai-action=${params.ai_action}`
         ];
-        
+
         if (params.output_format) args.push(`--format=${params.output_format}`);
         if (params.include_private) args.push('--private=1');
         if (params.include_protected) args.push('--protected=1');
@@ -763,9 +763,9 @@ class AidDistillerServer {
         if (params.include_methods === false) args.push('--methods=0');
         if (params.include_patterns) args.push(`--include=${params.include_patterns}`);
         if (params.exclude_patterns) args.push(`--exclude=${params.exclude_patterns}`);
-        
+
         const result = await this.executeAidCommand(args);
-        
+
         return {
           content: [{
             type: "text",
@@ -793,7 +793,7 @@ class AidDistillerServer {
       },
       async (params) => {
         const result = await this.listFiles(params);
-        
+
         return {
           content: [{
             type: "text",
@@ -876,7 +876,7 @@ class AidDistillerServer {
             "Comprehensive documentation generation"
           ]
         };
-        
+
         return {
           content: [{
             type: "text",
@@ -895,17 +895,17 @@ class AidDistillerServer {
     const basePath = path.resolve(args.path || '.');
     const pattern = args.pattern;
     const recursive = args.recursive !== false;
-    
+
     const results: any[] = [];
-    
+
     function matchesPattern(filePath: string, patternStr?: string): boolean {
       if (!patternStr) return true;
-      
+
       const safePattern = patternStr
         .replace(/[.+^${}()|[\]\\]/g, '\\$&')
         .replace(/\*/g, '.*')
         .replace(/\?/g, '.');
-      
+
       try {
         const regex = new RegExp(`^${safePattern}$`);
         return regex.test(filePath);
@@ -913,7 +913,7 @@ class AidDistillerServer {
         return false;
       }
     }
-    
+
     const detectLanguage = (ext: string): string | null => {
       return this.detectLanguage(ext);
     };
@@ -921,19 +921,19 @@ class AidDistillerServer {
     async function scan(dir: string): Promise<void> {
       try {
         const items = await fs.readdir(dir, { withFileTypes: true });
-        
+
         for (const item of items) {
           const fullPath = path.join(dir, item.name);
           const relativePath = path.relative(basePath, fullPath);
-          
+
           if (item.isFile()) {
             if (!pattern || matchesPattern(relativePath, pattern)) {
               const stats = await fs.stat(fullPath);
-              
+
               // Detect language
               const ext = path.extname(item.name).toLowerCase();
               const language = detectLanguage(ext);
-              
+
               results.push({
                 path: relativePath,
                 size: stats.size,
@@ -950,9 +950,9 @@ class AidDistillerServer {
         // Skip directories we can't read
       }
     }
-    
+
     await scan(basePath);
-    
+
     return {
       path: basePath,
       file_count: results.length,
@@ -1005,7 +1005,7 @@ class AidDistillerServer {
       '.inc': 'php',
       '.swift': 'swift'
     };
-    
+
     return languageMap[ext] || null;
   }
 
@@ -1014,12 +1014,12 @@ class AidDistillerServer {
    */
   private summarizeLanguages(files: any[]): Record<string, number> {
     const summary: Record<string, number> = {};
-    
+
     for (const file of files) {
       const lang = file.language || 'unknown';
       summary[lang] = (summary[lang] || 0) + 1;
     }
-    
+
     return summary;
   }
 
@@ -1029,20 +1029,20 @@ class AidDistillerServer {
   async connect(): Promise<void> {
     try {
       const transport = new StdioServerTransport();
-      
+
       // Set up error handlers before connecting
       transport.onclose = () => {
         if (isDebug) console.error('[AID MCP] Transport closed');
         process.exit(0);
       };
-      
+
       transport.onerror = (error: Error) => {
         console.error('[AID MCP] Transport error:', error);
         process.exit(1);
       };
-      
+
       await this.server.connect(transport);
-      
+
       if (isDebug) {
         console.error(`[AID MCP] Server connected successfully
 Binary: ${binaryPath}

@@ -32,24 +32,24 @@ func NewServer() *Server {
 func (s *Server) Start() {
 	// Using aliased fmt
 	f.Println("Starting server with aliases")
-	
+
 	// Using aliased http as req
 	req.HandleFunc("/health", func(w req.ResponseWriter, r *req.Request) {
 		// Using aliased json as j
 		response := map[string]string{
 			"status": "healthy",
 		}
-		
+
 		w.Header().Set("Content-Type", "application/json")
 		j.NewEncoder(w).Encode(response)
 	})
-	
+
 	// Using the logger
 	s.logger.Println("Server configured")
-	
+
 	// The pprof import is a blank import and should always be kept
 	// It registers the pprof handlers as a side effect
-	
+
 	// Start server
 	req.ListenAndServe(":8081", nil)
 }

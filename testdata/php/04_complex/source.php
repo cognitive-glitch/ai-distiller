@@ -22,7 +22,7 @@ class Route
 {
     /**
      * Create route attribute
-     * 
+     *
      * @param string $path Route path
      * @param string $method HTTP method
      * @param list<string> $middleware Route middleware
@@ -42,7 +42,7 @@ class Validate
 {
     /**
      * Create validation attribute
-     * 
+     *
      * @param string $rule Validation rule
      * @param string $message Error message
      */
@@ -60,7 +60,7 @@ class Inject
 {
     /**
      * Create injection attribute
-     * 
+     *
      * @param string|null $service Service identifier
      */
     public function __construct(
@@ -85,7 +85,7 @@ class AttributeProcessor
 
     /**
      * Process attributes for a class
-     * 
+     *
      * @param object $instance Object instance
      * @return array{class: list<array{name: string, arguments: array<mixed>, instance: object}>, methods: array<string, list<array{name: string, arguments: array<mixed>, instance: object}>>, properties: array<string, list<array{name: string, arguments: array<mixed>, instance: object}>>} Processed attributes
      */
@@ -93,7 +93,7 @@ class AttributeProcessor
     {
         $class = $instance::class;
         $reflection = new ReflectionClass($class);
-        
+
         if (isset($this->classCache[$instance])) {
             return $this->classCache[$instance];
         }
@@ -110,14 +110,14 @@ class AttributeProcessor
 
     /**
      * Process class-level attributes
-     * 
+     *
      * @param ReflectionClass $reflection Class reflection
      * @return array
      */
     private function processClassAttributes(ReflectionClass $reflection): array
     {
         $attributes = [];
-        
+
         foreach ($reflection->getAttributes() as $attribute) {
             $attributes[] = [
                 'name' => $attribute->getName(),
@@ -125,23 +125,23 @@ class AttributeProcessor
                 'instance' => $attribute->newInstance(),
             ];
         }
-        
+
         return $attributes;
     }
 
     /**
      * Process method attributes
-     * 
+     *
      * @param ReflectionClass $reflection Class reflection
      * @return array
      */
     private function processMethodAttributes(ReflectionClass $reflection): array
     {
         $methods = [];
-        
+
         foreach ($reflection->getMethods() as $method) {
             $attributes = [];
-            
+
             foreach ($method->getAttributes() as $attribute) {
                 $attributes[] = [
                     'name' => $attribute->getName(),
@@ -149,28 +149,28 @@ class AttributeProcessor
                     'instance' => $attribute->newInstance(),
                 ];
             }
-            
+
             if (!empty($attributes)) {
                 $methods[$method->getName()] = $attributes;
             }
         }
-        
+
         return $methods;
     }
 
     /**
      * Process property attributes
-     * 
+     *
      * @param ReflectionClass $reflection Class reflection
      * @return array
      */
     private function processPropertyAttributes(ReflectionClass $reflection): array
     {
         $properties = [];
-        
+
         foreach ($reflection->getProperties() as $property) {
             $attributes = [];
-            
+
             foreach ($property->getAttributes() as $attribute) {
                 $attributes[] = [
                     'name' => $attribute->getName(),
@@ -178,18 +178,18 @@ class AttributeProcessor
                     'instance' => $attribute->newInstance(),
                 ];
             }
-            
+
             if (!empty($attributes)) {
                 $properties[$property->getName()] = $attributes;
             }
         }
-        
+
         return $properties;
     }
 
     /**
      * Find methods with specific attribute
-     * 
+     *
      * @param ReflectionClass $reflection Class reflection
      * @param string $attributeClass Attribute class name
      * @return Generator<ReflectionMethod, ReflectionAttribute>
@@ -231,7 +231,7 @@ class ApiController
 
     /**
      * Update user profile
-     * 
+     *
      * @param int $id User ID
      * @param array<string, mixed> $data User data
      * @return array{id: int, updated: bool, data: array<string, mixed>}
@@ -253,7 +253,7 @@ class ApiController
 
     /**
      * Get all routes defined in this controller
-     * 
+     *
      * @return array
      */
     public function getRoutes(): array
@@ -309,53 +309,53 @@ class UserCreateDto
 
     /**
      * Create DTO from array
-     * 
+     *
      * @param array{name?: string, email?: string, age?: int, preferences?: array<string, mixed>} $data Input data
      * @return self
      */
     public static function fromArray(array $data): self
     {
         $dto = new self();
-        
+
         foreach ($data as $key => $value) {
             if (property_exists($dto, $key)) {
                 $dto->$key = $value;
             }
         }
-        
+
         return $dto;
     }
 
     /**
      * Validate the DTO using reflection and attributes
-     * 
+     *
      * @return array Validation errors
      */
     public function validate(): array
     {
         $errors = [];
         $reflection = new ReflectionClass($this);
-        
+
         foreach ($reflection->getProperties() as $property) {
             $propertyName = $property->getName();
             $value = $property->getValue($this);
-            
+
             foreach ($property->getAttributes(Validate::class) as $attribute) {
                 $validator = $attribute->newInstance();
                 $error = $this->validateRule($value, $validator->rule, $validator->message);
-                
+
                 if ($error) {
                     $errors[$propertyName][] = $error;
                 }
             }
         }
-        
+
         return $errors;
     }
 
     /**
      * Validate a single rule
-     * 
+     *
      * @param mixed $value Value to validate
      * @param string $rule Validation rule
      * @param string $message Error message
@@ -366,7 +366,7 @@ class UserCreateDto
         switch (true) {
             case $rule === 'required':
                 return empty($value) ? ($message ?: 'Field is required') : null;
-                
+
             case str_starts_with($rule, 'min:'):
                 $min = (int) substr($rule, 4);
                 if (is_string($value) && strlen($value) < $min) {
@@ -376,7 +376,7 @@ class UserCreateDto
                     return $message ?: "Must be at least {$min}";
                 }
                 return null;
-                
+
             case str_starts_with($rule, 'max:'):
                 $max = (int) substr($rule, 4);
                 if (is_string($value) && strlen($value) > $max) {
@@ -386,10 +386,10 @@ class UserCreateDto
                     return $message ?: "Must be at most {$max}";
                 }
                 return null;
-                
+
             case $rule === 'email':
                 return filter_var($value, FILTER_VALIDATE_EMAIL) ? null : ($message ?: 'Invalid email format');
-                
+
             default:
                 return null;
         }
@@ -405,12 +405,12 @@ class ServiceLocator
      * @var array<string, callable> Service factories
      */
     private array $factories = [];
-    
+
     /**
      * @var SplObjectStorage Singleton instances
      */
     private SplObjectStorage $singletons;
-    
+
     /**
      * @var array<string, array{singleton: bool}> Service metadata
      */
@@ -423,7 +423,7 @@ class ServiceLocator
 
     /**
      * Register a service factory
-     * 
+     *
      * @param string $id Service identifier
      * @param Closure $factory Service factory
      * @param bool $singleton Whether to create as singleton
@@ -437,7 +437,7 @@ class ServiceLocator
 
     /**
      * Resolve a service
-     * 
+     *
      * @param string $id Service identifier
      * @return mixed
      */
@@ -448,7 +448,7 @@ class ServiceLocator
         }
 
         $metadata = $this->metadata[$id];
-        
+
         if ($metadata['singleton']) {
             // Check if singleton already exists
             foreach ($this->singletons as $service) {
@@ -456,7 +456,7 @@ class ServiceLocator
                     return $service;
                 }
             }
-            
+
             // Create new singleton
             $instance = $this->factories[$id]($this);
             $this->singletons[$instance] = $id;
@@ -468,7 +468,7 @@ class ServiceLocator
 
     /**
      * Create service with dependency injection using attributes
-     * 
+     *
      * @param string $className Class name
      * @return object
      */
@@ -476,20 +476,20 @@ class ServiceLocator
     {
         $reflection = new ReflectionClass($className);
         $constructor = $reflection->getConstructor();
-        
+
         if (!$constructor) {
             return new $className();
         }
 
         $dependencies = [];
-        
+
         foreach ($constructor->getParameters() as $parameter) {
             $injectAttributes = $parameter->getAttributes(Inject::class);
-            
+
             if (!empty($injectAttributes)) {
                 $inject = $injectAttributes[0]->newInstance();
                 $serviceId = $inject->service ?? $parameter->getType()?->getName();
-                
+
                 if ($serviceId && $this->has($serviceId)) {
                     $dependencies[] = $this->resolve($serviceId);
                 } else {
@@ -510,7 +510,7 @@ class ServiceLocator
 
     /**
      * Check if service is registered
-     * 
+     *
      * @param string $id Service identifier
      * @return bool
      */
@@ -521,7 +521,7 @@ class ServiceLocator
 
     /**
      * Get service metadata
-     * 
+     *
      * @param string $id Service identifier
      * @return array
      */
@@ -532,7 +532,7 @@ class ServiceLocator
 
     /**
      * Get all registered service IDs
-     * 
+     *
      * @return array
      */
     public function getServiceIds(): array
@@ -548,7 +548,7 @@ class ComplexUserService
 {
     /**
      * Create service with dependency injection
-     * 
+     *
      * @param UserRepository $repository User repository
      * @param EventDispatcher $dispatcher Event dispatcher
      * @param AttributeProcessor $processor Attribute processor
@@ -561,14 +561,14 @@ class ComplexUserService
 
     /**
      * Create user with validation
-     * 
+     *
      * @param UserCreateDto $dto User data
      * @return array
      */
     public function createUser(UserCreateDto $dto): array
     {
         $errors = $dto->validate();
-        
+
         if (!empty($errors)) {
             return ['success' => false, 'errors' => $errors];
         }
@@ -579,7 +579,7 @@ class ComplexUserService
 
     /**
      * Process user data with generators
-     * 
+     *
      * @param array $users User data
      * @return Generator<array>
      */
@@ -588,7 +588,7 @@ class ComplexUserService
         foreach ($users as $userData) {
             $dto = UserCreateDto::fromArray($userData);
             $result = $this->createUser($dto);
-            
+
             yield [
                 'original' => $userData,
                 'processed' => $result,

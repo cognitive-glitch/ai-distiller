@@ -1,0 +1,27 @@
+<file path="testdata/c/02_simple//source.c">
+import stdio.h
+import string.h
+import stddef.h
+@enum
+class Color:
+@union
+class Data:
+class Node:
+    data: int
+    next
+class Rectangle:
+    width: int
+    height: int
+    color
+def initialize(param_0: void) -> void
+def calculate(x: int, y: int) -> int
+def create_node(value: int)
+def free_list(head: unknown) -> void
+def rect_area(rect: unknown) -> int
+def set_int(data: unknown, value: int) -> void
+def get_color_name(color: unknown) -> char
+~static def internal_helper(param_0: void) -> void
+def sum_all(count: int) -> int
+</file>
+
+

@@ -26,7 +26,7 @@ class ProxyTarget
 {
     /**
      * Create proxy target attribute
-     * 
+     *
      * @param list<string> $interceptMethods Methods to intercept
      * @param string $proxyClass Proxy class name
      */
@@ -44,7 +44,7 @@ class Intercept
 {
     /**
      * Create interceptor attribute
-     * 
+     *
      * @param string $before Before method hook
      * @param string $after After method hook
      * @param bool $cache Whether to cache results
@@ -64,7 +64,7 @@ class Memoize
 {
     /**
      * Create memoization attribute
-     * 
+     *
      * @param int $ttl Time to live in seconds
      * @param string $keyGenerator Key generator method
      */
@@ -83,12 +83,12 @@ class DynamicProxyFactory
      * @var WeakMap Cache for generated proxy classes
      */
     private WeakMap $proxyCache;
-    
+
     /**
      * @var array<string, WeakReference<callable>> Method interceptors
      */
     private array $interceptors = [];
-    
+
     /**
      * @var SplObjectStorage Memoization cache
      */
@@ -102,7 +102,7 @@ class DynamicProxyFactory
 
     /**
      * Create dynamic proxy for an object
-     * 
+     *
      * @param object $target Target object
      * @return object Proxy object
      */
@@ -110,13 +110,13 @@ class DynamicProxyFactory
     {
         $reflection = new ReflectionClass($target);
         $proxyAttributes = $reflection->getAttributes(ProxyTarget::class);
-        
+
         if (empty($proxyAttributes)) {
             throw new \InvalidArgumentException('Target class must have ProxyTarget attribute');
         }
 
         $proxyConfig = $proxyAttributes[0]->newInstance();
-        
+
         // Check cache first
         if (isset($this->proxyCache[$target])) {
             return $this->proxyCache[$target];
@@ -124,13 +124,13 @@ class DynamicProxyFactory
 
         $proxy = $this->generateProxy($target, $reflection, $proxyConfig);
         $this->proxyCache[$target] = $proxy;
-        
+
         return $proxy;
     }
 
     /**
      * Generate proxy object dynamically
-     * 
+     *
      * @param object $target Target object
      * @param ReflectionClass $reflection Target reflection
      * @param ProxyTarget $config Proxy configuration
@@ -144,7 +144,7 @@ class DynamicProxyFactory
 
     /**
      * Generate proxy class code dynamically
-     * 
+     *
      * @param ReflectionClass $reflection Target reflection
      * @param ProxyTarget $config Proxy configuration
      * @return string Generated proxy class name
@@ -153,20 +153,20 @@ class DynamicProxyFactory
     {
         $targetClassName = $reflection->getName();
         $proxyClassName = $config->proxyClass ?: $targetClassName . 'Proxy' . uniqid();
-        
+
         if (class_exists($proxyClassName)) {
             return $proxyClassName;
         }
 
         $classCode = $this->buildProxyClassCode($reflection, $proxyClassName, $config);
         eval($classCode);
-        
+
         return $proxyClassName;
     }
 
     /**
      * Build proxy class code
-     * 
+     *
      * @param ReflectionClass $reflection Target reflection
      * @param string $proxyClassName Proxy class name
      * @param ProxyTarget $config Proxy configuration
@@ -184,7 +184,7 @@ class DynamicProxyFactory
 
             $methodName = $method->getName();
             $interceptMethods = $config->interceptMethods;
-            
+
             if (empty($interceptMethods) || in_array($methodName, $interceptMethods)) {
                 $methods[] = $this->generateProxyMethod($method);
             }
@@ -215,7 +215,7 @@ class {$proxyClassName} implements ProxyInterface
 
     /**
      * Generate proxy method code
-     * 
+     *
      * @param ReflectionMethod $method Method reflection
      * @return string Generated method code
      */
@@ -239,53 +239,53 @@ class {$proxyClassName} implements ProxyInterface
 
     /**
      * Build parameter list for method
-     * 
+     *
      * @param ReflectionMethod $method Method reflection
      * @return string Parameter list
      */
     private function buildParameterList(ReflectionMethod $method): string
     {
         $params = [];
-        
+
         foreach ($method->getParameters() as $param) {
             $paramStr = '';
-            
+
             if ($param->getType()) {
                 $paramStr .= $param->getType() . ' ';
             }
-            
+
             $paramStr .= '$' . $param->getName();
-            
+
             if ($param->isDefaultValueAvailable()) {
                 $paramStr .= ' = ' . var_export($param->getDefaultValue(), true);
             }
-            
+
             $params[] = $paramStr;
         }
-        
+
         return implode(', ', $params);
     }
 
     /**
      * Build parameter names for method call
-     * 
+     *
      * @param ReflectionMethod $method Method reflection
      * @return string Parameter names
      */
     private function buildParameterNames(ReflectionMethod $method): string
     {
         $names = [];
-        
+
         foreach ($method->getParameters() as $param) {
             $names[] = '$' . $param->getName();
         }
-        
+
         return implode(', ', $names);
     }
 
     /**
      * Intercept method call
-     * 
+     *
      * @param object $target Target object
      * @param string $methodName Method name
      * @param array<int, mixed> $arguments Method arguments
@@ -295,13 +295,13 @@ class {$proxyClassName} implements ProxyInterface
     {
         $reflection = new ReflectionClass($target);
         $method = $reflection->getMethod($methodName);
-        
+
         // Check for memoization
         $memoizeAttributes = $method->getAttributes(Memoize::class);
         if (!empty($memoizeAttributes)) {
             $memoConfig = $memoizeAttributes[0]->newInstance();
             $cacheKey = $this->generateCacheKey($target, $methodName, $arguments, $memoConfig);
-            
+
             if ($this->memoCache->contains($target) && isset($this->memoCache[$target][$cacheKey])) {
                 return $this->memoCache[$target][$cacheKey]['value'];
             }
@@ -341,7 +341,7 @@ class {$proxyClassName} implements ProxyInterface
 
     /**
      * Generate cache key for memoization
-     * 
+     *
      * @param object $target Target object
      * @param string $methodName Method name
      * @param array $arguments Method arguments
@@ -353,13 +353,13 @@ class {$proxyClassName} implements ProxyInterface
         if ($config->keyGenerator && method_exists($target, $config->keyGenerator)) {
             return $target->{$config->keyGenerator}($methodName, $arguments);
         }
-        
+
         return md5($methodName . serialize($arguments));
     }
 
     /**
      * Call interceptor method
-     * 
+     *
      * @param object $target Target object
      * @param string $interceptorMethod Interceptor method name
      * @param array $arguments Arguments
@@ -379,7 +379,7 @@ interface ProxyInterface
 {
     /**
      * Get the target object
-     * 
+     *
      * @return object
      */
     public function __getTarget(): object;
@@ -394,7 +394,7 @@ class AsyncOperationManager
      * @var array<string, Fiber<mixed, mixed, mixed, mixed>> Active fibers
      */
     private array $fibers = [];
-    
+
     /**
      * @var array<string, mixed> Fiber results
      */
@@ -402,7 +402,7 @@ class AsyncOperationManager
 
     /**
      * Execute async operation
-     * 
+     *
      * @param string $id Operation ID
      * @param Closure $operation Operation to execute
      */
@@ -414,7 +414,7 @@ class AsyncOperationManager
 
     /**
      * Resume fiber execution
-     * 
+     *
      * @param string $id Fiber ID
      * @param mixed $value Value to resume with
      */
@@ -436,7 +436,7 @@ class AsyncOperationManager
 
     /**
      * Get operation result
-     * 
+     *
      * @param string $id Operation ID
      * @return mixed
      */
@@ -447,7 +447,7 @@ class AsyncOperationManager
 
     /**
      * Check if operation is complete
-     * 
+     *
      * @param string $id Operation ID
      * @return bool
      */
@@ -458,7 +458,7 @@ class AsyncOperationManager
 
     /**
      * Wait for all operations to complete
-     * 
+     *
      * @return Generator<string, mixed>
      */
     public function waitAll(): Generator
@@ -470,7 +470,7 @@ class AsyncOperationManager
                     yield $id => $this->getResult($id);
                 }
             }
-            
+
             // Yield control to prevent blocking
             Fiber::suspend();
         }
@@ -495,7 +495,7 @@ class OrderService
 
     /**
      * Calculate order price with memoization
-     * 
+     *
      * @param list<array{id: int, quantity: int, price: float}> $items Order items
      * @param string $currency Currency code
      * @return float
@@ -505,20 +505,20 @@ class OrderService
     public function calculatePrice(array $items, string $currency = 'USD'): float
     {
         $total = 0.0;
-        
+
         foreach ($items as $item) {
             $total += $item['price'] * $item['quantity'];
         }
-        
+
         // Simulate complex calculation
         usleep(100000); // 100ms
-        
+
         return $total * $this->getCurrencyMultiplier($currency);
     }
 
     /**
      * Process order asynchronously
-     * 
+     *
      * @param array{customer_id: int, items: list<array{id: int, quantity: int}>, payment_method: string} $orderData Order data
      * @return string Order ID
      */
@@ -526,31 +526,31 @@ class OrderService
     public function processOrder(array $orderData): string
     {
         $orderId = uniqid('order_');
-        
+
         $this->asyncManager->execute($orderId, function() use ($orderData, $orderId) {
             // Simulate async processing
             Fiber::suspend();
-            
+
             // Process payment
             $this->processPayment($orderData['payment']);
             Fiber::suspend();
-            
+
             // Update inventory
             $this->updateInventory($orderData['items']);
             Fiber::suspend();
-            
+
             // Send confirmation
             $this->sendConfirmation($orderData['customer']);
-            
+
             return ['order_id' => $orderId, 'status' => 'completed'];
         });
-        
+
         return $orderId;
     }
 
     /**
      * Generate cache key for price calculation
-     * 
+     *
      * @param string $methodName Method name
      * @param array $arguments Method arguments
      * @return string Cache key
@@ -563,7 +563,7 @@ class OrderService
 
     /**
      * Log price calculation
-     * 
+     *
      * @param array $items Order items
      * @param string $currency Currency
      */
@@ -574,7 +574,7 @@ class OrderService
 
     /**
      * Validate price result
-     * 
+     *
      * @param float $result Calculated price
      */
     protected function validatePriceResult(float $result): void
@@ -586,7 +586,7 @@ class OrderService
 
     /**
      * Validate order before processing
-     * 
+     *
      * @param array $orderData Order data
      */
     protected function validateOrder(array $orderData): void
@@ -598,7 +598,7 @@ class OrderService
 
     /**
      * Notify that order was processed
-     * 
+     *
      * @param string $orderId Order ID
      */
     protected function notifyOrderProcessed(string $orderId): void
@@ -608,7 +608,7 @@ class OrderService
 
     /**
      * Get currency multiplier
-     * 
+     *
      * @param string $currency Currency code
      * @return float Multiplier
      */
@@ -624,7 +624,7 @@ class OrderService
 
     /**
      * Process payment (simulated)
-     * 
+     *
      * @param array $paymentData Payment data
      */
     private function processPayment(array $paymentData): void
@@ -635,7 +635,7 @@ class OrderService
 
     /**
      * Update inventory (simulated)
-     * 
+     *
      * @param array $items Order items
      */
     private function updateInventory(array $items): void
@@ -646,7 +646,7 @@ class OrderService
 
     /**
      * Send confirmation (simulated)
-     * 
+     *
      * @param array $customerData Customer data
      */
     private function sendConfirmation(array $customerData): void
@@ -657,7 +657,7 @@ class OrderService
 
     /**
      * Get async operation status
-     * 
+     *
      * @param string $orderId Order ID
      * @return array Status information
      */
@@ -666,7 +666,7 @@ class OrderService
         if ($this->asyncManager->isComplete($orderId)) {
             return $this->asyncManager->getResult($orderId);
         }
-        
+
         return ['order_id' => $orderId, 'status' => 'processing'];
     }
 }
@@ -678,7 +678,7 @@ class MetaProgrammingDemo
 {
     /**
      * Create dynamic class at runtime
-     * 
+     *
      * @param string $className Class name
      * @param array $properties Class properties
      * @param array $methods Class methods
@@ -687,29 +687,29 @@ class MetaProgrammingDemo
     public function createDynamicClass(string $className, array $properties, array $methods): string
     {
         $classCode = "class {$className} {\n";
-        
+
         // Add properties
         foreach ($properties as $name => $type) {
             $classCode .= "    public {$type} \${$name};\n";
         }
-        
+
         // Add methods
         foreach ($methods as $methodName => $methodCode) {
             $classCode .= "\n    public function {$methodName}() {\n";
             $classCode .= "        {$methodCode}\n";
             $classCode .= "    }\n";
         }
-        
+
         $classCode .= "}\n";
-        
+
         eval($classCode);
-        
+
         return $className;
     }
 
     /**
      * Create method dynamically using Closure
-     * 
+     *
      * @param object $object Target object
      * @param string $methodName Method name
      * @param Closure $implementation Method implementation
@@ -722,14 +722,14 @@ class MetaProgrammingDemo
 
     /**
      * Analyze object structure using advanced reflection
-     * 
+     *
      * @param object $object Object to analyze
      * @return array Analysis result
      */
     public function analyzeObject(object $object): array
     {
         $reflection = new ReflectionClass($object);
-        
+
         return [
             'class' => $reflection->getName(),
             'interfaces' => $reflection->getInterfaceNames(),
@@ -743,14 +743,14 @@ class MetaProgrammingDemo
 
     /**
      * Analyze class properties
-     * 
+     *
      * @param ReflectionClass $reflection Class reflection
      * @return array Properties analysis
      */
     private function analyzeProperties(ReflectionClass $reflection): array
     {
         $properties = [];
-        
+
         foreach ($reflection->getProperties() as $property) {
             $properties[] = [
                 'name' => $property->getName(),
@@ -764,20 +764,20 @@ class MetaProgrammingDemo
                 ),
             ];
         }
-        
+
         return $properties;
     }
 
     /**
      * Analyze class methods
-     * 
+     *
      * @param ReflectionClass $reflection Class reflection
      * @return array Methods analysis
      */
     private function analyzeMethods(ReflectionClass $reflection): array
     {
         $methods = [];
-        
+
         foreach ($reflection->getMethods() as $method) {
             $methods[] = [
                 'name' => $method->getName(),
@@ -800,33 +800,33 @@ class MetaProgrammingDemo
                 ),
             ];
         }
-        
+
         return $methods;
     }
 
     /**
      * Analyze class attributes
-     * 
+     *
      * @param ReflectionClass $reflection Class reflection
      * @return array Attributes analysis
      */
     private function analyzeAttributes(ReflectionClass $reflection): array
     {
         $attributes = [];
-        
+
         foreach ($reflection->getAttributes() as $attribute) {
             $attributes[] = [
                 'name' => $attribute->getName(),
                 'arguments' => $attribute->getArguments(),
             ];
         }
-        
+
         return $attributes;
     }
 
     /**
      * Get visibility string
-     * 
+     *
      * @param ReflectionProperty|ReflectionMethod $member Class member
      * @return string Visibility
      */

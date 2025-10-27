@@ -12,7 +12,7 @@ def process_data():
     print(os.path.join("a", "b"))
     q = deque([1, 2, 3])
     print(q)
-    
+
     # Path is used here
     p = Path("/tmp")
     print(p.exists())

@@ -24,11 +24,11 @@ end
 class ApplicationController < ActionController::Base
   # This implicitly uses rails/all
   protect_from_forgery with: :exception
-  
+
   before_action :configure_permitted_parameters, if: :devise_controller?
-  
+
   protected
-  
+
   def configure_permitted_parameters
     # This method suggests Devise is used, but it's not actually called
     # in this example, so Devise import might be marked as unused
@@ -39,10 +39,10 @@ class JobsController < ApplicationController
   def index
     # Using Rails features (from rails/all)
     @jobs = Job.all
-    
+
     # Using Sidekiq for background job
     ProcessingJob.perform_later(@jobs.pluck(:id))
-    
+
     respond_to do |format|
       format.html
       format.json { render json: @jobs }
@@ -53,10 +53,10 @@ end
 class ProcessingJob < ApplicationJob
   # This uses ActiveJob from rails/all
   queue_as :default
-  
+
   # Using Sidekiq as the adapter
   self.queue_adapter = :sidekiq
-  
+
   def perform(job_ids)
     job_ids.each do |id|
       # Process each job
@@ -70,10 +70,10 @@ class Job < ApplicationRecord
   # These would typically use other gems like:
   # has_attached_file :document (Paperclip)
   # But we're not using them in this example
-  
+
   validates :title, presence: true
   validates :description, length: { minimum: 10 }
-  
+
   scope :active, -> { where(active: true) }
   scope :recent, -> { order(created_at: :desc) }
 end

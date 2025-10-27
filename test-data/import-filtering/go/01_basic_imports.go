@@ -26,13 +26,13 @@ type Response struct {
 func main() {
 	// Using fmt
 	fmt.Println("Hello, Go!")
-	
+
 	// Using os
 	hostname, err := os.Hostname()
 	if err != nil {
 		fmt.Printf("Error getting hostname: %v\n", err)
 	}
-	
+
 	// Using net/http
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		// Using encoding/json
@@ -40,11 +40,11 @@ func main() {
 			Message: "Welcome to " + hostname,
 			Status:  200,
 		}
-		
+
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(resp)
 	})
-	
+
 	// Start server
 	fmt.Println("Server starting on :8080")
 	http.ListenAndServe(":8080", nil)

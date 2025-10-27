@@ -32,11 +32,11 @@ import { Validator } from './validators';
 })
 export class UserService {
   private users$ = new BehaviorSubject<User[]>([]);
-  
+
   constructor(
     @Inject(HTTP_INTERCEPTORS) private interceptors: any[]
   ) {}
-  
+
   getUsers(): Observable<User[]> {
     return this.users$.asObservable().pipe(
       map(users => users.filter(u => u.active)),
@@ -47,11 +47,11 @@ export class UserService {
       })
     );
   }
-  
+
   checkPermission(user: User, permission: Permission): boolean {
     return user.permissions.includes(permission);
   }
-  
+
   // Method using environment
   getApiUrl(): string {
     return environment.apiUrl;

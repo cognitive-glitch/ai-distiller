@@ -13,7 +13,7 @@ pub struct SourceFile {
 // This tests the ability to parse trait definitions and their methods.
 pub trait Summarizable {
     fn summary(&self) -> String;
-    
+
     /// Default implementation for short summary
     fn short_summary(&self) -> String {
         let full = self.summary();
@@ -75,7 +75,7 @@ impl Summarizable for SourceFile {
 /// Additional trait for file operations
 pub trait FileOperations {
     type Error;
-    
+
     fn read_content(&self) -> Result<&str, Self::Error>;
     fn write_content(&mut self, content: String) -> Result<(), Self::Error>;
 }
@@ -90,7 +90,7 @@ pub enum FileError {
 
 impl FileOperations for SourceFile {
     type Error = FileError;
-    
+
     fn read_content(&self) -> Result<&str, Self::Error> {
         if self.is_valid() {
             Ok(&self.content)
@@ -98,7 +98,7 @@ impl FileOperations for SourceFile {
             Err(FileError::InvalidContent)
         }
     }
-    
+
     fn write_content(&mut self, content: String) -> Result<(), Self::Error> {
         self.content = content;
         self.process_internal();

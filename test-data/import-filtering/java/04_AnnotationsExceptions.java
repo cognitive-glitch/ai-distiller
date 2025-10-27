@@ -23,7 +23,7 @@ import java.util.Optional;
 
 /**
  * Demonstrates annotation and exception imports.
- * 
+ *
  * @see java.util.Optional
  * @see Logger for logging functionality
  */
@@ -34,19 +34,19 @@ import java.util.Optional;
 }
 
 public class AnnotationsExceptions {
-    
+
     @MyAnnotation("class-level")
     static class DataProcessor {
-        
+
         @NotNull
         private String name;
-        
+
         @Min(0)
         private int count;
-        
+
         /**
          * Process a file and handle various exceptions.
-         * 
+         *
          * @param filename the file to process
          * @throws FileNotFoundException if file doesn't exist
          * @throws IOException for general I/O errors
@@ -56,35 +56,35 @@ public class AnnotationsExceptions {
          * @see {@link Optional} for null-safe returns
          */
         @MyAnnotation("method-level")
-        public void processFile(@NotNull String filename) 
+        public void processFile(@NotNull String filename)
                 throws FileNotFoundException, IOException, SQLException, TimeoutException {
-            
+
             // Simulate file check
             if (!filename.exists()) {
                 throw new FileNotFoundException("File not found: " + filename);
             }
-            
+
             // Simulate I/O operation
             if (filename.contains("corrupt")) {
                 throw new IOException("Corrupted file");
             }
-            
+
             // Simulate database operation
             if (filename.contains("db")) {
                 throw new SQLException("Database connection failed");
             }
-            
+
             // Simulate timeout
             if (filename.length() > 100) {
                 throw new TimeoutException("Operation timed out");
             }
-            
+
             // Using custom exception
             if (filename.isEmpty()) {
                 throw new CustomException("Invalid filename");
             }
         }
-        
+
         /**
          * Validates email using annotation.
          * See {@link javax.validation.constraints.Email} for details.

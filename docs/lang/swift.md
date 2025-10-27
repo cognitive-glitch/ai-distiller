@@ -121,7 +121,7 @@ Due to stability issues with the tree-sitter Swift parser, AI Distiller currentl
 
 <details open><summary>Basic Function</summary><blockquote>
   <details><summary>input.swift</summary><blockquote>
-    
+
 ```swift
 public func calculateSum(a: Int, b: Int) -> Int {
     return a + b
@@ -131,108 +131,108 @@ private func helperFunction() {
     print("Helper")
 }
 ```
-    
+
   </blockquote></details>
   <details open><summary>Default output</summary><blockquote>
-    
+
 ```
 <file path="input.swift">
 public calculateSum() -> Int
 </file>
 ```
-    
+
   </blockquote></details>
   <details><summary>With `--private=0 --protected=0 --internal=0`</summary><blockquote>
-    
+
 ```
 <file path="input.swift">
 public calculateSum() -> Int
 </file>
 ```
-    
+
   </blockquote></details>
   <details><summary>With `--implementation=0`</summary><blockquote>
-    
+
 ```
 <file path="input.swift">
 public calculateSum() -> Int
 private helperFunction()
 </file>
 ```
-    
+
   </blockquote></details>
 </blockquote></details>
 
 <details><summary>Class with Properties</summary><blockquote>
   <details><summary>User.swift</summary><blockquote>
-    
+
 ```swift
 public class User {
     public let id: String
     private var name: String
     internal var email: String?
-    
+
     public init(id: String, name: String) {
         self.id = id
         self.name = name
     }
-    
+
     public func updateName(_ newName: String) {
         self.name = newName
     }
-    
+
     private func validate() -> Bool {
         return !name.isEmpty
     }
 }
 ```
-    
+
   </blockquote></details>
   <details open><summary>Default output</summary><blockquote>
-    
+
 ```
 <file path="User.swift">
 +class User {
     +let id: String
     -var name: String
     ~var email: String?
-    
+
     +init(id: String, name: String) {
         self.id = id
         self.name = name
     }
-    
+
     +updateName(_ newName: String) {
         self.name = newName
     }
-    
+
     -validate() -> Bool {
         return !name.isEmpty
     }
 }
 </file>
 ```
-    
+
   </blockquote></details>
   <details><summary>With `--private=0 --protected=0 --internal=0,implementation`</summary><blockquote>
-    
+
 ```
 <file path="User.swift">
 +class User {
     +let id: String
-    
+
     +init(id: String, name: String)
     +updateName(_ newName: String)
 }
 </file>
 ```
-    
+
   </blockquote></details>
 </blockquote></details>
 
 <details><summary>Protocol and Conformance</summary><blockquote>
   <details><summary>Drawable.swift</summary><blockquote>
-    
+
 ```swift
 public protocol Drawable {
     func draw()
@@ -242,16 +242,16 @@ public protocol Drawable {
 public struct Circle: Drawable {
     public var radius: Double
     public var color: String
-    
+
     public func draw() {
         print("Drawing circle with radius \(radius)")
     }
 }
 ```
-    
+
   </blockquote></details>
   <details open><summary>Default output</summary><blockquote>
-    
+
 ```
 <file path="Drawable.swift">
 +protocol Drawable {
@@ -262,14 +262,14 @@ public struct Circle: Drawable {
 +struct Circle: Drawable {
     +var radius: Double
     +var color: String
-    
+
     +draw() {
         print("Drawing circle with radius \(radius)")
     }
 }
 </file>
 ```
-    
+
   </blockquote></details>
 </blockquote></details>
 

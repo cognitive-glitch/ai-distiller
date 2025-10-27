@@ -52,7 +52,7 @@ npm pack --dry-run 2>&1 | grep -E "^npm notice [0-9]+B" | sort -k3 -h
 
 echo ""
 echo -e "${YELLOW}Ready to publish version $(node -p "require('./package.json').version")${NC}"
-echo -e "This will publish to: ${GREEN}@janreges/ai-distiller-mcp${NC}"
+echo -e "This will publish to: ${GREEN}@cognitive/ai-distiller-mcp${NC}"
 echo ""
 read -p "Continue with publish? (y/N) " -n 1 -r
 echo ""
@@ -60,16 +60,16 @@ echo ""
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo -e "${YELLOW}Publishing to npm...${NC}"
     npm publish --access public
-    
+
     if [ $? -eq 0 ]; then
         echo ""
         echo -e "${GREEN}✓ Successfully published!${NC}"
         echo ""
         echo "Users can now install with:"
-        echo -e "  ${GREEN}npm install -g @janreges/ai-distiller-mcp${NC}"
+        echo -e "  ${GREEN}npm install -g @cognitive/ai-distiller-mcp${NC}"
         echo ""
         echo "Or use with npx:"
-        echo -e "  ${GREEN}npx @janreges/ai-distiller-mcp${NC}"
+        echo -e "  ${GREEN}npx @cognitive/ai-distiller-mcp${NC}"
     else
         echo -e "${RED}✗ Publish failed${NC}"
         exit 1

@@ -46,17 +46,17 @@ template<typename... Args>
 class VariadicContainer {
 private:
     tuple<Args...> data;
-    
+
 public:
     VariadicContainer(Args... args) : data(forward<Args>(args)...) {
         // Using utility's forward
     }
-    
+
     template<size_t Index>
     auto get() -> decltype(std::get<Index>(data)) {
         return std::get<Index>(data);
     }
-    
+
     static constexpr size_t size() {
         return tuple_size<decltype(data)>::value;
     }
@@ -67,12 +67,12 @@ template<typename T>
 class EventEmitter {
 private:
     vector<function<void(T)>> callbacks;
-    
+
 public:
     void on(function<void(T)> callback) {
         callbacks.push_back(callback);
     }
-    
+
     void emit(T value) {
         for (auto& callback : callbacks) {
             callback(value);
@@ -84,9 +84,9 @@ public:
 template<typename Iterator>
 void processRange(Iterator first, Iterator last) {
     using ValueType = typename iterator_traits<Iterator>::value_type;
-    
+
     cout << "Processing range of " << typeid(ValueType).name() << " values:" << endl;
-    
+
     for (auto it = first; it != last; ++it) {
         cout << "  " << *it << endl;
     }
@@ -104,10 +104,10 @@ struct has_toString {
 private:
     template<typename U>
     static auto test(int) -> decltype(declval<U>().toString(), true_type{});
-    
+
     template<typename>
     static false_type test(...);
-    
+
 public:
     static constexpr bool value = decltype(test<T>(0))::value;
 };
@@ -124,36 +124,36 @@ int main() {
     // Using SFINAE-enabled functions
     cout << "Safe add integers: " << safeAdd(10, 20) << endl;
     cout << "Safe add doubles: " << safeAdd(10.5, 20.3) << endl;
-    
+
     #if __cplusplus >= 202002L
     // Using concepts
     cout << "Multiply with concept: " << multiply(5, 6) << endl;
     #endif
-    
+
     // Using variadic template with tuple
     VariadicContainer<int, string, double> container(42, "hello", 3.14);
     cout << "First element: " << container.get<0>() << endl;
     cout << "Second element: " << container.get<1>() << endl;
     cout << "Container size: " << container.size() << endl;
-    
+
     // Using event emitter with functional
     EventEmitter<string> emitter;
     emitter.on([](const string& msg) {
         cout << "Event received: " << msg << endl;
     });
     emitter.emit("Hello, Events!");
-    
+
     // Using iterator traits
     vector<int> numbers = {1, 2, 3, 4, 5};
     processRange(numbers.begin(), numbers.end());
-    
+
     // Using smart pointer factory
     auto msg = makeUnique<Message>("Smart pointer message");
     cout << "Message: " << msg->toString() << endl;
-    
+
     // Using trait detector
     cout << "Message has toString: " << has_toString<Message>::value << endl;
     cout << "int has toString: " << has_toString<int>::value << endl;
-    
+
     return 0;
 }

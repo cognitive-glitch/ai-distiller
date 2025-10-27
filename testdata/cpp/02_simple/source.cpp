@@ -30,30 +30,30 @@ public:
      */
     LibraryItem(const std::string& id, const std::string& title)
         : id_(id), title_(title), isAvailable_(true) {}
-    
+
     /**
      * @brief Virtual destructor for proper inheritance
      */
     virtual ~LibraryItem() = default;
-    
+
     /**
      * @brief Get item ID
      * @return The unique identifier
      */
     const std::string& getId() const { return id_; }
-    
+
     /**
      * @brief Get item title
      * @return The title
      */
     const std::string& getTitle() const { return title_; }
-    
+
     /**
      * @brief Check if item is available
      * @return true if available, false otherwise
      */
     bool isAvailable() const { return isAvailable_; }
-    
+
     /**
      * @brief Borrow the item
      * @return true if successfully borrowed
@@ -65,14 +65,14 @@ public:
         }
         return false;
     }
-    
+
     /**
      * @brief Return the item
      */
     virtual void returnItem() {
         isAvailable_ = true;
     }
-    
+
     /**
      * @brief Pure virtual function for item details
      * @return String representation of item details
@@ -104,22 +104,22 @@ public:
      * @param author Book author
      * @param isbn ISBN number
      */
-    Book(const std::string& id, const std::string& title, 
+    Book(const std::string& id, const std::string& title,
          const std::string& author, const std::string& isbn)
         : LibraryItem(id, title), author_(author), isbn_(isbn) {}
-    
+
     /**
      * @brief Get book author
      * @return The author name
      */
     const std::string& getAuthor() const { return author_; }
-    
+
     /**
      * @brief Get ISBN
      * @return The ISBN number
      */
     const std::string& getISBN() const { return isbn_; }
-    
+
     /**
      * @brief Implementation of getDetails for Book
      * @return Book details as string
@@ -148,25 +148,25 @@ public:
     Magazine(const std::string& id, const std::string& title,
              int issueNumber, const std::string& publisher)
         : LibraryItem(id, title), issueNumber_(issueNumber), publisher_(publisher) {}
-    
+
     /**
      * @brief Get issue number
      * @return The issue number
      */
     int getIssueNumber() const { return issueNumber_; }
-    
+
     /**
      * @brief Get publisher
      * @return The publisher name
      */
     const std::string& getPublisher() const { return publisher_; }
-    
+
     /**
      * @brief Implementation of getDetails for Magazine
      * @return Magazine details as string
      */
     std::string getDetails() const override {
-        return "Magazine: " + getTitle() + " Issue #" + 
+        return "Magazine: " + getTitle() + " Issue #" +
                std::to_string(issueNumber_) + " (" + publisher_ + ")";
     }
 
@@ -187,7 +187,7 @@ public:
     void addItem(std::unique_ptr<LibraryItem> item) {
         items_[item->getId()] = std::move(item);
     }
-    
+
     /**
      * @brief Find item by ID
      * @param id Item identifier
@@ -197,7 +197,7 @@ public:
         auto it = items_.find(id);
         return (it != items_.end()) ? it->second.get() : nullptr;
     }
-    
+
     /**
      * @brief Get available items
      * @return Vector of pointers to available items
@@ -211,7 +211,7 @@ public:
         }
         return available;
     }
-    
+
     /**
      * @brief Search items by title (case-insensitive)
      * @param searchTerm Search term
@@ -219,25 +219,25 @@ public:
      */
     std::vector<LibraryItem*> searchByTitle(const std::string& searchTerm) const {
         std::vector<LibraryItem*> results;
-        
+
         // Convert search term to lowercase
         std::string lowerSearchTerm = searchTerm;
         std::transform(lowerSearchTerm.begin(), lowerSearchTerm.end(),
                       lowerSearchTerm.begin(), ::tolower);
-        
+
         for (const auto& pair : items_) {
             std::string lowerTitle = pair.second->getTitle();
             std::transform(lowerTitle.begin(), lowerTitle.end(),
                           lowerTitle.begin(), ::tolower);
-            
+
             if (lowerTitle.find(lowerSearchTerm) != std::string::npos) {
                 results.push_back(pair.second.get());
             }
         }
-        
+
         return results;
     }
-    
+
     /**
      * @brief Get total count of items
      * @return Number of items in catalog
@@ -276,7 +276,7 @@ public:
     static void sortByTitle(std::vector<LibraryItem*>& items) {
         std::sort(items.begin(), items.end(), TitleComparator{});
     }
-    
+
     /**
      * @brief Filter items using a predicate
      * @tparam Predicate Function object type
@@ -288,11 +288,11 @@ public:
     static std::vector<LibraryItem*> filterItems(
         const std::vector<LibraryItem*>& items, Predicate pred) {
         std::vector<LibraryItem*> filtered;
-        std::copy_if(items.begin(), items.end(), 
+        std::copy_if(items.begin(), items.end(),
                     std::back_inserter(filtered), pred);
         return filtered;
     }
-    
+
     /**
      * @brief Count items by type
      * @tparam ItemType Specific item type
@@ -325,9 +325,9 @@ public:
      * @brief Constructor
      * @param filename File to manage
      */
-    explicit FileManager(const std::string& filename) 
+    explicit FileManager(const std::string& filename)
         : filename_(filename), isOpen_(false) {}
-    
+
     /**
      * @brief Destructor - automatically closes file
      */
@@ -336,17 +336,17 @@ public:
             close();
         }
     }
-    
+
     /**
      * @brief Copy constructor deleted for RAII
      */
     FileManager(const FileManager&) = delete;
-    
+
     /**
      * @brief Assignment operator deleted for RAII
      */
     FileManager& operator=(const FileManager&) = delete;
-    
+
     /**
      * @brief Open the file
      * @return true if successfully opened
@@ -356,7 +356,7 @@ public:
         isOpen_ = true;
         return true;
     }
-    
+
     /**
      * @brief Close the file
      */
@@ -366,7 +366,7 @@ public:
             isOpen_ = false;
         }
     }
-    
+
     /**
      * @brief Check if file is open
      * @return true if file is open
@@ -383,28 +383,28 @@ private:
  */
 void demonstrateLibrarySystem() {
     using namespace LibrarySystem;
-    
+
     // Create catalog
     LibraryCatalog catalog;
-    
+
     // Add items
-    catalog.addItem(std::make_unique<Book>("B001", "The C++ Programming Language", 
+    catalog.addItem(std::make_unique<Book>("B001", "The C++ Programming Language",
                                           "Bjarne Stroustrup", "978-0321563842"));
-    catalog.addItem(std::make_unique<Book>("B002", "Effective C++", 
+    catalog.addItem(std::make_unique<Book>("B002", "Effective C++",
                                           "Scott Meyers", "978-0321334879"));
     catalog.addItem(std::make_unique<Magazine>("M001", "C++ Today", 42, "Tech Publications"));
-    
+
     // Search and demonstrate
     auto cppItems = catalog.searchByTitle("C++");
     LibraryUtils::sortByTitle(cppItems);
-    
+
     // Filter available items
     auto availableItems = LibraryUtils::filterItems(
         cppItems, [](const LibraryItem* item) { return item->isAvailable(); });
-    
+
     // Count books
     size_t bookCount = LibraryUtils::countItemsByType<Book>(cppItems);
-    
+
     std::cout << "Found " << cppItems.size() << " C++ related items" << std::endl;
     std::cout << "Available: " << availableItems.size() << std::endl;
     std::cout << "Books: " << bookCount << std::endl;

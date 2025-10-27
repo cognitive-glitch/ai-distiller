@@ -91,7 +91,7 @@ if (!in_array($category, $this->categories)) {
     public static createSaleProduct(string $name, float $originalPrice, float $discountPercent): self {
 $salePrice = $originalPrice * (1 - $discountPercent / 100);
         $description = sprintf("Sale item - %d%% off!", $discountPercent);
-        
+
         return new self($name, $salePrice, $description);
     }
 }

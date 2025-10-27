@@ -1,0 +1,58 @@
+[package]
+name = "aid-cli"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "AI Distiller CLI - Extract code structure for AI consumption"
+
+[[bin]]
+name = "aid"
+path = "src/main.rs"
+
+[dependencies]
+# Core library
+distiller-core = { path = "../distiller-core" }
+
+# Formatters
+formatter-text = { path = "../formatter-text" }
+formatter-markdown = { path = "../formatter-markdown" }
+formatter-json = { path = "../formatter-json" }
+formatter-jsonl = { path = "../formatter-jsonl" }
+formatter-xml = { path = "../formatter-xml" }
+
+# Language processors
+lang-python = { path = "../lang-python" }
+lang-typescript = { path = "../lang-typescript" }
+lang-javascript = { path = "../lang-javascript" }
+lang-go = { path = "../lang-go" }
+lang-rust = { path = "../lang-rust" }
+lang-java = { path = "../lang-java" }
+lang-kotlin = { path = "../lang-kotlin" }
+lang-swift = { path = "../lang-swift" }
+lang-ruby = { path = "../lang-ruby" }
+lang-php = { path = "../lang-php" }
+lang-csharp = { path = "../lang-csharp" }
+lang-cpp = { path = "../lang-cpp" }
+lang-c = { path = "../lang-c" }
+
+# CLI
+clap = { workspace = true }
+
+# Error handling
+anyhow = { workspace = true }
+
+# Logging
+env_logger = "0.11"
+log = "0.4"
+
+[dev-dependencies]
+assert_cmd = "2.0"
+predicates = "3.1"
+criterion = "0.7"
+
+[[bench]]
+name = "processing"
+harness = false

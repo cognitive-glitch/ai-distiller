@@ -17,7 +17,7 @@ if (!fs.existsSync(sdkServerPath)) {
   console.error('Error: AI Distiller MCP server build not found at:', sdkServerPath);
   console.error('');
   console.error('This is likely a packaging issue. Please report it at:');
-  console.error('https://github.com/janreges/ai-distiller/issues');
+  console.error('https://github.com/cognitive-glitch/ai-distiller-reboot/issues');
   process.exit(1);
 }
 

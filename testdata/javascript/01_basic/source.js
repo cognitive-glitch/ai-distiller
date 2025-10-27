@@ -19,12 +19,12 @@ function isValidEmail(email) {
     if (!email || typeof email !== 'string') {
         return false;
     }
-    
+
     // Check cache first
     if (_VALIDATION_CACHE.has(email)) {
         return _VALIDATION_CACHE.get(email);
     }
-    
+
     const isValid = EMAIL_REGEX.test(email.toLowerCase().trim());
     _VALIDATION_CACHE.set(email, isValid);
     return isValid;
@@ -39,10 +39,10 @@ function isValidPassword(password) {
     if (!password || typeof password !== 'string') {
         return false;
     }
-    
-    return password.length >= MIN_PASSWORD_LENGTH && 
-           /[A-Z]/.test(password) && 
-           /[a-z]/.test(password) && 
+
+    return password.length >= MIN_PASSWORD_LENGTH &&
+           /[A-Z]/.test(password) &&
+           /[a-z]/.test(password) &&
            /\d/.test(password);
 }
 
