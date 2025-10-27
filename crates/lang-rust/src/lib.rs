@@ -374,7 +374,7 @@ impl RustProcessor {
                 if !type_name.is_empty() {
                     // Find the struct and add methods
                     for child in &mut file.children {
-                        if let Node::Class(ref mut class) = child {
+                        if let Node::Class(class) = child {
                             if class.name == type_name {
                                 // Add methods to the struct
                                 for method in methods {

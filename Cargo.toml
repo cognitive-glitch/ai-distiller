@@ -22,8 +22,8 @@ members = [
 
 [workspace.package]
 version = "2.0.0"
-edition = "2021"
-rust-version = "1.75"
+edition = "2024"
+rust-version = "1.85"
 authors = ["Jan Regeš <jan@reges.dev>"]
 license = "MIT"
 repository = "https://github.com/janreges/ai-distiller"
