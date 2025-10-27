@@ -23,7 +23,7 @@ pub struct CSharpProcessor {
 }
 
 impl CSharpProcessor {
-    /// Create a new Csharp processor
+    /// Create a new CSharp processor
     ///
     /// # Errors
     ///
