@@ -22,7 +22,7 @@ if [ $# -eq 0 ]; then
     echo ""
     echo "Supported languages:"
     echo "  python, typescript, go, javascript, php, ruby"
-    echo "  swift, rust, java, csharp, kotlin, cpp"
+    echo "  swift, rust, java, csharp, kotlin, cpp, c"
     echo ""
     echo "Special option:"
     echo "  really-all  - Regenerate ALL languages (use with caution)"
@@ -32,14 +32,21 @@ fi
 LANGUAGE_ARG="$1"
 
 # Ensure we're in the project root
-if [ ! -f "go.mod" ] || [ ! -d "testdata" ]; then
+if [ ! -f "Cargo.toml" ] || [ ! -d "testdata" ]; then
     echo "Error: This script must be run from the project root directory"
     exit 1
 fi
 
 # Build the aid binary first
 echo -e "${YELLOW}Building aid binary...${NC}"
-go build -o aid cmd/aid/main.go
+cargo build --release -p aid-cli
+
+# Set binary path
+AID_BINARY="target/release/aid"
+if [ ! -f "$AID_BINARY" ]; then
+    echo -e "${RED}Error: Binary not found at $AID_BINARY${NC}"
+    exit 1
+fi
 
 # Function to get file extension for a language
 get_extension() {
@@ -56,6 +63,7 @@ get_extension() {
         csharp) echo "cs" ;;
         kotlin) echo "kt" ;;
         cpp) echo "cpp" ;;
+        c) echo "c" ;;
         *) echo "$1" ;;
     esac
 }
@@ -100,28 +108,16 @@ regenerate_language() {
             fi
 
             # Generate default expected (all defaults)
-            ./aid "$sourcefile" --stdout --format text > "${testdir}expected/default.txt"
+            "$AID_BINARY" "$sourcefile" --stdout --format text > "${testdir}expected/default.txt"
 
             # Generate with implementation
-            ./aid "$sourcefile" --stdout --format text --implementation=1 > "${testdir}expected/implementation=1.txt"
-
-            # Generate without private members
-            ./aid "$sourcefile" --stdout --format text --private=0 > "${testdir}expected/private=0.txt"
-
-            # Generate without protected members
-            ./aid "$sourcefile" --stdout --format text --protected=0 > "${testdir}expected/protected=0.txt"
-
-            # Generate with only public members
-            ./aid "$sourcefile" --stdout --format text --private=0 --protected=0 --internal=0 > "${testdir}expected/private=0,protected=0,internal=0.txt"
+            "$AID_BINARY" "$sourcefile" --stdout --format text --implementation=1 > "${testdir}expected/implementation=1.txt"
 
             # Generate with all visibility but no implementation
-            ./aid "$sourcefile" --stdout --format text --private=1 --protected=1 --internal=1 --implementation=0 > "${testdir}expected/private=1,protected=1,internal=1,implementation=0.txt"
+            "$AID_BINARY" "$sourcefile" --stdout --format text --private=1 --protected=1 --internal=1 --implementation=0 > "${testdir}expected/private=1,protected=1,internal=1,implementation=0.txt"
 
             # Generate with comments
-            ./aid "$sourcefile" --stdout --format text --comments=1 > "${testdir}expected/comments=1.txt"
-
-            # Generate without imports
-            ./aid "$sourcefile" --stdout --format text --imports=0 > "${testdir}expected/imports=0.txt"
+            "$AID_BINARY" "$sourcefile" --stdout --format text --comments=1 > "${testdir}expected/comments=1.txt"
 
             # Remove old expected_*.txt files if they exist
             rm -f "${testdir}"expected_*.txt
@@ -131,18 +127,19 @@ regenerate_language() {
 
 # List of supported languages
 languages=(
-    "python"
-    "typescript"
-    "go"
-    "javascript"
-    "php"
-    "ruby"
-    "swift"
-    "rust"
-    "java"
-    "csharp"
-    "kotlin"
+    "c"
     "cpp"
+    "csharp"
+    "go"
+    "java"
+    "javascript"
+    "kotlin"
+    "php"
+    "python"
+    "ruby"
+    "rust"
+    "swift"
+    "typescript"
 )
 
 # Validate language argument
