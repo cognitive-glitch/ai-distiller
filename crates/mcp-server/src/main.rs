@@ -10,8 +10,9 @@ use anyhow::{Context, Result};
 use distiller_core::{
     ProcessOptions,
     error::DistilError,
-    ir::{File, Node},
+    ir::{File, Node, Visitor},
     processor::Processor,
+    stripper::Stripper,
 };
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
@@ -60,10 +61,23 @@ struct JsonRpcResponse {
     error: Option<JsonRpcError>,
 }
 
-/// JSON-RPC error codes
-const ERROR_METHOD_NOT_FOUND: i32 = -32601;
-const ERROR_FILE_NOT_FOUND: i32 = -32011;
-const ERROR_PROCESSING_FAILED: i32 = -32013;
+/// Maximum request body size (16MB) to prevent memory abuse
+const MAX_BODY_BYTES: usize = 16_777_216;
+
+/// JSON-RPC 2.0 standard error codes
+/// See: https://www.jsonrpc.org/specification#error_object
+#[allow(dead_code)]
+const ERROR_PARSE_ERROR: i32 = -32700; // Invalid JSON
+#[allow(dead_code)]
+const ERROR_INVALID_REQUEST: i32 = -32600; // Invalid Request object
+const ERROR_METHOD_NOT_FOUND: i32 = -32601; // Method does not exist
+const ERROR_INVALID_PARAMS: i32 = -32602; // Invalid method parameters
+
+/// Server-defined error codes (reserved range: -32000 to -32099)
+const ERROR_FILE_NOT_FOUND: i32 = -32001; // File or directory not found
+const ERROR_PROCESSING_FAILED: i32 = -32002; // Processing operation failed
+#[allow(dead_code)]
+const ERROR_PATH_VALIDATION: i32 = -32003; // Path validation failed
 
 /// JSON-RPC error
 #[derive(Debug, Serialize)]
@@ -75,6 +89,23 @@ struct JsonRpcError {
 }
 
 impl JsonRpcError {
+    #[allow(dead_code)]
+    fn parse_error(message: String) -> Self {
+        Self {
+            code: ERROR_PARSE_ERROR,
+            message,
+            data: None,
+        }
+    }
+
+    fn invalid_params(message: String) -> Self {
+        Self {
+            code: ERROR_INVALID_PARAMS,
+            message,
+            data: None,
+        }
+    }
+
     fn method_not_found(method: String) -> Self {
         Self {
             code: ERROR_METHOD_NOT_FOUND,
@@ -88,6 +119,15 @@ impl JsonRpcError {
             code: ERROR_FILE_NOT_FOUND,
             message: "File or directory not found".to_string(),
             data: Some(serde_json::json!({ "path": path })),
+        }
+    }
+
+    #[allow(dead_code)]
+    fn path_validation_error(message: String) -> Self {
+        Self {
+            code: ERROR_PATH_VALIDATION,
+            message,
+            data: None,
         }
     }
 
@@ -246,12 +286,16 @@ impl McpServer {
 
         // Update processor options
         let proc_opts: ProcessOptions = params.options.clone().into();
-        let processor = self.create_processor(proc_opts);
+        let processor = self.create_processor(proc_opts.clone());
 
         // Process directory
-        let node = processor
+        let mut node = processor
             .process_path(&validated_path)
             .context("Failed to process directory")?;
+
+        // Apply stripper to match CLI filtering behavior
+        let mut stripper = Stripper::new(proc_opts);
+        stripper.visit_node(&mut node);
 
         // Extract files
         let files = extract_files(&node);
@@ -284,12 +328,16 @@ impl McpServer {
 
         // Update processor options
         let proc_opts: ProcessOptions = params.options.clone().into();
-        let processor = self.create_processor(proc_opts);
+        let processor = self.create_processor(proc_opts.clone());
 
         // Process file
-        let node = processor
+        let mut node = processor
             .process_path(&validated_path)
             .context("Failed to process file")?;
+
+        // Apply stripper to match CLI filtering behavior
+        let mut stripper = Stripper::new(proc_opts);
+        stripper.visit_node(&mut node);
 
         // Extract files
         let files = extract_files(&node);
@@ -579,6 +627,29 @@ async fn main() -> Result<()> {
                         log::error!("❌ Expected Content-Length header, got: {}", header_line);
                         continue;
                     };
+
+                // Validate body size to prevent memory abuse
+                if content_length > MAX_BODY_BYTES {
+                    log::warn!(
+                        "⚠️  Request body too large: {} bytes (max: {} bytes)",
+                        content_length,
+                        MAX_BODY_BYTES
+                    );
+                    let error_response = JsonRpcResponse {
+                        jsonrpc: "2.0".to_string(),
+                        id: serde_json::Value::Null,
+                        result: None,
+                        error: Some(JsonRpcError::invalid_params(format!(
+                            "Request body too large: {} bytes (max: {} bytes)",
+                            content_length, MAX_BODY_BYTES
+                        ))),
+                    };
+                    if let Err(e) = send_response(&mut stdout, &error_response).await {
+                        log::error!("❌ Failed to send error response: {e}");
+                    }
+                    // Skip reading the oversized body
+                    continue;
+                }
 
                 // Read blank line after header
                 let mut blank_line = String::new();
