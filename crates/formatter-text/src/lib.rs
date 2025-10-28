@@ -544,7 +544,11 @@ impl TextFormatter {
     /// Format a parameter
     fn format_parameter(&self, param: &Parameter) -> String {
         let mut result = param.name.clone();
-        write!(result, ": {}", self.format_type_ref(&param.param_type)).unwrap();
+
+        // Only add type annotation if type name is not empty
+        if !param.param_type.name.is_empty() {
+            write!(result, ": {}", self.format_type_ref(&param.param_type)).unwrap();
+        }
 
         if let Some(ref default) = param.default_value {
             write!(result, " = {default}").unwrap();

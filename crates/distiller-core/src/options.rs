@@ -82,16 +82,16 @@ pub struct ProcessOptions {
 impl Default for ProcessOptions {
     fn default() -> Self {
         Self {
-            // Default: public APIs only
+            // Default: public and protected APIs
             include_public: true,
-            include_protected: false,
+            include_protected: true,
             include_internal: false,
             include_private: false,
 
-            // Default: signatures with docstrings
-            include_comments: false,
+            // Default: include comments and implementation
+            include_comments: true,
             include_docstrings: true,
-            include_implementation: false,
+            include_implementation: true,
             include_imports: true,
             include_annotations: true,
             include_fields: true,
@@ -275,8 +275,10 @@ mod tests {
     fn test_default_options() {
         let opts = ProcessOptions::default();
         assert!(opts.include_public);
+        assert!(opts.include_protected);
         assert!(!opts.include_private);
-        assert!(!opts.include_implementation);
+        assert!(opts.include_implementation);
+        assert!(opts.include_comments);
         assert!(opts.include_docstrings);
     }
 

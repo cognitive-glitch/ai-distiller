@@ -76,7 +76,7 @@ struct Args {
     public: bool,
 
     /// Include protected members
-    #[arg(long)]
+    #[arg(long, default_value = "true")]
     protected: bool,
 
     /// Include internal/package-private members
@@ -89,7 +89,7 @@ struct Args {
 
     // Content filtering
     /// Include regular comments
-    #[arg(long)]
+    #[arg(long, default_value = "true")]
     comments: bool,
 
     /// Include documentation comments/docstrings
@@ -97,7 +97,7 @@ struct Args {
     docstrings: bool,
 
     /// Include function/method implementations
-    #[arg(long)]
+    #[arg(long, default_value = "true")]
     implementation: bool,
 
     /// Include import statements
@@ -220,7 +220,7 @@ fn main() -> Result<()> {
     // Step 2.5: Apply stripper to filter IR based on options
     use distiller_core::ir::Visitor;
     use distiller_core::stripper::Stripper;
-    let mut stripper = Stripper::new(options);
+    let mut stripper = Stripper::new(options.clone());
     stripper.visit_node(&mut node);
 
     // Step 3: Extract files from IR node
@@ -235,15 +235,22 @@ fn main() -> Result<()> {
     // Step 4: Format output based on selected format
     let output = match args.format {
         Format::Text => {
-            use formatter_text::TextFormatter;
-            let formatter = TextFormatter::new();
+            use formatter_text::{TextFormatter, TextFormatterOptions};
+            let formatter_opts = TextFormatterOptions {
+                include_implementation: options.include_implementation,
+            };
+            let formatter = TextFormatter::with_options(formatter_opts);
             formatter
                 .format_files(&files)
                 .context("Failed to format as text")?
         }
         Format::Md => {
             use formatter_markdown::MarkdownFormatter;
-            let formatter = MarkdownFormatter::new();
+            use formatter_text::TextFormatterOptions;
+            let formatter_opts = TextFormatterOptions {
+                include_implementation: options.include_implementation,
+            };
+            let formatter = MarkdownFormatter::with_options(formatter_opts);
             formatter
                 .format_files(&files)
                 .context("Failed to format as markdown")?

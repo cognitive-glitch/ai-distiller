@@ -175,15 +175,20 @@ impl RustProcessor {
     fn parse_use(&self, node: tree_sitter::Node, source: &str) -> Result<Option<Import>> {
         let line = node.start_position().row + 1;
 
-        // Extract module path
-        let mut module = String::new();
-        let mut cursor = node.walk();
+        // Get the full text and strip "use " prefix and ";" suffix
+        let full_text = Self::node_text(node, source);
+        let module = full_text
+            .trim()
+            .strip_prefix("use ")
+            .unwrap_or(&full_text)
+            .strip_suffix(';')
+            .unwrap_or(&full_text)
+            .trim()
+            .to_string();
 
-        for child in node.children(&mut cursor) {
-            if child.kind() == "use_clause" || child.kind() == "scoped_identifier" {
-                module = Self::node_text(child, source);
-                break;
-            }
+        // Skip if module is empty
+        if module.is_empty() {
+            return Ok(None);
         }
 
         Ok(Some(Import {
