@@ -821,6 +821,42 @@ aid ./internal --summary-type=ci-friendly --no-emoji
 4. For maximum security, run AI Distiller in an isolated environment
 5. Future: We're exploring an `--obfuscate` flag to anonymize sensitive identifiers
 
+### MCP Server Security
+
+When using the MCP server integration with Claude Desktop or other AI tools, additional security considerations apply:
+
+**Path Sandboxing**:
+- Set `AID_WORKSPACE_ROOT` environment variable to restrict filesystem access to a specific directory
+- Without this setting, the MCP server can access any readable path on your system
+- Sensitive system directories (`/etc`, `/sys`, `/proc`, `/dev`) are always blocked
+
+**Request Size Limits**:
+- Default maximum request body size: 16MB
+- Configure via `AID_MAX_BODY_BYTES` environment variable
+- Prevents memory exhaustion attacks
+
+**Example secure configuration** (Claude Desktop):
+```json
+{
+  "mcpServers": {
+    "aid": {
+      "command": "npx",
+      "args": ["-y", "@cognitive/ai-distiller-mcp"],
+      "env": {
+        "AID_WORKSPACE_ROOT": "/home/user/projects",
+        "AID_MAX_BODY_BYTES": "8388608"
+      }
+    }
+  }
+}
+```
+
+**Best Practices**:
+1. Always set `AID_WORKSPACE_ROOT` to limit filesystem access
+2. Use project-specific workspace roots, not your home directory
+3. Review MCP server logs for unexpected access patterns
+4. Keep the MCP server package updated for security fixes
+
 
 ## 🛠️ Advanced Usage
 

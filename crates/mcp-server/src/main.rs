@@ -59,8 +59,16 @@ struct JsonRpcResponse {
     error: Option<JsonRpcError>,
 }
 
-/// Maximum request body size (16MB) to prevent memory abuse
-const MAX_BODY_BYTES: usize = 16_777_216;
+/// Default maximum request body size (16MB) to prevent memory abuse
+const DEFAULT_MAX_BODY_BYTES: usize = 16_777_216;
+
+/// Get maximum body size from environment or use default
+fn get_max_body_bytes() -> usize {
+    std::env::var("AID_MAX_BODY_BYTES")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(DEFAULT_MAX_BODY_BYTES)
+}
 
 /// JSON-RPC 2.0 standard error codes
 /// See: <https://www.jsonrpc.org/specification#error_object>
@@ -311,6 +319,21 @@ impl McpServer {
             .canonicalize()
             .map_err(|_| DistilError::FileNotFound(path.to_path_buf()))?;
 
+        // Check allowlist root confinement (if configured)
+        if let Ok(workspace_root) = std::env::var("AID_WORKSPACE_ROOT") {
+            let allowed_root = PathBuf::from(workspace_root).canonicalize().map_err(|e| {
+                DistilError::InvalidConfig(format!("Invalid AID_WORKSPACE_ROOT: {}", e))
+            })?;
+
+            if !canonical.starts_with(&allowed_root) {
+                return Err(DistilError::InvalidConfig(format!(
+                    "Access denied: path must be within {}",
+                    allowed_root.display()
+                ))
+                .into());
+            }
+        }
+
         // Additional security: ensure path doesn't start with sensitive directories
         let sensitive_dirs = ["/etc", "/sys", "/proc", "/dev"];
         for sensitive in &sensitive_dirs {
@@ -481,6 +504,7 @@ impl McpServer {
                 .into_iter()
                 .map(String::from)
                 .collect(),
+            max_body_bytes: get_max_body_bytes(),
         })
     }
 
@@ -550,6 +574,7 @@ struct ServerCapabilities {
     operations: Vec<String>,
     supported_languages: Vec<String>,
     supported_formats: Vec<String>,
+    max_body_bytes: usize,
 }
 
 /// Extract File nodes from an IR Node (recursive for Directory)
@@ -575,56 +600,163 @@ fn extract_files(node: &Node) -> Vec<File> {
 
 /// Register all supported language processors
 fn register_all_languages(processor: &mut Processor) {
+    let mut registered = Vec::new();
+    let mut failed = Vec::new();
+
     // Python
-    processor.register_language(Box::new(
-        PythonProcessor::new().expect("Failed to create PythonProcessor"),
-    ));
+    match PythonProcessor::new() {
+        Ok(p) => {
+            processor.register_language(Box::new(p));
+            registered.push("Python");
+        }
+        Err(e) => {
+            log::error!("Failed to create PythonProcessor: {}", e);
+            failed.push("Python");
+        }
+    }
 
     // TypeScript/JavaScript
-    processor.register_language(Box::new(
-        TypeScriptProcessor::new().expect("Failed to create TypeScriptProcessor"),
-    ));
-    processor.register_language(Box::new(
-        JavaScriptProcessor::new().expect("Failed to create JavaScriptProcessor"),
-    ));
+    match TypeScriptProcessor::new() {
+        Ok(p) => {
+            processor.register_language(Box::new(p));
+            registered.push("TypeScript");
+        }
+        Err(e) => {
+            log::error!("Failed to create TypeScriptProcessor: {}", e);
+            failed.push("TypeScript");
+        }
+    }
+    match JavaScriptProcessor::new() {
+        Ok(p) => {
+            processor.register_language(Box::new(p));
+            registered.push("JavaScript");
+        }
+        Err(e) => {
+            log::error!("Failed to create JavaScriptProcessor: {}", e);
+            failed.push("JavaScript");
+        }
+    }
 
     // Systems languages
-    processor.register_language(Box::new(
-        RustProcessor::new().expect("Failed to create RustProcessor"),
-    ));
-    processor.register_language(Box::new(
-        CppProcessor::new().expect("Failed to create CppProcessor"),
-    ));
-    processor.register_language(Box::new(
-        CProcessor::new().expect("Failed to create CProcessor"),
-    ));
-    processor.register_language(Box::new(
-        GoProcessor::new().expect("Failed to create GoProcessor"),
-    ));
+    match RustProcessor::new() {
+        Ok(p) => {
+            processor.register_language(Box::new(p));
+            registered.push("Rust");
+        }
+        Err(e) => {
+            log::error!("Failed to create RustProcessor: {}", e);
+            failed.push("Rust");
+        }
+    }
+    match CppProcessor::new() {
+        Ok(p) => {
+            processor.register_language(Box::new(p));
+            registered.push("C++");
+        }
+        Err(e) => {
+            log::error!("Failed to create CppProcessor: {}", e);
+            failed.push("C++");
+        }
+    }
+    match CProcessor::new() {
+        Ok(p) => {
+            processor.register_language(Box::new(p));
+            registered.push("C");
+        }
+        Err(e) => {
+            log::error!("Failed to create CProcessor: {}", e);
+            failed.push("C");
+        }
+    }
+    match GoProcessor::new() {
+        Ok(p) => {
+            processor.register_language(Box::new(p));
+            registered.push("Go");
+        }
+        Err(e) => {
+            log::error!("Failed to create GoProcessor: {}", e);
+            failed.push("Go");
+        }
+    }
 
     // JVM languages
-    processor.register_language(Box::new(
-        JavaProcessor::new().expect("Failed to create JavaProcessor"),
-    ));
-    processor.register_language(Box::new(
-        KotlinProcessor::new().expect("Failed to create KotlinProcessor"),
-    ));
+    match JavaProcessor::new() {
+        Ok(p) => {
+            processor.register_language(Box::new(p));
+            registered.push("Java");
+        }
+        Err(e) => {
+            log::error!("Failed to create JavaProcessor: {}", e);
+            failed.push("Java");
+        }
+    }
+    match KotlinProcessor::new() {
+        Ok(p) => {
+            processor.register_language(Box::new(p));
+            registered.push("Kotlin");
+        }
+        Err(e) => {
+            log::error!("Failed to create KotlinProcessor: {}", e);
+            failed.push("Kotlin");
+        }
+    }
 
     // .NET languages
-    processor.register_language(Box::new(
-        CSharpProcessor::new().expect("Failed to create CSharpProcessor"),
-    ));
+    match CSharpProcessor::new() {
+        Ok(p) => {
+            processor.register_language(Box::new(p));
+            registered.push("C#");
+        }
+        Err(e) => {
+            log::error!("Failed to create CSharpProcessor: {}", e);
+            failed.push("C#");
+        }
+    }
 
     // Other languages
-    processor.register_language(Box::new(
-        SwiftProcessor::new().expect("Failed to create SwiftProcessor"),
-    ));
-    processor.register_language(Box::new(
-        RubyProcessor::new().expect("Failed to create RubyProcessor"),
-    ));
-    processor.register_language(Box::new(
-        PhpProcessor::new().expect("Failed to create PhpProcessor"),
-    ));
+    match SwiftProcessor::new() {
+        Ok(p) => {
+            processor.register_language(Box::new(p));
+            registered.push("Swift");
+        }
+        Err(e) => {
+            log::error!("Failed to create SwiftProcessor: {}", e);
+            failed.push("Swift");
+        }
+    }
+    match RubyProcessor::new() {
+        Ok(p) => {
+            processor.register_language(Box::new(p));
+            registered.push("Ruby");
+        }
+        Err(e) => {
+            log::error!("Failed to create RubyProcessor: {}", e);
+            failed.push("Ruby");
+        }
+    }
+    match PhpProcessor::new() {
+        Ok(p) => {
+            processor.register_language(Box::new(p));
+            registered.push("PHP");
+        }
+        Err(e) => {
+            log::error!("Failed to create PhpProcessor: {}", e);
+            failed.push("PHP");
+        }
+    }
+
+    log::info!(
+        "✅ Registered {} language processors: {}",
+        registered.len(),
+        registered.join(", ")
+    );
+    if !failed.is_empty() {
+        log::warn!(
+            "⚠️  Failed to register {} processors: {}",
+            failed.len(),
+            failed.join(", ")
+        );
+    }
 }
 
 /// Helper function to send a JSON-RPC response with Content-Length framing
@@ -651,8 +783,14 @@ async fn main() -> Result<()> {
     log::info!("🚀 MCP Server v{} starting...", env!("CARGO_PKG_VERSION"));
 
     let server = McpServer::new();
-    log::info!("✅ Server initialized with 13 language processors");
     log::info!("📡 Listening for JSON-RPC requests on stdin...");
+
+    let max_body_bytes = get_max_body_bytes();
+    log::info!("📏 Max body size: {} bytes", max_body_bytes);
+
+    if let Ok(workspace_root) = std::env::var("AID_WORKSPACE_ROOT") {
+        log::info!("🔒 Workspace root: {}", workspace_root);
+    }
 
     // Read JSON-RPC requests from stdin with Content-Length framing
     let stdin = tokio::io::stdin();
@@ -661,7 +799,7 @@ async fn main() -> Result<()> {
 
     loop {
         // Read headers until blank line
-        let mut content_length: Option<usize> = None;
+        let mut headers = std::collections::HashMap::new();
 
         loop {
             let mut header_line = String::new();
@@ -681,16 +819,25 @@ async fn main() -> Result<()> {
 
                     // Parse header (case-insensitive)
                     if let Some((key, value)) = header_line.split_once(':') {
-                        if key.trim().eq_ignore_ascii_case("content-length") {
-                            match value.trim().parse::<usize>() {
-                                Ok(len) => content_length = Some(len),
-                                Err(e) => {
-                                    log::error!("❌ Failed to parse Content-Length: {e}");
-                                    continue;
-                                }
-                            }
+                        let key_lower = key.trim().to_lowercase();
+                        let value_trimmed = value.trim().to_string();
+
+                        // Check for duplicate Content-Length
+                        if key_lower == "content-length" && headers.contains_key(&key_lower) {
+                            log::error!("❌ Duplicate Content-Length header");
+                            let error_response = JsonRpcResponse {
+                                jsonrpc: "2.0".to_string(),
+                                id: serde_json::Value::Null,
+                                result: None,
+                                error: Some(JsonRpcError::invalid_params(
+                                    "Duplicate Content-Length header".to_string(),
+                                )),
+                            };
+                            send_response(&mut stdout, &error_response).await?;
+                            continue;
                         }
-                        // Ignore other headers
+
+                        headers.insert(key_lower, value_trimmed);
                     } else {
                         log::warn!("⚠️  Malformed header line: {}", header_line);
                     }
@@ -703,8 +850,18 @@ async fn main() -> Result<()> {
         }
 
         // Validate we got Content-Length
-        let content_length = match content_length {
-            Some(len) => len,
+        let content_length = match headers.get("content-length") {
+            Some(len_str) => match len_str.parse::<usize>() {
+                Ok(len) if len > 0 => len,
+                Ok(_) => {
+                    log::error!("❌ Content-Length must be positive");
+                    continue;
+                }
+                Err(e) => {
+                    log::error!("❌ Failed to parse Content-Length: {e}");
+                    continue;
+                }
+            },
             None => {
                 log::error!("❌ Missing Content-Length header");
                 continue;
@@ -712,11 +869,11 @@ async fn main() -> Result<()> {
         };
 
         // Validate body size to prevent memory abuse
-        if content_length > MAX_BODY_BYTES {
+        if content_length > max_body_bytes {
             log::warn!(
                 "⚠️  Request body too large: {} bytes (max: {} bytes)",
                 content_length,
-                MAX_BODY_BYTES
+                max_body_bytes
             );
             let error_response = JsonRpcResponse {
                 jsonrpc: "2.0".to_string(),
@@ -724,7 +881,7 @@ async fn main() -> Result<()> {
                 result: None,
                 error: Some(JsonRpcError::invalid_params(format!(
                     "Request body too large: {} bytes (max: {} bytes)",
-                    content_length, MAX_BODY_BYTES
+                    content_length, max_body_bytes
                 ))),
             };
             if let Err(e) = send_response(&mut stdout, &error_response).await {

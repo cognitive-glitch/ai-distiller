@@ -168,18 +168,32 @@ impl DirectoryProcessor {
 
         // Extract results
         if opts.continue_on_error {
-            // Collect successes, log errors
-            let files: Vec<File> = results
-                .into_iter()
-                .filter_map(|r| match r.result {
-                    Ok(file) => Some(file),
+            // Collect successes and failures
+            let mut successes = Vec::new();
+            let mut failures = Vec::new();
+
+            for r in results {
+                match r.result {
+                    Ok(file) => successes.push(file),
                     Err(e) => {
-                        log::warn!("Failed to process file: {}", e);
-                        None
+                        let error_msg = e.to_string();
+                        log::warn!("Failed to process file: {}", error_msg);
+                        failures.push(error_msg);
                     }
-                })
-                .collect();
-            Ok(files)
+                }
+            }
+
+            // Log aggregate summary
+            if !failures.is_empty() {
+                log::warn!(
+                    "⚠️  Processed {} files successfully, {} failed",
+                    successes.len(),
+                    failures.len()
+                );
+                log::debug!("Failed files: {}", failures.join(", "));
+            }
+
+            Ok(successes)
         } else {
             // Propagate first error
             results.into_iter().map(|r| r.result).collect()
