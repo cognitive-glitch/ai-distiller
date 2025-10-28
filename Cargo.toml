@@ -69,11 +69,60 @@ insta = { version = "1.40", features = ["json", "yaml"] }
 criterion = "0.7"
 proptest = "1.5"
 
+[workspace.lints.rust]
+rust-2024-compatibility = "warn"
+rust-2024-incompatible-pat = "warn"
+
+# # Docs lints
+# missing_docs = "warn"
+
+[workspace.lints.clippy]
+# all = { level = "warn", priority = -1 }
+# nursery = { level = "warn", priority = -1 }
+# pedantic = { level = "warn", priority = -1 }
+# cargo = { level = "warn", priority = -1 }
+
+# Performance lints
+inefficient_to_string = "warn"
+large_types_passed_by_value = "warn"
+
+# Correctness lints
+fallible_impl_from = "warn"
+missing_const_for_fn = "warn"
+# unwrap_used = "warn"
+# expect_used = "warn"
+# panic = "warn"
+
 [profile.release]
+lto = true
 opt-level = 3
-lto = "fat"
-codegen-units = 1
 strip = true
+debug = false
+panic = "abort"
+
+rpath = false
+codegen-units = 1
+
+[profile.release.build-override]
+opt-level = 3
+codegen-units = 1
+
+[profile.release.package."*"]
+opt-level = 3
+codegen-units = 1
+
+# Development profile - optimized for fast compile times
+[profile.dev]
+incremental = false    # Disable incremental compilation for macro-heavy code
+opt-level = 0          # No optimization for fastest builds
+debug = true           # Enable debug info
+overflow-checks = true
+
+# Build script optimization for development
+[profile.dev.build-override]
+# Helps with compile times for macro-heavy code
+# See: https://corrode.dev/blog/tips-for-faster-rust-compile-times/
+opt-level = 1
 
 [profile.release-with-debug]
 inherits = "release"
