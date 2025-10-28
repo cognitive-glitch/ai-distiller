@@ -330,9 +330,13 @@ fn generate_output_path(input: &Path, format: Format) -> Result<PathBuf> {
         .unwrap()
         .as_secs();
 
-    Ok(PathBuf::from(format!(
-        ".aid.{basename}.{timestamp}.{extension}"
-    )))
+    // Create .aid/ directory if it doesn't exist
+    let aid_dir = PathBuf::from(".aid");
+    if !aid_dir.exists() {
+        std::fs::create_dir(&aid_dir).context("Failed to create .aid/ directory")?;
+    }
+
+    Ok(aid_dir.join(format!("{basename}.{timestamp}.{extension}")))
 }
 
 /// Register all supported language processors

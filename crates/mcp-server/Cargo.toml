@@ -38,7 +38,7 @@ formatter-json = { path = "../formatter-json" }
 formatter-jsonl = { path = "../formatter-jsonl" }
 formatter-xml = { path = "../formatter-xml" }
 
-tokio = { version = "*", features = [
+tokio = { version = "1.41", features = [
     "rt-multi-thread",
     "io-std",
     "macros",

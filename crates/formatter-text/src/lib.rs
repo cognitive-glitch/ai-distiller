@@ -339,16 +339,15 @@ impl TextFormatter {
         }
 
         // Modifiers
-        let mut modifiers = func
-            .modifiers
-            .iter()
-            .map(|m| format!("{m:?}").to_lowercase())
-            .collect::<Vec<_>>();
-        let modifiers_str = if modifiers.is_empty() {
+        let modifiers_str = if func.modifiers.is_empty() {
             String::new()
         } else {
-            modifiers.push(String::new());
-            modifiers.join(" ")
+            let modifiers = func
+                .modifiers
+                .iter()
+                .map(|m| format!("{m:?}").to_lowercase())
+                .collect::<Vec<_>>();
+            format!("{} ", modifiers.join(" "))
         };
 
         write!(
@@ -406,16 +405,15 @@ impl TextFormatter {
         let vis_symbol = Self::visibility_symbol(field.visibility);
 
         // Modifiers
-        let mut modifiers = field
-            .modifiers
-            .iter()
-            .map(|m| format!("{m:?}").to_lowercase())
-            .collect::<Vec<_>>();
-        let modifiers_str = if modifiers.is_empty() {
+        let modifiers_str = if field.modifiers.is_empty() {
             String::new()
         } else {
-            modifiers.push(String::new());
-            modifiers.join(" ")
+            let modifiers = field
+                .modifiers
+                .iter()
+                .map(|m| format!("{m:?}").to_lowercase())
+                .collect::<Vec<_>>();
+            format!("{} ", modifiers.join(" "))
         };
 
         write!(

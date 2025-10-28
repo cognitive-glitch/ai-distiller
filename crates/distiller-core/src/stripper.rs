@@ -71,6 +71,7 @@ impl Stripper {
             Node::Interface(i) => i.children.is_empty(),
             Node::Struct(s) => s.children.is_empty(),
             Node::Enum(e) => e.children.is_empty(),
+            Node::Package(p) => p.children.is_empty(),
             _ => false,
         }
     }
