@@ -687,7 +687,7 @@ async fn main() -> Result<()> {
                     }
                 };
 
-                log::info!(
+                log::debug!(
                     "📥 Received request: method={}, id={:?}",
                     request.method,
                     request.id
@@ -714,7 +714,10 @@ async fn main() -> Result<()> {
                                     }),
                                 };
                                 send_response(&mut stdout, &error_response).await?;
-                                log::info!("📤 Sent error response for id={:?}", error_response.id);
+                                log::debug!(
+                                    "📤 Sent error response for id={:?}",
+                                    error_response.id
+                                );
                                 continue;
                             }
                         };
@@ -767,7 +770,10 @@ async fn main() -> Result<()> {
                                     }),
                                 };
                                 send_response(&mut stdout, &error_response).await?;
-                                log::info!("📤 Sent error response for id={:?}", error_response.id);
+                                log::debug!(
+                                    "📤 Sent error response for id={:?}",
+                                    error_response.id
+                                );
                                 continue;
                             }
                         };
@@ -820,7 +826,10 @@ async fn main() -> Result<()> {
                                     }),
                                 };
                                 send_response(&mut stdout, &error_response).await?;
-                                log::info!("📤 Sent error response for id={:?}", error_response.id);
+                                log::debug!(
+                                    "📤 Sent error response for id={:?}",
+                                    error_response.id
+                                );
                                 continue;
                             }
                         };
@@ -881,7 +890,7 @@ async fn main() -> Result<()> {
 
                 // Send response
                 send_response(&mut stdout, &response).await?;
-                log::info!("📤 Sent response for id={:?}", response.id);
+                log::debug!("📤 Sent response for id={:?}", response.id);
             }
             Err(e) => {
                 log::error!("❌ Failed to read from stdin: {e}");
