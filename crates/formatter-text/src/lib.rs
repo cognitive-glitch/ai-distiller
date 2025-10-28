@@ -40,6 +40,20 @@ impl TextFormatter {
         Self { options }
     }
 
+    /// Sanitize a line by escaping control characters
+    fn sanitize_line(&self, line: &str) -> String {
+        line.chars()
+            .map(|c| {
+                if c.is_control() && c != '\n' && c != '\r' && c != '\t' {
+                    // Escape control characters as \xNN
+                    format!("\\x{:02x}", c as u8)
+                } else {
+                    c.to_string()
+                }
+            })
+            .collect()
+    }
+
     /// Format a single file
     ///
     /// # Errors
@@ -380,9 +394,10 @@ impl TextFormatter {
         if self.options.include_implementation {
             if let Some(ref implementation) = func.implementation {
                 writeln!(output, ":")?;
-                // Indent implementation
+                // Indent implementation with control character sanitization
                 for line in implementation.lines() {
-                    writeln!(output, "{ind}    {line}")?;
+                    let sanitized = self.sanitize_line(line);
+                    writeln!(output, "{ind}    {sanitized}")?;
                 }
             } else {
                 writeln!(output)?;
