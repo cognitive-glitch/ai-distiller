@@ -63,7 +63,7 @@ impl DirectoryProcessor {
         }
 
         // Collect files to process
-        let files = self.discover_files(path)?;
+        let files = self.discover_files(path, language_registry)?;
 
         // Process files in parallel
         let results = self.process_files(&files, language_registry)?;
@@ -107,13 +107,17 @@ impl DirectoryProcessor {
     }
 
     /// Discover files in directory respecting .gitignore
-    fn discover_files(&self, root: &Path) -> Result<Vec<(PathBuf, usize)>> {
+    fn discover_files(
+        &self,
+        root: &Path,
+        language_registry: &LanguageRegistry,
+    ) -> Result<Vec<(PathBuf, usize)>> {
         let mut builder = WalkBuilder::new(root);
 
         // Configure walker
         builder
             .standard_filters(true) // Respect .gitignore, .ignore, .git/info/exclude
-            .hidden(false) // Include hidden files (for now)
+            .hidden(true) // Skip hidden files and directories (including .git)
             .follow_links(false) // Don't follow symlinks (avoid cycles)
             .max_depth(if self.options.recursive {
                 None
@@ -132,8 +136,13 @@ impl DirectoryProcessor {
 
             let path = entry.path();
 
-            // Only process regular files that match include/exclude patterns
-            if path.is_file() && self.should_include_file(path) {
+            // Only process regular files that:
+            // 1. Match include/exclude patterns
+            // 2. Have a registered language processor
+            if path.is_file()
+                && self.should_include_file(path)
+                && language_registry.find_processor(path).is_some()
+            {
                 files.push((path.to_path_buf(), index));
                 index += 1;
             }
@@ -206,17 +215,10 @@ impl DirectoryProcessor {
         language_registry: &LanguageRegistry,
         opts: &ProcessOptions,
     ) -> Result<File> {
-        // Find processor for this file
-        let processor = language_registry.find_processor(path).ok_or_else(|| {
-            DistilError::UnsupportedLanguage {
-                path: path.display().to_string(),
-                lang: path
-                    .extension()
-                    .and_then(|s| s.to_str())
-                    .unwrap_or("unknown")
-                    .to_string(),
-            }
-        })?;
+        // Find processor for this file (should always succeed due to discovery filtering)
+        let processor = language_registry
+            .find_processor(path)
+            .expect("File should have been filtered during discovery");
 
         // Read file
         let source = std::fs::read_to_string(path).map_err(DistilError::Io)?;
