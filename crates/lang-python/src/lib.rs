@@ -453,7 +453,8 @@ impl PythonProcessor {
         source: &str,
     ) -> Result<Option<Field>> {
         // Look for patterns like: self.field_name = value
-        let text = Self::node_text(node, source);
+        let text_raw = Self::node_text(node, source);
+        let text = text_raw.trim();
         if !text.starts_with("self.") {
             return Ok(None);
         }

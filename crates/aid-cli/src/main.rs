@@ -4,11 +4,7 @@
 
 use anyhow::{Context, Result};
 use clap::{Parser, ValueEnum};
-use distiller_core::{
-    ProcessOptions,
-    ir::{File, Node},
-    processor::Processor,
-};
+use distiller_core::{ProcessOptions, processor::Processor};
 use std::path::{Path, PathBuf};
 
 // Language processors
@@ -137,6 +133,10 @@ struct Args {
     #[arg(long)]
     exclude: Option<String>,
 
+    /// Continue processing on errors (collect partial results)
+    #[arg(long)]
+    continue_on_error: bool,
+
     // Formatter-specific options
     /// Pretty-print JSON output (JSON formatter only)
     #[arg(long)]
@@ -168,6 +168,7 @@ impl Args {
             include_methods: self.methods,
             workers: self.workers,
             recursive: self.recursive,
+            continue_on_error: self.continue_on_error,
             ..Default::default()
         };
 
@@ -181,27 +182,6 @@ impl Args {
 
         options
     }
-}
-
-/// Extract File nodes from an IR Node (recursive for Directory)
-fn extract_files(node: &Node) -> Vec<File> {
-    let mut files = Vec::new();
-
-    match node {
-        Node::File(file) => {
-            files.push(file.clone());
-        }
-        Node::Directory(dir) => {
-            for child in &dir.children {
-                files.extend(extract_files(child));
-            }
-        }
-        _ => {
-            // Other node types don't contain files
-        }
-    }
-
-    files
 }
 
 fn main() -> Result<()> {
@@ -244,7 +224,7 @@ fn main() -> Result<()> {
     stripper.visit_node(&mut node);
 
     // Step 3: Extract files from IR node
-    let files = extract_files(&node);
+    let files = distiller_core::ir::extract_files(&node);
 
     if files.is_empty() {
         anyhow::bail!("No files found to format");
@@ -344,7 +324,15 @@ fn generate_output_path(input: &Path, format: Format) -> Result<PathBuf> {
             .unwrap_or("output")
     };
 
-    Ok(PathBuf::from(format!(".aid.{basename}.{extension}")))
+    // Add timestamp to avoid collisions
+    let timestamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
+
+    Ok(PathBuf::from(format!(
+        ".aid.{basename}.{timestamp}.{extension}"
+    )))
 }
 
 /// Register all supported language processors

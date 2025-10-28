@@ -9,11 +9,12 @@
 use anyhow::{Context, Result};
 use distiller_core::{
     ProcessOptions,
+    error::DistilError,
     ir::{File, Node},
     processor::Processor,
 };
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
 
 // Language processors
@@ -196,37 +197,60 @@ impl From<DistilOptions> for ProcessOptions {
 /// MCP Server state
 #[allow(dead_code)]
 struct McpServer {
-    processor: Processor,
+    // Note: Processor is created per-request with custom ProcessOptions
+    // Language processor registration is cheap, so we don't cache
 }
 
 impl McpServer {
-    /// Create new MCP server with all language processors registered
+    /// Create new MCP server
     fn new() -> Self {
-        let mut processor = Processor::new(ProcessOptions::default());
-        register_all_languages(&mut processor);
+        Self {}
+    }
 
-        Self { processor }
+    /// Create processor with all language processors registered
+    fn create_processor(&self, options: ProcessOptions) -> Processor {
+        let mut processor = Processor::new(options);
+        register_all_languages(&mut processor);
+        processor
+    }
+
+    /// Validate path to prevent directory traversal attacks
+    fn validate_path(&self, path: &Path) -> Result<PathBuf> {
+        // Canonicalize to resolve symlinks and .. components
+        let canonical = path
+            .canonicalize()
+            .map_err(|_| DistilError::FileNotFound(path.to_path_buf()))?;
+
+        // Additional security: ensure path doesn't escape to sensitive directories
+        let path_str = canonical.to_string_lossy();
+        if path_str.contains("/etc/") || path_str.contains("/sys/") || path_str.contains("/proc/") {
+            return Err(DistilError::InvalidConfig(
+                "Access to system directories is not allowed".to_string(),
+            )
+            .into());
+        }
+
+        Ok(canonical)
     }
 
     /// Handle `distil_directory` operation
     async fn handle_distil_directory(&self, params: DistilDirectoryParams) -> Result<String> {
         let path = &params.path;
-        if !path.exists() {
-            anyhow::bail!("Path does not exist: {}", path.display());
-        }
-        if !path.is_dir() {
-            anyhow::bail!("Path is not a directory: {}", path.display());
+
+        // Validate path for security
+        let validated_path = self.validate_path(path)?;
+
+        if !validated_path.is_dir() {
+            anyhow::bail!("Path is not a directory: {}", validated_path.display());
         }
 
         // Update processor options
         let proc_opts: ProcessOptions = params.options.clone().into();
-        let processor = Processor::new(proc_opts);
-        let mut processor = processor;
-        register_all_languages(&mut processor);
+        let processor = self.create_processor(proc_opts);
 
         // Process directory
         let node = processor
-            .process_path(path)
+            .process_path(&validated_path)
             .context("Failed to process directory")?;
 
         // Extract files
@@ -250,22 +274,21 @@ impl McpServer {
     /// Handle `distil_file` operation
     async fn handle_distil_file(&self, params: DistilFileParams) -> Result<String> {
         let path = &params.path;
-        if !path.exists() {
-            anyhow::bail!("File does not exist: {}", path.display());
-        }
-        if !path.is_file() {
-            anyhow::bail!("Path is not a file: {}", path.display());
+
+        // Validate path for security
+        let validated_path = self.validate_path(path)?;
+
+        if !validated_path.is_file() {
+            anyhow::bail!("Path is not a file: {}", validated_path.display());
         }
 
         // Update processor options
         let proc_opts: ProcessOptions = params.options.clone().into();
-        let processor = Processor::new(proc_opts);
-        let mut processor = processor;
-        register_all_languages(&mut processor);
+        let processor = self.create_processor(proc_opts);
 
         // Process file
         let node = processor
-            .process_path(path)
+            .process_path(&validated_path)
             .context("Failed to process file")?;
 
         // Extract files
@@ -289,16 +312,17 @@ impl McpServer {
     /// Handle `list_dir` operation
     async fn handle_list_dir(&self, params: ListDirParams) -> Result<Vec<FileInfo>> {
         let path = &params.path;
-        if !path.exists() {
-            anyhow::bail!("Path does not exist: {}", path.display());
-        }
-        if !path.is_dir() {
-            anyhow::bail!("Path is not a directory: {}", path.display());
+
+        // Validate path for security
+        let validated_path = self.validate_path(path)?;
+
+        if !validated_path.is_dir() {
+            anyhow::bail!("Path is not a directory: {}", validated_path.display());
         }
 
         let mut entries = Vec::new();
 
-        for entry in std::fs::read_dir(path)? {
+        for entry in std::fs::read_dir(&validated_path)? {
             let entry = entry?;
             let path = entry.path();
             let metadata = entry.metadata()?;
@@ -628,16 +652,16 @@ async fn main() -> Result<()> {
                                 error: None,
                             },
                             Err(e) => {
-                                let error_msg = e.to_string();
-                                let error = if error_msg.contains("does not exist")
-                                    || error_msg.contains("not a directory")
-                                {
-                                    JsonRpcError::file_not_found(params.path.display().to_string())
-                                } else {
-                                    JsonRpcError::processing_failed(
-                                        error_msg,
+                                let error = match e.downcast_ref::<DistilError>() {
+                                    Some(DistilError::FileNotFound(_)) => {
+                                        JsonRpcError::file_not_found(
+                                            params.path.display().to_string(),
+                                        )
+                                    }
+                                    _ => JsonRpcError::processing_failed(
+                                        e.to_string(),
                                         Some(params.path.display().to_string()),
-                                    )
+                                    ),
                                 };
                                 JsonRpcResponse {
                                     jsonrpc: "2.0".to_string(),
@@ -681,16 +705,16 @@ async fn main() -> Result<()> {
                                 error: None,
                             },
                             Err(e) => {
-                                let error_msg = e.to_string();
-                                let error = if error_msg.contains("does not exist")
-                                    || error_msg.contains("not a file")
-                                {
-                                    JsonRpcError::file_not_found(params.path.display().to_string())
-                                } else {
-                                    JsonRpcError::processing_failed(
-                                        error_msg,
+                                let error = match e.downcast_ref::<DistilError>() {
+                                    Some(DistilError::FileNotFound(_)) => {
+                                        JsonRpcError::file_not_found(
+                                            params.path.display().to_string(),
+                                        )
+                                    }
+                                    _ => JsonRpcError::processing_failed(
+                                        e.to_string(),
                                         Some(params.path.display().to_string()),
-                                    )
+                                    ),
                                 };
                                 JsonRpcResponse {
                                     jsonrpc: "2.0".to_string(),
@@ -734,14 +758,16 @@ async fn main() -> Result<()> {
                                 error: None,
                             },
                             Err(e) => {
-                                let error_msg = e.to_string();
-                                let error = if error_msg.contains("does not exist") {
-                                    JsonRpcError::file_not_found(params.path.display().to_string())
-                                } else {
-                                    JsonRpcError::processing_failed(
-                                        error_msg,
+                                let error = match e.downcast_ref::<DistilError>() {
+                                    Some(DistilError::FileNotFound(_)) => {
+                                        JsonRpcError::file_not_found(
+                                            params.path.display().to_string(),
+                                        )
+                                    }
+                                    _ => JsonRpcError::processing_failed(
+                                        e.to_string(),
                                         Some(params.path.display().to_string()),
-                                    )
+                                    ),
                                 };
                                 JsonRpcResponse {
                                     jsonrpc: "2.0".to_string(),

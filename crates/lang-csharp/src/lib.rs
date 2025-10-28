@@ -166,10 +166,20 @@ impl CSharpProcessor {
     }
 
     fn parse_base_list(&self, node: TSNode, source: &str) -> (Vec<TypeRef>, Vec<TypeRef>) {
-        let extends = Vec::new();
-        let mut implements = Vec::new();
+        let mut all_types = Vec::new();
+        Self::collect_type_refs(node, source, &mut all_types);
 
-        Self::collect_type_refs(node, source, &mut implements);
+        // In C#, first type is base class (if class), rest are interfaces
+        let extends = if !all_types.is_empty() {
+            vec![all_types[0].clone()]
+        } else {
+            Vec::new()
+        };
+        let implements = if all_types.len() > 1 {
+            all_types[1..].to_vec()
+        } else {
+            Vec::new()
+        };
 
         (extends, implements)
     }

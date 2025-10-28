@@ -183,11 +183,15 @@ impl TextFormatter {
             write!(output, "({})", inheritance.join(", "))?;
         }
 
-        writeln!(output, ":")?;
-
-        // Children
-        for child in &class.children {
-            self.format_node(output, child, indent + 1)?;
+        // Only add colon if there are children
+        if class.children.is_empty() {
+            writeln!(output)?;
+        } else {
+            writeln!(output, ":")?;
+            // Children
+            for child in &class.children {
+                self.format_node(output, child, indent + 1)?;
+            }
         }
 
         Ok(())
@@ -223,10 +227,14 @@ impl TextFormatter {
             write!(output, "({extends})")?;
         }
 
-        writeln!(output, ":")?;
-
-        for child in &interface.children {
-            self.format_node(output, child, indent + 1)?;
+        // Only add colon if there are children
+        if interface.children.is_empty() {
+            writeln!(output)?;
+        } else {
+            writeln!(output, ":")?;
+            for child in &interface.children {
+                self.format_node(output, child, indent + 1)?;
+            }
         }
 
         Ok(())
@@ -252,10 +260,14 @@ impl TextFormatter {
             )?;
         }
 
-        writeln!(output, ":")?;
-
-        for child in &struct_node.children {
-            self.format_node(output, child, indent + 1)?;
+        // Only add colon if there are children
+        if struct_node.children.is_empty() {
+            writeln!(output)?;
+        } else {
+            writeln!(output, ":")?;
+            for child in &struct_node.children {
+                self.format_node(output, child, indent + 1)?;
+            }
         }
 
         Ok(())
@@ -277,10 +289,14 @@ impl TextFormatter {
             write!(output, ": {}", self.format_type_ref(enum_type))?;
         }
 
-        writeln!(output, ":")?;
-
-        for child in &enum_node.children {
-            self.format_node(output, child, indent + 1)?;
+        // Only add colon if there are children
+        if enum_node.children.is_empty() {
+            writeln!(output)?;
+        } else {
+            writeln!(output, ":")?;
+            for child in &enum_node.children {
+                self.format_node(output, child, indent + 1)?;
+            }
         }
 
         Ok(())

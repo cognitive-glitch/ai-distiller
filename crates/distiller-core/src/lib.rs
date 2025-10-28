@@ -15,6 +15,10 @@
 //!
 //! This crate uses **rayon** for CPU parallelism, NOT tokio/async.
 //! All operations are synchronous for simplicity and performance.
+//!
+//! **IMPORTANT**: No tokio or async types are allowed in this crate.
+
+#![forbid(unsafe_code)]
 
 pub mod error;
 pub mod ir;

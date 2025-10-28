@@ -166,6 +166,12 @@ pub struct ProcessOptionsBuilder {
 
 impl ProcessOptionsBuilder {
     #[must_use]
+    pub fn include_public(mut self, value: bool) -> Self {
+        self.options.include_public = value;
+        self
+    }
+
+    #[must_use]
     pub fn include_private(mut self, value: bool) -> Self {
         self.options.include_private = value;
         self
@@ -192,6 +198,42 @@ impl ProcessOptionsBuilder {
     #[must_use]
     pub fn include_comments(mut self, value: bool) -> Self {
         self.options.include_comments = value;
+        self
+    }
+
+    #[must_use]
+    pub fn include_annotations(mut self, value: bool) -> Self {
+        self.options.include_annotations = value;
+        self
+    }
+
+    #[must_use]
+    pub fn include_fields(mut self, value: bool) -> Self {
+        self.options.include_fields = value;
+        self
+    }
+
+    #[must_use]
+    pub fn include_methods(mut self, value: bool) -> Self {
+        self.options.include_methods = value;
+        self
+    }
+
+    #[must_use]
+    pub fn file_path_type(mut self, path_type: PathType) -> Self {
+        self.options.file_path_type = path_type;
+        self
+    }
+
+    #[must_use]
+    pub fn relative_path_prefix(mut self, prefix: Option<String>) -> Self {
+        self.options.relative_path_prefix = prefix;
+        self
+    }
+
+    #[must_use]
+    pub fn base_path(mut self, path: Option<PathBuf>) -> Self {
+        self.options.base_path = path;
         self
     }
 

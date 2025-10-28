@@ -53,7 +53,7 @@ impl Stripper {
             Node::Struct(s) => self.should_include_visibility(s.visibility),
             Node::Enum(e) => self.should_include_visibility(e.visibility),
             Node::TypeAlias(t) => self.should_include_visibility(t.visibility),
-            _ => true, // Include other node types by default
+            Node::File(_) | Node::Directory(_) | Node::Package(_) | Node::RawContent(_) => true,
         }
     }
 
@@ -61,6 +61,17 @@ impl Stripper {
     fn filter_decorators(&self, decorators: &mut Vec<String>) {
         if !self.options.include_annotations {
             decorators.clear();
+        }
+    }
+
+    /// Check if a container node is empty after filtering
+    fn is_empty_container(node: &Node) -> bool {
+        match node {
+            Node::Class(c) => c.children.is_empty(),
+            Node::Interface(i) => i.children.is_empty(),
+            Node::Struct(s) => s.children.is_empty(),
+            Node::Enum(e) => e.children.is_empty(),
+            _ => false,
         }
     }
 }
@@ -91,6 +102,10 @@ impl Visitor for Stripper {
         for child in &mut file.children {
             self.visit_node(child);
         }
+
+        // Post-visit: Remove empty containers
+        file.children
+            .retain(|child| !Self::is_empty_container(child));
     }
 
     fn visit_directory(&mut self, dir: &mut crate::ir::Directory) {
@@ -101,6 +116,10 @@ impl Visitor for Stripper {
         for child in &mut dir.children {
             self.visit_node(child);
         }
+
+        // Post-visit: Remove empty containers
+        dir.children
+            .retain(|child| !Self::is_empty_container(child));
     }
 
     fn visit_package(&mut self, package: &mut Package) {
@@ -113,6 +132,11 @@ impl Visitor for Stripper {
         for child in &mut package.children {
             self.visit_node(child);
         }
+
+        // Post-visit: Remove empty containers
+        package
+            .children
+            .retain(|child| !Self::is_empty_container(child));
     }
 
     fn visit_class(&mut self, class: &mut Class) {
