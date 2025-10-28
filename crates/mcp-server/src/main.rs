@@ -34,11 +34,9 @@ use lang_swift::SwiftProcessor;
 use lang_typescript::TypeScriptProcessor;
 
 // Formatters
-use formatter_json::JsonFormatter;
 use formatter_jsonl::JsonlFormatter;
 use formatter_markdown::MarkdownFormatter;
 use formatter_text::TextFormatter;
-use formatter_xml::XmlFormatter;
 
 /// JSON-RPC request
 #[derive(Debug, Deserialize)]
@@ -219,6 +217,18 @@ struct DistilOptions {
 
     #[serde(default)]
     format: OutputFormat,
+
+    // Formatter-specific options
+    /// Pretty-print JSON output (JSON formatter only)
+    #[serde(default = "default_true")]
+    pretty: bool,
+    /// XML indentation spaces (XML formatter only, 0 = no indent)
+    #[serde(default = "default_indent")]
+    indent: usize,
+}
+
+fn default_indent() -> usize {
+    2
 }
 
 impl Default for DistilOptions {
@@ -237,6 +247,8 @@ impl Default for DistilOptions {
             include_fields: true,
             include_methods: true,
             format: OutputFormat::default(),
+            pretty: true,
+            indent: 2,
         }
     }
 }
@@ -346,7 +358,12 @@ impl McpServer {
         }
 
         // Format output
-        let output = self.format_files(&files, params.options.format)?;
+        let output = self.format_files(
+            &files,
+            params.options.format,
+            params.options.pretty,
+            params.options.indent,
+        )?;
         Ok(output)
     }
 
@@ -382,7 +399,12 @@ impl McpServer {
         }
 
         // Format output
-        let output = self.format_files(&files, params.options.format)?;
+        let output = self.format_files(
+            &files,
+            params.options.format,
+            params.options.pretty,
+            params.options.indent,
+        )?;
         Ok(output)
     }
 
@@ -462,8 +484,14 @@ impl McpServer {
         })
     }
 
-    /// Format files using specified formatter
-    fn format_files(&self, files: &[File], format: OutputFormat) -> Result<String> {
+    /// Format files using specified formatter with options
+    fn format_files(
+        &self,
+        files: &[File],
+        format: OutputFormat,
+        pretty: bool,
+        indent: usize,
+    ) -> Result<String> {
         match format {
             OutputFormat::Text => {
                 let formatter = TextFormatter::new();
@@ -478,7 +506,9 @@ impl McpServer {
                     .context("Failed to format as markdown")
             }
             OutputFormat::Json => {
-                let formatter = JsonFormatter::new();
+                use formatter_json::{JsonFormatter, JsonFormatterOptions};
+                let opts = JsonFormatterOptions { pretty };
+                let formatter = JsonFormatter::with_options(opts);
                 formatter
                     .format_files(files)
                     .context("Failed to format as JSON")
@@ -490,7 +520,12 @@ impl McpServer {
                     .context("Failed to format as JSONL")
             }
             OutputFormat::Xml => {
-                let formatter = XmlFormatter::new();
+                use formatter_xml::{XmlFormatter, XmlFormatterOptions};
+                let opts = XmlFormatterOptions {
+                    indent: indent > 0,
+                    indent_size: indent,
+                };
+                let formatter = XmlFormatter::with_options(opts);
                 formatter
                     .format_files(files)
                     .context("Failed to format as XML")
