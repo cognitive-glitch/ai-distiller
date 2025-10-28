@@ -172,6 +172,24 @@ struct ListDirParams {
     filters: Option<Vec<String>>,
 }
 
+/// Output format for distillation
+#[derive(Debug, Clone, Copy, Deserialize)]
+#[serde(rename_all = "lowercase")]
+enum OutputFormat {
+    Text,
+    #[serde(alias = "markdown")]
+    Md,
+    Json,
+    Jsonl,
+    Xml,
+}
+
+impl Default for OutputFormat {
+    fn default() -> Self {
+        Self::Text
+    }
+}
+
 /// Distillation options (simplified from CLI)
 #[derive(Debug, Clone, Deserialize, Default)]
 struct DistilOptions {
@@ -200,7 +218,7 @@ struct DistilOptions {
     include_methods: bool,
 
     #[serde(default)]
-    format: String, // "text", "md", "json", "jsonl", "xml"
+    format: OutputFormat,
 }
 
 fn default_true() -> bool {
@@ -305,13 +323,7 @@ impl McpServer {
         }
 
         // Format output
-        let format = if params.options.format.is_empty() {
-            "text"
-        } else {
-            &params.options.format
-        };
-
-        let output = self.format_files(&files, format)?;
+        let output = self.format_files(&files, params.options.format)?;
         Ok(output)
     }
 
@@ -347,13 +359,7 @@ impl McpServer {
         }
 
         // Format output
-        let format = if params.options.format.is_empty() {
-            "text"
-        } else {
-            &params.options.format
-        };
-
-        let output = self.format_files(&files, format)?;
+        let output = self.format_files(&files, params.options.format)?;
         Ok(output)
     }
 
@@ -434,39 +440,38 @@ impl McpServer {
     }
 
     /// Format files using specified formatter
-    fn format_files(&self, files: &[File], format: &str) -> Result<String> {
+    fn format_files(&self, files: &[File], format: OutputFormat) -> Result<String> {
         match format {
-            "text" => {
+            OutputFormat::Text => {
                 let formatter = TextFormatter::new();
                 formatter
                     .format_files(files)
                     .context("Failed to format as text")
             }
-            "md" | "markdown" => {
+            OutputFormat::Md => {
                 let formatter = MarkdownFormatter::new();
                 formatter
                     .format_files(files)
                     .context("Failed to format as markdown")
             }
-            "json" => {
+            OutputFormat::Json => {
                 let formatter = JsonFormatter::new();
                 formatter
                     .format_files(files)
                     .context("Failed to format as JSON")
             }
-            "jsonl" => {
+            OutputFormat::Jsonl => {
                 let formatter = JsonlFormatter::new();
                 formatter
                     .format_files(files)
                     .context("Failed to format as JSONL")
             }
-            "xml" => {
+            OutputFormat::Xml => {
                 let formatter = XmlFormatter::new();
                 formatter
                     .format_files(files)
                     .context("Failed to format as XML")
             }
-            _ => anyhow::bail!("Unsupported format: {format}"),
         }
     }
 }
