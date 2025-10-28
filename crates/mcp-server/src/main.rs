@@ -190,8 +190,8 @@ impl Default for OutputFormat {
     }
 }
 
-/// Distillation options (simplified from CLI)
-#[derive(Debug, Clone, Deserialize, Default)]
+/// Distillation options (matches ProcessOptions defaults)
+#[derive(Debug, Clone, Deserialize)]
 struct DistilOptions {
     #[serde(default = "default_true")]
     include_public: bool,
@@ -219,6 +219,26 @@ struct DistilOptions {
 
     #[serde(default)]
     format: OutputFormat,
+}
+
+impl Default for DistilOptions {
+    fn default() -> Self {
+        // Match ProcessOptions::default() to prevent drift
+        Self {
+            include_public: true,
+            include_protected: false,
+            include_internal: false,
+            include_private: false,
+            include_comments: false,
+            include_docstrings: true,
+            include_implementation: false,
+            include_imports: true,
+            include_annotations: true,
+            include_fields: true,
+            include_methods: true,
+            format: OutputFormat::default(),
+        }
+    }
 }
 
 fn default_true() -> bool {
