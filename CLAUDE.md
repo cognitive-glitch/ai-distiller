@@ -21,6 +21,9 @@ cargo build --release -p aid-cli
 
 # Run without installing
 cargo run -p aid-cli -- testdata/python/01_basic/source.py -vv
+
+# Run with stdin for quick testing
+echo 'class User: pass' | cargo run -p aid-cli -- -
 ```
 
 ### Testing
@@ -37,7 +40,10 @@ cargo test -p distiller-core --test integration_tests
 cargo test -- --nocapture
 
 # Run specific test
-cargo test test_python_class --  --nocapture
+cargo test test_python_class -- --nocapture
+
+# Run single test with single thread (for debugging)
+cargo test test_python_class -- --nocapture --test-threads=1
 ```
 
 ### Code Quality
@@ -59,6 +65,26 @@ cargo fmt --all -- --check
 # Run benchmarks
 cargo bench -p aid-cli
 ```
+
+### Quick Testing with stdin
+
+For rapid development testing, `aid` supports stdin input with automatic language detection:
+
+```bash
+# Auto-detect language from code patterns
+echo 'class User { getName() { return this.name; } }' | cargo run -p aid-cli -- - --format text
+
+# Explicit language specification
+cat snippet.ts | cargo run -p aid-cli -- - --lang typescript --implementation=1
+
+# Test parser with full debug trace
+echo 'def foo(): pass' | cargo run -p aid-cli -- - -vvv
+
+# Test from file
+cargo run -p aid-cli -- - --lang python < test.py
+```
+
+Automatic language detection works for: python, typescript, javascript, go, ruby, swift, rust, java, c#, kotlin, c++, php.
 
 ## Architecture
 
@@ -91,12 +117,21 @@ Stripper (filtering) → Formatter → Output
 **Transport**: stdio (standard input/output)
 
 The MCP server provides 4 core operations:
-- `distil_directory` - Process entire directory
-- `distil_file` - Process single file
+- `distill_directory` - Process entire directory
+- `distill_file` - Process single file
 - `list_dir` - List directory contents with metadata
-- `get_capa` - Get server capabilities
+- `get_capabilities` - Get server capabilities
+
+Plus 10 specialized AI analysis tools that generate prompts:
+- `aid_hunt_bugs` - Bug hunting prompts
+- `aid_suggest_refactoring` - Refactoring analysis prompts
+- `aid_generate_diagram` - Mermaid diagram prompts
+- `aid_analyze_security` - OWASP Top 10 security audit prompts
+- And 6 more specialized analysis prompts
 
 **Integration**: Claude Desktop, Cursor, VS Code, Codex via stdio transport
+
+**NPM Package**: `@cognitive/ai-distiller-mcp` - Installable via `npx`
 
 ### Core Abstractions
 
@@ -109,6 +144,8 @@ pub trait LanguageProcessor: Send + Sync {
     fn process(&self, source: &str, path: &Path, opts: &ProcessOptions) -> Result<File>;
 }
 ```
+
+**CRITICAL**: This trait is SYNCHRONOUS (no async/await). Use rayon for parallelism at the processor level.
 
 **IR Node Types** (`distiller-core/src/ir/`):
 - `Node` - Enum: File, Directory, Class, Function, Field, etc.
@@ -136,7 +173,7 @@ All processing is synchronous. Parallelism is achieved via rayon's thread pool.
 
 - Uses native Rust bindings (`tree-sitter` crate)
 - Parser pooling for thread-safe access (`ParserPool`)
-- All grammars compiled into binary
+- All grammars compiled into binary - zero external dependencies
 
 ### 3. Visitor Pattern for Filtering
 
@@ -178,6 +215,97 @@ fn main() -> anyhow::Result<()> {
         .context("Failed to process path")?
 }
 ```
+
+## Important CLI Features
+
+### AI Actions and Prompt Generation
+
+AI Distiller generates specialized analysis prompts combined with distilled code. These are NOT executed by `aid` - they create prompts for AI agents to execute.
+
+**Available Actions** (via `--ai-action` flag):
+- `flow-for-deep-file-to-file-analysis` - Systematic file-by-file analysis task list
+- `flow-for-multi-file-docs` - Multi-file documentation workflow
+- `prompt-for-security-analysis` - OWASP Top 10 security audit prompt
+- `prompt-for-refactoring-suggestion` - Refactoring suggestions prompt
+- `prompt-for-complex-codebase-analysis` - Enterprise-grade analysis with diagrams
+- `prompt-for-performance-analysis` - Performance optimization prompt
+- `prompt-for-best-practices-analysis` - Code quality assessment prompt
+- `prompt-for-bug-hunting` - Bug detection and pattern analysis prompt
+- `prompt-for-single-file-docs` - Single file documentation prompt
+- `prompt-for-diagrams` - Generate 10+ Mermaid architecture diagrams
+
+**Usage**:
+```bash
+cargo run -p aid-cli -- src/ --ai-action=prompt-for-security-analysis --private=1
+```
+
+Output is saved to `.aid/` directory with pattern: `.aid/<action>.<timestamp>.<dirname>.md`
+
+### .aidignore System
+
+Uses `.gitignore` syntax to exclude files from processing.
+
+**Automatically ignored directories**:
+- `node_modules/`, `vendor/`, `target/`, `build/`, `dist/`
+- `__pycache__/`, `.venv/`, `.pytest_cache/`, `venv/`, `env/`
+- `.gradle/`, `Pods/`, `.bundle/`
+- `.vs/`, `.idea/`, `.vscode/`
+- `.git/`, `.svn/`, `.hg/`
+
+**Special feature**: Use `!` prefix to include normally-ignored content:
+```bash
+# .aidignore
+!vendor/my-local-package/  # Include specific vendor package
+!*.md                       # Include markdown files
+```
+
+Place `.aidignore` files in any directory for nested control.
+
+### Git History Analysis Mode
+
+Special mode activated when path is `.git`:
+
+```bash
+cargo run -p aid-cli -- .git --git-limit=500 --with-analysis-prompt
+```
+
+Generates formatted commit history with optional AI analysis prompt for:
+- Contributor statistics and expertise areas
+- Timeline analysis and development phases
+- Functional categorization (features, fixes, refactoring)
+- Codebase evolution insights
+- Actionable recommendations
+
+Output includes both the prompt and formatted git history.
+
+### Dependency-Aware Distillation
+
+**Status**: Experimental feature for call graph analysis
+
+Traces function calls across files to include only used code:
+
+```bash
+cargo run -p aid-cli -- main.py --dependency-aware --max-depth=2 --implementation=1
+```
+
+**Language Support Quality**:
+- 🟢 **Very Good** (production-ready): Python, JavaScript, Go, Rust, Java, Swift, PHP, Ruby
+- 🟡 **Limited** (basic functionality): TypeScript, C#, C++ (language processor limitations)
+
+### Summary Output Types
+
+After processing, `aid` displays summary with compression statistics.
+
+**Available formats** (via `--summary-type`):
+- `visual-progress-bar` (default) - Progress bar with green/red dots
+- `stock-ticker` - Compact stock market style
+- `speedometer-dashboard` - Multi-line dashboard
+- `minimalist-sparkline` - Single line with sparkline
+- `ci-friendly` - Clean format for CI/CD
+- `json` - Machine-readable JSON
+- `off` - Disable summary
+
+Use `--no-emoji` to remove emojis from any format.
 
 ## Language Processor Development
 
@@ -351,6 +479,8 @@ cargo test test_python_class -- --nocapture --test-threads=1
 - Validate all tree-sitter node positions
 - Use AST-based traversal
 - Test against real parser output
+- Use stdin (`-`) for quick testing during development
+- Use `-vvv` for full trace including IR dumps
 
 ## Git Commit Style
 
@@ -369,6 +499,9 @@ perf(python): optimize AST traversal performance
 - `README.md` - User-facing documentation
 - `testdata/` - Integration test fixtures
 - `docs/lang/*.md` - Language-specific parser documentation
+- `.aidignore` - File exclusion patterns (user-created, gitignore syntax)
+- `.aid/` - Default output directory (auto-generated, add to .gitignore)
+- `benchmark/` - Performance benchmark scripts and results
 
 ## Notes for AI Assistants
 
@@ -380,3 +513,8 @@ perf(python): optimize AST traversal performance
 - Update testdata expected files when parser behavior changes
 - Language processors should be self-contained (minimal dependencies)
 - Keep CLI focused - complex logic belongs in libraries
+- Use stdin for quick iterations: `echo 'code' | cargo run -p aid-cli -- -`
+- AI actions generate prompts, they don't perform analysis
+- Check `.aidignore` when files aren't being processed as expected
+- Git mode: path `.git` activates special commit history analysis
+- The LanguageProcessor trait is SYNCHRONOUS - never use async/await in processors
