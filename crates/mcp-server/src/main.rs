@@ -63,7 +63,7 @@ struct JsonRpcResponse {
 const MAX_BODY_BYTES: usize = 16_777_216;
 
 /// JSON-RPC 2.0 standard error codes
-/// See: https://www.jsonrpc.org/specification#error_object
+/// See: <https://www.jsonrpc.org/specification#error_object>
 #[allow(dead_code)]
 const ERROR_PARSE_ERROR: i32 = -32700; // Invalid JSON
 #[allow(dead_code)]
