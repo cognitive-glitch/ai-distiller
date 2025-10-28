@@ -279,13 +279,16 @@ impl McpServer {
             .canonicalize()
             .map_err(|_| DistilError::FileNotFound(path.to_path_buf()))?;
 
-        // Additional security: ensure path doesn't escape to sensitive directories
-        let path_str = canonical.to_string_lossy();
-        if path_str.contains("/etc/") || path_str.contains("/sys/") || path_str.contains("/proc/") {
-            return Err(DistilError::InvalidConfig(
-                "Access to system directories is not allowed".to_string(),
-            )
-            .into());
+        // Additional security: ensure path doesn't start with sensitive directories
+        let sensitive_dirs = ["/etc", "/sys", "/proc", "/dev"];
+        for sensitive in &sensitive_dirs {
+            if canonical.starts_with(sensitive) {
+                return Err(DistilError::InvalidConfig(format!(
+                    "Access to {} is not allowed",
+                    sensitive
+                ))
+                .into());
+            }
         }
 
         Ok(canonical)
@@ -602,301 +605,293 @@ async fn main() -> Result<()> {
     let mut stdout = tokio::io::stdout();
 
     loop {
-        // Read Content-Length header
-        let mut header_line = String::new();
-        match reader.read_line(&mut header_line).await {
-            Ok(0) => {
-                // EOF
-                log::info!("📪 Received EOF, shutting down...");
-                break;
-            }
-            Ok(_) => {
-                let header_line = header_line.trim();
+        // Read headers until blank line
+        let mut content_length: Option<usize> = None;
 
-                // Skip empty lines
-                if header_line.is_empty() {
-                    continue;
+        loop {
+            let mut header_line = String::new();
+            match reader.read_line(&mut header_line).await {
+                Ok(0) => {
+                    // EOF
+                    log::info!("📪 Received EOF, shutting down...");
+                    return Ok(());
                 }
+                Ok(_) => {
+                    let header_line = header_line.trim();
 
-                // Parse Content-Length header
-                let content_length =
-                    if let Some(len_str) = header_line.strip_prefix("Content-Length:") {
-                        match len_str.trim().parse::<usize>() {
-                            Ok(len) => len,
-                            Err(e) => {
-                                log::error!("❌ Failed to parse Content-Length: {e}");
-                                continue;
+                    // Blank line marks end of headers
+                    if header_line.is_empty() {
+                        break;
+                    }
+
+                    // Parse header (case-insensitive)
+                    if let Some((key, value)) = header_line.split_once(':') {
+                        if key.trim().eq_ignore_ascii_case("content-length") {
+                            match value.trim().parse::<usize>() {
+                                Ok(len) => content_length = Some(len),
+                                Err(e) => {
+                                    log::error!("❌ Failed to parse Content-Length: {e}");
+                                    continue;
+                                }
                             }
                         }
+                        // Ignore other headers
                     } else {
-                        log::error!("❌ Expected Content-Length header, got: {}", header_line);
-                        continue;
-                    };
-
-                // Validate body size to prevent memory abuse
-                if content_length > MAX_BODY_BYTES {
-                    log::warn!(
-                        "⚠️  Request body too large: {} bytes (max: {} bytes)",
-                        content_length,
-                        MAX_BODY_BYTES
-                    );
-                    let error_response = JsonRpcResponse {
-                        jsonrpc: "2.0".to_string(),
-                        id: serde_json::Value::Null,
-                        result: None,
-                        error: Some(JsonRpcError::invalid_params(format!(
-                            "Request body too large: {} bytes (max: {} bytes)",
-                            content_length, MAX_BODY_BYTES
-                        ))),
-                    };
-                    if let Err(e) = send_response(&mut stdout, &error_response).await {
-                        log::error!("❌ Failed to send error response: {e}");
+                        log::warn!("⚠️  Malformed header line: {}", header_line);
                     }
-                    // Skip reading the oversized body
-                    continue;
                 }
-
-                // Read blank line after header
-                let mut blank_line = String::new();
-                if let Err(e) = reader.read_line(&mut blank_line).await {
-                    log::error!("❌ Failed to read blank line: {e}");
-                    break;
+                Err(e) => {
+                    log::error!("❌ Failed to read from stdin: {e}");
+                    return Ok(());
                 }
+            }
+        }
 
-                // Read exactly content_length bytes for the JSON body
-                let mut body_buf = vec![0u8; content_length];
-                if let Err(e) = reader.read_exact(&mut body_buf).await {
-                    log::error!("❌ Failed to read message body: {e}");
-                    break;
-                }
+        // Validate we got Content-Length
+        let content_length = match content_length {
+            Some(len) => len,
+            None => {
+                log::error!("❌ Missing Content-Length header");
+                continue;
+            }
+        };
 
-                let body = match String::from_utf8(body_buf) {
-                    Ok(s) => s,
-                    Err(e) => {
-                        log::error!("❌ Invalid UTF-8 in message body: {e}");
-                        continue;
-                    }
-                };
+        // Validate body size to prevent memory abuse
+        if content_length > MAX_BODY_BYTES {
+            log::warn!(
+                "⚠️  Request body too large: {} bytes (max: {} bytes)",
+                content_length,
+                MAX_BODY_BYTES
+            );
+            let error_response = JsonRpcResponse {
+                jsonrpc: "2.0".to_string(),
+                id: serde_json::Value::Null,
+                result: None,
+                error: Some(JsonRpcError::invalid_params(format!(
+                    "Request body too large: {} bytes (max: {} bytes)",
+                    content_length, MAX_BODY_BYTES
+                ))),
+            };
+            if let Err(e) = send_response(&mut stdout, &error_response).await {
+                log::error!("❌ Failed to send error response: {e}");
+            }
+            // Skip reading the oversized body
+            continue;
+        }
 
-                // Parse JSON-RPC request
-                let request: JsonRpcRequest = match serde_json::from_str(&body) {
-                    Ok(req) => req,
-                    Err(e) => {
-                        log::error!("❌ Failed to parse JSON-RPC request: {e}");
-                        continue;
-                    }
-                };
+        // Read exactly content_length bytes for the JSON body
+        let mut body_buf = vec![0u8; content_length];
+        if let Err(e) = reader.read_exact(&mut body_buf).await {
+            log::error!("❌ Failed to read message body: {e}");
+            break;
+        }
 
-                log::debug!(
-                    "📥 Received request: method={}, id={:?}",
-                    request.method,
-                    request.id
-                );
+        let body = match String::from_utf8(body_buf) {
+            Ok(s) => s,
+            Err(e) => {
+                log::error!("❌ Invalid UTF-8 in message body: {e}");
+                continue;
+            }
+        };
 
-                // Handle request based on method
-                let response = match request.method.as_str() {
-                    "distil_directory" => {
-                        // Parse params
-                        let params: DistilDirectoryParams = match serde_json::from_value(
-                            request.params.unwrap_or(serde_json::Value::Null),
-                        ) {
-                            Ok(p) => p,
-                            Err(e) => {
-                                // Send error response and continue to next request
-                                let error_response = JsonRpcResponse {
-                                    jsonrpc: "2.0".to_string(),
-                                    id: request.id.clone(),
-                                    result: None,
-                                    error: Some(JsonRpcError {
-                                        code: -32602,
-                                        message: format!("Invalid params: {e}"),
-                                        data: None,
-                                    }),
-                                };
-                                send_response(&mut stdout, &error_response).await?;
-                                log::debug!(
-                                    "📤 Sent error response for id={:?}",
-                                    error_response.id
-                                );
-                                continue;
-                            }
-                        };
+        // Parse JSON-RPC request
+        let request: JsonRpcRequest = match serde_json::from_str(&body) {
+            Ok(req) => req,
+            Err(e) => {
+                log::error!("❌ Failed to parse JSON-RPC request: {e}");
+                continue;
+            }
+        };
 
-                        // Handle operation
-                        match server.handle_distil_directory(params.clone()).await {
-                            Ok(result) => JsonRpcResponse {
+        log::debug!(
+            "📥 Received request: method={}, id={:?}",
+            request.method,
+            request.id
+        );
+
+        // Handle request based on method
+        let response = match request.method.as_str() {
+            "distil_directory" => {
+                // Parse params
+                let params: DistilDirectoryParams =
+                    match serde_json::from_value(request.params.unwrap_or(serde_json::Value::Null))
+                    {
+                        Ok(p) => p,
+                        Err(e) => {
+                            // Send error response and continue to next request
+                            let error_response = JsonRpcResponse {
                                 jsonrpc: "2.0".to_string(),
-                                id: request.id,
-                                result: Some(serde_json::Value::String(result)),
-                                error: None,
-                            },
-                            Err(e) => {
-                                let error = match e.downcast_ref::<DistilError>() {
-                                    Some(DistilError::FileNotFound(_)) => {
-                                        JsonRpcError::file_not_found(
-                                            params.path.display().to_string(),
-                                        )
-                                    }
-                                    _ => JsonRpcError::processing_failed(
-                                        e.to_string(),
-                                        Some(params.path.display().to_string()),
-                                    ),
-                                };
-                                JsonRpcResponse {
-                                    jsonrpc: "2.0".to_string(),
-                                    id: request.id,
-                                    result: None,
-                                    error: Some(error),
-                                }
-                            }
-                        }
-                    }
-                    "distil_file" => {
-                        // Parse params
-                        let params: DistilFileParams = match serde_json::from_value(
-                            request.params.unwrap_or(serde_json::Value::Null),
-                        ) {
-                            Ok(p) => p,
-                            Err(e) => {
-                                // Send error response and continue to next request
-                                let error_response = JsonRpcResponse {
-                                    jsonrpc: "2.0".to_string(),
-                                    id: request.id.clone(),
-                                    result: None,
-                                    error: Some(JsonRpcError {
-                                        code: -32602,
-                                        message: format!("Invalid params: {e}"),
-                                        data: None,
-                                    }),
-                                };
-                                send_response(&mut stdout, &error_response).await?;
-                                log::debug!(
-                                    "📤 Sent error response for id={:?}",
-                                    error_response.id
-                                );
-                                continue;
-                            }
-                        };
-
-                        // Handle operation
-                        match server.handle_distil_file(params.clone()).await {
-                            Ok(result) => JsonRpcResponse {
-                                jsonrpc: "2.0".to_string(),
-                                id: request.id,
-                                result: Some(serde_json::Value::String(result)),
-                                error: None,
-                            },
-                            Err(e) => {
-                                let error = match e.downcast_ref::<DistilError>() {
-                                    Some(DistilError::FileNotFound(_)) => {
-                                        JsonRpcError::file_not_found(
-                                            params.path.display().to_string(),
-                                        )
-                                    }
-                                    _ => JsonRpcError::processing_failed(
-                                        e.to_string(),
-                                        Some(params.path.display().to_string()),
-                                    ),
-                                };
-                                JsonRpcResponse {
-                                    jsonrpc: "2.0".to_string(),
-                                    id: request.id,
-                                    result: None,
-                                    error: Some(error),
-                                }
-                            }
-                        }
-                    }
-                    "list_dir" => {
-                        // Parse params
-                        let params: ListDirParams = match serde_json::from_value(
-                            request.params.unwrap_or(serde_json::Value::Null),
-                        ) {
-                            Ok(p) => p,
-                            Err(e) => {
-                                // Send error response and continue to next request
-                                let error_response = JsonRpcResponse {
-                                    jsonrpc: "2.0".to_string(),
-                                    id: request.id.clone(),
-                                    result: None,
-                                    error: Some(JsonRpcError {
-                                        code: -32602,
-                                        message: format!("Invalid params: {e}"),
-                                        data: None,
-                                    }),
-                                };
-                                send_response(&mut stdout, &error_response).await?;
-                                log::debug!(
-                                    "📤 Sent error response for id={:?}",
-                                    error_response.id
-                                );
-                                continue;
-                            }
-                        };
-
-                        // Handle operation
-                        match server.handle_list_dir(params.clone()).await {
-                            Ok(result) => JsonRpcResponse {
-                                jsonrpc: "2.0".to_string(),
-                                id: request.id,
-                                result: Some(serde_json::to_value(result).unwrap()),
-                                error: None,
-                            },
-                            Err(e) => {
-                                let error = match e.downcast_ref::<DistilError>() {
-                                    Some(DistilError::FileNotFound(_)) => {
-                                        JsonRpcError::file_not_found(
-                                            params.path.display().to_string(),
-                                        )
-                                    }
-                                    _ => JsonRpcError::processing_failed(
-                                        e.to_string(),
-                                        Some(params.path.display().to_string()),
-                                    ),
-                                };
-                                JsonRpcResponse {
-                                    jsonrpc: "2.0".to_string(),
-                                    id: request.id,
-                                    result: None,
-                                    error: Some(error),
-                                }
-                            }
-                        }
-                    }
-                    "get_capa" => {
-                        // No params needed for get_capa
-                        match server.handle_get_capa().await {
-                            Ok(result) => JsonRpcResponse {
-                                jsonrpc: "2.0".to_string(),
-                                id: request.id,
-                                result: Some(serde_json::to_value(result).unwrap()),
-                                error: None,
-                            },
-                            Err(e) => JsonRpcResponse {
-                                jsonrpc: "2.0".to_string(),
-                                id: request.id,
+                                id: request.id.clone(),
                                 result: None,
-                                error: Some(JsonRpcError::processing_failed(e.to_string(), None)),
-                            },
+                                error: Some(JsonRpcError {
+                                    code: -32602,
+                                    message: format!("Invalid params: {e}"),
+                                    data: None,
+                                }),
+                            };
+                            send_response(&mut stdout, &error_response).await?;
+                            log::debug!("📤 Sent error response for id={:?}", error_response.id);
+                            continue;
+                        }
+                    };
+
+                // Handle operation
+                match server.handle_distil_directory(params.clone()).await {
+                    Ok(result) => JsonRpcResponse {
+                        jsonrpc: "2.0".to_string(),
+                        id: request.id,
+                        result: Some(serde_json::Value::String(result)),
+                        error: None,
+                    },
+                    Err(e) => {
+                        let error = match e.downcast_ref::<DistilError>() {
+                            Some(DistilError::FileNotFound(_)) => {
+                                JsonRpcError::file_not_found(params.path.display().to_string())
+                            }
+                            _ => JsonRpcError::processing_failed(
+                                e.to_string(),
+                                Some(params.path.display().to_string()),
+                            ),
+                        };
+                        JsonRpcResponse {
+                            jsonrpc: "2.0".to_string(),
+                            id: request.id,
+                            result: None,
+                            error: Some(error),
                         }
                     }
-                    _ => JsonRpcResponse {
+                }
+            }
+            "distil_file" => {
+                // Parse params
+                let params: DistilFileParams =
+                    match serde_json::from_value(request.params.unwrap_or(serde_json::Value::Null))
+                    {
+                        Ok(p) => p,
+                        Err(e) => {
+                            // Send error response and continue to next request
+                            let error_response = JsonRpcResponse {
+                                jsonrpc: "2.0".to_string(),
+                                id: request.id.clone(),
+                                result: None,
+                                error: Some(JsonRpcError {
+                                    code: -32602,
+                                    message: format!("Invalid params: {e}"),
+                                    data: None,
+                                }),
+                            };
+                            send_response(&mut stdout, &error_response).await?;
+                            log::debug!("📤 Sent error response for id={:?}", error_response.id);
+                            continue;
+                        }
+                    };
+
+                // Handle operation
+                match server.handle_distil_file(params.clone()).await {
+                    Ok(result) => JsonRpcResponse {
+                        jsonrpc: "2.0".to_string(),
+                        id: request.id,
+                        result: Some(serde_json::Value::String(result)),
+                        error: None,
+                    },
+                    Err(e) => {
+                        let error = match e.downcast_ref::<DistilError>() {
+                            Some(DistilError::FileNotFound(_)) => {
+                                JsonRpcError::file_not_found(params.path.display().to_string())
+                            }
+                            _ => JsonRpcError::processing_failed(
+                                e.to_string(),
+                                Some(params.path.display().to_string()),
+                            ),
+                        };
+                        JsonRpcResponse {
+                            jsonrpc: "2.0".to_string(),
+                            id: request.id,
+                            result: None,
+                            error: Some(error),
+                        }
+                    }
+                }
+            }
+            "list_dir" => {
+                // Parse params
+                let params: ListDirParams =
+                    match serde_json::from_value(request.params.unwrap_or(serde_json::Value::Null))
+                    {
+                        Ok(p) => p,
+                        Err(e) => {
+                            // Send error response and continue to next request
+                            let error_response = JsonRpcResponse {
+                                jsonrpc: "2.0".to_string(),
+                                id: request.id.clone(),
+                                result: None,
+                                error: Some(JsonRpcError {
+                                    code: -32602,
+                                    message: format!("Invalid params: {e}"),
+                                    data: None,
+                                }),
+                            };
+                            send_response(&mut stdout, &error_response).await?;
+                            log::debug!("📤 Sent error response for id={:?}", error_response.id);
+                            continue;
+                        }
+                    };
+
+                // Handle operation
+                match server.handle_list_dir(params.clone()).await {
+                    Ok(result) => JsonRpcResponse {
+                        jsonrpc: "2.0".to_string(),
+                        id: request.id,
+                        result: Some(serde_json::to_value(result).unwrap()),
+                        error: None,
+                    },
+                    Err(e) => {
+                        let error = match e.downcast_ref::<DistilError>() {
+                            Some(DistilError::FileNotFound(_)) => {
+                                JsonRpcError::file_not_found(params.path.display().to_string())
+                            }
+                            _ => JsonRpcError::processing_failed(
+                                e.to_string(),
+                                Some(params.path.display().to_string()),
+                            ),
+                        };
+                        JsonRpcResponse {
+                            jsonrpc: "2.0".to_string(),
+                            id: request.id,
+                            result: None,
+                            error: Some(error),
+                        }
+                    }
+                }
+            }
+            "get_capa" => {
+                // No params needed for get_capa
+                match server.handle_get_capa().await {
+                    Ok(result) => JsonRpcResponse {
+                        jsonrpc: "2.0".to_string(),
+                        id: request.id,
+                        result: Some(serde_json::to_value(result).unwrap()),
+                        error: None,
+                    },
+                    Err(e) => JsonRpcResponse {
                         jsonrpc: "2.0".to_string(),
                         id: request.id,
                         result: None,
-                        error: Some(JsonRpcError::method_not_found(request.method.clone())),
+                        error: Some(JsonRpcError::processing_failed(e.to_string(), None)),
                     },
-                };
+                }
+            }
+            _ => JsonRpcResponse {
+                jsonrpc: "2.0".to_string(),
+                id: request.id,
+                result: None,
+                error: Some(JsonRpcError::method_not_found(request.method.clone())),
+            },
+        };
 
-                // Send response
-                send_response(&mut stdout, &response).await?;
-                log::debug!("📤 Sent response for id={:?}", response.id);
-            }
-            Err(e) => {
-                log::error!("❌ Failed to read from stdin: {e}");
-                break;
-            }
-        }
+        // Send response
+        send_response(&mut stdout, &response).await?;
+        log::debug!("📤 Sent response for id={:?}", response.id);
     }
 
     log::info!("👋 MCP Server shutting down...");
