@@ -118,9 +118,11 @@ impl Visitor for Stripper {
             self.visit_node(child);
         }
 
-        // Post-visit: Remove empty containers
-        dir.children
-            .retain(|child| !Self::is_empty_container(child));
+        // Post-visit: Remove empty containers and empty files
+        dir.children.retain(|child| {
+            !Self::is_empty_container(child)
+                && !matches!(child, Node::File(f) if f.children.is_empty())
+        });
     }
 
     fn visit_package(&mut self, package: &mut Package) {

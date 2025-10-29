@@ -35,8 +35,6 @@ use lang_typescript::TypeScriptProcessor;
 
 // Formatters
 use formatter_jsonl::JsonlFormatter;
-use formatter_markdown::MarkdownFormatter;
-use formatter_text::TextFormatter;
 
 /// JSON-RPC request
 #[derive(Debug, Deserialize)]
@@ -369,9 +367,11 @@ impl McpServer {
             .process_path(&validated_path)
             .context("Failed to process directory")?;
 
-        // Apply stripper to match CLI filtering behavior
-        let mut stripper = Stripper::new(proc_opts);
-        stripper.visit_node(&mut node);
+        // Apply stripper to match CLI filtering behavior (skip if raw_mode)
+        if !proc_opts.raw_mode {
+            let mut stripper = Stripper::new(proc_opts);
+            stripper.visit_node(&mut node);
+        }
 
         // Extract files
         let files = extract_files(&node);
@@ -386,6 +386,7 @@ impl McpServer {
             params.options.format,
             params.options.pretty,
             params.options.indent,
+            params.options.include_implementation,
         )?;
         Ok(output)
     }
@@ -410,9 +411,11 @@ impl McpServer {
             .process_path(&validated_path)
             .context("Failed to process file")?;
 
-        // Apply stripper to match CLI filtering behavior
-        let mut stripper = Stripper::new(proc_opts);
-        stripper.visit_node(&mut node);
+        // Apply stripper to match CLI filtering behavior (skip if raw_mode)
+        if !proc_opts.raw_mode {
+            let mut stripper = Stripper::new(proc_opts);
+            stripper.visit_node(&mut node);
+        }
 
         // Extract files
         let files = extract_files(&node);
@@ -427,6 +430,7 @@ impl McpServer {
             params.options.format,
             params.options.pretty,
             params.options.indent,
+            params.options.include_implementation,
         )?;
         Ok(output)
     }
@@ -515,16 +519,26 @@ impl McpServer {
         format: OutputFormat,
         pretty: bool,
         indent: usize,
+        include_implementation: bool,
     ) -> Result<String> {
         match format {
             OutputFormat::Text => {
-                let formatter = TextFormatter::new();
+                use formatter_text::{TextFormatter, TextFormatterOptions};
+                let opts = TextFormatterOptions {
+                    include_implementation,
+                };
+                let formatter = TextFormatter::with_options(opts);
                 formatter
                     .format_files(files)
                     .context("Failed to format as text")
             }
             OutputFormat::Md => {
-                let formatter = MarkdownFormatter::new();
+                use formatter_markdown::MarkdownFormatter;
+                use formatter_text::TextFormatterOptions;
+                let opts = TextFormatterOptions {
+                    include_implementation,
+                };
+                let formatter = MarkdownFormatter::with_options(opts);
                 formatter
                     .format_files(files)
                     .context("Failed to format as markdown")
@@ -824,7 +838,7 @@ async fn main() -> Result<()> {
 
                         // Check for duplicate Content-Length
                         if key_lower == "content-length" && headers.contains_key(&key_lower) {
-                            log::error!("❌ Duplicate Content-Length header");
+                            log::debug!("Duplicate Content-Length header");
                             let error_response = JsonRpcResponse {
                                 jsonrpc: "2.0".to_string(),
                                 id: serde_json::Value::Null,
@@ -854,16 +868,16 @@ async fn main() -> Result<()> {
             Some(len_str) => match len_str.parse::<usize>() {
                 Ok(len) if len > 0 => len,
                 Ok(_) => {
-                    log::error!("❌ Content-Length must be positive");
+                    log::debug!("Content-Length must be positive");
                     continue;
                 }
                 Err(e) => {
-                    log::error!("❌ Failed to parse Content-Length: {e}");
+                    log::debug!("Failed to parse Content-Length: {e}");
                     continue;
                 }
             },
             None => {
-                log::error!("❌ Missing Content-Length header");
+                log::debug!("Missing Content-Length header");
                 continue;
             }
         };
@@ -894,14 +908,14 @@ async fn main() -> Result<()> {
         // Read exactly content_length bytes for the JSON body
         let mut body_buf = vec![0u8; content_length];
         if let Err(e) = reader.read_exact(&mut body_buf).await {
-            log::error!("❌ Failed to read message body: {e}");
+            log::debug!("Failed to read message body: {e}");
             break;
         }
 
         let body = match String::from_utf8(body_buf) {
             Ok(s) => s,
             Err(e) => {
-                log::error!("❌ Invalid UTF-8 in message body: {e}");
+                log::debug!("Invalid UTF-8 in message body: {e}");
                 continue;
             }
         };
@@ -910,7 +924,7 @@ async fn main() -> Result<()> {
         let request: JsonRpcRequest = match serde_json::from_str(&body) {
             Ok(req) => req,
             Err(e) => {
-                log::error!("❌ Failed to parse JSON-RPC request: {e}");
+                log::debug!("Failed to parse JSON-RPC request: {e}");
                 continue;
             }
         };
@@ -935,11 +949,9 @@ async fn main() -> Result<()> {
                                 jsonrpc: "2.0".to_string(),
                                 id: request.id.clone(),
                                 result: None,
-                                error: Some(JsonRpcError {
-                                    code: -32602,
-                                    message: format!("Invalid params: {e}"),
-                                    data: None,
-                                }),
+                                error: Some(JsonRpcError::invalid_params(format!(
+                                    "Invalid params: {e}"
+                                ))),
                             };
                             send_response(&mut stdout, &error_response).await?;
                             log::debug!("📤 Sent error response for id={:?}", error_response.id);
@@ -986,11 +998,9 @@ async fn main() -> Result<()> {
                                 jsonrpc: "2.0".to_string(),
                                 id: request.id.clone(),
                                 result: None,
-                                error: Some(JsonRpcError {
-                                    code: -32602,
-                                    message: format!("Invalid params: {e}"),
-                                    data: None,
-                                }),
+                                error: Some(JsonRpcError::invalid_params(format!(
+                                    "Invalid params: {e}"
+                                ))),
                             };
                             send_response(&mut stdout, &error_response).await?;
                             log::debug!("📤 Sent error response for id={:?}", error_response.id);
@@ -1037,11 +1047,9 @@ async fn main() -> Result<()> {
                                 jsonrpc: "2.0".to_string(),
                                 id: request.id.clone(),
                                 result: None,
-                                error: Some(JsonRpcError {
-                                    code: -32602,
-                                    message: format!("Invalid params: {e}"),
-                                    data: None,
-                                }),
+                                error: Some(JsonRpcError::invalid_params(format!(
+                                    "Invalid params: {e}"
+                                ))),
                             };
                             send_response(&mut stdout, &error_response).await?;
                             log::debug!("📤 Sent error response for id={:?}", error_response.id);

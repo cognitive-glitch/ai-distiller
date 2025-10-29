@@ -127,14 +127,22 @@ impl ProcessOptions {
     /// Get the number of worker threads to use
     ///
     /// Returns 0 if auto-detection should be used (80% of CPU cores).
+    /// Can be overridden with AID_WORKERS environment variable.
     #[must_use]
     pub fn worker_count(&self) -> usize {
+        // Check for AID_WORKERS environment variable first
+        if let Ok(env_workers) = std::env::var("AID_WORKERS")
+            && let Ok(count) = env_workers.parse::<usize>()
+        {
+            return count.max(1); // Ensure at least 1 worker
+        }
+
         if self.workers == 0 {
             // Auto: 80% of available parallelism
             let cpus = num_cpus::get();
             (cpus * 4 / 5).max(1)
         } else {
-            self.workers
+            self.workers.max(1) // Ensure at least 1 worker
         }
     }
 

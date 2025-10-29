@@ -20,7 +20,7 @@ Do you work with large-scale projects that have thousands of files and functions
 
 **AI Distiller (or `aid` for short) helps solve this problem.** Its main function is code "distillation" – a process where it extracts only the most essential information from the entire project (ideally from the main source folder, or a specific module subdirectory for extremely large projects) that the AI needs to write code correctly on the first try. This distillation usually generates a context that is only 5-20% of the original source code volume, allowing AI tools to include it in their context. As a result, the AI uses the existing code exactly as it was designed, not by trial and error.
 
-Very simply, it can be said that `aid`, within the distillation process, will leave only the public parts of the interface, input and output data types, but in the default state it will discard method implementations and non-public structures. But everything is configurable via [CLI Options](#-complete-cli-reference).
+Very simply, it can be said that `aid`, within the distillation process, will extract public and protected interfaces, input and output data types, along with method implementations and comments in the default state. Everything is configurable via [CLI Options](#-complete-cli-reference) to produce more compact output when needed.
 
 ## Table of Contents
 
@@ -65,17 +65,17 @@ Control exactly what to include with our new granular flag system:
 
 **Visibility Control**:
 - `--public=1` (default) - Include public members
-- `--protected=0` (default) - Exclude protected members
+- `--protected=1` (default) - Include protected members
 - `--internal=0` (default) - Exclude internal/package-private
 - `--private=0` (default) - Exclude private members
 
 **Content Control**:
-- `--comments=0` (default) - Exclude comments
+- `--comments=1` (default) - Include comments
 - `--docstrings=1` (default) - Include documentation
-- `--implementation=0` (default) - Exclude function/methods bodies
+- `--implementation=1` (default) - Include function/methods bodies
 - `--imports=1` (default) - Include import/use statements
 
-**Default behavior**: Shows only public API signatures with basic documentation - perfect for AI understanding while maintaining maximum compression.
+**Default behavior**: Shows public and protected APIs with documentation, comments, and implementations - comprehensive output for AI understanding.
 
 ### 🤖 AI-Powered Analysis Prompt Generation
 
@@ -416,7 +416,7 @@ Instead of playing "code roulette", AI can now write correct code from the start
 ### 🔧 Flexible for Different Use Cases
 
 ```bash
-# Process entire codebase (default: public APIs only)
+# Process entire codebase (default: public+protected with implementations)
 aid ./my-project
 
 # Process specific directory or module
@@ -655,7 +655,7 @@ aid <path> [OPTIONS]
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `--public` | 0\|1 | `1` | Include public members (methods, functions, classes) |
-| `--protected` | 0\|1 | `0` | Include protected members |
+| `--protected` | 0\|1 | `1` | Include protected members |
 | `--internal` | 0\|1 | `0` | Include internal/package-private members |
 | `--private` | 0\|1 | `0` | Include private members |
 
@@ -663,9 +663,9 @@ aid <path> [OPTIONS]
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `--comments` | 0\|1 | `0` | Include inline and block comments |
+| `--comments` | 0\|1 | `1` | Include inline and block comments |
 | `--docstrings` | 0\|1 | `1` | Include documentation comments (docstrings, JSDoc, etc.) |
-| `--implementation` | 0\|1 | `0` | Include function/method bodies (implementation details) |
+| `--implementation` | 0\|1 | `1` | Include function/method bodies (implementation details) |
 | `--imports` | 0\|1 | `1` | Include import/require statements |
 | `--annotations` | 0\|1 | `1` | Include decorators and annotations |
 | `--fields` | 0\|1 | `1` | Include class fields and properties |
@@ -770,7 +770,7 @@ AI actions generate pre-configured prompts combined with distilled code that AI 
 ### Examples
 
 ```bash
-# Basic usage - distill with default settings (public APIs only)
+# Basic usage - distill with default settings (public+protected with implementations)
 aid ./src
 
 # Include all visibility levels and implementation
@@ -856,6 +856,33 @@ When using the MCP server integration with Claude Desktop or other AI tools, add
 2. Use project-specific workspace roots, not your home directory
 3. Review MCP server logs for unexpected access patterns
 4. Keep the MCP server package updated for security fixes
+
+### MCP Server Current Limitations
+
+The current MCP server implementation has some known limitations that will be addressed in future releases:
+
+**Performance & Scalability**:
+- No streaming or chunking support for large outputs (entire response loaded in memory)
+- JSONL format returns full output as single string, not incrementally
+- Large directory distillations may cause memory pressure
+
+**Request Management**:
+- No per-request timeout or cancellation support
+- Requests are queued and processed serially to prevent race conditions
+- Long-running operations cannot be interrupted
+
+**Security**:
+- `AID_WORKSPACE_ROOT` is optional but strongly recommended for production use
+- Without workspace root set, server can access any readable filesystem path
+- Path validation only blocks sensitive system directories by default
+
+**Planned Improvements** (see `ROADMAP_100_COVERAGE.md`):
+- Streaming JSONL output with pagination support
+- Request timeout and cancellation mechanisms
+- Mandatory workspace root enforcement option
+- Migration to `rmcp` framework for better protocol compliance
+
+For current workarounds and best practices, see the MCP Server Security section above.
 
 
 ## 🛠️ Advanced Usage

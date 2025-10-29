@@ -576,8 +576,20 @@ impl TextFormatter {
     }
 
     /// Generate indentation string
-    fn indent(level: usize) -> String {
-        "    ".repeat(level)
+    fn indent(level: usize) -> &'static str {
+        // Use static slices for common indentation levels (0-8)
+        match level {
+            0 => "",
+            1 => "    ",
+            2 => "        ",
+            3 => "            ",
+            4 => "                ",
+            5 => "                    ",
+            6 => "                        ",
+            7 => "                            ",
+            8 => "                                ",
+            _ => "                                    ", // Max practical depth
+        }
     }
 }
 
